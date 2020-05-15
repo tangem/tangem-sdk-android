@@ -1,0 +1,29 @@
+*.iml
+
+# Built application files
+/build
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Gradle generated files
+.gradle
+
+# User-specific configurations
+.idea/caches/
+.idea/libraries/
+.idea/*.xml
+.idea/codeStyles
+
+# LayoutInspector files
+/captures
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+
+# fastlane files
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
