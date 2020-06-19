@@ -1,0 +1,28 @@
+apply plugin: 'maven'
+
+repositories {
+  maven {url "https://raw.github.com/synergian/wagon-git/releases"}
+}
+
+configurations {
+  deployLibrary
+}
+
+dependencies {
+  deployLibrary "ar.com.synergian:wagon-git:0.2.5"
+}
+
+uploadArchives {
+
+  repositories.mavenDeployer {
+    configuration = configurations.deployLibrary
+    repository(url: 'git:releases://git@bitbucket.org:' + COMPANY + '/' + REPOSITORY_NAME + '.git')
+
+    pom.project {
+      groupId = ARTIFACT_PACKAGE
+      version = "${major}.${minor}.${patch}"
+      artifactId = ARTIFACT_NAME
+      packaging ARTIFACT_PACKAGING
+    }
+  }
+}
