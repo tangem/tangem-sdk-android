@@ -14,13 +14,13 @@ dependencies {
 
 task lookForArtifacts {
   doLast {
-    def artifactName = ARTIFACT_NAME + '-' + ARTIFACT_VERSION + '.aar'
-    def artifactPath = ARTIFACT_PACKAGE.replace(".", "/") + "/" + ARTIFACT_NAME + "/" + ARTIFACT_VERSION + "/" + artifactName
-    def repositoryUrl = 'https://api.bitbucket.org/2.0/repositories/' + COMPANY + '/' + REPOSITORY_NAME + '/src/releases/' +
+    def artifactId = artifactId + '-' + artifactVersion + '.aar'
+    def artifactPath = artifactPackage.replace(".", "/") + "/" + artifactId + "/" + artifactVersion + "/" + artifactId
+    def repositoryUrl = 'https://api.bitbucket.org/2.0/repositories/' + companyName + '/' + repositoryName + '/src/releases/' +
         artifactPath
 
     println("")
-    println("Checking if artifact already exists: " + artifactName)
+    println("Checking if artifact already exists: " + artifactId)
     println("at URL: " + repositoryUrl)
 
     def artifactExists = urlExists(repositoryUrl)
@@ -28,7 +28,7 @@ task lookForArtifacts {
     println("")
 
     if (urlExists(repositoryUrl)) {
-      throw new RuntimeException("Artifact with version " + ARTIFACT_VERSION + " already exist - not executing uploadArchives")
+      throw new RuntimeException("Artifact with version " + artifactVersion + " already exist - not executing uploadArchives")
     }
     return true
   }
@@ -40,12 +40,17 @@ uploadArchives {
 
   repositories.mavenDeployer {
     configuration = configurations.deployLibrary
-    repository(url: 'git:releases://git@bitbucket.org:' + COMPANY + '/' + REPOSITORY_NAME + '.git')
+    repository(url: 'git:releases://git@bitbucket.org:' + companyName + '/' + repositoryName + '.git')
     pom.project {
-      groupId = ARTIFACT_PACKAGE
-      version = ARTIFACT_VERSION
-      artifactId = ARTIFACT_NAME
-      packaging ARTIFACT_PACKAGING
+      groupId = artifactPackage
+      version = artifactVersion
+      artifactId = artifactId
+      packaging artifactPackaging
+    }
+    pom.whenConfigured {
+      p -> p.dependencies = p.dependencies.findAll {
+        dep -> dep.groupId != "card-sdk-kotlin"
+      }
     }
   }
 }
@@ -74,6 +79,6 @@ def urlExists(String repositoryUrl) {
 }
 
 def getBase64EncodedCredentials() {
-  def s = USERNAME + ":" + PASSWORD
+  def s = bitbucketUser + ":" + bitbucketPass
   return s.bytes.encodeBase64().toString()
 }
