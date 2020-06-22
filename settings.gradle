@@ -1,1 +1,3 @@
-include ':tangem-core', ':tangem-sdk', ':tangem-devkit'
+include ':tangem-devkit'
+include ':tangem-sdk'
+include ':tangem-core'
