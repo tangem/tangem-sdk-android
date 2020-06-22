@@ -47,6 +47,11 @@ uploadArchives {
       artifactId = ARTIFACT_NAME
       packaging ARTIFACT_PACKAGING
     }
+    pom.whenConfigured {
+      p -> p.dependencies = p.dependencies.findAll {
+        dep -> dep.groupId != "card-sdk-kotlin"
+      }
+    }
   }
 }
 
