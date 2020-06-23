@@ -1,0 +1,84 @@
+apply plugin: 'maven'
+
+repositories {
+  maven {url "https://raw.github.com/synergian/wagon-git/releases"}
+}
+
+configurations {
+  deployLibrary
+}
+
+dependencies {
+  deployLibrary "ar.com.synergian:wagon-git:0.3.0"
+}
+
+task lookForArtifacts {
+  doLast {
+    def artifactId = artifactId + '-' + artifactVersion + '.aar'
+    def artifactPath = artifactPackage.replace(".", "/") + "/" + artifactId + "/" + artifactVersion + "/" + artifactId
+    def repositoryUrl = 'https://api.bitbucket.org/2.0/repositories/' + companyName + '/' + repositoryName + '/src/releases/' +
+        artifactPath
+
+    println("")
+    println("Checking if artifact already exists: " + artifactId)
+    println("at URL: " + repositoryUrl)
+
+    def artifactExists = urlExists(repositoryUrl)
+    println(artifactExists ? "existing artifact found" : "no existing artifact found")
+    println("")
+
+    if (urlExists(repositoryUrl)) {
+      throw new RuntimeException("Artifact with version " + artifactVersion + " already exist - not executing uploadArchives")
+    }
+    return true
+  }
+}
+
+uploadArchives.dependsOn lookForArtifacts
+
+uploadArchives {
+
+  repositories.mavenDeployer {
+    configuration = configurations.deployLibrary
+    repository(url: 'git:releases://git@bitbucket.org:' + companyName + '/' + repositoryName + '.git')
+    pom.project {
+      groupId = artifactPackage
+      version = artifactVersion
+      artifactId = artifactId
+      packaging artifactPackaging
+    }
+    pom.whenConfigured {
+      p -> p.dependencies = p.dependencies.findAll {
+        dep -> dep.groupId != "card-sdk-kotlin"
+      }
+    }
+  }
+}
+
+
+def urlExists(String repositoryUrl) {
+  try {
+    def connection = (HttpURLConnection) new URL(repositoryUrl).openConnection()
+
+    connection.setRequestProperty("Authorization", "Basic " + getBase64EncodedCredentials())
+    connection.setConnectTimeout(10000)
+    connection.setReadTimeout(10000)
+    connection.setRequestMethod("HEAD")
+
+    def responseCode = connection.getResponseCode()
+    println("responseCode: " + responseCode)
+
+    if (responseCode == 401) {
+      throw new RuntimeException("Unauthorized BitBucket user - please provide valid username and password in gradle.properties file")
+    }
+
+    return (200 == responseCode)
+  } catch (IOException ignored) {
+    return false
+  }
+}
+
+def getBase64EncodedCredentials() {
+  def s = bitbucketUser + ":" + bitbucketPass
+  return s.bytes.encodeBase64().toString()
+}
