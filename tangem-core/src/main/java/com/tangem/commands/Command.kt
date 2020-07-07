@@ -38,6 +38,7 @@ interface CommandResponse
 abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRunnable<T> {
 
     override val performPreflightRead: Boolean = true
+    open val requiresPin2: Boolean = false
 
     override fun run(session: CardSession, callback: (result: CompletionResult<T>) -> Unit) {
         Log.i("Command", "Initializing ${this::class.java.simpleName}")
@@ -58,12 +59,21 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
             }
         }
 
+        if (requiresPin2 && session.environment.isCurrentPin2Default()) {
+            handlePin2(session, callback)
+            return
+        }
+
         val apdu = serialize(session.environment)
         transceiveApdu(apdu, session) { result ->
             when (result) {
                 is CompletionResult.Failure -> {
                     if (session.environment.handleErrors) {
                         val error = mapError(session.environment.card, result.error)
+                        if (error is TangemSdkError.Pin1Required) {
+                            handlePin1(session, callback)
+                            return@transceiveApdu
+                        }
                         callback(CompletionResult.Failure(error))
                         return@transceiveApdu
 
@@ -80,7 +90,6 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                 }
             }
         }
-
     }
 
     private fun transceiveApdu(
@@ -96,8 +105,10 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                     val responseApdu = result.data
 
                     when (responseApdu.statusWord) {
-                        StatusWord.ProcessCompleted, StatusWord.Pin1Changed,
-                        StatusWord.Pin2Changed, StatusWord.PinsChanged -> {
+                        StatusWord.ProcessCompleted,
+                        StatusWord.Pin1Changed, StatusWord.Pin2Changed, StatusWord.Pins12Changed,
+                        StatusWord.Pin3Changed, StatusWord.Pins13Changed, StatusWord.Pins23Changed,
+                        StatusWord.Pins123Changed -> {
                             callback(CompletionResult.Success(responseApdu))
                         }
                         StatusWord.NeedPause -> {
@@ -172,4 +183,51 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
         return false
     }
 
+    private fun handlePin1(
+        session: CardSession,
+        callback: (result: CompletionResult<T>) -> Unit
+    ) {
+        if (!session.environment.isCurrentPin1Default()) {
+            session.environment.setPin1(SessionEnvironment.DEFAULT_PIN)
+            transceive(session, callback)
+            return
+        }
+        session.pause()
+        session.viewDelegate.onPinRequested { pin1 ->
+            if (!pin1.isNullOrEmpty()) {
+                session.environment.setPin1(pin1)
+                session.resume()
+                transceive(session, callback)
+            } else {
+                session.environment.setPin1(SessionEnvironment.DEFAULT_PIN)
+                session.resume()
+                transceive(session, callback)
+            }
+        }
+    }
+
+    private fun handlePin2(
+        session: CardSession,
+        callback: (result: CompletionResult<T>) -> Unit
+    ) {
+        val checkPinCommand = SetPinCommand(session.environment.pin1, session.environment.pin2)
+        checkPinCommand.run(session) { result ->
+            when (result) {
+                is CompletionResult.Failure -> {
+                    session.viewDelegate.onPinRequested { pin2 ->
+                        if (!pin2.isNullOrEmpty()) {
+                            session.environment.setPin2(pin2)
+                            transceive(session, callback)
+                        } else {
+                            session.environment.setPin2(SessionEnvironment.DEFAULT_PIN2)
+                            callback(CompletionResult.Failure(TangemSdkError.Pin2OrCvcRequired()))
+                        }
+                    }
+                }
+                is CompletionResult.Success -> {
+                    transceive(session, callback)
+                }
+            }
+        }
+    }
 }
