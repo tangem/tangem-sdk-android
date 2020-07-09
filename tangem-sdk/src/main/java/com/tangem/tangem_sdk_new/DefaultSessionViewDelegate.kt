@@ -1,6 +1,6 @@
 package com.tangem.tangem_sdk_new
 
-import androidx.fragment.app.FragmentActivity
+import android.app.Activity
 import com.tangem.*
 import com.tangem.tangem_sdk_new.nfc.NfcReader
 import com.tangem.tangem_sdk_new.ui.NfcSessionDialog
@@ -11,7 +11,7 @@ import com.tangem.tangem_sdk_new.ui.NfcSessionDialog
  */
 class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDelegate {
 
-    lateinit var activity: FragmentActivity
+    lateinit var activity: Activity
     private var readingDialog: NfcSessionDialog? = null
 
     init {
@@ -22,7 +22,7 @@ class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDel
         postUI { showReadingDialog(activity, cardId, message) }
     }
 
-    private fun showReadingDialog(activity: FragmentActivity, cardId: String?, message: Message?) {
+    private fun showReadingDialog(activity: Activity, cardId: String?, message: Message?) {
         val dialogView = activity.layoutInflater.inflate(R.layout.nfc_bottom_sheet, null)
         readingDialog = NfcSessionDialog(activity)
         readingDialog?.setContentView(dialogView)
