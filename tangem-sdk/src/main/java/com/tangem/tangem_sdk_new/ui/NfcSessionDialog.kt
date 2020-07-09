@@ -8,9 +8,7 @@ import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
-import androidx.fragment.app.FragmentActivity
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.tangem.Log
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.localizedDescription
@@ -19,7 +17,7 @@ import com.tangem.tangem_sdk_new.postUI
 import kotlinx.android.synthetic.main.layout_touch_card.*
 import kotlinx.android.synthetic.main.nfc_bottom_sheet.*
 
-class NfcSessionDialog(val activity: FragmentActivity) : BottomSheetDialog(activity) {
+class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
 
     private var currentState: SessionViewDelegateState? = null
 
@@ -139,7 +137,7 @@ class NfcSessionDialog(val activity: FragmentActivity) : BottomSheetDialog(activ
                     tvTaskTitle?.show()
                     tvTaskText?.show()
                     val imm: InputMethodManager =
-                        context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+                            context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
                     imm.hideSoftInputFromWindow(v?.windowToken, 0)
 
                     v?.text?.toString()?.let { state.callback(it) }
@@ -151,7 +149,7 @@ class NfcSessionDialog(val activity: FragmentActivity) : BottomSheetDialog(activ
 
     private fun onTagLost() {
         if (currentState is SessionViewDelegateState.Success ||
-            currentState is SessionViewDelegateState.PinRequested) {
+                currentState is SessionViewDelegateState.PinRequested) {
             return
         }
         show(lTouchCard)
@@ -173,7 +171,7 @@ class NfcSessionDialog(val activity: FragmentActivity) : BottomSheetDialog(activ
             )
             performHapticFeedback()
 
-            postUI (2000){
+            postUI(2000) {
                 show(lTouchCard)
                 tvTaskTitle?.text = activity.getText(R.string.dialog_ready_to_scan)
                 tvTaskText?.text = activity.getText(R.string.dialog_scan_text)
