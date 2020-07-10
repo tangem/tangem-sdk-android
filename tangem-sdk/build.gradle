@@ -6,7 +6,7 @@ apply from: '../upload.gradle'
 
 android {
     compileSdkVersion 29
-    buildToolsVersion "29.0.2"
+    buildToolsVersion "29.0.3"
 
 
     defaultConfig {
@@ -58,6 +58,7 @@ dependencies {
     // misc
     implementation 'com.skyfishjy.ripplebackground:library:1.0.1'
     implementation 'at.favre.lib:armadillo:0.9.0'
+    implementation "com.squareup.sqldelight:android-driver:1.4.0"
 
     // testing
     testImplementation 'junit:junit:4.12'
