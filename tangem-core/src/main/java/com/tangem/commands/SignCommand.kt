@@ -1,6 +1,7 @@
 package com.tangem.commands
 
 import com.tangem.SessionEnvironment
+import com.tangem.TangemError
 import com.tangem.TangemSdkError
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
@@ -65,7 +66,7 @@ class SignCommand(private val hashes: Array<ByteArray>) : Command<SignResponse>(
         }
     }
 
-    override fun mapError(card: Card?, error: TangemSdkError): TangemSdkError {
+    override fun mapError(card: Card?, error: TangemError): TangemError {
         if (error is TangemSdkError.InvalidParams) {
             return TangemSdkError.Pin2OrCvcRequired()
         }
