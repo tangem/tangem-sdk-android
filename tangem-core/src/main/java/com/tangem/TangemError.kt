@@ -6,10 +6,20 @@ import com.tangem.common.apdu.StatusWord
 import com.tangem.tasks.ScanTask
 
 /**
+ * An interface for any error that may occur when performing Tangem SDK tasks.
+ */
+interface TangemError {
+    val code: Int
+    var customMessage: String
+}
+
+/**
  * An error class that represent typical errors that may occur when performing Tangem SDK tasks.
  * Errors are propagated back to the caller in callbacks.
  */
-sealed class TangemSdkError(val code: Int) : Exception(code.toString()) {
+sealed class TangemSdkError(final override val code: Int) : Exception(code.toString()), TangemError {
+
+    override var customMessage: String = code.toString()
 
     /**
      * This error is returned when Android  NFC reader loses a tag
