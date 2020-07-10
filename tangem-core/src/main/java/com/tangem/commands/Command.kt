@@ -47,9 +47,9 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
         transceive(session, callback)
     }
 
-    open fun performPreCheck(card: Card): TangemSdkError? = null
+    open fun performPreCheck(card: Card): TangemError? = null
 
-    open fun mapError(card: Card?, error: TangemSdkError): TangemSdkError = error
+    open fun mapError(card: Card?, error: TangemError): TangemError = error
 
     fun transceive(session: CardSession, callback: (result: CompletionResult<T>) -> Unit) {
         val card = session.environment.card
