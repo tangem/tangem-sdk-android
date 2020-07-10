@@ -124,7 +124,7 @@ class CardSession(
      * @param callback: callback with the card session. Can contain [TangemSdkError] if something goes wrong.
      */
     fun start(
-        callback: (session: CardSession, error: TangemSdkError?) -> Unit
+        callback: (session: CardSession, error: TangemError?) -> Unit
     ) {
 
         if (state != CardSessionState.Inactive) {
@@ -182,7 +182,7 @@ class CardSession(
         viewDelegate.onTagLost()
     }
 
-    private fun preflightCheck(callback: (session: CardSession, error: TangemSdkError?) -> Unit) {
+    private fun preflightCheck(callback: (session: CardSession, error: TangemError?) -> Unit) {
         val readCommand = ReadCommand()
         readCommand.run(this) { result ->
             when (result) {
@@ -229,7 +229,7 @@ class CardSession(
      * Stops the current session on error.
      * @param error An error that will be shown.
      */
-    private fun stopWithError(error: TangemSdkError) {
+    private fun stopWithError(error: TangemError) {
         stopSession()
         if (error !is TangemSdkError.UserCancelled) {
             Log.e(tag, "Finishing with error: ${error::class.simpleName}: ${error.code}")
