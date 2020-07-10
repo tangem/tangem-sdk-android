@@ -110,6 +110,7 @@
         android:layout_height="200dp"
         android:layout_gravity="center"
         android:orientation="vertical"
+        android:theme="@style/Theme.MaterialComponents"
         android:visibility="gone">
 
         <com.google.android.material.textfield.TextInputLayout
