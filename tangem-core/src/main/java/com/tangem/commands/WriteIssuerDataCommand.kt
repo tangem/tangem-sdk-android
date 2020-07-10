@@ -1,6 +1,7 @@
 package com.tangem.commands
 
 import com.tangem.SessionEnvironment
+import com.tangem.TangemError
 import com.tangem.TangemSdkError
 import com.tangem.commands.common.DefaultIssuerDataVerifier
 import com.tangem.commands.common.IssuerDataMode
@@ -60,7 +61,7 @@ class WriteIssuerDataCommand(
         return null
     }
 
-    override fun mapError(card: Card?, error: TangemSdkError): TangemSdkError {
+    override fun mapError(card: Card?, error: TangemError): TangemError {
         if (error is TangemSdkError.InvalidParams && isCounterRequired(card)) {
             return TangemSdkError.DataCannotBeWritten()
         }

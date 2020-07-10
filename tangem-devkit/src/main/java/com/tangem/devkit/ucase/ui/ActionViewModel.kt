@@ -3,7 +3,7 @@ package com.tangem.devkit.ucase.ui
 import android.view.View
 import androidx.annotation.UiThread
 import androidx.lifecycle.*
-import com.google.gson.Gson
+import com.tangem.TangemError
 import com.tangem.TangemSdk
 import com.tangem.TangemSdkError
 import com.tangem.commands.Card
@@ -132,7 +132,7 @@ class ActionViewModel(private val itemsManager: ItemsManager) : ViewModel(), Lif
 
 internal class Notifier(private val vm: ActionViewModel) {
 
-    private var notShowedError: TangemSdkError? = null
+    private var notShowedError: TangemError? = null
 
     fun handleActionResult(result: CompletionResult<*>, list: List<Item>) {
         if (list.isNotEmpty()) notifyItemsChanged(list)
@@ -161,7 +161,7 @@ internal class Notifier(private val vm: ActionViewModel) {
         }
     }
 
-    private fun handleError(error: TangemSdkError) {
+    private fun handleError(error: TangemError) {
         Log.d(this, "error = $error")
         when (error) {
             is TangemSdkError.UserCancelled -> {

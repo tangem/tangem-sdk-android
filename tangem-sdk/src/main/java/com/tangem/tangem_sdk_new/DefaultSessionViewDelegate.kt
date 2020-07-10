@@ -64,7 +64,7 @@ class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDel
         postUI { readingDialog?.show(SessionViewDelegateState.Success(message)) }
     }
 
-    override fun onError(error: TangemSdkError) {
+    override fun onError(error: TangemError) {
         postUI { readingDialog?.show(SessionViewDelegateState.Error(error)) }
     }
 
