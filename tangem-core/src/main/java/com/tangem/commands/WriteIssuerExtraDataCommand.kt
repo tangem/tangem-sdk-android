@@ -2,6 +2,7 @@ package com.tangem.commands
 
 import com.tangem.CardSession
 import com.tangem.SessionEnvironment
+import com.tangem.TangemError
 import com.tangem.TangemSdkError
 import com.tangem.commands.common.DefaultIssuerDataVerifier
 import com.tangem.commands.common.IssuerDataMode
@@ -72,7 +73,7 @@ class WriteIssuerExtraDataCommand(
         return null
     }
 
-    override fun mapError(card: Card?, error: TangemSdkError): TangemSdkError {
+    override fun mapError(card: Card?, error: TangemError): TangemError {
         if (error is TangemSdkError.InvalidParams && isCounterRequired(card)) {
             return TangemSdkError.DataCannotBeWritten()
         }
@@ -134,9 +135,8 @@ class WriteIssuerExtraDataCommand(
                 }
                 is CompletionResult.Failure -> {
                     if (session.environment.handleErrors) {
-                        mapError(session.environment.card, result.error)?.let {
-                            callback(CompletionResult.Failure(it))
-                        }
+                        val error = mapError(session.environment.card, result.error)
+                        callback(CompletionResult.Failure(error))
                     }
                     callback(CompletionResult.Failure(result.error))
                 }
