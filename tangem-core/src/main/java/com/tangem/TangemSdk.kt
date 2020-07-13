@@ -428,7 +428,7 @@ class TangemSdk(
      * then you can use the [CardSession] to interact with a card.
      */
     fun startSession(cardId: String? = null, initialMessage: Message? = null,
-                     callback: (session: CardSession, error: TangemSdkError?) -> Unit) {
+                     callback: (session: CardSession, error: TangemError?) -> Unit) {
         val cardSession = CardSession(environmentService, reader, viewDelegate, cardId, initialMessage)
         Thread().run { cardSession.start(callback = callback) }
     }
