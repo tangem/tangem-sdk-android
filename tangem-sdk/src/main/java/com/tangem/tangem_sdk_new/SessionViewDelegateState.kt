@@ -1,10 +1,10 @@
 package com.tangem.tangem_sdk_new
 
 import com.tangem.Message
-import com.tangem.TangemSdkError
+import com.tangem.TangemError
 
 sealed class SessionViewDelegateState() {
-    data class Error(val error: TangemSdkError) : SessionViewDelegateState()
+    data class Error(val error: TangemError) : SessionViewDelegateState()
     data class Success(val message: Message?) : SessionViewDelegateState()
     data class SecurityDelay(val ms: Int, val totalDurationSeconds: Int) : SessionViewDelegateState()
     data class Delay(val total: Int, val current: Int, val step: Int) : SessionViewDelegateState()
