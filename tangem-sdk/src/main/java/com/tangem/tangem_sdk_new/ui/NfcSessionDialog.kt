@@ -9,6 +9,8 @@ import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.tangem.TangemError
+import com.tangem.TangemSdkError
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.localizedDescription
@@ -80,11 +82,20 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
     private fun onError(state: SessionViewDelegateState.Error) {
         show(flError)
         tvTaskTitle?.text = activity.getText(R.string.dialog_error)
+        val errorMessage = getErrorMessage(state.error)
         tvTaskText?.text = activity.getString(
                 R.string.error_message,
-                state.error.code.toString(), activity.getString(state.error.localizedDescription())
+                state.error.code.toString(), errorMessage
         )
         performHapticFeedback()
+    }
+
+    private fun getErrorMessage(error: TangemError): String {
+       return if (error is TangemSdkError) {
+            activity.getString(error.localizedDescription())
+        } else {
+            error.customMessage
+        }
     }
 
     private fun onSecurityDelay(state: SessionViewDelegateState.SecurityDelay) {
