@@ -2,6 +2,7 @@ package com.tangem.commands
 
 import com.google.gson.annotations.SerializedName
 import com.tangem.SessionEnvironment
+import com.tangem.TangemError
 import com.tangem.TangemSdkError
 import com.tangem.commands.common.CardDeserializer
 import com.tangem.common.apdu.CommandApdu
@@ -370,7 +371,7 @@ class Card(
  */
 class ReadCommand : Command<Card>() {
 
-    override fun mapError(card: Card?, error: TangemSdkError): TangemSdkError {
+    override fun mapError(card: Card?, error: TangemError): TangemError {
         if (error is TangemSdkError.InvalidParams) {
             return TangemSdkError.Pin1Required()
         }
