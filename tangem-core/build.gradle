@@ -5,6 +5,9 @@ apply from: '../dependencies.gradle'
 apply from: '../upload.gradle'
 apply plugin: 'com.squareup.sqldelight'
 
+group = artifactGithubPackage
+version artifactVersion
+
 dependencies {
     // kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$versions.kotlin"
