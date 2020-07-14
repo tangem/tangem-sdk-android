@@ -4,6 +4,9 @@ apply plugin: 'kotlin-android-extensions'
 apply from: '../dependencies.gradle'
 apply from: '../upload.gradle'
 
+group = artifactGithubPackage
+version artifactVersion
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
