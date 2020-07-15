@@ -14,10 +14,9 @@ dependencies {
 
 task lookForArtifacts {
   doLast {
-    def artifactId = artifactId + '-' + artifactVersion + '.aar'
-    def artifactPath = artifactPackage.replace(".", "/") + "/" + artifactId + "/" + artifactVersion + "/" + artifactId
-    def repositoryUrl = 'https://api.bitbucket.org/2.0/repositories/' + companyName + '/' + repositoryName + '/src/releases/' +
-        artifactPath
+    def artifactFullName = artifactId + '-' + artifactVersion + '.' + artifactPackaging
+    def artifactPath = artifactPackage.replace(".", "/") + "/" + artifactId + "/" + artifactVersion + "/" + artifactFullName
+    def repositoryUrl = 'https://api.bitbucket.org/2.0/repositories/' + companyName + '/' + repositoryName + '/src/releases/' + artifactPath
 
     println("")
     println("Checking if artifact already exists: " + artifactId)
