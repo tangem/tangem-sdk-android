@@ -35,7 +35,6 @@ class SignCommand(private val hashes: Array<ByteArray>) : Command<SignResponse>(
 
     override val requiresPin2 = true
 
-    //TODO: Allow signing more than 10 hashes
 
     private val hashSizes = if (hashes.isNotEmpty()) hashes.first().size else 0
 
@@ -55,6 +54,9 @@ class SignCommand(private val hashes: Array<ByteArray>) : Command<SignResponse>(
         if (hashes.any { it.size != hashSizes }) {
             return TangemSdkError.HashSizeMustBeEqual()
         }
+
+        //TODO: Allow signing more than 10 hashes
+        if (hashes.size > 10) return TangemSdkError.TooManyHashesInOneTransaction()
 
         return when (card.status) {
             CardStatus.Loaded -> null
