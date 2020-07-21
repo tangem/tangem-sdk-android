@@ -4,8 +4,12 @@
     <color name="colorPrimaryDark">#027AFF</color>
     <color name="colorAccent">#027AFF</color>
 
-    <color name="card_sdk_accent">#266dd3</color>
-    <color name="card_sdk_text_color">#000000</color>
+    <color name="card_sdk_primary">#0029FF</color>
+    <color name="card_sdk_primary_dark">#0029FF</color>
+    <color name="card_sdk_accent">#0029FF</color>
     <color name="card_sdk_ripple">#2c5ac4</color>
+    <color name="card_sdk_text_color_primary">#2C2C2E</color>
+
+    <color name="tap_in_bg_color">#F2F2F7</color>
 
 </resources>
