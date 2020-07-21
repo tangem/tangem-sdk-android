@@ -5,7 +5,7 @@ apply from: '../dependencies.gradle'
 apply from: '../upload.gradle'
 apply plugin: 'com.squareup.sqldelight'
 
-group = artifactGithubPackage
+group = isLocalMaven ? artifactPackage : artifactGithubPackage
 version artifactVersion
 
 dependencies {
