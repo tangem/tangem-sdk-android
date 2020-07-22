@@ -4,6 +4,8 @@ import com.tangem.Log
 import com.tangem.TangemSdkError
 import com.tangem.commands.*
 import com.tangem.commands.common.IssuerDataMode
+import com.tangem.commands.file.FileDataMode
+import com.tangem.commands.file.FileSettings
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
@@ -19,7 +21,7 @@ class TlvEncoder {
 
      * @param value information that is to be encoded into [Tlv].
      */
-    internal inline fun <reified T> encode(tag: TlvTag, value: T?): Tlv {
+    inline fun <reified T> encode(tag: TlvTag, value: T?): Tlv {
         if (value != null) {
             return Tlv(tag, encodeValue(tag, value))
         } else {
@@ -28,7 +30,7 @@ class TlvEncoder {
         }
     }
 
-    internal inline fun <reified T> encodeValue(tag: TlvTag, value: T): ByteArray {
+    inline fun <reified T> encodeValue(tag: TlvTag, value: T): ByteArray {
         return when (tag.valueType()) {
             TlvValueType.HexString -> {
                 typeCheck<T, String>(tag)
@@ -41,6 +43,10 @@ class TlvEncoder {
             TlvValueType.Utf8String -> {
                 typeCheck<T, String>(tag)
                 (value as String).toByteArray()
+            }
+            TlvValueType.Uint8 -> {
+                typeCheck<T, Int>(tag)
+                (value as Int).toByteArray(1)
             }
             TlvValueType.Uint16 -> {
                 typeCheck<T, Int>(tag)
@@ -94,15 +100,23 @@ class TlvEncoder {
                 typeCheck<T, IssuerDataMode>(tag)
                 byteArrayOf((value as IssuerDataMode).code)
             }
+            TlvValueType.FileDataMode -> {
+                typeCheck<T, FileDataMode>(tag)
+                byteArrayOf((value as FileDataMode).rawValue.toByte())
+            }
+            TlvValueType.FileSettings -> {
+                typeCheck<T, FileSettings>(tag)
+                (value as FileSettings).rawValue.toByteArray(2)
+            }
         }
     }
 
-    private fun determineByteArraySize(value: Int): Int {
+    fun determineByteArraySize(value: Int): Int {
         val mask = 0xFFFF0000.toInt()
         return if ((value and mask) != 0) 4 else 2
     }
 
-    private inline fun <reified T, reified ExpectedT> typeCheck(tag: TlvTag) {
+    inline fun <reified T, reified ExpectedT> typeCheck(tag: TlvTag) {
         if (T::class != ExpectedT::class) {
             Log.e(this::class.simpleName!!,
                     "Mapping error. Type for tag: $tag must be ${tag.valueType()}. It is ${T::class}")

@@ -73,6 +73,7 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
      * and the encryption was not established by TangemSdk.
      */
     class NeedEncryption : TangemSdkError(30006)
+    class FileNotFound : TangemSdkError(30007)
 
     //Personalization Errors
     class AlreadyPersonalized : TangemSdkError(40101)
