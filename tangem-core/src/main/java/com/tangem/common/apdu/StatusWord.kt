@@ -21,10 +21,12 @@ enum class StatusWord(val code: Int) {
     Pins23Changed(0x9006),
     Pins123Changed(0x9007),
 
-
     InsNotSupported(0x6D00),
     NeedEncryption(0x6982),
     NeedPause(0x9789),
+
+    FileNotFound(0x6A82),
+
     Unknown(0x0000);
 
     companion object {
@@ -44,6 +46,7 @@ fun StatusWord.toTangemSdkError(): TangemSdkError? {
         StatusWord.InvalidState -> TangemSdkError.InvalidState()
         StatusWord.InsNotSupported -> TangemSdkError.InsNotSupported()
         StatusWord.NeedEncryption -> TangemSdkError.NeedEncryption()
+        StatusWord.FileNotFound -> TangemSdkError.FileNotFound()
         StatusWord.Unknown -> TangemSdkError.UnknownStatus()
     }
 }

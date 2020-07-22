@@ -22,7 +22,10 @@ enum class Instruction(var code: Int) {
     OpenSession(0xFF),
     WriteUserData(0xE0),
     ReadUserData(0xE1),
-    Depersonalize(0xE3);
+    Depersonalize(0xE3),
+    WriteFileData(0xD0),
+    ReadFileData(0xD1),
+    ;
 
 
     companion object {
