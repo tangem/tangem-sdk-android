@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="CardSdkTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/card_sdk_accent</item>
+        <item name="colorPrimaryDark">@color/card_sdk_accent</item>
+        <item name="colorAccent">@color/card_sdk_accent</item>
+    </style>
+
+</resources>
