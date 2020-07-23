@@ -63,8 +63,9 @@ class WriteUserDataCommand(private val userData: ByteArray? = null, private val 
         builder.append(TlvTag.UserCounter, userCounter)
         builder.append(TlvTag.UserProtectedData, userProtectedData)
         builder.append(TlvTag.UserProtectedCounter, userProtectedCounter)
-        if (userProtectedCounter != null || userProtectedData != null)
-            builder.append(TlvTag.Pin2, environment.pin2)
+        if (userProtectedCounter != null || userProtectedData != null) {
+            builder.append(TlvTag.Pin2, environment.pin2?.value)
+        }
 
         return CommandApdu(Instruction.WriteUserData, builder.serialize())
     }
