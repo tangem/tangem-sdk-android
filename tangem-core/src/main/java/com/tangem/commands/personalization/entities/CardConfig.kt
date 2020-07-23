@@ -13,8 +13,7 @@ data class NdefRecord(
         URI, AAR, TEXT
     }
 
-    @delegate:Transient
-    val valueInBytes: ByteArray by lazy { value.toByteArray() }
+    fun valueInBytes(): ByteArray = value.toByteArray()
 }
 
 /**
