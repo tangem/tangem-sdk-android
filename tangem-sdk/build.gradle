@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 apply from: '../dependencies.gradle'
 apply from: '../upload.gradle'
 
-group = artifactGithubPackage
+group = isLocalMaven ? artifactPackage : artifactGithubPackage
 version artifactVersion
 
 android {
