@@ -1,6 +1,7 @@
 package com.tangem
 
 import com.tangem.commands.*
+import com.tangem.commands.file.*
 import com.tangem.commands.personalization.DepersonalizeCommand
 import com.tangem.commands.personalization.DepersonalizeResponse
 import com.tangem.commands.personalization.PersonalizeCommand
@@ -392,6 +393,52 @@ class TangemSdk(
                    callback: (result: CompletionResult<SetPinResponse>) -> Unit) {
         val command = ChangePinTask(PinType.Pin3, pin)
         startSessionWithRunnable(command, cardId, initialMessage, callback)
+    }
+
+    fun writeFileData(cardId: String? = null,
+                      issuerData: ByteArray,
+                      startingSignature: ByteArray,
+                      finalizingSignature: ByteArray,
+                      issuerDataCounter: Int? = null,
+                      initialMessage: Message? = null,
+                      callback: (result: CompletionResult<WriteFileDataResponse>) -> Unit) {
+        val command = WriteFileDataCommand(
+                issuerData,
+                startingSignature, finalizingSignature,
+                issuerDataCounter,
+                config.issuerPublicKey
+        )
+        startSessionWithRunnable(command, cardId, initialMessage, callback)
+    }
+
+    fun writeFileDataTask(cardId: String? = null,
+                          data: ByteArray,
+                          issuerKeys: KeyPair,
+                          initialMessage: Message? = null,
+                          callback: (result: CompletionResult<WriteFileDataResponse>) -> Unit) {
+        val command = WriteFileDataTask(data, issuerKeys)
+        startSessionWithRunnable(command, cardId, initialMessage, callback)
+    }
+
+    fun readFileData(cardId: String? = null, readPrivateFiles: Boolean = false,
+                     callback: (result: CompletionResult<ReadFileDataResponse>) -> Unit) {
+        startSessionWithRunnable(ReadFileDataCommand(0, readPrivateFiles), cardId, null, callback)
+    }
+
+    fun readFileDataTask(cardId: String? = null, readPrivateFiles: Boolean = false,
+                     callback: (result: CompletionResult<ReadFilesResponse>) -> Unit) {
+        startSessionWithRunnable(ReadFileDataTask( readPrivateFiles), cardId, null, callback)
+    }
+
+    fun deleteFile(cardId: String? = null, fileIndex: Int = 0,
+                         callback: (result: CompletionResult<DeleteFileResponse>) -> Unit) {
+        startSessionWithRunnable(DeleteFileCommand(fileIndex), cardId, null, callback)
+    }
+
+    fun changeFileSettings(cardId: String? = null, fileSettings: FileSettings, fileIndex: Int = 0,
+                   callback: (result: CompletionResult<ChangeFileSettingsResponse>) -> Unit) {
+        val command = ChangeFileSettingsCommand(fileSettings, fileIndex)
+        startSessionWithRunnable(command, cardId, null, callback)
     }
 
     /**

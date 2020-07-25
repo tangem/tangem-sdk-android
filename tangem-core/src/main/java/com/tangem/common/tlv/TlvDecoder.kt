@@ -4,6 +4,8 @@ import com.tangem.Log
 import com.tangem.TangemSdkError
 import com.tangem.commands.*
 import com.tangem.commands.common.IssuerDataMode
+import com.tangem.commands.file.FileDataMode
+import com.tangem.commands.file.FileSettings
 import com.tangem.common.extensions.toDate
 import com.tangem.common.extensions.toHexString
 import com.tangem.common.extensions.toInt
@@ -71,7 +73,7 @@ class TlvDecoder(val tlvList: List<Tlv>) {
                 typeCheck<T, String>(tag)
                 tlvValue.toUtf8() as T
             }
-            TlvValueType.Uint16, TlvValueType.Uint32 -> {
+            TlvValueType.Uint8, TlvValueType.Uint16, TlvValueType.Uint32 -> {
                 typeCheck<T, Int>(tag)
                 try {
                     tlvValue.toInt() as T
@@ -138,6 +140,24 @@ class TlvDecoder(val tlvList: List<Tlv>) {
                 typeCheck<T, IssuerDataMode>(tag)
                 try {
                     IssuerDataMode.byCode(tlvValue.toInt().toByte()) as T
+                } catch (exception: Exception) {
+                    logException(tag, tlvValue.toInt().toString(), exception)
+                    throw TangemSdkError.DecodingFailed()
+                }
+            }
+            TlvValueType.FileDataMode -> {
+                typeCheck<T, FileDataMode>(tag)
+                try {
+                    FileDataMode.byRawValue(tlvValue.toInt()) as T
+                } catch (exception: Exception) {
+                    logException(tag, tlvValue.toInt().toString(), exception)
+                    throw TangemSdkError.DecodingFailed()
+                }
+            }
+            TlvValueType.FileSettings -> {
+                typeCheck<T, FileSettings>(tag)
+                try {
+                    FileSettings.byRawValue(tlvValue.toInt()) as T
                 } catch (exception: Exception) {
                     logException(tag, tlvValue.toInt().toString(), exception)
                     throw TangemSdkError.DecodingFailed()
