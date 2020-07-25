@@ -11,6 +11,8 @@ fun Int.toByteArray(size: Int = Int.SIZE_BYTES): ByteArray {
         return byteArrayOf(
                 (this ushr 8).toByte(),
                 this.toByte())
+    } else if (size == 1) {
+        return byteArrayOf(this.toByte())
     }
     return byteArrayOf()
 }
