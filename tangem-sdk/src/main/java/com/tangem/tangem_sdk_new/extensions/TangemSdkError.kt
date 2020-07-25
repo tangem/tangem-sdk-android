@@ -20,6 +20,7 @@ fun TangemSdkError.localizedDescription(): Int {
         is TangemSdkError.InsNotSupported -> R.string.error_operation
         is TangemSdkError.InvalidParams -> R.string.error_operation
         is TangemSdkError.NeedEncryption -> R.string.error_operation
+        is TangemSdkError.FileNotFound -> R.string.error_operation
         is TangemSdkError.AlreadyPersonalized -> R.string.error_already_personalized
         is TangemSdkError.CannotBeDepersonalized -> R.string.error_cannot_be_depersonalized
         is TangemSdkError.Pin1Required -> R.string.error_operation
