@@ -34,6 +34,8 @@ interface ApduSerializable<T : CommandResponse> {
  */
 interface CommandResponse
 
+data class SimpleResponse(val cardId: String) : CommandResponse
+
 /**
  * Basic class for Tangem card commands
  */
