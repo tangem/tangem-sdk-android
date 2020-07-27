@@ -7,6 +7,7 @@ enum class TlvValueType {
     HexString,
     HexStringToHash,
     Utf8String,
+    Uint8,
     Uint16,
     Uint32,
     BoolValue,
@@ -17,7 +18,9 @@ enum class TlvValueType {
     SettingsMask,
     CardStatus,
     SigningMethod,
-    IssuerDataMode
+    IssuerDataMode,
+    FileDataMode,
+    FileSettings
 }
 
 /**
@@ -117,7 +120,12 @@ enum class TlvTag(val code: Int) {
     UserData(0x2A),
     UserProtectedData(0x2B),
     UserCounter(0x2C),
-    UserProtectedCounter(0x2D);
+    UserProtectedCounter(0x2D),
+
+    WriteFileMode(0x23),
+    FileIndex(0x26),
+    FileSettings(0x27)
+    ;
 
     /**
      * @return [TlvValueType] associated with a [TlvTag]
@@ -130,6 +138,7 @@ enum class TlvTag(val code: Int) {
             CurveId -> TlvValueType.EllipticCurve
             PauseBeforePin2, RemainingSignatures, SignedHashes, Health, TokenDecimal,
             Offset, Size -> TlvValueType.Uint16
+            FileIndex -> TlvValueType.Uint8
             MaxSignatures, UserCounter, UserProtectedCounter, IssuerDataCounter -> TlvValueType.Uint32
             IsActivated, TerminalIsLinked, CreateWalletAtPersonalize -> TlvValueType.BoolValue
             ManufactureDateTime -> TlvValueType.DateTime
@@ -138,6 +147,8 @@ enum class TlvTag(val code: Int) {
             Status -> TlvValueType.CardStatus
             SigningMethod -> TlvValueType.SigningMethod
             Mode -> TlvValueType.IssuerDataMode
+            WriteFileMode -> TlvValueType.FileDataMode
+            FileSettings -> TlvValueType.FileSettings
             else -> TlvValueType.ByteArray
         }
     }
