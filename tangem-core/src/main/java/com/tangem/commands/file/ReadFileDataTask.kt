@@ -2,17 +2,17 @@ package com.tangem.commands.file
 
 import com.tangem.CardSession
 import com.tangem.CardSessionRunnable
-import com.tangem.Log
 import com.tangem.TangemSdkError
 import com.tangem.commands.CommandResponse
 import com.tangem.common.CompletionResult
 
 class ReadFilesResponse(
-        val files: List<FileData>
+        val files: List<File>
 ) : CommandResponse
 
-data class FileData(
+data class File(
         val fileIndex: Int,
+        val fileSettings: FileSettings?,
         val fileData: ByteArray
 )
 
@@ -22,7 +22,7 @@ class ReadFileDataTask(
 
     override val requiresPin2 = readPrivateFiles
     private var fileIndex = 0
-    private val files = mutableListOf<FileData>()
+    private val files = mutableListOf<File>()
 
     override fun run(session: CardSession, callback: (result: CompletionResult<ReadFilesResponse>) -> Unit) {
         performReadFileDataCommand(session, callback)
@@ -34,15 +34,16 @@ class ReadFileDataTask(
             when (readResponse) {
                 is CompletionResult.Failure -> {
                     if (readResponse.error is TangemSdkError.FileNotFound) {
-                        Log.i("ReadFileDataTask", files.toString())
-                        Log.i("ReadFileDataTask", files.size.toString())
                         callback(CompletionResult.Success(ReadFilesResponse(files)))
                     } else {
                         callback(CompletionResult.Failure(readResponse.error))
                     }
                 }
                 is CompletionResult.Success -> {
-                    val newFile = FileData(readResponse.data.fileIndex, readResponse.data.fileData)
+                    val newFile = File(
+                            readResponse.data.fileIndex, readResponse.data.fileSettings,
+                            readResponse.data.fileData
+                    )
                     files.add(newFile)
                     fileIndex += 1
                     performReadFileDataCommand(session, callback)
