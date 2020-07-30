@@ -11,4 +11,6 @@
     <dimen name="progress_bar_state_width">185dp</dimen>
     <dimen name="progress_bar_state_inset">8dp</dimen>
     <dimen name="progress_bar_state_text_size">51sp</dimen>
+    <dimen name="progress_bar_stroke_width">2</dimen>
+
 </resources>
