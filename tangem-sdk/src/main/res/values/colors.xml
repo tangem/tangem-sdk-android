@@ -13,6 +13,7 @@
     <color name="tap_in_bg_color">#F2F2F7</color>
 
     <color name="progress_bar_color">#0029FF</color>
+    <color name="progress_bar_color_secondary">#3B0029FF</color>
     <color name="progress_bar_state_done_color">#0029FF</color>
     <color name="progress_bar_state_error_color">#C4291C</color>
     <color name="progress_bar_state_warning_color">#EFC313</color>
