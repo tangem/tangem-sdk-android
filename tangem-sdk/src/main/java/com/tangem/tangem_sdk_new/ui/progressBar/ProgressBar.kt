@@ -1,6 +1,7 @@
 package com.tangem.tangem_sdk_new.ui.progressBar
 
 import android.animation.TimeInterpolator
+import android.animation.TypeEvaluator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.Resources
@@ -21,6 +22,7 @@ class SdkProgressBar(context: Context, attrs: AttributeSet? = null) : View(conte
     companion object {
         private const val DEFAULT_MAX_VALUE = 100f
         private const val DEFAULT_START_ANGLE = 270f
+        private const val DEFAULT_ANIMATION_DURATION = 550L
     }
 
     var onProgressChangeListener: ((Float) -> Unit)? = null
@@ -171,7 +173,12 @@ class SdkProgressBar(context: Context, attrs: AttributeSet? = null) : View(conte
         paintRect.set(0 + highStroke / 2, 0 + highStroke / 2, min - highStroke / 2, min - highStroke / 2)
     }
 
-    fun setProgressWithAnimation(progress: Float, duration: Long? = null, interpolator: TimeInterpolator? = null, startDelay: Long? = null) {
+    fun setProgressWithAnimation(
+            progress: Float,
+            duration: Long? = DEFAULT_ANIMATION_DURATION,
+            interpolator: TimeInterpolator? = null,
+            startDelay: Long? = null
+    ) {
         progressAnimator?.cancel()
         val animator = ValueAnimator.ofFloat(this.progress, progress)
         progressAnimator = animator
@@ -188,6 +195,28 @@ class SdkProgressBar(context: Context, attrs: AttributeSet? = null) : View(conte
         animator.start()
     }
 
+    fun setProgressBarColorWithAnimation(color: Int) {
+        animateProgressBarColorChanges(color, progressBarColor, listener = ValueAnimator.AnimatorUpdateListener {
+            progressBarColor = it.animatedValue as Int
+        })
+    }
+
+    private fun animateProgressBarColorChanges(
+            toColorId: Int,
+            fromColorId: Int = -1,
+            duration: Long = DEFAULT_ANIMATION_DURATION,
+            listener: ValueAnimator.AnimatorUpdateListener
+    ) {
+        if (fromColorId == -1) return
+
+        ValueAnimator().apply {
+            setIntValues(fromColorId, toColorId)
+            setEvaluator(InnerArbEvaluator())
+            this.duration = duration
+            addUpdateListener(listener)
+        }.start()
+    }
+
     private fun Float.dpToPx(): Float = this * Resources.getSystem().displayMetrics.density
 
     private fun Float.pxToDp(): Float = this / Resources.getSystem().displayMetrics.density
@@ -195,4 +224,25 @@ class SdkProgressBar(context: Context, attrs: AttributeSet? = null) : View(conte
 
 enum class SweepState {
     INCREMENT, DECREMENT
+}
+
+
+class InnerArbEvaluator : TypeEvaluator<Int> {
+
+    override fun evaluate(fraction: Float, startValue: Int, endValue: Int): Int {
+        val startA = startValue shr 24 and 0xff
+        val startR = startValue shr 16 and 0xff
+        val startG = startValue shr 8 and 0xff
+        val startB = startValue and 0xff
+
+        val endA = endValue shr 24 and 0xff
+        val endR = endValue shr 16 and 0xff
+        val endG = endValue shr 8 and 0xff
+        val endB = endValue and 0xff
+
+        return ((startA + (fraction * (endA - startA)).toInt() shl 24)
+                or (startR + (fraction * (endR - startR)).toInt() shl 16)
+                or (startG + (fraction * (endG - startG)).toInt() shl 8)
+                or (startB + (fraction * (endB - startB)).toInt()))
+    }
 }
