@@ -1,0 +1,30 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:aapt="http://schemas.android.com/aapt"
+        android:drawable="@drawable/ic_exclamation">
+
+    <target android:name="bar">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                    android:duration="430"
+                    android:interpolator="@android:anim/accelerate_interpolator"
+                    android:propertyName="trimPathEnd"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+
+    <target android:name="dot">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                    android:duration="200"
+                    android:interpolator="@android:anim/overshoot_interpolator"
+                    android:propertyName="strokeWidth"
+                    android:startOffset="400"
+                    android:valueFrom="0"
+                    android:valueTo="11"
+                    android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+
+</animated-vector>
