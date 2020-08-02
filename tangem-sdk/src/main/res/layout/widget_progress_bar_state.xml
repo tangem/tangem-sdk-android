@@ -20,7 +20,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:pb_color="@color/progress_bar_color"
             app:pb_round_border="true"
-            app:pb_secondary_color="@color/progress_bar_color_secondary"
+            app:pb_secondary_color="@color/progress_bar_secondary_color"
             app:pb_secondary_thickness="6dp"
             app:pb_thickness="6dp" />
 
@@ -36,7 +36,7 @@
             app:srcCompat="@drawable/ic_progress_bar_state_success_anim" />
 
     <ImageView
-            android:id="@+id/imvError"
+            android:id="@+id/imvExclamation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone"
@@ -44,18 +44,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_progress_bar_state_error" />
-
-    <ImageView
-            android:id="@+id/imvWarning"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_progress_bar_state_warning" />
+            app:srcCompat="@drawable/ic_exclamation_anim" />
 
     <TextView
             android:id="@+id/tvProgressValue"

@@ -1,0 +1,20 @@
+<vector
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:name="vector"
+        android:width="16dp"
+        android:height="65dp"
+        android:viewportWidth="16"
+        android:viewportHeight="65">
+    <path
+            android:name="bar"
+            android:pathData="M 8 5.1 L 8 40.3"
+            android:strokeColor="@color/progress_bar_color"
+            android:strokeWidth="8.3"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"/>
+    <path
+            android:name="dot"
+            android:pathData="M 8 57 L 8 57"
+            android:strokeColor="@color/progress_bar_color"
+            android:strokeLineCap="round"/>
+</vector>

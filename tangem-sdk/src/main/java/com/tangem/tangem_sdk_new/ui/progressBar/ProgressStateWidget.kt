@@ -1,28 +1,25 @@
 package com.tangem.tangem_sdk_new.ui.progressBar
 
-import android.content.Context
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.transition.AutoTransition
 import androidx.transition.Transition
 import androidx.transition.TransitionManager
-import com.tangem.Log
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
-import kotlin.random.Random
 
 /**
 [REDACTED_AUTHOR]
  */
-class ProgressbarStateWidget(
-        private val context: Context,
-        private val mainView: ViewGroup
-) {
+interface State {
+    fun apply(state: SessionViewDelegateState)
+}
 
-    private var currentState: SessionViewDelegateState? = null
+class ProgressbarStateWidget(private val mainView: ViewGroup) {
 
     init {
         NoneState(mainView)
@@ -35,21 +32,12 @@ class ProgressbarStateWidget(
             is SessionViewDelegateState.Success -> SuccessState(mainView)
             is SessionViewDelegateState.Error -> ErrorState(mainView)
             is SessionViewDelegateState.PinRequested -> WarningState(mainView)
-//            is SessionViewDelegateState.Delay -> ErrorState(mainView)
-//            is SessionViewDelegateState.PinChangeRequested -> ErrorState(mainView)
-//            is SessionViewDelegateState.WrongCard -> ErrorState(mainView)
-//            is SessionViewDelegateState.TagLost -> ErrorState(mainView)
-//            is SessionViewDelegateState.TagConnected -> ErrorState(mainView)
+            is SessionViewDelegateState.TagLost -> NoneState(mainView)
             else -> NoneState(mainView)
         }
-        viewState.apply(currentState ?: state, state)
-        currentState = state
+        viewState.apply(state)
     }
 
-}
-
-interface State {
-    fun apply(prevState: SessionViewDelegateState, state: SessionViewDelegateState)
 }
 
 abstract class BaseState(protected val mainView: ViewGroup) : State {
@@ -59,26 +47,38 @@ abstract class BaseState(protected val mainView: ViewGroup) : State {
     protected val tvProgressValue: TextView = mainView.findViewById(R.id.tvProgressValue)
 
     protected val doneView: ImageView = mainView.findViewById(R.id.imvSuccess)
-    protected val errorView: ImageView = mainView.findViewById(R.id.imvError)
-    protected val warningView: ImageView = mainView.findViewById(R.id.imvWarning)
+    protected val exclamationView: ImageView = mainView.findViewById(R.id.imvExclamation)
 
 
     init {
         hide(tvProgressValue)
         hide(progressBar)
         hide(doneView)
-        hide(errorView)
-        hide(warningView)
+        hide(exclamationView)
     }
 
     protected fun setMaxProgress() {
-        setProgress(100f)
+        setProgress(progressBar.progressMax)
     }
 
     protected fun setProgress(progress: Float) {
-        progressBar.isIndeterminate = false
-        progressBar.setProgressWithAnimation(progress, 300)
+        if (progressBar.isIndeterminate) progressBar.isIndeterminate = false
+
+        progressBar.setProgressWithAnimation(progress)
         tvProgressValue.text = progress.toInt().toString()
+    }
+
+    protected fun changeProgressColor(color: Int, withAnimation: Boolean = true) {
+        val parsedColor = ContextCompat.getColor(progressBar.context, color)
+        if (withAnimation) {
+            progressBar.setProgressBarColorWithAnimation(parsedColor)
+        } else {
+            progressBar.progressBarColor = parsedColor
+        }
+    }
+
+    protected fun changeExclamationColor(color: Int) {
+        exclamationView.drawable.setTint(ContextCompat.getColor(progressBar.context, color))
     }
 
     protected fun show(view: View) {
@@ -94,92 +94,99 @@ abstract class BaseState(protected val mainView: ViewGroup) : State {
     protected fun beginDelayedTransition(transition: Transition = AutoTransition()) {
         TransitionManager.beginDelayedTransition(mainView, transition)
     }
+
+    protected fun animateVectorDrawable(view: ImageView) {
+        val drawable = view.drawable as? AnimatedVectorDrawable ?: return
+
+        drawable.start()
+    }
 }
 
 class NoneState(mainView: ViewGroup
 ) : BaseState(mainView) {
-    override fun apply(prevState: SessionViewDelegateState, state: SessionViewDelegateState) {
-        beginDelayedTransition()
+    override fun apply(state: SessionViewDelegateState) {
         hide(progressBar)
         hide(tvProgressValue)
         hide(doneView)
-        hide(errorView)
-        hide(warningView)
+        hide(exclamationView)
+
+        changeProgressColor(R.color.progress_bar_secondary_color, false)
+        setProgress(0f)
     }
 }
 
 class SuccessState(mainView: ViewGroup) : BaseState(mainView) {
-    override fun apply(prevState: SessionViewDelegateState, state: SessionViewDelegateState) {
+    override fun apply(state: SessionViewDelegateState) {
         hide(tvProgressValue)
         hide(progressBar)
-        hide(errorView)
-        hide(warningView)
+        hide(exclamationView)
 
         show(progressBar)
+        changeProgressColor(R.color.progress_bar_state_success_color)
         setMaxProgress()
         show(doneView)
-        val drawable = doneView.drawable as? AnimatedVectorDrawable ?: return
-        drawable.start()
+        animateVectorDrawable(doneView)
     }
 }
 
 
 class ErrorState(mainView: ViewGroup) : BaseState(mainView) {
-    override fun apply(prevState: SessionViewDelegateState, state: SessionViewDelegateState) {
+    override fun apply(state: SessionViewDelegateState) {
         hide(tvProgressValue)
-        hide(warningView)
         hide(doneView)
 
+        val color = R.color.progress_bar_state_error_color
         show(progressBar)
+        changeProgressColor(color)
         setMaxProgress()
-        beginDelayedTransition()
-        show(errorView)
+        changeExclamationColor(color)
+        show(exclamationView)
+        animateVectorDrawable(exclamationView)
     }
 }
 
 class WarningState(mainView: ViewGroup) : BaseState(mainView) {
-    override fun apply(prevState: SessionViewDelegateState, state: SessionViewDelegateState) {
+    override fun apply(state: SessionViewDelegateState) {
         hide(tvProgressValue)
-        hide(errorView)
         hide(doneView)
 
+        val color = R.color.progress_bar_state_warning_color
         show(progressBar)
+        changeProgressColor(color)
         setMaxProgress()
-        beginDelayedTransition()
-        show(warningView)
+        changeExclamationColor(color)
+        show(exclamationView)
+        animateVectorDrawable(exclamationView)
     }
 }
 
 class IndeterminateProgressState(mainView: ViewGroup) : BaseState(mainView) {
-    override fun apply(prevState: SessionViewDelegateState, state: SessionViewDelegateState) {
+    override fun apply(state: SessionViewDelegateState) {
         hide(tvProgressValue)
         hide(doneView)
-        hide(errorView)
-        hide(warningView)
+        hide(exclamationView)
 
-        beginDelayedTransition()
+        changeProgressColor(R.color.progress_bar_color)
         show(progressBar)
         progressBar.isIndeterminate = true
     }
 }
 
 class DelayState(mainView: ViewGroup) : BaseState(mainView) {
-    override fun apply(prevState: SessionViewDelegateState, state: SessionViewDelegateState) {
+    override fun apply(state: SessionViewDelegateState) {
         val delay = state as? SessionViewDelegateState.SecurityDelay ?: return
 
         hide(doneView)
-        hide(errorView)
-        hide(warningView)
+        hide(exclamationView)
 
         show(progressBar)
-        beginDelayedTransition()
         show(tvProgressValue)
         progressBar.progressMax = delay.totalDurationSeconds.toFloat()
-        setProgress((delay.ms / 1000).toFloat())
+        setProgress(calculateProgress(delay))
+        changeProgressColor(R.color.progress_bar_color)
     }
 
-    private fun calculateProgress(currentMs: Int, totalDelaySeconds: Int): Int {
-        Log.i(tag, "currentMs: $currentMs, totalDelaySeconds: $totalDelaySeconds")
-        return Random.nextInt(101)
+    private fun calculateProgress(delay: SessionViewDelegateState.SecurityDelay): Float{
+        return delay.ms / 1000f
     }
 }
