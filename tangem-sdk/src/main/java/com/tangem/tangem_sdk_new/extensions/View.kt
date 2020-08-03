@@ -16,5 +16,7 @@ internal fun View.show(show: Boolean) {
     } else {
         this.visibility = View.GONE
     }
-
 }
+
+fun View.dpToPx(dp: Float): Float = context.dpToPx(dp)
+fun View.pxToDp(px: Float): Float = context.pxToDp(px)
