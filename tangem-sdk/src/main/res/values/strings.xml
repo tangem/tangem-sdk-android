@@ -1,7 +1,9 @@
 <resources>
     <string name="app_name">Tangem Sdk</string>
     <string name="general_ok">OK</string>
-    <string name="dialog_cancel">Cancel</string>
+    <string name="general_cancel">Cancel</string>
+    <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</string>
+    <string name="lorem_ipsum_half">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</string>
     <string name="dialog_nfc_enable_title">Enable NFC?</string>
     <string name="dialog_nfc_enable_text">This app is useless when NFC is disabled. Reader mode depends on it. Hit OK to go to Settings, where you can enable NFC.</string>
     <string name="dialog_security_delay">Security delay</string>
