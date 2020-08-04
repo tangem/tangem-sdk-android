@@ -9,7 +9,7 @@
         android:id="@+id/flBackground"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@color/tap_in_bg_color"
+        android:background="@color/card_sdk_bg_color"
         app:layout_constraintBottom_toTopOf="@+id/llButtonsContainer"
         app:layout_constraintTop_toTopOf="parent" />
 
