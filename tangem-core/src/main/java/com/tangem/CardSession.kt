@@ -134,7 +134,7 @@ class CardSession(
 
 
         if (environment.pin1 == null) {
-            viewDelegate.onSessionStarted(cardId)
+            viewDelegate.onSessionStarted(cardId, initialMessage)
             viewDelegate.onPinRequested(PinType.Pin1) {
                 environment.pin1 = PinCode(it)
                 start(callback)
@@ -143,7 +143,7 @@ class CardSession(
         }
 
         if (pin2Required && environment.pin2 == null) {
-            viewDelegate.onSessionStarted(cardId)
+            viewDelegate.onSessionStarted(cardId, initialMessage)
             viewDelegate.onPinRequested(PinType.Pin2) {
                 environment.pin2 = PinCode(it)
                 start(callback)
@@ -152,7 +152,7 @@ class CardSession(
         }
 
         state = CardSessionState.Active
-        viewDelegate.onSessionStarted(cardId)
+        viewDelegate.onSessionStarted(cardId, initialMessage)
 
         scope.launch {
             reader.tag
