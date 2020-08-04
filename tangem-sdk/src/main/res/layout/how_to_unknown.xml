@@ -5,7 +5,7 @@
     android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/tap_in_bg_color">
+    android:background="@color/card_sdk_bg_color">
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"
