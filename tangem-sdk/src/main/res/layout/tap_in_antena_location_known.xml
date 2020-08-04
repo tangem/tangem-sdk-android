@@ -8,7 +8,7 @@
         android:id="@+id/flBackground"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@color/tap_in_bg_color"
+        android:background="@color/card_sdk_bg_color"
         app:layout_constraintBottom_toTopOf="@+id/llButtonsContainer"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -23,7 +23,7 @@
         app:srcCompat="@drawable/hand_card_horizontal_vector" />
 
     <ImageView
-        android:id="@+id/imageView3"
+        android:id="@+id/imvPhone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="28dp"
