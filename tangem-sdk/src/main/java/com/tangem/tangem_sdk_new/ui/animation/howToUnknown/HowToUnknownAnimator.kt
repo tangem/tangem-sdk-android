@@ -12,6 +12,7 @@ import androidx.core.animation.doOnStart
 import com.skyfishjy.library.RippleBackground
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.extensions.dpToPx
+import com.tangem.tangem_sdk_new.extensions.vibrate
 import com.tangem.tangem_sdk_new.postUI
 import com.tangem.tangem_sdk_new.ui.progressBar.StateWidget
 
@@ -51,11 +52,17 @@ class HowToUnknownAnimator(
         list.add(getSlideLeftAnimation())
         animatorSet.playSequentially(list)
         animatorSet.addListener(
+                onStart = { handWithCard.alpha = 1f },
                 onEnd = {
-                    if (currentState == FindNfcState.FIND_ANTENNA)
+                    if (currentState == FindNfcState.FIND_ANTENNA) {
                         postUI(100) { apply(FindNfcState.FIND_ANTENNA) }
+                    }
                 },
-                onCancel = { setText(R.string.how_to_unknown_empty) }
+                onCancel = {
+                    setText(R.string.how_to_unknown_empty)
+                    ObjectAnimator.ofFloat(handWithCard, View.ALPHA, 1f, 0.0f).apply { duration = 1000 }.start()
+                    mainView.context.vibrate(longArrayOf(0, 100, 30, 350))
+                }
         )
     }
 
@@ -73,10 +80,10 @@ class HowToUnknownAnimator(
     }
 
     private fun getSlideDownAnimation(): Animator {
-        val yToBottom = ObjectAnimator.ofFloat(handWithCard, View.TRANSLATION_Y, dpToPx(-25f), dpToPx(145f))
-        yToBottom.duration = 7000
-        yToBottom.doOnStart { setText(R.string.how_to_unknown_move_card) }
-        return yToBottom
+        return ObjectAnimator.ofFloat(handWithCard, View.TRANSLATION_Y, dpToPx(-25f), dpToPx(145f)).apply {
+            duration = 10500
+            doOnStart { setText(R.string.how_to_unknown_move_card) }
+        }
     }
 
     private fun getSlideLeftAnimation(): Animator {
@@ -106,7 +113,6 @@ class HowToUnknownAnimator(
             }
             FindNfcState.ANTENNA_FOUND -> {
                 animatorSet.cancel()
-                rippleView.translationY = handWithCard.translationY - dpToPx(60f)
                 rippleView.startRippleAnimation()
                 setText(R.string.how_to_unknown_detected)
             }
