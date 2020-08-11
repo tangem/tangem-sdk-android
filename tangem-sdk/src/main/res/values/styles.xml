@@ -14,4 +14,10 @@
     <style name="SdkTextView.Medium">
         <item name="fontFamily">sans-serif-medium</item>
     </style>
+
+    <style name="SdkBottomSheetDialogStyle" parent="Theme.MaterialComponents.Light.BottomSheetDialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+    </style>
 </resources>
