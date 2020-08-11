@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rlTouchCard"
     android:layout_width="400dp"
-    android:layout_height="250dp"
+    android:layout_height="@dimen/bottom_sheet_top_container_height"
+    android:paddingTop="20dp"
+    android:clipToPadding="false"
     android:gravity="center_vertical|center_horizontal">
 
     <LinearLayout
@@ -17,11 +20,11 @@
             android:id="@+id/imSmartphone"
             android:layout_width="75dp"
             android:layout_height="150dp"
-            app:srcCompat="@drawable/smartphone" />
+            app:srcCompat="@drawable/phone" />
 
     </LinearLayout>
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <LinearLayout
         android:id="@+id/llNfc"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -42,29 +45,30 @@
             app:rb_strokeWidth="8dp"
             app:rb_type="strokeRipple" />
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </LinearLayout>
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <LinearLayout
         android:id="@+id/llHand"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="16dp"
+        android:clipToPadding="false"
         android:elevation="0dp"
         android:gravity="center_vertical"
         android:orientation="vertical">
 
         <ImageView
             android:id="@+id/ivHandCardHorizontal"
-            android:layout_width="190dp"
+            android:layout_width="233dp"
             android:layout_height="wrap_content"
-            app:srcCompat="@drawable/hand_card_horizontal" />
+            app:srcCompat="@drawable/hand_full_card_horizontal" />
 
         <ImageView
             android:id="@+id/ivHandCardVertical"
-            android:layout_width="190dp"
+            android:layout_width="233dp"
             android:layout_height="wrap_content"
-            app:srcCompat="@drawable/hand_card_vertical" />
+            app:srcCompat="@drawable/hand_full_card_vertical" />
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </LinearLayout>
 
 </RelativeLayout>
