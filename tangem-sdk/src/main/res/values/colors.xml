@@ -18,4 +18,6 @@
     <color name="progress_bar_state_success_color">#0029FF</color>
     <color name="progress_bar_state_error_color">#C4291C</color>
     <color name="progress_bar_state_warning_color">#EFC313</color>
+    <color name="card_sdk_text_error_color">#C4291C</color>
+
 </resources>

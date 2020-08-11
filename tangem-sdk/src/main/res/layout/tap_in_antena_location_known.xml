@@ -20,7 +20,7 @@
         android:translationX="-30dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/hand_card_horizontal_vector" />
+        app:srcCompat="@drawable/hand_full_card_horizontal" />
 
     <ImageView
         android:id="@+id/imvPhone"

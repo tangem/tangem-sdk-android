@@ -1,4 +1,4 @@
-package com.tangem.tangem_sdk_new.ui.animation.howToUnknown
+package com.tangem.tangem_sdk_new.ui.widget.howTo
 
 import android.animation.Animator
 import android.animation.AnimatorSet
@@ -14,7 +14,7 @@ import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.extensions.dpToPx
 import com.tangem.tangem_sdk_new.extensions.vibrate
 import com.tangem.tangem_sdk_new.postUI
-import com.tangem.tangem_sdk_new.ui.progressBar.StateWidget
+import com.tangem.tangem_sdk_new.ui.widget.progressBar.StateWidget
 
 
 /**
@@ -24,8 +24,8 @@ enum class FindNfcState {
     FIND_ANTENNA, ANTENNA_FOUND, CANCEL
 }
 
-class HowToUnknownAnimator(
-        private val mainView: View
+class HowToUnknownWidget(
+    private val mainView: View
 ) : StateWidget<FindNfcState> {
 
     private val handWithCard: View = mainView.findViewById(R.id.imvHandWithCard)
@@ -40,6 +40,8 @@ class HowToUnknownAnimator(
         initHandAnimators()
     }
 
+    override fun getView(): View = mainView
+
     private fun initTextChangesAnimation() {
         tvSwitcher.setInAnimation(mainView.context, android.R.anim.slide_in_left)
         tvSwitcher.setOutAnimation(mainView.context, android.R.anim.slide_out_right)
@@ -52,17 +54,17 @@ class HowToUnknownAnimator(
         list.add(getSlideLeftAnimation())
         animatorSet.playSequentially(list)
         animatorSet.addListener(
-                onStart = { handWithCard.alpha = 1f },
-                onEnd = {
-                    if (currentState == FindNfcState.FIND_ANTENNA) {
-                        postUI(100) { apply(FindNfcState.FIND_ANTENNA) }
-                    }
-                },
-                onCancel = {
-                    setText(R.string.how_to_unknown_empty)
-                    ObjectAnimator.ofFloat(handWithCard, View.ALPHA, 1f, 0.0f).apply { duration = 1000 }.start()
-                    mainView.context.vibrate(longArrayOf(0, 100, 30, 350))
+            onStart = { handWithCard.alpha = 1f },
+            onEnd = {
+                if (currentState == FindNfcState.FIND_ANTENNA) {
+                    postUI(100) { apply(FindNfcState.FIND_ANTENNA) }
                 }
+            },
+            onCancel = {
+                setText(R.string.how_to_unknown_empty)
+                ObjectAnimator.ofFloat(handWithCard, View.ALPHA, 1f, 0.0f).apply { duration = 1000 }.start()
+                mainView.context.vibrate(longArrayOf(0, 100, 30, 350))
+            }
         )
     }
 

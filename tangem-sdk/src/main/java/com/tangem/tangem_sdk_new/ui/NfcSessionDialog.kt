@@ -1,27 +1,61 @@
 package com.tangem.tangem_sdk_new.ui
 
-import android.animation.ObjectAnimator
 import android.app.Activity
 import android.view.HapticFeedbackConstants
-import android.view.KeyEvent
 import android.view.View
-import android.view.animation.DecelerateInterpolator
-import android.view.inputmethod.InputMethodManager
-import android.widget.TextView
+import android.view.ViewGroup
+import androidx.transition.AutoTransition
+import androidx.transition.TransitionManager
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.tangem.TangemError
-import com.tangem.TangemSdkError
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
-import com.tangem.tangem_sdk_new.extensions.localizedDescription
 import com.tangem.tangem_sdk_new.extensions.show
 import com.tangem.tangem_sdk_new.postUI
-import kotlinx.android.synthetic.main.layout_touch_card.*
-import kotlinx.android.synthetic.main.nfc_bottom_sheet.*
+import com.tangem.tangem_sdk_new.ui.widget.*
+import com.tangem.tangem_sdk_new.ui.widget.progressBar.ProgressbarStateWidget
+import com.tangem.tangem_sdk_new.ui.widget.progressBar.StateWidget
+import kotlinx.android.synthetic.main.bottom_sheet_layout.*
+import kotlinx.android.synthetic.main.touch_card_layout.*
+import ru.gbixahue.eu4d.core.log.Log
 
-class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
+class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.style.SdkBottomSheetDialogStyle) {
+
+    private lateinit var mainContentView: View
+
+    private lateinit var headerWidget: HeaderWidget
+    private lateinit var touchCardWidget: TouchCardWidget
+    private lateinit var progressStateWidget: ProgressbarStateWidget
+    private lateinit var pinCodeRequestWidget: PinCodeRequestWidget
+    private lateinit var pinCodeSetChangeWidget: PinCodeModificationWidget
+    private lateinit var messageWidget: MessageWidget
+
+    private val stateWidgets = mutableListOf<StateWidget<*>>()
 
     private var currentState: SessionViewDelegateState? = null
+
+    init {
+        val dialogView = activity.layoutInflater.inflate(R.layout.bottom_sheet_layout, null)
+        setContentView(dialogView)
+    }
+
+    override fun setContentView(view: View) {
+        super.setContentView(view)
+
+        mainContentView = view
+        headerWidget = HeaderWidget(view.findViewById(R.id.llHeader))
+        touchCardWidget = TouchCardWidget(view.findViewById(R.id.rlTouchCard))
+        progressStateWidget = ProgressbarStateWidget(view.findViewById(R.id.clProgress))
+        pinCodeRequestWidget = PinCodeRequestWidget(view.findViewById(R.id.csPinCode))
+        pinCodeSetChangeWidget = PinCodeModificationWidget(view.findViewById(R.id.llChangePin), 0)
+        messageWidget = MessageWidget(view.findViewById(R.id.llMessage))
+
+        stateWidgets.add(touchCardWidget)
+        stateWidgets.add(progressStateWidget)
+        stateWidgets.add(pinCodeRequestWidget)
+        stateWidgets.add(pinCodeSetChangeWidget)
+        stateWidgets.add(messageWidget)
+    }
 
     fun show(state: SessionViewDelegateState) {
         if (!this.isShowing) {
@@ -35,239 +69,145 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
             is SessionViewDelegateState.Delay -> onDelay(state)
             is SessionViewDelegateState.PinRequested -> onPinRequested(state)
             is SessionViewDelegateState.PinChangeRequested -> onPinChangeRequested(state)
-            is SessionViewDelegateState.TagLost -> onTagLost()
-            is SessionViewDelegateState.TagConnected -> onTagConnected()
-            is SessionViewDelegateState.WrongCard -> onWrongCard()
+            is SessionViewDelegateState.TagLost -> onTagLost(state)
+            is SessionViewDelegateState.TagConnected -> onTagConnected(state)
+            is SessionViewDelegateState.WrongCard -> onWrongCard(state)
+        }
+        if (currentState is SessionViewDelegateState.PinChangeRequested) {
+            behavior.state = BottomSheetBehavior.STATE_COLLAPSED
         }
         currentState = state
     }
 
     private fun onReady(state: SessionViewDelegateState.Ready) {
-        show(lTouchCard)
-        rippleBackgroundNfc?.startRippleAnimation()
-        val nfcDeviceAntenna = TouchCardAnimation(
-                activity, ivHandCardHorizontal, ivHandCardVertical, llHand, llNfc
-        )
-        nfcDeviceAntenna.init()
-        state.cardId?.let { cardId ->
-            tvCard?.show()
-            tvCardId?.show()
-            tvCardId?.text = cardId
-        }
+        Log.d(this, "onReady")
+        headerWidget.apply(state)
 
-        if (state.message?.header != null) {
-            tvTaskTitle?.text = state.message.header
-        } else {
-            tvTaskTitle?.text = activity.getText(R.string.dialog_ready_to_scan)
-        }
-        if (state.message?.body != null) {
-            tvTaskText?.text = state.message.body
-        } else {
-            tvTaskText?.text = activity.getText(R.string.dialog_scan_text)
-
-        }
+        showViews(touchCardWidget, messageWidget)
+        messageWidget.apply(state)
     }
 
     private fun onSuccess(state: SessionViewDelegateState.Success) {
-        show(flCompletion)
-        ivCompletion?.setImageDrawable(activity.getDrawable(R.drawable.ic_done_135dp))
-        state.message?.let { message ->
-            if (message.body != null) tvTaskText?.text = message.body
-            if (message.header != null) tvTaskTitle?.text = message.header
-        }
+        Log.d(this, "onSuccess")
+        showViews(progressStateWidget, messageWidget)
+        messageWidget.apply(state)
+        progressStateWidget.apply(state)
         performHapticFeedback()
-        postUI(300) { dismiss() }
+        postUI(1500) { dismiss() }
     }
 
     private fun onError(state: SessionViewDelegateState.Error) {
-        show(flError)
-        tvTaskTitle?.text = activity.getText(R.string.dialog_error)
-        val errorMessage = getErrorMessage(state.error)
-        tvTaskText?.text = activity.getString(
-                R.string.error_message,
-                state.error.code.toString(), errorMessage
-        )
+        Log.d(this, "onError")
+        showViews(progressStateWidget, messageWidget)
+        messageWidget.apply(state)
+        progressStateWidget.apply(state)
         performHapticFeedback()
-    }
-
-    private fun getErrorMessage(error: TangemError): String {
-       return if (error is TangemSdkError) {
-            activity.getString(error.localizedDescription())
-        } else {
-            error.customMessage
-        }
     }
 
     private fun onSecurityDelay(state: SessionViewDelegateState.SecurityDelay) {
-        show(flSecurityDelay)
-
-        tvRemainingTime?.text = state.ms.div(100).toString()
-        tvTaskTitle?.text = activity.getText(R.string.dialog_security_delay)
-        tvTaskText?.text =
-                activity.getText(R.string.dialog_security_delay_description)
-
+        Log.d(this, "onSecurityDelay")
+//        show(flSecurityDelay)
+        showViews(progressStateWidget, messageWidget)
+        messageWidget.apply(state)
+        progressStateWidget.apply(state)
         performHapticFeedback()
-
-        if (pbSecurityDelay?.max != state.totalDurationSeconds) {
-            pbSecurityDelay?.max = state.totalDurationSeconds
-        }
-        pbSecurityDelay?.progress = state.totalDurationSeconds - state.ms + 100
-
-        val animation = ObjectAnimator.ofInt(
-                pbSecurityDelay,
-                "progress",
-                state.totalDurationSeconds - state.ms,
-                state.totalDurationSeconds - state.ms + 100)
-        animation.duration = 500
-        animation.interpolator = DecelerateInterpolator()
-        animation.start()
     }
 
     private fun onDelay(state: SessionViewDelegateState.Delay) {
-        show(flSecurityDelay)
-        tvRemainingTime?.text = (((state.total - state.current) / state.step) + 1).toString()
-        tvTaskTitle?.text = "Operation in process"
-        tvTaskText?.text = "Please hold the card firmly until the operation is completed…"
+        Log.d(this, "onDelay")
+        showViews(progressStateWidget, messageWidget)
+        messageWidget.apply(state)
+        progressStateWidget.apply(state)
 
         performHapticFeedback()
-
-        if (pbSecurityDelay?.max != state.total) {
-            pbSecurityDelay?.max = state.total
-        }
-        pbSecurityDelay?.progress = state.current
-
-        val animation = ObjectAnimator.ofInt(
-                pbSecurityDelay,
-                "progress",
-                state.current,
-                state.current + state.step)
-        animation.duration = 300
-        animation.interpolator = DecelerateInterpolator()
-        animation.start()
     }
 
     private fun onPinRequested(state: SessionViewDelegateState.PinRequested) {
+        Log.d(this, "onPinRequested")
+        showViews(pinCodeRequestWidget)
 
-        tvTaskText?.visibility = View.INVISIBLE
-        tvTaskTitle?.visibility = View.INVISIBLE
-        show(flPin)
-        tilPin.hint = state.message
+        pinCodeRequestWidget.apply(state)
+        pinCodeRequestWidget.onSave = {
+            state.callback(it)
+            pinCodeRequestWidget.onSave = null
+            showViews(touchCardWidget, messageWidget)
+            messageWidget.apply(SessionViewDelegateState.Ready("", null))
+        }
 
         performHapticFeedback()
-        etPin?.setOnEditorActionListener { v: TextView?, actionId: Int, event: KeyEvent? ->
-            postUI {
-                if (actionId == KeyEvent.KEYCODE_ENDCALL) {
-                    if (v?.text.isNullOrBlank()) {
-                        etPin?.error = activity.getString(R.string.pin_enter_error_empty)
-                    } else {
-                        show(lTouchCard)
-                        tvTaskTitle?.show()
-                        tvTaskText?.show()
-                        val imm: InputMethodManager =
-                                context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-                        imm.hideSoftInputFromWindow(v?.windowToken, 0)
-
-                        v?.text.toString().let { pin ->
-                            v?.text = ""
-                            state.callback(pin)
-                        }
-                    }
-                }
-            }
-            true
-        }
     }
 
     private fun onPinChangeRequested(state: SessionViewDelegateState.PinChangeRequested) {
+        Log.d(this, "onPinChangeRequested")
+        showViews(pinCodeSetChangeWidget)
 
-        tvTaskText?.visibility = View.INVISIBLE
-        tvTaskTitle?.visibility = View.INVISIBLE
-        show(llChangePin)
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
 
-        tilChangePin.hint = state.message
-        tilChangePinConfirm.hint = activity.getString(R.string.pin_change_confirm)
+        headerWidget.onClose = {
+            behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            postUI(150) { dismiss() }
+        }
+        pinCodeSetChangeWidget.onSave = {
+            behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            pinCodeSetChangeWidget.onSave = null
+            showViews(touchCardWidget, messageWidget)
+            messageWidget.apply(SessionViewDelegateState.Ready("", null))
+            state.callback(it)
+        }
 
+        headerWidget.apply(state)
+        pinCodeSetChangeWidget.apply(state)
         performHapticFeedback()
-        etPin?.setOnEditorActionListener { v: TextView?, actionId: Int, event: KeyEvent? ->
-            postUI {
-                if (actionId == KeyEvent.KEYCODE_ENDCALL) {
-                    if (v?.text.isNullOrBlank()) {
-                        etChangePin?.error = activity.getString(R.string.pin_enter_error_empty)
-                    }
-                }
-            }
-            true
-        }
-
-        etChangePinConfirm?.setOnEditorActionListener { v: TextView?, actionId: Int, event: KeyEvent? ->
-            postUI {
-                if (actionId == KeyEvent.KEYCODE_ENDCALL) {
-                    if (v?.text.isNullOrBlank()) {
-                        etChangePin?.error = activity.getString(R.string.pin_enter_error_empty)
-                    } else if (v?.text.toString() != etChangePin?.text.toString()) {
-                        etChangePinConfirm?.error = activity.getString(R.string.pin_change_error)
-                        etChangePin?.error = activity.getString(R.string.pin_change_error)
-                    } else {
-                        show(lTouchCard)
-                        tvTaskTitle?.show()
-                        tvTaskText?.show()
-                        val imm: InputMethodManager =
-                                context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-                        imm.hideSoftInputFromWindow(v?.windowToken, 0)
-
-                        v?.text.toString().let { pin ->
-                            v?.text = ""
-                            etChangePin?.setText("")
-                            state.callback(pin)
-                        }
-                    }
-                }
-            }
-            true
-        }
     }
 
-    private fun onTagLost() {
+    private fun onTagLost(state: SessionViewDelegateState) {
+        Log.d(this, "onTagLost")
         if (currentState is SessionViewDelegateState.Success ||
-                currentState is SessionViewDelegateState.PinRequested) {
+            currentState is SessionViewDelegateState.PinRequested ||
+            currentState is SessionViewDelegateState.PinChangeRequested) {
             return
         }
-        show(lTouchCard)
-        tvTaskTitle?.text = activity.getText(R.string.dialog_ready_to_scan)
-        tvTaskText?.text = activity.getText(R.string.dialog_scan_text)
+        showViews(touchCardWidget, messageWidget)
+        messageWidget.apply(state)
     }
 
-    private fun onTagConnected() {
-        show(flReading)
+    private fun onTagConnected(state: SessionViewDelegateState) {
+        Log.d(this, "onTagConnected")
+        showViews(progressStateWidget, messageWidget)
+        progressStateWidget.apply(state)
     }
 
-    private fun onWrongCard() {
+    private fun onWrongCard(state: SessionViewDelegateState) {
+        Log.d(this, "onWrongCard")
         if (currentState !is SessionViewDelegateState.WrongCard) {
-            show(flError)
-            tvTaskTitle?.text = activity.getText(R.string.dialog_error)
-            tvTaskText?.text = activity.getString(
-                    R.string.error_message,
-                    "Wrong Card", activity.getString(R.string.error_wrong_card_number)
-            )
             performHapticFeedback()
-
+            showViews(progressStateWidget, messageWidget)
+            progressStateWidget.apply(state)
+            messageWidget.apply(state)
             postUI(2000) {
-                show(lTouchCard)
-                tvTaskTitle?.text = activity.getText(R.string.dialog_ready_to_scan)
-                tvTaskText?.text = activity.getText(R.string.dialog_scan_text)
+                showViews(touchCardWidget, messageWidget)
+                messageWidget.apply(SessionViewDelegateState.Ready("", null))
             }
-
         }
     }
 
-    private fun show(view: View) {
-        lTouchCard?.show(view.id == lTouchCard.id)
-        flSecurityDelay?.show(view.id == flSecurityDelay.id)
-        flReading?.show(view.id == flReading.id)
-        flError?.show(view.id == flError.id)
-        flCompletion?.show(view.id == flCompletion.id)
-        flPin?.show(view.id == flPin.id)
-        llChangePin?.show(view.id == llChangePin.id)
+    private fun showViews(vararg views: StateWidget<*>) {
+        val toHide = stateWidgets.filter { !views.contains(it) && it.getView().visibility != View.GONE }
+        val toShow = views.filter { it.getView().visibility != View.VISIBLE }
+
+        if (toHide.isNotEmpty() || toShow.isNotEmpty()) {
+            (mainContentView as? ViewGroup)?.let { TransitionManager.beginDelayedTransition(it, AutoTransition()) }
+        }
+        toHide.forEach { it.getView().show(false) }
+        views.forEach { it.getView().show(true) }
+
+        if (views.contains(touchCardWidget)) {
+            rippleBackgroundNfc?.startRippleAnimation()
+            val nfcDeviceAntenna = TouchCardAnimation(
+                activity, ivHandCardHorizontal, ivHandCardVertical, llHand, llNfc
+            )
+            nfcDeviceAntenna.init()
+        }
     }
 
     private fun performHapticFeedback() {
@@ -276,4 +216,5 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
             llHeader?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
         }
     }
+
 }
