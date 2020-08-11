@@ -13,7 +13,6 @@ import com.tangem.commands.verifycard.VerifyCardCommand
 import com.tangem.commands.verifycard.VerifyCardResponse
 import com.tangem.common.CardValuesStorage
 import com.tangem.common.CompletionResult
-import com.tangem.common.PinCode
 import com.tangem.common.TerminalKeysService
 import com.tangem.crypto.CryptoUtils
 import com.tangem.tasks.ChangePinTask
@@ -481,7 +480,7 @@ class TangemSdk(
     }
 
     companion object {
-        var pin1: PinCode? = null
-        val pin2: MutableMap<String, PinCode?> = mutableMapOf()
+//        var pin1: PinCode? = null
+//        val pin2: MutableMap<String, PinCode?> = mutableMapOf()
     }
 }
