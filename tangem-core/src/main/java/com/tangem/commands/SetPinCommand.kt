@@ -1,6 +1,7 @@
 package com.tangem.commands
 
 import com.tangem.SessionEnvironment
+import com.tangem.TangemError
 import com.tangem.TangemSdkError
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
@@ -54,6 +55,13 @@ class SetPinCommand(
         private var newPin2: ByteArray,
         private var newPin3: ByteArray? = null
 ) : Command<SetPinResponse>() {
+
+    override fun mapError(card: Card?, error: TangemError): TangemError {
+        if (error is TangemSdkError.InvalidParams) {
+            return TangemSdkError.Pin2OrCvcRequired()
+        }
+        return error
+    }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         val tlvBuilder = TlvBuilder()
