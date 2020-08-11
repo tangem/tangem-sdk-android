@@ -1,4 +1,4 @@
-package com.tangem.tangem_sdk_new.ui.progressBar
+package com.tangem.tangem_sdk_new.ui.widget.progressBar
 
 import android.animation.TimeInterpolator
 import android.animation.TypeEvaluator
@@ -174,10 +174,10 @@ class SdkProgressBar(context: Context, attrs: AttributeSet? = null) : View(conte
     }
 
     fun setProgressWithAnimation(
-            progress: Float,
-            duration: Long? = DEFAULT_ANIMATION_DURATION,
-            interpolator: TimeInterpolator? = null,
-            startDelay: Long? = null
+        progress: Float,
+        duration: Long? = DEFAULT_ANIMATION_DURATION,
+        interpolator: TimeInterpolator? = null,
+        startDelay: Long? = null
     ) {
         progressAnimator?.cancel()
         val animator = ValueAnimator.ofFloat(this.progress, progress)
@@ -202,10 +202,10 @@ class SdkProgressBar(context: Context, attrs: AttributeSet? = null) : View(conte
     }
 
     private fun animateProgressBarColorChanges(
-            toColorId: Int,
-            fromColorId: Int = -1,
-            duration: Long = DEFAULT_ANIMATION_DURATION,
-            listener: ValueAnimator.AnimatorUpdateListener
+        toColorId: Int,
+        fromColorId: Int = -1,
+        duration: Long = DEFAULT_ANIMATION_DURATION,
+        listener: ValueAnimator.AnimatorUpdateListener
     ) {
         if (fromColorId == -1) return
 
@@ -241,8 +241,8 @@ class InnerArbEvaluator : TypeEvaluator<Int> {
         val endB = endValue and 0xff
 
         return ((startA + (fraction * (endA - startA)).toInt() shl 24)
-                or (startR + (fraction * (endR - startR)).toInt() shl 16)
-                or (startG + (fraction * (endG - startG)).toInt() shl 8)
-                or (startB + (fraction * (endB - startB)).toInt()))
+            or (startR + (fraction * (endR - startR)).toInt() shl 16)
+            or (startG + (fraction * (endG - startG)).toInt() shl 8)
+            or (startB + (fraction * (endB - startB)).toInt()))
     }
 }

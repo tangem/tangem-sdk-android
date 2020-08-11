@@ -39,7 +39,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/imvPhone"
-        app:srcCompat="@drawable/hand_card_horizontal_vector" />
+        app:srcCompat="@drawable/hand_full_card_horizontal" />
 
     <ImageView
         android:id="@+id/imvPhone"
