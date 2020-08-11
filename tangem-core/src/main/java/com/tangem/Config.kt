@@ -45,6 +45,8 @@ class Config(
         var savePin1InStaticField: Boolean = true,
 
         var savePin2InStaticField: Boolean = false
+
+//        val useCardValuesStorage: Boolean = false
 ) {
         companion object {
                 const val DEFAULT_PIN_1 = "000000"
