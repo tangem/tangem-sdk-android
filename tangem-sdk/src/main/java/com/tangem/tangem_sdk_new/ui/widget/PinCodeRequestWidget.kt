@@ -8,8 +8,8 @@ import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.hideSoftKeyboard
 import com.tangem.tangem_sdk_new.extensions.showSoftKeyboard
+import com.tangem.tangem_sdk_new.postUI
 import com.tangem.tangem_sdk_new.ui.widget.progressBar.StateWidget
-import ru.gbixahue.eu4d.android.global.singleton.threadHandler.post
 
 /**
 [REDACTED_AUTHOR]
@@ -42,7 +42,7 @@ class PinCodeRequestWidget(
                         etPinCode.setText("")
                         etPinCode.hideSoftKeyboard()
                         mainView.requestFocus()
-                        post(250) { onSave?.invoke(pin) }
+                        postUI(250) { onSave?.invoke(pin) }
                     }
                 }
             }

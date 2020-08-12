@@ -17,7 +17,6 @@ import com.tangem.tangem_sdk_new.ui.widget.progressBar.ProgressbarStateWidget
 import com.tangem.tangem_sdk_new.ui.widget.progressBar.StateWidget
 import kotlinx.android.synthetic.main.bottom_sheet_layout.*
 import kotlinx.android.synthetic.main.touch_card_layout.*
-import ru.gbixahue.eu4d.core.log.Log
 
 class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.style.SdkBottomSheetDialogStyle) {
 
@@ -80,7 +79,6 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
     }
 
     private fun onReady(state: SessionViewDelegateState.Ready) {
-        Log.d(this, "onReady")
         headerWidget.apply(state)
 
         showViews(touchCardWidget, messageWidget)
@@ -88,7 +86,6 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
     }
 
     private fun onSuccess(state: SessionViewDelegateState.Success) {
-        Log.d(this, "onSuccess")
         showViews(progressStateWidget, messageWidget)
         messageWidget.apply(state)
         progressStateWidget.apply(state)
@@ -97,7 +94,6 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
     }
 
     private fun onError(state: SessionViewDelegateState.Error) {
-        Log.d(this, "onError")
         showViews(progressStateWidget, messageWidget)
         messageWidget.apply(state)
         progressStateWidget.apply(state)
@@ -105,8 +101,6 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
     }
 
     private fun onSecurityDelay(state: SessionViewDelegateState.SecurityDelay) {
-        Log.d(this, "onSecurityDelay")
-//        show(flSecurityDelay)
         showViews(progressStateWidget, messageWidget)
         messageWidget.apply(state)
         progressStateWidget.apply(state)
@@ -114,7 +108,6 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
     }
 
     private fun onDelay(state: SessionViewDelegateState.Delay) {
-        Log.d(this, "onDelay")
         showViews(progressStateWidget, messageWidget)
         messageWidget.apply(state)
         progressStateWidget.apply(state)
@@ -123,7 +116,6 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
     }
 
     private fun onPinRequested(state: SessionViewDelegateState.PinRequested) {
-        Log.d(this, "onPinRequested")
         showViews(pinCodeRequestWidget)
 
         pinCodeRequestWidget.apply(state)
@@ -138,7 +130,6 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
     }
 
     private fun onPinChangeRequested(state: SessionViewDelegateState.PinChangeRequested) {
-        Log.d(this, "onPinChangeRequested")
         showViews(pinCodeSetChangeWidget)
 
         behavior.state = BottomSheetBehavior.STATE_EXPANDED
@@ -161,7 +152,6 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
     }
 
     private fun onTagLost(state: SessionViewDelegateState) {
-        Log.d(this, "onTagLost")
         if (currentState is SessionViewDelegateState.Success ||
             currentState is SessionViewDelegateState.PinRequested ||
             currentState is SessionViewDelegateState.PinChangeRequested) {
@@ -172,13 +162,11 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
     }
 
     private fun onTagConnected(state: SessionViewDelegateState) {
-        Log.d(this, "onTagConnected")
         showViews(progressStateWidget, messageWidget)
         progressStateWidget.apply(state)
     }
 
     private fun onWrongCard(state: SessionViewDelegateState) {
-        Log.d(this, "onWrongCard")
         if (currentState !is SessionViewDelegateState.WrongCard) {
             performHapticFeedback()
             showViews(progressStateWidget, messageWidget)
