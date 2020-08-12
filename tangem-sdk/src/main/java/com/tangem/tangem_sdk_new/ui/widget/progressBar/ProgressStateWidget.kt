@@ -8,7 +8,6 @@ import androidx.core.content.ContextCompat
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.show
-import ru.gbixahue.eu4d.core.log.Log
 
 /**
 [REDACTED_AUTHOR]
