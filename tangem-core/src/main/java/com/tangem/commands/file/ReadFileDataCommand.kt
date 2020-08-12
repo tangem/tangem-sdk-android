@@ -21,6 +21,7 @@ class ReadFileDataResponse(
         val size: Int?,
         val fileData: ByteArray,
         val fileIndex: Int,
+        val fileSettings: FileSettings?,
         val fileDataSignature: ByteArray?,
         val fileDataCounter: Int?
 ) : CommandResponse
@@ -36,6 +37,7 @@ class ReadFileDataCommand(
     private val fileData = ByteArrayOutputStream()
     private var offset: Int = 0
     private var dataSize: Int = 0
+    private var fileSettings: FileSettings? = null
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.status == CardStatus.NotPersonalized) {
@@ -70,6 +72,7 @@ class ReadFileDataCommand(
                             return@transceive
                         }
                         dataSize = result.data.size
+                        fileSettings = result.data.fileSettings
                     }
                     fileData.write(result.data.fileData)
                     if (result.data.fileDataCounter == null) {
@@ -95,6 +98,7 @@ class ReadFileDataCommand(
                 dataSize,
                 fileData.toByteArray(),
                 data.fileIndex,
+                fileSettings,
                 data.fileDataSignature,
                 data.fileDataCounter
         )
@@ -123,6 +127,7 @@ class ReadFileDataCommand(
                 size = decoder.decodeOptional(TlvTag.Size),
                 fileData = decoder.decodeOptional(TlvTag.IssuerData) ?: byteArrayOf(),
                 fileIndex = decoder.decodeOptional(TlvTag.FileIndex) ?: 0,
+                fileSettings = decoder.decodeOptional(TlvTag.FileSettings),
                 fileDataSignature = decoder.decodeOptional(TlvTag.IssuerDataSignature),
                 fileDataCounter = decoder.decodeOptional(TlvTag.IssuerDataCounter)
         )
