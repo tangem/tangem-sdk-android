@@ -1,14 +1,10 @@
 package com.tangem.tangem_sdk_new
 
 import android.app.Activity
-import com.tangem.Message
-import com.tangem.SessionViewDelegate
-import com.tangem.TangemError
+import com.tangem.*
 import com.tangem.tangem_sdk_new.nfc.NfcReader
 import com.tangem.tangem_sdk_new.ui.NfcSessionDialog
 import com.tangem.tasks.PinType
-import ru.gbixahue.eu4d.android.log.TagLogger
-import ru.gbixahue.eu4d.core.log.Log
 
 /**
  * Default implementation of [SessionViewDelegate].
@@ -89,25 +85,21 @@ class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDel
         postUI { readingDialog?.show(SessionViewDelegateState.PinChangeRequested(message, callback)) }
     }
 
-//    private fun setLogger() {
-//        Log.setLogger(
-//            object : LoggerInterface {
-//                override fun i(logTag: String, message_layout: String) {
-//                    android.util.Log.i(logTag, message_layout)
-//                }
-//
-//                override fun e(logTag: String, message_layout: String) {
-//                    android.util.Log.e(logTag, message_layout)
-//                }
-//
-//                override fun v(logTag: String, message_layout: String) {
-//                    android.util.Log.v(logTag, message_layout)
-//                }
-//            }
-//        )
-//    }
-
     private fun setLogger() {
-        Log.setLogger(TagLogger("TangemSDK"))
+        Log.setLogger(
+            object : LoggerInterface {
+                override fun i(logTag: String, message: String) {
+                    android.util.Log.i(logTag, message)
+                }
+
+                override fun e(logTag: String, message: String) {
+                    android.util.Log.e(logTag, message)
+                }
+
+                override fun v(logTag: String, message: String) {
+                    android.util.Log.v(logTag, message)
+                }
+            }
+        )
     }
 }
