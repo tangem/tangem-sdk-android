@@ -1,5 +1,4 @@
 include ':tangem-demo'
-include ':updateui_test'
 include ':tangem-devkit'
 include ':tangem-sdk'
 include ':tangem-core'
