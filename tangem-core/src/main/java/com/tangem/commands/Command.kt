@@ -6,7 +6,6 @@ import com.tangem.common.PinCode
 import com.tangem.common.apdu.*
 import com.tangem.common.extensions.toInt
 import com.tangem.common.tlv.TlvTag
-import com.tangem.tasks.PinType
 
 
 interface ApduSerializable<T : CommandResponse> {
@@ -61,8 +60,8 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                 return
             }
         }
-        if (requiresPin2 && session.environment.pin2?.isDefault == true) {
-            handlePin2(session, callback)
+        if (session.environment.pin2 == null && requiresPin2) {
+            requestPin2(session, callback)
             return
         }
         transceiveInternal(session, callback)
@@ -77,12 +76,12 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                         val error = mapError(session.environment.card, result.error)
                         if (error is TangemSdkError.Pin1Required) {
                             session.environment.pin1 = null
-                            handlePin1(session, callback)
+                            requestPin1(session, callback)
                             return@transceiveApdu
                         }
                         if (error is TangemSdkError.Pin2OrCvcRequired) {
                             session.environment.pin2 = null
-                            handlePin2(session, callback)
+                            requestPin2(session, callback)
                             return@transceiveApdu
                         }
                         callback(CompletionResult.Failure(error))
@@ -190,7 +189,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
         return tlv?.find { it.tag == TlvTag.Pause }?.value?.toInt()
     }
 
-    private fun handlePin1(
+    private fun requestPin1(
             session: CardSession,
             callback: (result: CompletionResult<T>) -> Unit
     ) {
@@ -202,35 +201,8 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
         }
     }
 
-    private fun handlePin2(
-            session: CardSession,
-            callback: (result: CompletionResult<T>) -> Unit
-    ) {
-        val currentPin1 = session.environment.pin1?.value ?: run {
-            callback(CompletionResult.Failure(TangemSdkError.Pin1Required()))
-            return
-        }
-        val currentPin2 = session.environment.pin2?.value ?: run {
-            callback(CompletionResult.Failure(TangemSdkError.Pin2OrCvcRequired()))
-            return
-        }
-
-        val checkPinCommand = SetPinCommand(currentPin1, currentPin2)
-        checkPinCommand.run(session) { result ->
-            when (result) {
-                is CompletionResult.Failure -> {
-                    session.environment.pin2 = null
-                    getPin2FromDelegate(session, callback)
-                }
-                is CompletionResult.Success -> {
-                    transceiveInternal(session, callback)
-                }
-            }
-        }
-    }
-
-    private fun getPin2FromDelegate(session: CardSession,
-                                    callback: (result: CompletionResult<T>) -> Unit) {
+    private fun requestPin2(session: CardSession,
+                            callback: (result: CompletionResult<T>) -> Unit) {
         session.viewDelegate.onPinRequested(PinType.Pin2) { pin2 ->
             session.environment.pin2 = PinCode(pin2)
             transceive(session, callback)
