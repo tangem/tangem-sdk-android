@@ -27,19 +27,21 @@ internal class ScanTask : CardSessionRunnable<Card> {
             callback(CompletionResult.Failure(TangemSdkError.CardError()))
             return
         }
-        if (session.environment.pin1 != null && session.environment.pin2 != null) {
-            val checkPinCommand = SetPinCommand(session.environment.pin1!!.value, session.environment.pin2!!.value)
-            checkPinCommand.run(session) { result ->
-                when (result) {
-                    is CompletionResult.Failure -> {
-                        session.environment.pin2 = null
-                    }
-                }
-                runCheckWalletIfNeeded(card, session, callback)
-            }
-        } else {
+//        if (session.environment.pin1 != null && session.environment.pin2 != null) {
+//            val checkPinCommand = SetPinCommand(session.environment.pin1!!.value, session.environment.pin2!!.value)
+//            checkPinCommand.run(session) { result ->
+//                when (result) {
+//                    is CompletionResult.Failure -> {
+//                        if (result.error is TangemSdkError.Pin2OrCvcRequired) {
+//                            session.environment.pin2 = null
+//                        }
+//                    }
+//                }
+//                runCheckWalletIfNeeded(card, session, callback)
+//            }
+//        } else {
             runCheckWalletIfNeeded(card, session, callback)
-        }
+//        }
 
     }
 

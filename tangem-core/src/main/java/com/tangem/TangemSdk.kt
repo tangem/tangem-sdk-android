@@ -1,7 +1,6 @@
 package com.tangem
 
 import com.tangem.commands.*
-import com.tangem.commands.file.*
 import com.tangem.commands.personalization.DepersonalizeCommand
 import com.tangem.commands.personalization.DepersonalizeResponse
 import com.tangem.commands.personalization.PersonalizeCommand
@@ -13,12 +12,9 @@ import com.tangem.commands.verifycard.VerifyCardCommand
 import com.tangem.commands.verifycard.VerifyCardResponse
 import com.tangem.common.CardValuesStorage
 import com.tangem.common.CompletionResult
-import com.tangem.common.PinCode
 import com.tangem.common.TerminalKeysService
 import com.tangem.crypto.CryptoUtils
-import com.tangem.tasks.ChangePinTask
 import com.tangem.tasks.CreateWalletTask
-import com.tangem.tasks.PinType
 import com.tangem.tasks.ScanTask
 
 /**
@@ -375,7 +371,7 @@ class TangemSdk(
                    pin: ByteArray? = null,
                    initialMessage: Message? = null,
                    callback: (result: CompletionResult<SetPinResponse>) -> Unit) {
-        val command = ChangePinTask(PinType.Pin1, pin)
+        val command = SetPinCommand.setPin1(pin)
         startSessionWithRunnable(command, cardId, initialMessage, callback)
     }
 
@@ -383,7 +379,7 @@ class TangemSdk(
                    pin: ByteArray? = null,
                    initialMessage: Message? = null,
                    callback: (result: CompletionResult<SetPinResponse>) -> Unit) {
-        val command = ChangePinTask(PinType.Pin2, pin)
+        val command = SetPinCommand.setPin2(pin)
         startSessionWithRunnable(command, cardId, initialMessage, callback)
     }
 
@@ -391,54 +387,8 @@ class TangemSdk(
                    pin: ByteArray? = null,
                    initialMessage: Message? = null,
                    callback: (result: CompletionResult<SetPinResponse>) -> Unit) {
-        val command = ChangePinTask(PinType.Pin3, pin)
+        val command = SetPinCommand.setPin3(pin)
         startSessionWithRunnable(command, cardId, initialMessage, callback)
-    }
-
-    fun writeFileData(cardId: String? = null,
-                      issuerData: ByteArray,
-                      startingSignature: ByteArray,
-                      finalizingSignature: ByteArray,
-                      issuerDataCounter: Int? = null,
-                      initialMessage: Message? = null,
-                      callback: (result: CompletionResult<WriteFileDataResponse>) -> Unit) {
-        val command = WriteFileDataCommand(
-                issuerData,
-                startingSignature, finalizingSignature,
-                issuerDataCounter,
-                config.issuerPublicKey
-        )
-        startSessionWithRunnable(command, cardId, initialMessage, callback)
-    }
-
-    fun writeFileDataTask(cardId: String? = null,
-                          data: ByteArray,
-                          issuerKeys: KeyPair,
-                          initialMessage: Message? = null,
-                          callback: (result: CompletionResult<WriteFileDataResponse>) -> Unit) {
-        val command = WriteFileDataTask(data, issuerKeys)
-        startSessionWithRunnable(command, cardId, initialMessage, callback)
-    }
-
-    fun readFileData(cardId: String? = null, readPrivateFiles: Boolean = false,
-                     callback: (result: CompletionResult<ReadFileDataResponse>) -> Unit) {
-        startSessionWithRunnable(ReadFileDataCommand(0, readPrivateFiles), cardId, null, callback)
-    }
-
-    fun readFileDataTask(cardId: String? = null, readPrivateFiles: Boolean = false,
-                     callback: (result: CompletionResult<ReadFilesResponse>) -> Unit) {
-        startSessionWithRunnable(ReadFileDataTask( readPrivateFiles), cardId, null, callback)
-    }
-
-    fun deleteFile(cardId: String? = null, fileIndex: Int = 0,
-                         callback: (result: CompletionResult<DeleteFileResponse>) -> Unit) {
-        startSessionWithRunnable(DeleteFileCommand(fileIndex), cardId, null, callback)
-    }
-
-    fun changeFileSettings(cardId: String? = null, fileSettings: FileSettings, fileIndex: Int = 0,
-                   callback: (result: CompletionResult<ChangeFileSettingsResponse>) -> Unit) {
-        val command = ChangeFileSettingsCommand(fileSettings, fileIndex)
-        startSessionWithRunnable(command, cardId, null, callback)
     }
 
     /**
@@ -481,7 +431,7 @@ class TangemSdk(
     }
 
     companion object {
-        var pin1: PinCode? = null
-        val pin2: MutableMap<String, PinCode?> = mutableMapOf()
+//        var pin1: PinCode? = null
+//        val pin2: MutableMap<String, PinCode?> = mutableMapOf()
     }
 }
