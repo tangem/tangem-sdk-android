@@ -38,8 +38,7 @@
                 android:id="@+id/etPinCode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Enter the pin code"
-                android:text="1234" />
+                android:hint="Enter the pin code" />
 
             <LinearLayout
                 android:layout_width="match_parent"
