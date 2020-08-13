@@ -2,72 +2,48 @@ package com.tangem.tangem_sdk_new.ui.widget
 
 import android.view.View
 import android.widget.ImageView
-import android.widget.TextView
+import android.widget.LinearLayout
+import com.skyfishjy.library.RippleBackground
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
-import com.tangem.tangem_sdk_new.extensions.hideSoftKeyboard
-import com.tangem.tangem_sdk_new.extensions.show
-import com.tangem.tangem_sdk_new.ui.widget.progressBar.StateWidget
+import com.tangem.tangem_sdk_new.ui.TouchCardAnimation
 
 /**
 [REDACTED_AUTHOR]
  */
-class TouchCardWidget(private val mainView: View) : StateWidget<SessionViewDelegateState> {
-    override fun getView(): View = mainView
+class TouchCardWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
 
-    override fun apply(params: SessionViewDelegateState) {
-    }
-}
+    private val rippleBackgroundNfc = mainView.findViewById<RippleBackground>(R.id.rippleBackgroundNfc)
+    private val ivHandCardHorizontal = mainView.findViewById<ImageView>(R.id.ivHandCardHorizontal)
+    private val ivHandCardVertical = mainView.findViewById<ImageView>(R.id.ivHandCardVertical)
+    private val llHand = mainView.findViewById<LinearLayout>(R.id.llHand)
+    private val llNfc = mainView.findViewById<LinearLayout>(R.id.llNfc)
 
-class HeaderWidget(private val mainView: View) : StateWidget<SessionViewDelegateState> {
-
-    private val tvCard = mainView.findViewById<TextView>(R.id.tvCard)
-    private val tvCardId = mainView.findViewById<TextView>(R.id.tvCardId)
-    private val imvClose = mainView.findViewById<ImageView>(R.id.imvClose)
-
-    var onClose: (() -> Unit)? = null
+    private val nfcDeviceAntenna = TouchCardAnimation(mainView.context, ivHandCardHorizontal, ivHandCardVertical, llHand, llNfc)
 
     init {
-        imvClose.setOnClickListener {
-            mainView.hideSoftKeyboard()
-            mainView.requestFocus()
-            onClose?.invoke()
-        }
+        nfcDeviceAntenna.init()
     }
 
-    override fun getView(): View = mainView
-
-    override fun apply(params: SessionViewDelegateState) {
+    override fun setState(params: SessionViewDelegateState) {
         when (params) {
-            is SessionViewDelegateState.Ready -> {
-                imvClose.show(false)
-                tvCard.show(true)
-                params.cardId?.let {
-                    tvCardId.show(true)
-                    tvCardId.text = splitByLength(it, 4)
-                }
-            }
-            is SessionViewDelegateState.PinChangeRequested -> {
-                imvClose.show(true)
-            }
-            else -> {
-                imvClose.show(false)
-            }
+            is SessionViewDelegateState.Ready -> animate()
+            is SessionViewDelegateState.TagLost -> animate()
+            else -> stopAnimation()
         }
     }
 
-    private fun splitByLength(value: String, sizeOfChunk: Int): String {
-        val length = value.length
-        if (length <= sizeOfChunk) return value
+    private fun animate() {
+        rippleBackgroundNfc.startRippleAnimation()
+        nfcDeviceAntenna.animate()
+    }
 
-        val countOfFullSizedChunk = length / sizeOfChunk
-        val builder = StringBuilder()
-        var startPosition = 0
-        for (i in 0 until countOfFullSizedChunk) {
-            val endPosition = startPosition + sizeOfChunk
-            builder.append(value.substring(startPosition, endPosition)).append(" ")
-            startPosition = endPosition
-        }
-        return builder.append(value.substring(startPosition, length)).toString().trim()
+    private fun stopAnimation() {
+        rippleBackgroundNfc.stopRippleAnimation()
+        nfcDeviceAntenna.stopAnimation()
+    }
+
+    override fun onBottomSheetDismiss() {
+        stopAnimation()
     }
 }
