@@ -1,7 +1,6 @@
 package com.tangem
 
 import com.tangem.commands.*
-import com.tangem.commands.file.*
 import com.tangem.commands.personalization.DepersonalizeCommand
 import com.tangem.commands.personalization.DepersonalizeResponse
 import com.tangem.commands.personalization.PersonalizeCommand
@@ -15,9 +14,7 @@ import com.tangem.common.CardValuesStorage
 import com.tangem.common.CompletionResult
 import com.tangem.common.TerminalKeysService
 import com.tangem.crypto.CryptoUtils
-import com.tangem.tasks.ChangePinTask
 import com.tangem.tasks.CreateWalletTask
-import com.tangem.tasks.PinType
 import com.tangem.tasks.ScanTask
 
 /**
@@ -374,7 +371,7 @@ class TangemSdk(
                    pin: ByteArray? = null,
                    initialMessage: Message? = null,
                    callback: (result: CompletionResult<SetPinResponse>) -> Unit) {
-        val command = ChangePinTask(PinType.Pin1, pin)
+        val command = SetPinCommand.setPin1(pin)
         startSessionWithRunnable(command, cardId, initialMessage, callback)
     }
 
@@ -382,7 +379,7 @@ class TangemSdk(
                    pin: ByteArray? = null,
                    initialMessage: Message? = null,
                    callback: (result: CompletionResult<SetPinResponse>) -> Unit) {
-        val command = ChangePinTask(PinType.Pin2, pin)
+        val command = SetPinCommand.setPin2(pin)
         startSessionWithRunnable(command, cardId, initialMessage, callback)
     }
 
@@ -390,23 +387,7 @@ class TangemSdk(
                    pin: ByteArray? = null,
                    initialMessage: Message? = null,
                    callback: (result: CompletionResult<SetPinResponse>) -> Unit) {
-        val command = ChangePinTask(PinType.Pin3, pin)
-        startSessionWithRunnable(command, cardId, initialMessage, callback)
-    }
-
-    fun writeFileData(cardId: String? = null,
-                      issuerData: ByteArray,
-                      startingSignature: ByteArray,
-                      finalizingSignature: ByteArray,
-                      issuerDataCounter: Int? = null,
-                      initialMessage: Message? = null,
-                      callback: (result: CompletionResult<WriteFileDataResponse>) -> Unit) {
-        val command = WriteFileDataCommand(
-                issuerData,
-                startingSignature, finalizingSignature,
-                issuerDataCounter,
-                config.issuerPublicKey
-        )
+        val command = SetPinCommand.setPin3(pin)
         startSessionWithRunnable(command, cardId, initialMessage, callback)
     }
 
