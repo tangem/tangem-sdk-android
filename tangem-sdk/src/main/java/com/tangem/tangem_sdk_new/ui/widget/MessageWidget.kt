@@ -1,31 +1,23 @@
 package com.tangem.tangem_sdk_new.ui.widget
 
 import android.view.View
-import android.view.ViewGroup
 import android.widget.TextView
-import androidx.transition.AutoTransition
-import androidx.transition.TransitionManager
 import com.tangem.TangemError
 import com.tangem.TangemSdkError
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.localizedDescription
 import com.tangem.tangem_sdk_new.postUI
-import com.tangem.tangem_sdk_new.ui.widget.progressBar.StateWidget
 
 /**
 [REDACTED_AUTHOR]
  */
-class MessageWidget(
-    private val mainView: View
-) : StateWidget<SessionViewDelegateState> {
+class MessageWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
 
     private val tvTaskTitle: TextView = mainView.findViewById(R.id.tvTaskTitle)
     private val tvTaskMessage: TextView = mainView.findViewById(R.id.tvTaskMessage)
 
-    override fun getView(): View = mainView
-
-    override fun apply(params: SessionViewDelegateState) {
+    override fun setState(params: SessionViewDelegateState) {
         when (params) {
             is SessionViewDelegateState.Ready -> {
                 setText(tvTaskTitle, params.message?.header, R.string.dialog_ready_to_scan)
@@ -74,7 +66,7 @@ class MessageWidget(
 
                 setText(tvTaskMessage, bodyMessage)
                 postUI(2000) {
-                    apply(SessionViewDelegateState.Ready(null, null))
+                    setState(SessionViewDelegateState.Ready(null, null))
                 }
             }
         }
