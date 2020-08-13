@@ -125,6 +125,7 @@ class DemoActivity : AppCompatActivity() {
 	}
 
 	private fun setPin() {
+		etPinCode.setText("1234")
 		fun getPin(): ByteArray? {
 			val pin = etPinCode.text.toString()
 			return if (pin.isEmpty()) null else pin.calculateSha256()
