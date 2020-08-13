@@ -14,7 +14,7 @@ import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.extensions.dpToPx
 import com.tangem.tangem_sdk_new.extensions.vibrate
 import com.tangem.tangem_sdk_new.postUI
-import com.tangem.tangem_sdk_new.ui.widget.progressBar.StateWidget
+import com.tangem.tangem_sdk_new.ui.widget.BaseStateWidget
 
 
 /**
@@ -25,8 +25,8 @@ enum class FindNfcState {
 }
 
 class HowToUnknownWidget(
-    private val mainView: View
-) : StateWidget<FindNfcState> {
+    mainView: View
+) : BaseStateWidget<FindNfcState>(mainView) {
 
     private val handWithCard: View = mainView.findViewById(R.id.imvHandWithCard)
     private val rippleView: RippleBackground = mainView.findViewById(R.id.rippleBg)
@@ -39,8 +39,6 @@ class HowToUnknownWidget(
         initTextChangesAnimation()
         initHandAnimators()
     }
-
-    override fun getView(): View = mainView
 
     private fun initTextChangesAnimation() {
         tvSwitcher.setInAnimation(mainView.context, android.R.anim.slide_in_left)
@@ -57,7 +55,7 @@ class HowToUnknownWidget(
             onStart = { handWithCard.alpha = 1f },
             onEnd = {
                 if (currentState == FindNfcState.FIND_ANTENNA) {
-                    postUI(100) { apply(FindNfcState.FIND_ANTENNA) }
+                    postUI(100) { setState(FindNfcState.FIND_ANTENNA) }
                 }
             },
             onCancel = {
@@ -106,7 +104,7 @@ class HowToUnknownWidget(
         tvSwitcher.setText(tvSwitcher.context.getString(textId))
     }
 
-    override fun apply(params: FindNfcState) {
+    override fun setState(params: FindNfcState) {
         currentState = params
         when (params) {
             FindNfcState.FIND_ANTENNA -> {
@@ -124,6 +122,9 @@ class HowToUnknownWidget(
                 setText(R.string.how_to_unknown_empty)
             }
         }
+    }
+
+    override fun onBottomSheetDismiss() {
     }
 
     private fun dpToPx(value: Float): Float = mainView.dpToPx(value)
