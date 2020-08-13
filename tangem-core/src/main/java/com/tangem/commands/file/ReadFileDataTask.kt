@@ -16,6 +16,9 @@ data class File(
         val fileData: ByteArray
 )
 
+/**
+ * Task uses commands that are in development and subject to future changes
+ */
 class ReadFileDataTask(
         private val readPrivateFiles: Boolean = false
 ) : CardSessionRunnable<ReadFilesResponse> {

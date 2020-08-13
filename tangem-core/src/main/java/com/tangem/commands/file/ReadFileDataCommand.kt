@@ -26,7 +26,9 @@ class ReadFileDataResponse(
         val fileDataCounter: Int?
 ) : CommandResponse
 
-
+/**
+ * Card Command is in development, subject to future changes
+ */
 class ReadFileDataCommand(
         private val fileIndex: Int = 0,
         private val readPrivateFiles: Boolean = false

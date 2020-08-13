@@ -21,6 +21,9 @@ class WriteFileDataResponse(
         val fileIndex: Int? = null
 ) : CommandResponse
 
+/**
+ * Card Command is in development, subject to future changes
+ */
 class WriteFileDataCommand(
         private val data: ByteArray,
         private val startingSignature: ByteArray,
