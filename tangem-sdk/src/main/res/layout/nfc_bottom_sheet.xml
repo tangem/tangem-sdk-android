@@ -110,8 +110,7 @@
         android:layout_height="200dp"
         android:layout_gravity="center"
         android:orientation="vertical"
-        android:theme="@style/CardSdkTheme"
-        android:visibility="gone">
+        android:theme="@style/CardSdkTheme">
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilChangePin"
@@ -120,7 +119,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="24dp"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="8dp"
             android:backgroundTint="#f3f5f6"
             android:layout_gravity="center"
             android:gravity="center"
@@ -140,7 +139,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="24dp"
             android:layout_marginEnd="16dp"
             android:backgroundTint="#f3f5f6"
             android:layout_gravity="center"
@@ -155,6 +153,23 @@
                 android:hint="Enter PIN"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_set_new_pin"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:layout_gravity="center"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="Set new PIN"
+            android:textAllCaps="false"
+            android:textColor="@color/card_sdk_accent"
+            android:textSize="16sp" />
 
     </LinearLayout>
 

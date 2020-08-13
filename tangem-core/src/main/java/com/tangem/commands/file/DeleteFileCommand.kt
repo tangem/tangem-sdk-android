@@ -17,7 +17,9 @@ import com.tangem.common.tlv.TlvTag
 
 typealias DeleteFileResponse = SimpleResponse
 
-
+/**
+ * Card Command is in development, subject to future changes
+ */
 class DeleteFileCommand(private val fileIndex: Int) : Command<DeleteFileResponse>() {
 
     override val requiresPin2 = true
