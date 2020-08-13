@@ -22,7 +22,7 @@ class SdkProgressBar(context: Context, attrs: AttributeSet? = null) : View(conte
     companion object {
         private const val DEFAULT_MAX_VALUE = 100f
         private const val DEFAULT_START_ANGLE = 270f
-        private const val DEFAULT_ANIMATION_DURATION = 550L
+        private const val DEFAULT_ANIMATION_DURATION = 300L
     }
 
     var onProgressChangeListener: ((Float) -> Unit)? = null
