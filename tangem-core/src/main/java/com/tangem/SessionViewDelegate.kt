@@ -1,6 +1,6 @@
 package com.tangem
 
-import com.tangem.tasks.PinType
+import com.tangem.commands.PinType
 
 /**
  * Allows interaction with users and shows visual elements.
