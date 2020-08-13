@@ -14,6 +14,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.concurrent.CancellationException
 import kotlin.coroutines.resume
 
 
@@ -59,9 +60,12 @@ class NfcReader : CardReader {
     }
 
     override fun stopSession(cancelled: Boolean) {
-        nfcTag = null
         listener?.readingIsActive = false
-        if (cancelled) scope?.cancel()
+        if (cancelled) {
+            scope?.cancel(CancellationException(TangemSdkError.UserCancelled().customMessage))
+        } else {
+            nfcTag = null
+        }
     }
 
     override suspend fun transceiveApdu(apdu: CommandApdu): CompletionResult<ResponseApdu> =
