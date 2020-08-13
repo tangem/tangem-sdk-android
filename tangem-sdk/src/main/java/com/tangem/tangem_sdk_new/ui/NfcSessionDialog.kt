@@ -3,22 +3,18 @@ package com.tangem.tangem_sdk_new.ui
 import android.app.Activity
 import android.view.HapticFeedbackConstants
 import android.view.View
-import android.view.ViewGroup
-import androidx.transition.AutoTransition
-import androidx.transition.TransitionManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.tangem.Log
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
-import com.tangem.tangem_sdk_new.extensions.show
 import com.tangem.tangem_sdk_new.postUI
 import com.tangem.tangem_sdk_new.ui.widget.*
 import com.tangem.tangem_sdk_new.ui.widget.progressBar.ProgressbarStateWidget
-import com.tangem.tangem_sdk_new.ui.widget.progressBar.StateWidget
 import kotlinx.android.synthetic.main.bottom_sheet_layout.*
-import kotlinx.android.synthetic.main.touch_card_layout.*
 
 class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.style.SdkBottomSheetDialogStyle) {
+    private val tag = this::class.java.simpleName
 
     private lateinit var mainContentView: View
 
@@ -49,6 +45,7 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
         pinCodeSetChangeWidget = PinCodeModificationWidget(view.findViewById(R.id.llChangePin), 0)
         messageWidget = MessageWidget(view.findViewById(R.id.llMessage))
 
+        stateWidgets.add(headerWidget)
         stateWidgets.add(touchCardWidget)
         stateWidgets.add(progressStateWidget)
         stateWidgets.add(pinCodeRequestWidget)
@@ -72,130 +69,112 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
             is SessionViewDelegateState.TagConnected -> onTagConnected(state)
             is SessionViewDelegateState.WrongCard -> onWrongCard(state)
         }
-        if (currentState is SessionViewDelegateState.PinChangeRequested) {
-            behavior.state = BottomSheetBehavior.STATE_COLLAPSED
-        }
         currentState = state
     }
 
     private fun onReady(state: SessionViewDelegateState.Ready) {
-        headerWidget.apply(state)
-
-        showViews(touchCardWidget, messageWidget)
-        messageWidget.apply(state)
+        Log.i(tag, "onReady")
+        setStateAndShow(state, headerWidget, touchCardWidget, messageWidget)
     }
 
     private fun onSuccess(state: SessionViewDelegateState.Success) {
-        showViews(progressStateWidget, messageWidget)
-        messageWidget.apply(state)
-        progressStateWidget.apply(state)
+        Log.i(tag, "onSuccess")
+        setStateAndShow(state, progressStateWidget, messageWidget)
         performHapticFeedback()
         postUI(1500) { dismiss() }
     }
 
     private fun onError(state: SessionViewDelegateState.Error) {
-        showViews(progressStateWidget, messageWidget)
-        messageWidget.apply(state)
-        progressStateWidget.apply(state)
+        Log.i(tag, "onError")
+        setStateAndShow(state, progressStateWidget, messageWidget)
         performHapticFeedback()
     }
 
     private fun onSecurityDelay(state: SessionViewDelegateState.SecurityDelay) {
-        showViews(progressStateWidget, messageWidget)
-        messageWidget.apply(state)
-        progressStateWidget.apply(state)
+        Log.i(tag, "onSecurityDelay")
+        setStateAndShow(state, progressStateWidget, messageWidget)
         performHapticFeedback()
     }
 
     private fun onDelay(state: SessionViewDelegateState.Delay) {
-        showViews(progressStateWidget, messageWidget)
-        messageWidget.apply(state)
-        progressStateWidget.apply(state)
-
+        Log.i(tag, "onDelay")
+        setStateAndShow(state, progressStateWidget, messageWidget)
         performHapticFeedback()
     }
 
     private fun onPinRequested(state: SessionViewDelegateState.PinRequested) {
-        showViews(pinCodeRequestWidget)
+        Log.i(tag, "onPinRequested")
+        setStateAndShow(state, pinCodeRequestWidget)
 
-        pinCodeRequestWidget.apply(state)
         pinCodeRequestWidget.onSave = {
             state.callback(it)
             pinCodeRequestWidget.onSave = null
-            showViews(touchCardWidget, messageWidget)
-            messageWidget.apply(SessionViewDelegateState.Ready("", null))
+
+            val readyState = SessionViewDelegateState.Ready("", null)
+            setStateAndShow(readyState, touchCardWidget, messageWidget)
         }
 
         performHapticFeedback()
     }
 
     private fun onPinChangeRequested(state: SessionViewDelegateState.PinChangeRequested) {
-        showViews(pinCodeSetChangeWidget)
-
+        Log.i(tag, "onPinChangeRequested")
         behavior.state = BottomSheetBehavior.STATE_EXPANDED
 
         headerWidget.onClose = {
             behavior.state = BottomSheetBehavior.STATE_COLLAPSED
-            postUI(150) { dismiss() }
+            postUI(150) { cancel() }
         }
         pinCodeSetChangeWidget.onSave = {
             behavior.state = BottomSheetBehavior.STATE_COLLAPSED
             pinCodeSetChangeWidget.onSave = null
-            showViews(touchCardWidget, messageWidget)
-            messageWidget.apply(SessionViewDelegateState.Ready("", null))
+
+            val readyState = SessionViewDelegateState.Ready("", null)
+            setStateAndShow(readyState, touchCardWidget, messageWidget)
             state.callback(it)
         }
 
-        headerWidget.apply(state)
-        pinCodeSetChangeWidget.apply(state)
+        setStateAndShow(state, headerWidget, pinCodeSetChangeWidget)
         performHapticFeedback()
     }
 
     private fun onTagLost(state: SessionViewDelegateState) {
+        Log.i(tag, "onTagLost")
         if (currentState is SessionViewDelegateState.Success ||
             currentState is SessionViewDelegateState.PinRequested ||
             currentState is SessionViewDelegateState.PinChangeRequested) {
             return
         }
-        showViews(touchCardWidget, messageWidget)
-        messageWidget.apply(state)
+        setStateAndShow(state, touchCardWidget, messageWidget)
     }
 
     private fun onTagConnected(state: SessionViewDelegateState) {
-        showViews(progressStateWidget, messageWidget)
-        progressStateWidget.apply(state)
+        Log.i(tag, "onTagConnected")
+        setStateAndShow(state, progressStateWidget, messageWidget)
     }
 
     private fun onWrongCard(state: SessionViewDelegateState) {
+        Log.i(tag, "onWrongCard")
         if (currentState !is SessionViewDelegateState.WrongCard) {
             performHapticFeedback()
-            showViews(progressStateWidget, messageWidget)
-            progressStateWidget.apply(state)
-            messageWidget.apply(state)
+            setStateAndShow(state, progressStateWidget, messageWidget)
+            progressStateWidget.setState(state)
+            messageWidget.setState(state)
             postUI(2000) {
-                showViews(touchCardWidget, messageWidget)
-                messageWidget.apply(SessionViewDelegateState.Ready("", null))
+                val readyState = SessionViewDelegateState.Ready("", null)
+                setStateAndShow(readyState, touchCardWidget, messageWidget)
             }
         }
     }
 
-    private fun showViews(vararg views: StateWidget<*>) {
-        val toHide = stateWidgets.filter { !views.contains(it) && it.getView().visibility != View.GONE }
-        val toShow = views.filter { it.getView().visibility != View.VISIBLE }
+    private fun setStateAndShow(state: SessionViewDelegateState, vararg views: StateWidget<SessionViewDelegateState>) {
+        views.forEach { it.setState(state) }
 
-        if (toHide.isNotEmpty() || toShow.isNotEmpty()) {
-            (mainContentView as? ViewGroup)?.let { TransitionManager.beginDelayedTransition(it, AutoTransition()) }
-        }
-        toHide.forEach { it.getView().show(false) }
-        views.forEach { it.getView().show(true) }
+        val toHide = stateWidgets.filter { !views.contains(it) && it.isVisible() }
+        val toShow = views.filter { !it.isVisible() }
 
-        if (views.contains(touchCardWidget)) {
-            rippleBackgroundNfc?.startRippleAnimation()
-            val nfcDeviceAntenna = TouchCardAnimation(
-                activity, ivHandCardHorizontal, ivHandCardVertical, llHand, llNfc
-            )
-            nfcDeviceAntenna.init()
-        }
+        toHide.forEach { it.showWidget(false) }
+        toShow.forEach { it.showWidget(true) }
     }
 
     private fun performHapticFeedback() {
@@ -205,4 +184,8 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
         }
     }
 
+    override fun dismiss() {
+        stateWidgets.forEach { it.onBottomSheetDismiss() }
+        super.dismiss()
+    }
 }
