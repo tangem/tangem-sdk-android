@@ -9,14 +9,11 @@ import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.hideSoftKeyboard
 import com.tangem.tangem_sdk_new.extensions.showSoftKeyboard
 import com.tangem.tangem_sdk_new.postUI
-import com.tangem.tangem_sdk_new.ui.widget.progressBar.StateWidget
 
 /**
 [REDACTED_AUTHOR]
  */
-class PinCodeRequestWidget(
-    private val mainView: View
-) : StateWidget<SessionViewDelegateState> {
+class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
 
     var onSave: ((String) -> Unit)? = null
 
@@ -24,9 +21,7 @@ class PinCodeRequestWidget(
     private val etPinCode = mainView.findViewById<TextInputEditText>(R.id.etPinCode)
     private val btnSave = mainView.findViewById<Button>(R.id.btnSaveCode)
 
-    override fun getView(): View = mainView
-
-    override fun apply(params: SessionViewDelegateState) {
+    override fun setState(params: SessionViewDelegateState) {
         when (params) {
             is SessionViewDelegateState.PinRequested -> {
                 if (params.message.isNotEmpty()) tilPinCode.hint = params.message
