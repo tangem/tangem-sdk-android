@@ -101,7 +101,7 @@ class NfcReader : CardReader {
     private fun tryHandleNfcError(exception: Exception, callback: (response: CompletionResult<ResponseApdu>) -> Unit) {
         Log.i(this::class.simpleName!!, exception.localizedMessage ?: "Error tranceiving data")
         // The messages of errors can vary on different Android devices,
-        // but we try to identify it by parsing the message_layout.
+        // but we try to identify it by parsing the message.
         if (exception.message?.contains("length") == true) {
             callback.invoke(CompletionResult.Failure(TangemSdkError.ExtendedLengthNotSupported()))
         }
