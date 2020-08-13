@@ -9,6 +9,9 @@ import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
 import com.tangem.crypto.sign
 
+/**
+ * Task uses commands that are in development and subject to future changes
+ */
 class WriteFileDataTask(
         private val data: ByteArray,
         private val issuerKeys: KeyPair
