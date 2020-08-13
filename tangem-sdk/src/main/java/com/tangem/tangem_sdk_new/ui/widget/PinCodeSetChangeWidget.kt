@@ -18,15 +18,14 @@ import com.google.android.material.textfield.TextInputLayout
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.showSoftKeyboard
-import com.tangem.tangem_sdk_new.ui.widget.progressBar.StateWidget
 
 /**
 [REDACTED_AUTHOR]
  */
 class PinCodeModificationWidget(
-    private val mainView: View,
+    mainView: View,
     private var mode: Int
-) : StateWidget<SessionViewDelegateState> {
+) : BaseSessionDelegateStateWidget(mainView) {
 
     companion object {
         val MODE_SET = 0
@@ -73,9 +72,7 @@ class PinCodeModificationWidget(
         }
     }
 
-    override fun getView(): View = mainView
-
-    override fun apply(params: SessionViewDelegateState) {
+    override fun setState(params: SessionViewDelegateState) {
         when (params) {
             is SessionViewDelegateState.PinChangeRequested -> {
                 etPinCode.showSoftKeyboard()

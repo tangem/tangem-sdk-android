@@ -8,24 +8,19 @@ import androidx.core.content.ContextCompat
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.show
+import com.tangem.tangem_sdk_new.ui.widget.BaseSessionDelegateStateWidget
 
 /**
 [REDACTED_AUTHOR]
  */
-interface StateWidget<P> {
-    fun getView(): View
-    fun apply(params: P)
-}
 
-class ProgressbarStateWidget(private val mainView: View) : StateWidget<SessionViewDelegateState> {
+class ProgressbarStateWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
 
     init {
         NoneState(mainView)
     }
 
-    override fun getView(): View = mainView
-
-    override fun apply(params: SessionViewDelegateState) {
+    override fun setState(params: SessionViewDelegateState) {
         val viewState = when (params) {
             is SessionViewDelegateState.SecurityDelay -> SecurityDelayState(mainView)
             is SessionViewDelegateState.Delay -> DelayState(mainView)
@@ -36,11 +31,15 @@ class ProgressbarStateWidget(private val mainView: View) : StateWidget<SessionVi
             is SessionViewDelegateState.TagConnected -> IndeterminateProgressState(mainView)
             else -> NoneState(mainView)
         }
-        viewState.apply(params)
+        viewState.setState(params)
+    }
+
+    override fun onBottomSheetDismiss() {
+        NoneState(mainView)
     }
 }
 
-abstract class BaseState(private val mainView: View) : StateWidget<SessionViewDelegateState> {
+abstract class BaseProgressState(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
     protected val progressBar: SdkProgressBar = mainView.findViewById(R.id.progressBar)
     protected val tvProgressValue: TextView = mainView.findViewById(R.id.tvProgressValue)
 
@@ -51,8 +50,6 @@ abstract class BaseState(private val mainView: View) : StateWidget<SessionViewDe
     init {
         hideViews(tvProgressValue, progressBar, doneView, exclamationView)
     }
-
-    override fun getView(): View = mainView
 
     protected fun setMaxProgress() {
         setProgress(progressBar.progressMax)
@@ -93,8 +90,8 @@ abstract class BaseState(private val mainView: View) : StateWidget<SessionViewDe
     }
 }
 
-class NoneState(mainView: View) : BaseState(mainView) {
-    override fun apply(params: SessionViewDelegateState) {
+class NoneState(mainView: View) : BaseProgressState(mainView) {
+    override fun setState(params: SessionViewDelegateState) {
         hideViews(progressBar, tvProgressValue, doneView, exclamationView)
 
         changeProgressColor(R.color.progress_bar_secondary_color, false)
@@ -102,8 +99,8 @@ class NoneState(mainView: View) : BaseState(mainView) {
     }
 }
 
-class SuccessState(mainView: View) : BaseState(mainView) {
-    override fun apply(params: SessionViewDelegateState) {
+class SuccessState(mainView: View) : BaseProgressState(mainView) {
+    override fun setState(params: SessionViewDelegateState) {
         hideViews(tvProgressValue, progressBar, exclamationView)
         showViews(progressBar)
 
@@ -114,8 +111,8 @@ class SuccessState(mainView: View) : BaseState(mainView) {
 }
 
 
-class ErrorState(mainView: View) : BaseState(mainView) {
-    override fun apply(params: SessionViewDelegateState) {
+class ErrorState(mainView: View) : BaseProgressState(mainView) {
+    override fun setState(params: SessionViewDelegateState) {
         hideViews(tvProgressValue, doneView)
         showViews(progressBar)
 
@@ -127,8 +124,8 @@ class ErrorState(mainView: View) : BaseState(mainView) {
     }
 }
 
-class WarningState(mainView: View) : BaseState(mainView) {
-    override fun apply(params: SessionViewDelegateState) {
+class WarningState(mainView: View) : BaseProgressState(mainView) {
+    override fun setState(params: SessionViewDelegateState) {
         hideViews(tvProgressValue, doneView)
         showViews(progressBar)
 
@@ -140,37 +137,38 @@ class WarningState(mainView: View) : BaseState(mainView) {
     }
 }
 
-class IndeterminateProgressState(mainView: View) : BaseState(mainView) {
-    override fun apply(params: SessionViewDelegateState) {
+class IndeterminateProgressState(mainView: View) : BaseProgressState(mainView) {
+    override fun setState(params: SessionViewDelegateState) {
+        changeProgressColor(R.color.progress_bar_color, false)
+
         hideViews(tvProgressValue, doneView, exclamationView)
         showViews(progressBar)
 
         progressBar.isIndeterminate = true
-        changeProgressColor(R.color.progress_bar_color)
     }
 }
 
-class SecurityDelayState(mainView: View) : BaseState(mainView) {
-    override fun apply(params: SessionViewDelegateState) {
+class SecurityDelayState(mainView: View) : BaseProgressState(mainView) {
+    override fun setState(params: SessionViewDelegateState) {
         val delay = params as? SessionViewDelegateState.SecurityDelay ?: return
 
+        changeProgressColor(R.color.progress_bar_color, false)
         hideViews(doneView, exclamationView)
         showViews(progressBar, tvProgressValue)
 
         if (progressBar.progressMax != params.totalDurationSeconds.toFloat()) {
             progressBar.progressMax = params.totalDurationSeconds.toFloat()
         }
-        val progress = delay.totalDurationSeconds - delay.ms + 100
+        val progress = delay.totalDurationSeconds - delay.ms
+        val text = params.ms.div(100).toString()
         setProgress(progress.toFloat())
-        tvProgressValue.text = params.ms.div(100).toString()
-
-        changeProgressColor(R.color.progress_bar_color)
+        tvProgressValue.text = text
     }
 
 }
 
-class DelayState(mainView: View) : BaseState(mainView) {
-    override fun apply(params: SessionViewDelegateState) {
+class DelayState(mainView: View) : BaseProgressState(mainView) {
+    override fun setState(params: SessionViewDelegateState) {
         val delay = params as? SessionViewDelegateState.Delay ?: return
 
         hideViews(doneView)
@@ -186,7 +184,8 @@ class DelayState(mainView: View) : BaseState(mainView) {
             progressBar.progressMax = delay.total.toFloat()
         }
         setProgress(delay.current.toFloat())
-        tvProgressValue.text = (((delay.total - delay.current) / delay.step) + 1).toString()
+        val percent = delay.current * 100 / delay.total
+        tvProgressValue.text = "$percent %"
 
         changeProgressColor(R.color.progress_bar_color)
     }

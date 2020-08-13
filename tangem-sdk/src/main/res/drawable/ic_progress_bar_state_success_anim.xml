@@ -5,7 +5,7 @@
     <target android:name="check">
         <aapt:attr name="android:animation">
             <objectAnimator
-                    android:duration="600"
+                    android:duration="300"
                     android:interpolator="@android:anim/accelerate_interpolator"
                     android:propertyName="trimPathEnd"
                     android:valueFrom="0"
