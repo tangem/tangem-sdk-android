@@ -27,7 +27,9 @@ enum class FileSettings(val rawValue: Int) {
 
 typealias ChangeFileSettingsResponse = SimpleResponse
 
-
+/**
+ * Card Command is in development, subject to future changes
+ */
 class ChangeFileSettingsCommand(
         private val settings: FileSettings,
         private val fileIndex: Int
