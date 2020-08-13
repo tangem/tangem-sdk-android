@@ -391,36 +391,6 @@ class TangemSdk(
         startSessionWithRunnable(command, cardId, initialMessage, callback)
     }
 
-    fun writeFileDataTask(cardId: String? = null,
-                          data: ByteArray,
-                          issuerKeys: KeyPair,
-                          initialMessage: Message? = null,
-                          callback: (result: CompletionResult<WriteFileDataResponse>) -> Unit) {
-        val command = WriteFileDataTask(data, issuerKeys)
-        startSessionWithRunnable(command, cardId, initialMessage, callback)
-    }
-
-    fun readFileData(cardId: String? = null, readPrivateFiles: Boolean = false,
-                     callback: (result: CompletionResult<ReadFileDataResponse>) -> Unit) {
-        startSessionWithRunnable(ReadFileDataCommand(0, readPrivateFiles), cardId, null, callback)
-    }
-
-    fun readFileDataTask(cardId: String? = null, readPrivateFiles: Boolean = false,
-                     callback: (result: CompletionResult<ReadFilesResponse>) -> Unit) {
-        startSessionWithRunnable(ReadFileDataTask( readPrivateFiles), cardId, null, callback)
-    }
-
-    fun deleteFile(cardId: String? = null, fileIndex: Int = 0,
-                         callback: (result: CompletionResult<DeleteFileResponse>) -> Unit) {
-        startSessionWithRunnable(DeleteFileCommand(fileIndex), cardId, null, callback)
-    }
-
-    fun changeFileSettings(cardId: String? = null, fileSettings: FileSettings, fileIndex: Int = 0,
-                   callback: (result: CompletionResult<ChangeFileSettingsResponse>) -> Unit) {
-        val command = ChangeFileSettingsCommand(fileSettings, fileIndex)
-        startSessionWithRunnable(command, cardId, null, callback)
-    }
-
     /**
      * Allows running a custom bunch of commands in one [CardSession] by creating a custom task.
      * [TangemSdk] will start a card session, perform preflight [ReadCommand],
