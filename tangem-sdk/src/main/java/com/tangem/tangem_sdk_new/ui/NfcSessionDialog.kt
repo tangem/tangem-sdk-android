@@ -202,28 +202,37 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
         etChangePinConfirm?.setOnEditorActionListener { v: TextView?, actionId: Int, event: KeyEvent? ->
             postUI {
                 if (actionId == KeyEvent.KEYCODE_ENDCALL) {
-                    if (v?.text.isNullOrBlank()) {
-                        etChangePin?.error = activity.getString(R.string.pin_enter_error_empty)
-                    } else if (v?.text.toString() != etChangePin?.text.toString()) {
-                        etChangePinConfirm?.error = activity.getString(R.string.pin_change_error)
-                        etChangePin?.error = activity.getString(R.string.pin_change_error)
-                    } else {
-                        show(lTouchCard)
-                        tvTaskTitle?.show()
-                        tvTaskText?.show()
-                        val imm: InputMethodManager =
-                                context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-                        imm.hideSoftInputFromWindow(v?.windowToken, 0)
-
-                        v?.text.toString().let { pin ->
-                            v?.text = ""
-                            etChangePin?.setText("")
-                            state.callback(pin)
-                        }
-                    }
+                    val imm: InputMethodManager =
+                            context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.hideSoftInputFromWindow(etChangePinConfirm?.windowToken, 0)
                 }
             }
             true
+        }
+
+        btn_set_new_pin?.setOnClickListener { setNewPin(state) }
+
+    }
+
+    private fun setNewPin(state: SessionViewDelegateState.PinChangeRequested) {
+        if (etChangePinConfirm?.text.isNullOrBlank()) {
+            etChangePin?.error = activity.getString(R.string.pin_enter_error_empty)
+        } else if (etChangePinConfirm?.text.toString() != etChangePin?.text.toString()) {
+            etChangePinConfirm?.error = activity.getString(R.string.pin_change_error)
+            etChangePin?.error = activity.getString(R.string.pin_change_error)
+        } else {
+            show(lTouchCard)
+            tvTaskTitle?.show()
+            tvTaskText?.show()
+            val imm: InputMethodManager =
+                    context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(etChangePinConfirm?.windowToken, 0)
+
+            etChangePinConfirm?.text.toString().let { pin ->
+                etChangePinConfirm?.setText("")
+                etChangePin?.setText("")
+                state.callback(pin)
+            }
         }
     }
 
