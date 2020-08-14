@@ -21,16 +21,19 @@ class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDel
 
     override fun onSessionStarted(cardId: String?, message: Message?) {
         postUI {
-            if (readingDialog == null) createReadingDialog2(activity)
+            if (readingDialog == null) createReadingDialog(activity)
             readingDialog?.show(SessionViewDelegateState.Ready(cardId, message))
         }
     }
 
-    private fun createReadingDialog2(activity: Activity) {
+    private fun createReadingDialog(activity: Activity) {
         readingDialog = NfcSessionDialog(activity).apply {
             dismissWithAnimation = true
             create()
-            setOnCancelListener { reader.stopSession(true) }
+            setOnCancelListener {
+                reader.stopSession(true)
+                createReadingDialog(activity)
+            }
         }
     }
 
@@ -68,21 +71,11 @@ class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDel
     }
 
     override fun onPinRequested(pinType: PinType, callback: (pin: String) -> Unit) {
-        val message = when (pinType) {
-            PinType.Pin1 -> activity.getString(R.string.pin_enter_pin_1)
-            PinType.Pin2 -> activity.getString(R.string.pin_enter_pin_2)
-            PinType.Pin3 -> activity.getString(R.string.pin_enter_pin_3)
-        }
-        postUI { readingDialog?.show(SessionViewDelegateState.PinRequested(message, callback)) }
+        postUI { readingDialog?.show(SessionViewDelegateState.PinRequested(pinType, callback)) }
     }
 
     override fun onPinChangeRequested(pinType: PinType, callback: (pin: String) -> Unit) {
-        val message = when (pinType) {
-            PinType.Pin1 -> activity.getString(R.string.pin_change_pin_1)
-            PinType.Pin2 -> activity.getString(R.string.pin_change_pin_2)
-            PinType.Pin3 -> activity.getString(R.string.pin_change_pin_3)
-        }
-        postUI { readingDialog?.show(SessionViewDelegateState.PinChangeRequested(message, callback)) }
+        postUI { readingDialog?.show(SessionViewDelegateState.PinChangeRequested(pinType, callback)) }
     }
 
     private fun setLogger() {

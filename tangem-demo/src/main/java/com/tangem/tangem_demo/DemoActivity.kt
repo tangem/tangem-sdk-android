@@ -143,10 +143,10 @@ class DemoActivity : AppCompatActivity() {
                 }
 
                 val json = gson.toJson(completionResult.data)
-                mainThread.post { showDialog(json) }
+//                mainThread.post { showDialog(json) }
             }
             is CompletionResult.Failure -> {
-                mainThread.post { showToast(completionResult.error.customMessage) }
+//                mainThread.post { showToast(completionResult.error.customMessage) }
             }
         }
     }
