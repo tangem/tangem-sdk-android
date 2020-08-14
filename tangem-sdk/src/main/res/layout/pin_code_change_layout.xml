@@ -22,7 +22,7 @@
             android:textColor="#000000"
             android:textSize="20sp"
             android:textStyle="bold"
-            tools:text="@string/pin_set_access_code_title" />
+            tools:text="@string/pin_set_code_title" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilPinCode"
@@ -34,7 +34,7 @@
             app:errorIconDrawable="@null"
             app:errorTextColor="@color/card_sdk_text_error_color"
             app:passwordToggleEnabled="true"
-            tools:hint="@string/pin_set_access_code_hint">
+            tools:hint="@string/pin_set_code_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPinCode"
@@ -53,7 +53,7 @@
             android:layout_marginTop="10dp"
             app:boxBackgroundColor="@android:color/transparent"
             app:errorTextColor="@color/card_sdk_text_error_color"
-            tools:hint="@string/pin_change_new_access_code_hint">
+            tools:hint="@string/pin_change_new_code_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etNewPinCode"
@@ -72,7 +72,7 @@
             android:layout_marginTop="10dp"
             app:boxBackgroundColor="@android:color/transparent"
             app:errorTextColor="@color/card_sdk_text_error_color"
-            tools:hint="@string/pin_set_access_code_confirm_hint">
+            tools:hint="@string/pin_set_code_confirm_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPinCodeConfirm"
@@ -89,7 +89,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="0.1" />
 
     <Button
         android:id="@+id/btnSaveCode"
@@ -101,10 +101,11 @@
         android:layout_marginBottom="16dp"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        android:text="@string/pin_set_access_code_save"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/flLayout" />
+        android:text="@string/pin_save" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
 </LinearLayout>

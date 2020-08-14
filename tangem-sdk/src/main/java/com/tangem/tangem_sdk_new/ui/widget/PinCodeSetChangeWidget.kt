@@ -15,8 +15,10 @@ import android.widget.TextView
 import androidx.core.widget.addTextChangedListener
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.tangem.commands.PinType
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
+import com.tangem.tangem_sdk_new.extensions.hideSoftKeyboard
 import com.tangem.tangem_sdk_new.extensions.showSoftKeyboard
 
 /**
@@ -51,6 +53,8 @@ class PinCodeModificationWidget(
     private val btnSave: Button = mainView.findViewById(R.id.btnSaveCode)
 
     private var isPasswordEnabled = true
+    private var pinType: PinType = PinType.Pin1
+
     private val isChangeCodeMode: Boolean = mode == MODE_CHANGE
 
     init {
@@ -68,6 +72,7 @@ class PinCodeModificationWidget(
 
         btnSave.setOnClickListener {
             mainView.requestFocus()
+            mainView.hideSoftKeyboard()
             onSave?.invoke(etPinCodeConfirm.text?.toString() ?: "")
         }
     }
@@ -76,6 +81,8 @@ class PinCodeModificationWidget(
         when (params) {
             is SessionViewDelegateState.PinChangeRequested -> {
                 etPinCode.showSoftKeyboard()
+                pinType = params.pinType
+                modifyUiByMode()
             }
         }
     }
@@ -86,16 +93,21 @@ class PinCodeModificationWidget(
     }
 
     private fun modifyUiByMode() {
+        val nameOfPin = when (pinType) {
+            PinType.Pin1 -> getString(R.string.pin1)
+            PinType.Pin2 -> getString(R.string.pin2)
+            PinType.Pin3 -> getString(R.string.pin3)
+        }
         if (isChangeCodeMode) {
-            tvScreenTitle.text = getString(R.string.pin_change_access_code_title)
-            tilPinCode.hint = getString(R.string.pin_change_current_access_code_hint)
-            tilNewPinCode.hint = getString(R.string.pin_change_new_access_code_hint)
-            tilPinCodeConfirm.hint = getString(R.string.pin_change_new_access_code_confirm_hint)
+            tvScreenTitle.text = getFormattedString(R.string.pin_change_code_title, nameOfPin)
+            tilPinCode.hint = getFormattedString(R.string.pin_change_current_code_hint, nameOfPin)
+            tilNewPinCode.hint = getFormattedString(R.string.pin_change_new_code_hint, nameOfPin)
+            tilPinCodeConfirm.hint = getFormattedString(R.string.pin_change_new_code_confirm_hint, nameOfPin)
         } else {
-            tvScreenTitle.text = getString(R.string.pin_set_access_code_title)
-            tilPinCode.hint = getString(R.string.pin_set_access_code_hint)
+            tvScreenTitle.text = getFormattedString(R.string.pin_set_code_title, nameOfPin)
+            tilPinCode.hint = getFormattedString(R.string.pin_set_code_hint, nameOfPin)
             tilNewPinCode.visibility = View.GONE
-            tilPinCodeConfirm.hint = getString(R.string.pin_set_access_code_hint)
+            tilPinCodeConfirm.hint = getFormattedString(R.string.pin_set_code_confirm_hint, nameOfPin)
         }
     }
 
@@ -125,7 +137,7 @@ class PinCodeModificationWidget(
 
         TransitionManager.beginDelayedTransition(mainView as ViewGroup, AutoTransition())
         if (errorIsVisible) {
-            val errorMessage = getString(R.string.pin_access_code_confirm_error)
+            val errorMessage = getString(R.string.pin_code_confirm_error)
             til1.error = errorMessage
             til2.error = errorMessage
         } else {
@@ -140,8 +152,6 @@ class PinCodeModificationWidget(
         et.inputType = if (isPasswordEnabled) 129 else InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
         if (et.isFocused) et.setSelection(et.text?.length ?: 0)
     }
-
-    private fun getString(id: Int): String = mainView.context.getString(id)
 }
 
 class DebounceAfterTextChanged(
