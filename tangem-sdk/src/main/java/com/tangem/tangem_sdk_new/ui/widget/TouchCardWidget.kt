@@ -23,6 +23,8 @@ class TouchCardWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView)
 
     init {
         nfcDeviceAntenna.init()
+        nfcDeviceAntenna.onCardOnBack = { rippleBackgroundNfc.startRippleAnimation() }
+        nfcDeviceAntenna.onCardMoveOut = { rippleBackgroundNfc.stopRippleAnimation() }
     }
 
     override fun setState(params: SessionViewDelegateState) {
@@ -34,7 +36,6 @@ class TouchCardWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView)
     }
 
     private fun animate() {
-        rippleBackgroundNfc.startRippleAnimation()
         nfcDeviceAntenna.animate()
     }
 

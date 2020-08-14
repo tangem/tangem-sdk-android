@@ -21,6 +21,9 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
     private val tilPinCode = mainView.findViewById<TextInputLayout>(R.id.tilPinCode)
     private val etPinCode = mainView.findViewById<TextInputEditText>(R.id.etPinCode)
     private val btnContinue = mainView.findViewById<Button>(R.id.btnContinue)
+    private val expandingView = mainView.findViewById<View>(R.id.expandingView)
+
+    fun canExpand(): Boolean = expandingView != null
 
     override fun setState(params: SessionViewDelegateState) {
         when (params) {
@@ -33,7 +36,7 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
                 tilPinCode.hint = getFormattedString(R.string.pin_enter_code, nameOfPin)
 
                 etPinCode.setText("")
-                etPinCode.showSoftKeyboard()
+                postUI(1000) { etPinCode.showSoftKeyboard() }
                 btnContinue.setOnClickListener {
                     val pin = etPinCode.text.toString()
                     if (pin.isEmpty()) {
