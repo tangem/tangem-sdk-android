@@ -13,7 +13,9 @@
     <string name="dialog_error">Error</string>
     <string name="dialog_ready_to_scan">Ready to Scan</string>
     <string name="dialog_scan_text">Scan card with your phone as shown above</string>
+    <string name="dialog_success">Success</string>
     <string name="header_card">Card</string>
+    <string name="header_card_any">Any card</string>
 
     <string name="pin1">Access</string>
     <string name="pin2">Pass</string>
