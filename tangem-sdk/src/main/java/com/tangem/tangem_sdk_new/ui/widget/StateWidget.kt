@@ -22,6 +22,11 @@ abstract class BaseStateWidget<T>(protected val mainView: View) : StateWidget<T>
     override fun onBottomSheetDismiss() {
 
     }
+
+    protected fun getString(id: Int): String = mainView.context.getString(id)
+
+    protected fun getFormattedString(id: Int, name: String): String = mainView.context.getString(id, name)
+
 }
 
 abstract class BaseSessionDelegateStateWidget(mainView: View) : BaseStateWidget<SessionViewDelegateState>(mainView)
