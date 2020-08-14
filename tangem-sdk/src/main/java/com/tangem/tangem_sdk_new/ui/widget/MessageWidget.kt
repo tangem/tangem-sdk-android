@@ -85,6 +85,4 @@ class MessageWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
         }
         id?.let { tv.text = getString(it) }
     }
-
-    private fun getString(id: Int): String = mainView.context.getString(id)
 }
