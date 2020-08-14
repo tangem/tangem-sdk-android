@@ -14,28 +14,25 @@
     <string name="dialog_ready_to_scan">Ready to Scan</string>
     <string name="dialog_scan_text">Scan card with your phone as shown above</string>
     <string name="header_card">Card</string>
-    <string name="pin_change_pin_1">Enter New Access Code</string>
-    <string name="pin_change_pin_2">Enter New Pass Code</string>
-    <string name="pin_change_pin_3">Enter New PIN 3</string>
-    <string name="pin_change_confirm">Confirm New Code</string>
-    <string name="pin_change_error">Codes do not match</string>
+
+    <string name="pin1">Access</string>
+    <string name="pin2">Pass</string>
+    <string name="pin3">PIN 3</string>
+
+    <string name="pin_enter_code">%s code</string>
+    <string name="pin_enter_code_continue">Continue</string>
     <string name="pin_enter_error_empty">Enter code</string>
-    <string name="pin_enter_pin_1">Enter Access Code</string>
-    <string name="pin_enter_pin_2">Enter Pass Code</string>
-    <string name="pin_enter_pin_3">Enter PIN 3</string>
 
-    <string name="pin_enter_access_code">Access code</string>
-    <string name="pin_enter_access_code_continue">Continue</string>
+    <string name="pin_set_code_title">Set %s Code</string>
+    <string name="pin_set_code_hint">%s Code</string>
+    <string name="pin_set_code_confirm_hint">Confirm %s Code</string>
 
-    <string name="pin_set_access_code_title">Set Access Code</string>
-    <string name="pin_set_access_code_hint">Access Code</string>
-    <string name="pin_set_access_code_confirm_hint">Confirm Access Code</string>
-    <string name="pin_set_access_code_save">Save</string>
-    <string name="pin_change_access_code_title">Change Access Code</string>
-    <string name="pin_change_current_access_code_hint">Current Access Code</string>
-    <string name="pin_change_new_access_code_hint">New Access Code</string>
-    <string name="pin_change_new_access_code_confirm_hint">New Access Code (Confirm)</string>
-    <string name="pin_change_access_code_save">Save</string>
-    <string name="pin_access_code_confirm_error">Codes do not match</string>
+    <string name="pin_change_code_title">Change %s Code</string>
+    <string name="pin_change_current_code_hint">Current %s Code</string>
+    <string name="pin_change_new_code_hint">New %s Code</string>
+    <string name="pin_change_new_code_confirm_hint">New %s Code (Confirm)</string>
+
+    <string name="pin_save">Save</string>
+    <string name="pin_code_confirm_error">Codes do not match</string>
 
 </resources>
