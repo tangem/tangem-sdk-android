@@ -18,6 +18,10 @@ class HeaderWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
     private val imvClose = mainView.findViewById<ImageView>(R.id.imvClose)
 
     var onClose: (() -> Unit)? = null
+    var isFullScreenMode: Boolean = false
+
+    var cardId: String? = null
+        private set
 
     init {
         imvClose.setOnClickListener {
@@ -34,15 +38,22 @@ class HeaderWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
     override fun setState(params: SessionViewDelegateState) {
         when (params) {
             is SessionViewDelegateState.Ready -> {
+                cardId = params.cardId
                 imvClose.show(false)
-                params.cardId?.let {
-                    tvCard.show(true)
+                tvCard.show(true)
+                if (cardId == null) {
+                    tvCard.text = getString(R.string.header_card_any)
+                } else {
+                    tvCard.text = getString(R.string.header_card)
                     tvCardId.show(true)
-                    tvCardId.text = splitByLength(it, 4)
+                    tvCardId.text = splitByLength(cardId!!, 4)
                 }
             }
             is SessionViewDelegateState.PinChangeRequested -> {
                 imvClose.show(true)
+            }
+            is SessionViewDelegateState.PinRequested -> {
+                imvClose.show(isFullScreenMode)
             }
             else -> {
                 imvClose.show(false)

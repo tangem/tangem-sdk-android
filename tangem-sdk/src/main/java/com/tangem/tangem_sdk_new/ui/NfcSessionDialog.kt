@@ -16,7 +16,7 @@ import com.tangem.tangem_sdk_new.ui.widget.*
 import com.tangem.tangem_sdk_new.ui.widget.progressBar.ProgressbarStateWidget
 import kotlinx.android.synthetic.main.bottom_sheet_layout.*
 
-class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
+class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.style.SdkBottomSheetDialogStyle) {
     private val tag = this::class.java.simpleName
 
     private lateinit var mainContentView: View
@@ -54,12 +54,14 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
         stateWidgets.add(pinCodeRequestWidget)
         stateWidgets.add(pinCodeSetChangeWidget)
         stateWidgets.add(messageWidget)
+
+        behavior.state = BottomSheetBehavior.STATE_COLLAPSED
     }
 
     fun show(state: SessionViewDelegateState) {
-        if (!this.isShowing) {
-            this.show()
-        }
+        if (currentState == state) return
+
+        if (!this.isShowing) this.show()
         when (state) {
             is SessionViewDelegateState.Ready -> onReady(state)
             is SessionViewDelegateState.Success -> onSuccess(state)
@@ -108,17 +110,22 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
     private fun onPinRequested(state: SessionViewDelegateState.PinRequested) {
         Log.i(tag, "onPinRequested")
         enableBottomSheetAnimation()
-        setStateAndShow(state, pinCodeRequestWidget)
+        if (pinCodeRequestWidget.canExpand()) {
+            headerWidget.isFullScreenMode = true
+            headerWidget.onClose = { cancel() }
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        }
 
         pinCodeRequestWidget.onContinue = {
             enableBottomSheetAnimation()
             pinCodeRequestWidget.onContinue = null
+            headerWidget.isFullScreenMode = false
 
-            val readyState = SessionViewDelegateState.Ready(null, null)
-            setStateAndShow(readyState, touchCardWidget, messageWidget)
+            setStateAndShow(getEmptyOnReadyEvent(), headerWidget, touchCardWidget, messageWidget)
             postUI(200) { state.callback(it) }
         }
 
+        setStateAndShow(state, headerWidget, pinCodeRequestWidget)
         performHapticFeedback()
     }
 
@@ -132,9 +139,8 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
             enableBottomSheetAnimation()
             pinCodeSetChangeWidget.onSave = null
 
-            val readyState = SessionViewDelegateState.Ready(null, null)
-            setStateAndShow(readyState, headerWidget, touchCardWidget, messageWidget)
-            state.callback(it)
+            setStateAndShow(getEmptyOnReadyEvent(), headerWidget, touchCardWidget, messageWidget)
+            postUI(200) { state.callback(it) }
         }
 
         setStateAndShow(state, headerWidget, pinCodeSetChangeWidget)
@@ -164,8 +170,7 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
             progressStateWidget.setState(state)
             messageWidget.setState(state)
             postUI(2000) {
-                val readyState = SessionViewDelegateState.Ready(null, null)
-                setStateAndShow(readyState, touchCardWidget, messageWidget)
+                setStateAndShow(getEmptyOnReadyEvent(), touchCardWidget, messageWidget)
             }
         }
     }
@@ -187,7 +192,11 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
         }
     }
 
-    private fun enableBottomSheetAnimation(){
+    private fun getEmptyOnReadyEvent(): SessionViewDelegateState {
+        return SessionViewDelegateState.Ready(headerWidget.cardId, null)
+    }
+
+    private fun enableBottomSheetAnimation() {
         val dialogContainer = delegate.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.parent
         dialogContainer.let { TransitionManager.beginDelayedTransition(it as ViewGroup, AutoTransition()) }
     }
