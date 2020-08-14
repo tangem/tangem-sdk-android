@@ -156,15 +156,41 @@ class SecurityDelayState(mainView: View) : BaseProgressState(mainView) {
         hideViews(doneView, exclamationView)
         showViews(progressBar, tvProgressValue)
 
-        if (progressBar.progressMax != params.totalDurationSeconds.toFloat()) {
-            progressBar.progressMax = params.totalDurationSeconds.toFloat()
+        if (delay.totalDurationSeconds == 0) {
+            invertDelay(delay)
+        } else {
+            if (progressBar.progressMax != delay.totalDurationSeconds.toFloat()) {
+                progressBar.progressMax = delay.totalDurationSeconds.toFloat()
+            }
+            val progress = delay.totalDurationSeconds - delay.ms
+            setProgress(progress.toFloat())
+            tvProgressValue.text = delay.ms.div(100).toString()
         }
-        val progress = delay.totalDurationSeconds - delay.ms
-        val text = params.ms.div(100).toString()
-        setProgress(progress.toFloat())
-        tvProgressValue.text = text
     }
 
+    private fun invertDelay(delay: SessionViewDelegateState.SecurityDelay) {
+        val msDiv100 = delay.ms.div(100)
+        if (msDiv100 == 0 && !progressBar.externalLogicOfProgressIsInActiveState) {
+            setProgress(progressBar.progressMax)
+            showViews(progressBar, doneView)
+            return
+        }
+
+        if (!progressBar.externalLogicOfProgressIsInActiveState) {
+            progressBar.externalLogicOfProgressIsInActiveState = true
+            progressBar.progressMax = msDiv100.toFloat()
+        } else if (msDiv100 == 0) {
+            progressBar.externalLogicOfProgressIsInActiveState = false
+            hideViews(tvProgressValue)
+            showViews(progressBar, doneView)
+            setProgress(progressBar.progressMax)
+            return
+        }
+
+        val progress = progressBar.progressMax - msDiv100
+        setProgress(progress)
+        tvProgressValue.text = delay.ms.div(100).toString()
+    }
 }
 
 class DelayState(mainView: View) : BaseProgressState(mainView) {
