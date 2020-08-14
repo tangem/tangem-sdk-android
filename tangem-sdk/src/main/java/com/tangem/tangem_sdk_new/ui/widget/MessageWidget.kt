@@ -25,7 +25,7 @@ class MessageWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
             }
             is SessionViewDelegateState.Success -> {
                 setText(tvTaskTitle, params.message?.header, R.string.dialog_success)
-                setText(tvTaskMessage, params.message?.body?: "")
+                setText(tvTaskMessage, params.message?.body ?: "")
             }
             is SessionViewDelegateState.Error -> {
                 setText(tvTaskTitle, null, R.string.dialog_error)

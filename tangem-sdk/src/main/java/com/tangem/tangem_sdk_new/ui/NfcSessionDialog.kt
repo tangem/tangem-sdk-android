@@ -59,8 +59,6 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
     }
 
     fun show(state: SessionViewDelegateState) {
-        if (currentState == state) return
-
         if (!this.isShowing) this.show()
         when (state) {
             is SessionViewDelegateState.Ready -> onReady(state)
@@ -86,7 +84,7 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
         Log.i(tag, "onSuccess")
         setStateAndShow(state, progressStateWidget, messageWidget)
         performHapticFeedback()
-        postUI(1500) { dismiss() }
+        postUI(1000) { cancel() }
     }
 
     private fun onError(state: SessionViewDelegateState.Error) {
@@ -96,7 +94,7 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
     }
 
     private fun onSecurityDelay(state: SessionViewDelegateState.SecurityDelay) {
-        Log.i(tag, "onSecurityDelay")
+        Log.i(tag, "onSecurityDelay: ${state.ms}, ${state.totalDurationSeconds}")
         setStateAndShow(state, progressStateWidget, messageWidget)
         performHapticFeedback()
     }
