@@ -32,6 +32,8 @@ class SdkProgressBar(context: Context, attrs: AttributeSet? = null) : View(conte
     var angleToSwitchSweepIncrement = 5
     var angleToSwitchSweepDecrement = 320
 
+    var externalLogicOfProgressIsInActiveState = false
+
     private var sweepAngle = 0f
     private var sweepState: SweepState = SweepState.INCREMENT
 
