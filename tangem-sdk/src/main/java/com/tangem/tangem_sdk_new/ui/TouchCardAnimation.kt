@@ -64,7 +64,7 @@ class TouchCardAnimation(private var context: Context,
     }
 
     private fun downTime(duration: Long): Animator {
-        return ObjectAnimator.ofFloat(llHand, View.ALPHA, 1f, 1f).apply { this.duration = duration }
+        return ObjectAnimator.ofFloat(llHand, View.SCALE_X, 1f, 1f).apply { this.duration = duration }
     }
 
     private fun backInAnimation(): AnimatorSet {
@@ -75,14 +75,13 @@ class TouchCardAnimation(private var context: Context,
         val scaleUpX = ObjectAnimator.ofFloat(llHand, View.SCALE_X, 0.5f, 1f)
         val scaleUpY = ObjectAnimator.ofFloat(llHand, View.SCALE_Y, 0.5f, 1f)
         val xToRight = ObjectAnimator.ofFloat(llHand, View.TRANSLATION_X, context.dpToPx(-75f), context.dpToPx(65f))
-//        val alpha = ObjectAnimator.ofFloat(llHand, View.ALPHA, 0f, 1f)
+        val alpha = ObjectAnimator.ofFloat(llHand, View.ALPHA, 0f, 1f)
         xToRight.interpolator = DecelerateInterpolator()
         xToRight.addListener(onEnd = { onCardOnBack?.invoke() })
 
         val animator = AnimatorSet()
         animator.duration = 1200
-//        animator.playTogether(scaleUpX, scaleUpY, xToRight, alpha)
-        animator.playTogether(scaleUpX, scaleUpY, xToRight)
+        animator.playTogether(scaleUpX, scaleUpY, xToRight, alpha)
         return animator
     }
 
@@ -94,14 +93,13 @@ class TouchCardAnimation(private var context: Context,
         val scaleUpX = ObjectAnimator.ofFloat(llHand, View.SCALE_X, 1f, 0.5f)
         val scaleUpY = ObjectAnimator.ofFloat(llHand, View.SCALE_Y, 1f, 0.5f)
         val xToLeft = ObjectAnimator.ofFloat(llHand, View.TRANSLATION_X, context.dpToPx(65f), context.dpToPx(-75f))
-//        val alpha = ObjectAnimator.ofFloat(llHand, View.ALPHA, 1f, 0f)
+        val alpha = ObjectAnimator.ofFloat(llHand, View.ALPHA, 1f, 0f)
         xToLeft.interpolator = AccelerateInterpolator()
         xToLeft.addListener(onStart = { onCardMoveOut?.invoke() })
 
         val animator = AnimatorSet()
         animator.duration = 1200
-//        animator.playTogether(scaleUpX, scaleUpY, xToLeft, alpha)
-        animator.playTogether(scaleUpX, scaleUpY, xToLeft)
+        animator.playTogether(scaleUpX, scaleUpY, xToLeft, alpha)
         return animator
     }
 
