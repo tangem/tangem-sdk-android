@@ -14,5 +14,5 @@
     <dimen name="progress_bar_stroke_width">2</dimen>
 
     <dimen name="bottom_sheet_top_container_height">220dp</dimen>
-    <dimen name="bottom_sheet_bottom_container_height">70dp</dimen>
+    <dimen name="bottom_sheet_bottom_container_height">105dp</dimen>
 </resources>
