@@ -44,8 +44,8 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
                     } else {
                         tilPinCode.error = null
                         tilPinCode.isErrorEnabled = false
-                        etPinCode.hideSoftKeyboard()
                         mainView.requestFocus()
+                        etPinCode.hideSoftKeyboard()
                         postUI(250) { onContinue?.invoke(pin) }
                     }
                 }
