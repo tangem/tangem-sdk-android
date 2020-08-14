@@ -20,6 +20,7 @@ import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.hideSoftKeyboard
 import com.tangem.tangem_sdk_new.extensions.showSoftKeyboard
+import com.tangem.tangem_sdk_new.postUI
 
 /**
 [REDACTED_AUTHOR]
@@ -61,7 +62,7 @@ class PinCodeModificationWidget(
         modifyUiByMode()
         attachCodesCheck(getEtForCodeChecks())
         attachCodesCheck(etPinCodeConfirm)
-        btnSave.isEnabled = false
+//        btnSave.isEnabled = false
 
         tilPinCode.setEndIconOnClickListener {
             isPasswordEnabled = !isPasswordEnabled
@@ -71,18 +72,24 @@ class PinCodeModificationWidget(
         }
 
         btnSave.setOnClickListener {
-            mainView.requestFocus()
-            mainView.hideSoftKeyboard()
-            onSave?.invoke(etPinCodeConfirm.text?.toString() ?: "")
+            val state = checkCodes()
+//            btnSave.isEnabled = state == MATCH
+            updateErrorsVisibility(state == NOT_MATCH || state == UNDEFINED)
+            if (state == MATCH) {
+                mainView.requestFocus()
+                mainView.hideSoftKeyboard()
+                postUI(250) { onSave?.invoke(etPinCodeConfirm.text?.toString() ?: "") }
+            }
         }
     }
 
     override fun setState(params: SessionViewDelegateState) {
         when (params) {
             is SessionViewDelegateState.PinChangeRequested -> {
-                etPinCode.showSoftKeyboard()
                 pinType = params.pinType
+                resetPinCodes()
                 modifyUiByMode()
+                postUI(1000) { etPinCode.showSoftKeyboard() }
             }
         }
     }
@@ -111,11 +118,17 @@ class PinCodeModificationWidget(
         }
     }
 
+    private fun resetPinCodes() {
+        etPinCode.setText("")
+        etNewPinCode.setText("")
+        etPinCodeConfirm.setText("")
+    }
+
     private fun attachCodesCheck(et: TextInputEditText) {
         DebounceAfterTextChanged(et) {
-            val state = checkCodes()
-            btnSave.isEnabled = state == MATCH
-            updateErrorsVisibility(state == NOT_MATCH)
+//            val state = checkCodes()
+//            btnSave.isEnabled = state == MATCH
+//            updateErrorsVisibility(state == NOT_MATCH)
         }
     }
 

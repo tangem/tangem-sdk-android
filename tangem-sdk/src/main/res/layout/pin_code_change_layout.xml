@@ -89,7 +89,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="0.1" />
+        android:layout_weight="1" />
 
     <Button
         android:id="@+id/btnSaveCode"
@@ -102,10 +102,5 @@
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:text="@string/pin_save" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
 
 </LinearLayout>
