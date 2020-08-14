@@ -14,6 +14,11 @@
         layout="@layout/pin_code_change_layout"
         android:visibility="gone" />
 
+    <include
+        android:id="@+id/csPinCode"
+        layout="@layout/pin_code_enter_layout"
+        android:visibility="gone" />
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/bottom_sheet_top_container_height">
@@ -30,11 +35,6 @@
             android:layout_height="@dimen/bottom_sheet_top_container_height"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="20dp"
-            android:visibility="gone" />
-
-        <include
-            android:id="@+id/csPinCode"
-            layout="@layout/pin_code_enter_layout"
             android:visibility="gone" />
 
     </FrameLayout>
