@@ -193,10 +193,8 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
             session: CardSession,
             callback: (result: CompletionResult<T>) -> Unit
     ) {
-        session.pause()
         session.viewDelegate.onPinRequested(PinType.Pin1) { pin1 ->
             session.environment.pin1 = PinCode(pin1)
-            session.resume()
             transceive(session, callback)
         }
     }
