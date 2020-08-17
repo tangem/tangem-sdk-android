@@ -2,6 +2,7 @@ package com.tangem.commands.file
 
 import com.tangem.CardSession
 import com.tangem.SessionEnvironment
+import com.tangem.TangemError
 import com.tangem.TangemSdkError
 import com.tangem.commands.Card
 import com.tangem.commands.CardStatus
@@ -46,6 +47,13 @@ class ReadFileDataCommand(
             return TangemSdkError.NotPersonalized()
         }
         return null
+    }
+
+    override fun mapError(card: Card?, error: TangemError): TangemError {
+        if (error is TangemSdkError.InvalidParams && requiresPin2) {
+            return TangemSdkError.Pin2OrCvcRequired()
+        }
+        return error
     }
 
     override fun run(
