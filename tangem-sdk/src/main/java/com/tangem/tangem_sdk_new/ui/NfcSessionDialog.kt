@@ -49,11 +49,11 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
                 activity, ivHandCardHorizontal, ivHandCardVertical, llHand, llNfc
         )
         nfcDeviceAntenna.init()
-        state.cardId?.let { cardId ->
-            tvCard?.show()
-            tvCardId?.show()
-            tvCardId?.text = cardId
-        }
+
+        val showCardId = state.cardId != null
+        tvCard?.show(showCardId)
+        tvCardId?.show(showCardId)
+        if (state.cardId != null) tvCardId?.text = state.cardId
 
         if (state.message?.header != null) {
             tvTaskTitle?.text = state.message.header
@@ -64,8 +64,10 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity) {
             tvTaskText?.text = state.message.body
         } else {
             tvTaskText?.text = activity.getText(R.string.dialog_scan_text)
-
         }
+
+        tvTaskText?.show()
+        tvTaskTitle?.show()
     }
 
     private fun onSuccess(state: SessionViewDelegateState.Success) {
