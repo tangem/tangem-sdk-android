@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SdkProgressBar">
+        <attr name="pb_is_indeterminate" format="boolean" />
+        <attr name="pb_progress" format="integer" />
+        <attr name="pb_progress_max" format="integer" />
+        <attr name="pb_sweep_step" format="integer" />
+        <attr name="pb_sweep_start_increment" format="integer" />
+        <attr name="pb_sweep_start_decrement" format="integer" />
+        <attr name="pb_color" format="color" />
+        <attr name="pb_secondary_color" format="color" />
+        <attr name="pb_thickness" format="dimension" />
+        <attr name="pb_secondary_thickness" format="dimension" />
+        <attr name="pb_round_border" format="boolean" />
+    </declare-styleable>
+</resources>
