@@ -27,12 +27,14 @@ class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDel
     }
 
     private fun createReadingDialog(activity: Activity) {
-        val dialogView = activity.layoutInflater.inflate(R.layout.nfc_bottom_sheet, null)
-        readingDialog = NfcSessionDialog(activity)
-        readingDialog?.setContentView(dialogView)
-        readingDialog?.dismissWithAnimation = true
-        readingDialog?.create()
-        readingDialog?.setOnCancelListener { reader.stopSession(true) }
+        readingDialog = NfcSessionDialog(activity).apply {
+            dismissWithAnimation = true
+            create()
+            setOnCancelListener {
+                reader.stopSession(true)
+                createReadingDialog(activity)
+            }
+        }
     }
 
     override fun onSecurityDelay(ms: Int, totalDurationSeconds: Int) {
@@ -69,38 +71,28 @@ class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDel
     }
 
     override fun onPinRequested(pinType: PinType, callback: (pin: String) -> Unit) {
-        val message = when (pinType) {
-            PinType.Pin1 -> activity.getString(R.string.pin_enter_pin_1)
-            PinType.Pin2 -> activity.getString(R.string.pin_enter_pin_2)
-            PinType.Pin3 -> activity.getString(R.string.pin_enter_pin_3)
-        }
-        postUI { readingDialog?.show(SessionViewDelegateState.PinRequested(message, callback)) }
+        postUI { readingDialog?.show(SessionViewDelegateState.PinRequested(pinType, callback)) }
     }
 
     override fun onPinChangeRequested(pinType: PinType, callback: (pin: String) -> Unit) {
-        val message = when (pinType) {
-            PinType.Pin1 -> activity.getString(R.string.pin_change_pin_1)
-            PinType.Pin2 -> activity.getString(R.string.pin_change_pin_2)
-            PinType.Pin3 -> activity.getString(R.string.pin_change_pin_3)
-        }
-        postUI { readingDialog?.show(SessionViewDelegateState.PinChangeRequested(message, callback)) }
+        postUI { readingDialog?.show(SessionViewDelegateState.PinChangeRequested(pinType, callback)) }
     }
 
     private fun setLogger() {
         Log.setLogger(
-                object : LoggerInterface {
-                    override fun i(logTag: String, message: String) {
-                        android.util.Log.i(logTag, message)
-                    }
-
-                    override fun e(logTag: String, message: String) {
-                        android.util.Log.e(logTag, message)
-                    }
-
-                    override fun v(logTag: String, message: String) {
-                        android.util.Log.v(logTag, message)
-                    }
+            object : LoggerInterface {
+                override fun i(logTag: String, message: String) {
+                    android.util.Log.i(logTag, message)
                 }
+
+                override fun e(logTag: String, message: String) {
+                    android.util.Log.e(logTag, message)
+                }
+
+                override fun v(logTag: String, message: String) {
+                    android.util.Log.v(logTag, message)
+                }
+            }
         )
     }
 }
