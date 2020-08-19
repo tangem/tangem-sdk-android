@@ -33,22 +33,20 @@ class ReadFileDataTask(
 
     private fun performReadFileDataCommand(session: CardSession, callback: (result: CompletionResult<ReadFilesResponse>) -> Unit) {
         val command = ReadFileDataCommand(fileIndex, readPrivateFiles)
-        command.run(session) { readResponse ->
-            when (readResponse) {
+        command.run(session) { result ->
+            when (result) {
                 is CompletionResult.Failure -> {
-                    if (readResponse.error is TangemSdkError.FileNotFound) {
+                    if (result.error is TangemSdkError.FileNotFound) {
                         callback(CompletionResult.Success(ReadFilesResponse(files)))
                     } else {
-                        callback(CompletionResult.Failure(readResponse.error))
+                        callback(CompletionResult.Failure(result.error))
                     }
                 }
                 is CompletionResult.Success -> {
-                    val newFile = File(
-                            readResponse.data.fileIndex, readResponse.data.fileSettings,
-                            readResponse.data.fileData
-                    )
+                    val data = result.data
+                    val newFile = File(data.fileIndex, data.fileSettings, data.fileData)
                     files.add(newFile)
-                    fileIndex += 1
+                    fileIndex = data.fileIndex + 1
                     performReadFileDataCommand(session, callback)
                 }
             }
