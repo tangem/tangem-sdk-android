@@ -2,4 +2,5 @@
     package="com.tangem.tangem_sdk_new" >
 
     <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
 </manifest>
