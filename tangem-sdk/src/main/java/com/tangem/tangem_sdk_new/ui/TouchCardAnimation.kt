@@ -1,20 +1,23 @@
 package com.tangem.tangem_sdk_new.ui
 
+import android.animation.Animator
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.content.Context
 import android.os.Build
 import android.view.View
-import android.view.animation.Animation
+import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
-import android.view.animation.Transformation
 import android.widget.ImageView
-import android.widget.RelativeLayout
-import androidx.appcompat.widget.LinearLayoutCompat
+import android.widget.LinearLayout
+import androidx.core.animation.addListener
+import com.tangem.tangem_sdk_new.extensions.dpToPx
 
 class TouchCardAnimation(private var context: Context,
                          private var ivHandCardHorizontal: ImageView,
                          private var ivHandCardVertical: ImageView,
-                         private var llHand: LinearLayoutCompat,
-                         private var llNfc: LinearLayoutCompat) {
+                         private var llHand: LinearLayout,
+                         private var llNfc: LinearLayout) {
 
     companion object {
         const val CARD_ON_BACK = 0
@@ -29,30 +32,75 @@ class TouchCardAnimation(private var context: Context,
     var y: Float = 0.toFloat()
     var z: Int = 0
 
+    var onCardOnBack: (() -> Unit)? = null
+    var onCardMoveOut: (() -> Unit)? = null
+
+    private var handAnimator: AnimatorSet? = null
+
     fun init() {
         getAntennaLocation()
         setCardOrientation()
-        animate()
     }
 
     fun animate() {
-        val lp = llHand.layoutParams as RelativeLayout.LayoutParams
-        val lp2 = llNfc.layoutParams as RelativeLayout.LayoutParams
-        val dp = context.resources.displayMetrics.density
-        val lm = dp * (47 + x * 75)
-        lp.topMargin = (dp * (-100 + y * 250)).toInt()
-        lp2.topMargin = (dp * (-125 + y * 250)).toInt()
-        llNfc.layoutParams = lp2
+        handAnimator?.cancel()
+        handAnimator = AnimatorSet()
+        handAnimator?.playSequentially(backInAnimation(), downTime(3000), backOutAnimation(), downTime(400))
 
-        val a = object : Animation() {
-            override fun applyTransformation(interpolatedTime: Float, t: Transformation) {
-                lp.leftMargin = (lm * interpolatedTime).toInt()
-                llHand.layoutParams = lp
-            }
-        }
-        a.duration = 2000
-        a.interpolator = DecelerateInterpolator()
-        llHand.startAnimation(a)
+        var isCancelled = false
+        handAnimator?.addListener(
+            onStart = { isCancelled = false },
+            onEnd = {
+                if (!isCancelled) handAnimator?.start()
+            },
+            onCancel = { isCancelled = true },
+            onRepeat = { isCancelled = false }
+        )
+        handAnimator?.start()
+    }
+
+    fun stopAnimation() {
+        handAnimator?.cancel()
+    }
+
+    private fun downTime(duration: Long): Animator {
+        return ObjectAnimator.ofFloat(llHand, View.SCALE_X, 1f, 1f).apply { this.duration = duration }
+    }
+
+    private fun backInAnimation(): AnimatorSet {
+        val dp = context.resources.displayMetrics.density
+        llHand.translationY = (dp * (-50 + y * 250))
+        llNfc.translationY = (dp * (-105 + y * 250))
+
+        val scaleUpX = ObjectAnimator.ofFloat(llHand, View.SCALE_X, 0.5f, 1f)
+        val scaleUpY = ObjectAnimator.ofFloat(llHand, View.SCALE_Y, 0.5f, 1f)
+        val xToRight = ObjectAnimator.ofFloat(llHand, View.TRANSLATION_X, context.dpToPx(-75f), context.dpToPx(65f))
+        val alpha = ObjectAnimator.ofFloat(llHand, View.ALPHA, 0f, 1f)
+        xToRight.interpolator = DecelerateInterpolator()
+        xToRight.addListener(onEnd = { onCardOnBack?.invoke() })
+
+        val animator = AnimatorSet()
+        animator.duration = 1200
+        animator.playTogether(scaleUpX, scaleUpY, xToRight, alpha)
+        return animator
+    }
+
+    private fun backOutAnimation(): AnimatorSet {
+        val dp = context.resources.displayMetrics.density
+        llHand.translationY = (dp * (-50 + y * 250))
+        llNfc.translationY = (dp * (-105 + y * 250))
+
+        val scaleUpX = ObjectAnimator.ofFloat(llHand, View.SCALE_X, 1f, 0.5f)
+        val scaleUpY = ObjectAnimator.ofFloat(llHand, View.SCALE_Y, 1f, 0.5f)
+        val xToLeft = ObjectAnimator.ofFloat(llHand, View.TRANSLATION_X, context.dpToPx(65f), context.dpToPx(-75f))
+        val alpha = ObjectAnimator.ofFloat(llHand, View.ALPHA, 1f, 0f)
+        xToLeft.interpolator = AccelerateInterpolator()
+        xToLeft.addListener(onStart = { onCardMoveOut?.invoke() })
+
+        val animator = AnimatorSet()
+        animator.duration = 1200
+        animator.playTogether(scaleUpX, scaleUpY, xToLeft, alpha)
+        return animator
     }
 
     private fun getAntennaLocation() {
@@ -95,5 +143,4 @@ class TouchCardAnimation(private var context: Context,
             CARD_ON_FRONT -> llHand.elevation = 30.0f
         }
     }
-
 }
