@@ -37,6 +37,15 @@ class NfcReader : CardReader {
 
     override fun startSession() {
         Log.i(this::class.simpleName!!, "NFC reader is starting NFC session")
+        nfcTag = null
+        listener?.readingIsActive = true
+    }
+
+    override fun pauseSession() {
+        listener?.readingIsActive = false
+    }
+
+    override fun resumeSession() {
         listener?.readingIsActive = true
     }
 
@@ -87,14 +96,10 @@ class NfcReader : CardReader {
             nfcTag = null
             return
         }
-
-        if (rawResponse != null) {
-            Log.i(this::class.simpleName!!, "Data from the card was received")
-        }
         rawResponse?.let { callback.invoke(CompletionResult.Success(ResponseApdu(it))) }
     }
 
-    private fun transcieveAndLog(data: ByteArray): ByteArray? {
+    private fun transcieveAndLog(data:  ByteArray): ByteArray? {
         Log.i(this::class.simpleName!!, "Sending data to the card, size is ${data.size}")
         Log.v(this::class.simpleName!!, "Raw data that is to be sent to the card: ${data.toHexString()}")
         val rawResponse = nfcTag?.isoDep?.transceive(data)

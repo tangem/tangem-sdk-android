@@ -26,8 +26,10 @@
     <string name="error_missing_issuer_public_key">The issuer public key is missing</string>
     <string name="error_user_cancelled">The user cancelled the operation</string>
     <string name="error_busy">The CardSession is running a command. Please wait and try again</string>
+    <string name="error_wrong_card">Wrong Card</string>
     <string name="error_wrong_card_number">You tapped a different card. Please match the in-app Card ID to the your physical Card ID to continue this process.</string>
-    <string name="error_wrong_card_type">This card is configured for a different app. Please see the information on your card and download the related app.</string>
+    <string name="error_wrong_card_type">You tapped a wrong card. Please check if it is the correct card to use for this action.</string>
+    <string name="error_wrong_card_app">This card is configured for a different app. Please see the information on your card and download the related app.</string>
     <string name="error_card_error">Your card is missing essential data</string>
     <string name="error_invalid_response">Invalid Response</string>
 </resources>
