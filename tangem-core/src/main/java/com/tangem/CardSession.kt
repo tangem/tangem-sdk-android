@@ -110,16 +110,7 @@ class CardSession(
             runnable.run(this) { result ->
                 when (result) {
                     is CompletionResult.Success -> stop()
-                    is CompletionResult.Failure -> {
-                        if (result.error is TangemSdkError.ExtendedLengthNotSupported) {
-                            if (session.environment.terminalKeys != null) {
-                                session.environment.terminalKeys = null
-                                startWithRunnable(runnable, callback)
-                                return@run
-                            }
-                        }
-                        stopWithError(result.error)
-                    }
+                    is CompletionResult.Failure -> { stopWithError(result.error) }
                 }
                 callback(result)
             }
@@ -160,6 +151,9 @@ class CardSession(
         state = CardSessionState.Active
         viewDelegate.onSessionStarted(cardId, initialMessage)
 
+        reader.scope = scope
+        reader.startSession()
+
         scope.launch {
             reader.tag
                     .asFlow()
@@ -170,9 +164,9 @@ class CardSession(
                         }
                     }
                     .collect { tagType ->
-                        if (tagType == null && connectedTag != null) {
+                        if (tagType == null && connectedTag != null && state == CardSessionState.Active) {
                             handleTagLost()
-                        } else if (tagType != null) {
+                        } else if (tagType != null) { //TODO: check what if connectedTag != null here
                             connectedTag = tagType
                             viewDelegate.onTagConnected()
 
@@ -184,8 +178,7 @@ class CardSession(
                         }
                     }
         }
-        reader.scope = scope
-        reader.startSession()
+
     }
 
     private fun handleTagLost() {
@@ -205,14 +198,14 @@ class CardSession(
                 is CompletionResult.Success -> {
                     val receivedCardId = result.data.cardId
                     if (cardId != null && receivedCardId != cardId) {
-                        viewDelegate.onWrongCard()
+                        viewDelegate.onWrongCard(WrongValueType.CardId)
                         preflightCheck(callback)
                         return@run
                     }
                     val allowedCardTypes = environment.cardFilter.allowedCardTypes
                     if (!allowedCardTypes.contains(result.data.getType())) {
-                        stopWithError(TangemSdkError.WrongCardType())
-                        callback(this, TangemSdkError.WrongCardType())
+                        viewDelegate.onWrongCard(WrongValueType.CardType)
+                        preflightCheck(callback)
                         return@run
                     }
                     environment.card = result.data
@@ -252,9 +245,9 @@ class CardSession(
     }
 
     private fun stopSession() {
+        state = CardSessionState.Inactive
         environmentService.saveEnvironmentValues(environment, cardId)
         reader.stopSession()
-        state = CardSessionState.Inactive
         scope.cancel()
     }
 
@@ -276,11 +269,11 @@ class CardSession(
     }
 
     fun pause() {
-        reader.stopSession()
+        reader.pauseSession()
     }
 
     fun resume() {
-        reader.startSession()
+        reader.resumeSession()
     }
 
     private suspend fun establishEncryptionIfNeeded(): CompletionResult<Boolean> {
