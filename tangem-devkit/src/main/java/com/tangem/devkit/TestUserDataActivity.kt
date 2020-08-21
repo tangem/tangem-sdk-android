@@ -49,7 +49,7 @@ class TestUserDataActivity : AppCompatActivity() {
 
             tangemSdk.writeUserData(
                     writeOptions.cardId!!,
-                    writeOptions.userData,
+                    writeOptions.userData!!,
                     writeOptions.userCounter
             ) {
                 when (it) {
