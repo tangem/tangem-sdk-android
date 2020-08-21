@@ -44,6 +44,9 @@ interface CardReader {
      */
     fun stopSession(cancelled: Boolean = false)
 
+    fun pauseSession()
+    fun resumeSession()
+
     fun readSlixTag(callback: (result: CompletionResult<ResponseApdu>) -> Unit)
 
 }

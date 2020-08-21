@@ -15,7 +15,7 @@ class WriteUserProtectedDataAction : BaseAction() {
         val cardId = attrs.itemList.findItem(TlvId.CardId)?.viewModel?.data ?: return
         val counter = (attrs.itemList.findItem(TlvId.Counter)?.viewModel?.data as? Int) ?: 1
 
-        attrs.tangemSdk.writeProtectedUserData(stringOf(cardId), protectedUserData, counter) {
+        attrs.tangemSdk.writeUserProtectedData(stringOf(cardId), protectedUserData, counter) {
             handleResult(payload, it, null, attrs, callback)
         }
     }

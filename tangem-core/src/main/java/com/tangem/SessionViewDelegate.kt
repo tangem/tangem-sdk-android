@@ -34,7 +34,7 @@ interface SessionViewDelegate {
 
     fun onTagConnected()
 
-    fun onWrongCard()
+    fun onWrongCard(wrongValueType: WrongValueType)
 
     /**
      * It is called when NFC session was completed and a user can take the card away from the Android device.
@@ -61,3 +61,5 @@ interface SessionViewDelegate {
  * Wrapper for a message that can be shown to user after a start of NFC session.
  */
 data class Message(val header: String? = null, val body: String? = null)
+
+enum class WrongValueType { CardId, CardType }
