@@ -47,6 +47,7 @@ class SetPinCommand(
             return
         }
 
+        session.pause()
         session.viewDelegate.onPinChangeRequested(pinType) { pinString ->
             val newPin = pinString.calculateSha256()
             when (pinType) {
@@ -54,6 +55,7 @@ class SetPinCommand(
                 PinType.Pin2 -> newPin2 = newPin
                 PinType.Pin3 -> newPin3 = newPin
             }
+            session.resume()
             transceive(session, callback)
         }
     }
