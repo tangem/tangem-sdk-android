@@ -28,7 +28,7 @@ class WriteFileDataTask(
                     val counter = (readResponse.data.fileDataCounter ?: 0) + 1
                     val cardId = session.environment.card?.cardId
                     if (cardId == null) {
-                        callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
+                        callback(CompletionResult.Failure(TangemSdkError.CardError()))
                         return@run
                     }
                     val writeCommand = WriteFileDataCommand(
