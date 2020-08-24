@@ -58,8 +58,8 @@ class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDel
         postUI { readingDialog?.show(SessionViewDelegateState.TagConnected) }
     }
 
-    override fun onWrongCard() {
-        postUI { readingDialog?.show(SessionViewDelegateState.WrongCard) }
+    override fun onWrongCard(wrongValueType: WrongValueType) {
+        postUI { readingDialog?.show(SessionViewDelegateState.WrongCard(wrongValueType)) }
     }
 
     override fun onSessionStopped(message: Message?) {

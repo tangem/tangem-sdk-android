@@ -54,6 +54,10 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
 
     fun transceive(session: CardSession, callback: (result: CompletionResult<T>) -> Unit) {
         val card = session.environment.card
+        if (card == null && performPreflightRead) {
+            callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
+            return
+        }
         if (session.environment.handleErrors && card != null) {
             performPreCheck(card)?.let { error ->
                 callback(CompletionResult.Failure(error))
@@ -61,7 +65,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
             }
         }
         if (session.environment.pin2 == null && requiresPin2) {
-            requestPin2(session, callback)
+            requestPin(PinType.Pin2, session, callback)
             return
         }
         transceiveInternal(session, callback)
@@ -72,16 +76,23 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
         transceiveApdu(apdu, session) { result ->
             when (result) {
                 is CompletionResult.Failure -> {
+                    if (result.error is TangemSdkError.ExtendedLengthNotSupported) {
+                        if (session.environment.terminalKeys != null) {
+                            session.environment.terminalKeys = null
+                            transceiveInternal(session, callback)
+                            return@transceiveApdu
+                        }
+                    }
                     if (session.environment.handleErrors) {
                         val error = mapError(session.environment.card, result.error)
                         if (error is TangemSdkError.Pin1Required) {
                             session.environment.pin1 = null
-                            requestPin1(session, callback)
+                            requestPin(PinType.Pin1, session, callback)
                             return@transceiveApdu
                         }
                         if (error is TangemSdkError.Pin2OrCvcRequired) {
                             session.environment.pin2 = null
-                            requestPin2(session, callback)
+                            requestPin(PinType.Pin2, session, callback)
                             return@transceiveApdu
                         }
                         callback(CompletionResult.Failure(error))
@@ -189,21 +200,17 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
         return tlv?.find { it.tag == TlvTag.Pause }?.value?.toInt()
     }
 
-    private fun requestPin1(
-            session: CardSession,
-            callback: (result: CompletionResult<T>) -> Unit
-    ) {
-        session.viewDelegate.onPinRequested(PinType.Pin1) { pin1 ->
-            session.environment.pin1 = PinCode(pin1)
-            transceive(session, callback)
-        }
-    }
-
-    private fun requestPin2(session: CardSession,
-                            callback: (result: CompletionResult<T>) -> Unit) {
-        session.viewDelegate.onPinRequested(PinType.Pin2) { pin2 ->
-            session.environment.pin2 = PinCode(pin2)
-            transceive(session, callback)
+    private fun requestPin(pinType: PinType,
+                           session: CardSession, callback: (result: CompletionResult<T>) -> Unit) {
+        session.pause()
+        session.viewDelegate.onPinRequested(pinType) { pin ->
+            when (pinType) {
+                PinType.Pin1 -> session.environment.pin1 = PinCode(pin)
+                PinType.Pin2 -> session.environment.pin2 = PinCode(pin)
+                PinType.Pin3 -> {}
+            }
+            session.resume()
+            transceiveInternal(session, callback)
         }
     }
 }
