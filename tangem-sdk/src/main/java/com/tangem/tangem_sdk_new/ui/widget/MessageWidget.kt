@@ -4,6 +4,7 @@ import android.view.View
 import android.widget.TextView
 import com.tangem.TangemError
 import com.tangem.TangemSdkError
+import com.tangem.WrongValueType
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.localizedDescription
@@ -32,9 +33,9 @@ class MessageWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
 
                 val errorMessage = getErrorMessage(params.error)
                 val formattedErrorMessage = mainView.context.getString(
-                    R.string.error_message,
-                    params.error.code.toString(),
-                    errorMessage
+                        R.string.error_message,
+                        params.error.code.toString(),
+                        errorMessage
                 )
                 setText(tvTaskMessage, formattedErrorMessage)
             }
@@ -57,11 +58,17 @@ class MessageWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
             is SessionViewDelegateState.TagConnected -> {
             }
             is SessionViewDelegateState.WrongCard -> {
+                val description = when (params.wrongValueType) {
+                    WrongValueType.CardId -> getString(R.string.error_wrong_card_number)
+                    WrongValueType.CardType -> getString(R.string.error_wrong_card_type)
+
+                }
+
                 setText(tvTaskTitle, null, R.string.dialog_error)
                 val bodyMessage = mainView.context.getString(
-                    R.string.error_message,
-                    "Wrong Card",
-                    getString(R.string.error_wrong_card_number)
+                        R.string.error_message,
+                        getString(R.string.error_wrong_card),
+                        description
                 )
 
                 setText(tvTaskMessage, bodyMessage)
