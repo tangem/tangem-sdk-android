@@ -120,7 +120,7 @@ class DemoActivity : AppCompatActivity() {
         btnWriteUserProtectedData.setOnClickListener {
             val userProtectedData = "Some of user protected data ${Utils.randomString(20)}".toByteArray()
             val counter = 1
-            sdk.writeProtectedUserData(card?.cardId, userProtectedData, counter) { handleResult(it) }
+            sdk.writeUserProtectedData(card?.cardId, userProtectedData, counter) { handleResult(it) }
         }
     }
 
