@@ -1,4 +1,5 @@
 apply plugin: 'maven'
+apply from: '../artifactConfig.gradle'
 
 repositories {
   maven {url "https://raw.github.com/synergian/wagon-git/releases"}
@@ -14,8 +15,11 @@ dependencies {
 
 task lookForArtifacts {
   doLast {
+    def artifactGroup = "$artifactConfig.group"
+    def artifactVersion = "$artifactConfig.version"
+
     def artifactFullName = artifactId + '-' + artifactVersion + '.' + artifactPackaging
-    def artifactPath = artifactPackage.replace(".", "/") + "/" + artifactId + "/" + artifactVersion + "/" + artifactFullName
+    def artifactPath = artifactGroup.replace(".", "/") + "/" + artifactId + "/" + artifactVersion + "/" + artifactFullName
     def repositoryUrl = 'https://api.bitbucket.org/2.0/repositories/' + companyName + '/' + repositoryName + '/src/releases/' + artifactPath
 
     println("")
@@ -41,8 +45,8 @@ uploadArchives {
     configuration = configurations.deployLibrary
     repository(url: 'git:releases://git@bitbucket.org:' + companyName + '/' + repositoryName + '.git')
     pom.project {
-      groupId = artifactPackage
-      version = artifactVersion
+      groupId = "$artifactConfig.group"
+      version = "$artifactConfig.version"
       artifactId = artifactId
       packaging artifactPackaging
     }
