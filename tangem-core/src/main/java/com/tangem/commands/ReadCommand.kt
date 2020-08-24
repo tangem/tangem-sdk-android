@@ -371,6 +371,8 @@ class Card(
  */
 class ReadCommand : Command<Card>() {
 
+    override val performPreflightRead = false
+
     override fun mapError(card: Card?, error: TangemError): TangemError {
         if (error is TangemSdkError.InvalidParams) {
             return TangemSdkError.Pin1Required()

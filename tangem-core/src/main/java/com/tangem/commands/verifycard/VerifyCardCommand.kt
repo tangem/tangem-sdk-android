@@ -56,7 +56,7 @@ class VerifyCardCommand(private val onlineVerification: Boolean) : Command<Verif
         val card = session.environment.card
         val cardPublicKey = card?.cardPublicKey
         if (cardPublicKey == null) {
-            callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
+            callback(CompletionResult.Failure(TangemSdkError.CardError()))
             return
         }
         super.run(session) { result ->
