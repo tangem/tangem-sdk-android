@@ -6,6 +6,7 @@ import android.widget.TextView
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.hideSoftKeyboard
+import com.tangem.tangem_sdk_new.extensions.setVectorDrawable
 import com.tangem.tangem_sdk_new.extensions.show
 
 /**
@@ -24,6 +25,7 @@ class HeaderWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
         private set
 
     init {
+        imvClose.setVectorDrawable(R.drawable.ic_close)
         imvClose.setOnClickListener {
             mainView.hideSoftKeyboard()
             mainView.requestFocus()
