@@ -1,12 +1,13 @@
 package com.tangem.tangem_sdk_new.ui.widget.progressBar
 
-import android.graphics.drawable.AnimatedVectorDrawable
+import android.graphics.drawable.Animatable
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
+import com.tangem.tangem_sdk_new.extensions.setAnimVectorDrawable
 import com.tangem.tangem_sdk_new.extensions.show
 import com.tangem.tangem_sdk_new.ui.widget.BaseSessionDelegateStateWidget
 
@@ -48,6 +49,8 @@ abstract class BaseProgressState(mainView: View) : BaseSessionDelegateStateWidge
 
 
     init {
+        doneView.setAnimVectorDrawable(R.drawable.ic_success_anim)
+        exclamationView.setAnimVectorDrawable(R.drawable.ic_exclamation_anim)
         hideViews(tvProgressValue, progressBar, doneView, exclamationView)
     }
 
@@ -84,9 +87,7 @@ abstract class BaseProgressState(mainView: View) : BaseSessionDelegateStateWidge
 
     protected fun showAndAnimateDrawable(view: ImageView) {
         view.show(true)
-        val drawable = view.drawable as? AnimatedVectorDrawable ?: return
-
-        drawable.start()
+        (view.drawable as? Animatable)?.start()
     }
 }
 
