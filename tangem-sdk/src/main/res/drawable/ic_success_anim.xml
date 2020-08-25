@@ -1,6 +1,6 @@
 <animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:aapt="http://schemas.android.com/aapt"
-        android:drawable="@drawable/ic_progress_bar_state_success">
+        android:drawable="@drawable/ic_success">
 
     <target android:name="check">
         <aapt:attr name="android:animation">
