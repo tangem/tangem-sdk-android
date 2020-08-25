@@ -1,1 +1,4 @@
-ext.artifactConfig = [group: 'com.Tangem', version  : '0.0.1']
+ext.artifactConfig = [
+        group: project.hasProperty('artifactGroup') ? project.getProperty('artifactGroup') : 'com.github.Tangem',
+        version: project.hasProperty('artifactVersion') ? project.getProperty('artifactVersion') : '0.0.1'
+]
