@@ -33,7 +33,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_progress_bar_state_success_anim" />
+            app:srcCompat="@drawable/ic_success_anim" />
 
     <ImageView
             android:id="@+id/imvExclamation"
