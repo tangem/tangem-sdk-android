@@ -1,9 +1,7 @@
 package com.tangem.tangem_sdk_new.ui
 
-import android.app.Activity
-import android.view.HapticFeedbackConstants
-import android.view.View
-import android.view.ViewGroup
+import android.content.Context
+import android.view.*
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -16,7 +14,7 @@ import com.tangem.tangem_sdk_new.ui.widget.*
 import com.tangem.tangem_sdk_new.ui.widget.progressBar.ProgressbarStateWidget
 import kotlinx.android.synthetic.main.bottom_sheet_layout.*
 
-class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.style.SdkBottomSheetDialogStyle) {
+class NfcSessionDialog(context: Context) : BottomSheetDialog(context) {
     private val tag = this::class.java.simpleName
 
     private lateinit var mainContentView: View
@@ -33,7 +31,7 @@ class NfcSessionDialog(val activity: Activity) : BottomSheetDialog(activity, R.s
     private var currentState: SessionViewDelegateState? = null
 
     init {
-        val dialogView = activity.layoutInflater.inflate(R.layout.bottom_sheet_layout, null)
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_layout, null)
         setContentView(dialogView)
     }
 

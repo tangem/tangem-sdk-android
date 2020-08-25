@@ -5,6 +5,7 @@
         <item name="colorPrimary">@color/card_sdk_primary</item>
         <item name="colorPrimaryDark">@color/card_sdk_primary_dark</item>
         <item name="colorAccent">@color/card_sdk_accent</item>
+        <item name="bottomSheetDialogTheme">@style/SdkBottomSheetDialogStyle</item>
     </style>
 
     <style name="SdkTextView" parent="Widget.MaterialComponents.TextView">
