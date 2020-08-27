@@ -29,10 +29,10 @@ data class SigningMethodMask(val rawValue: Int) {
 enum class SigningMethod(val code: Int) {
     SignHash(0),
     SignRaw(1),
-    SignHashValidateByIssuer(2),
-    SignRawValidateByIssuer(3),
-    SignHashValidateByIssuerWriteIssuerData(4),
-    SignRawValidateByIssuerWriteIssuerData(5),
+    SignHashSignedByIssuer(2),
+    SignRawSignedByIssuer(3),
+    SignHashSignedByIssuerAndUpdateIssuerData(4),
+    SignRawSignedByIssuerAndUpdateIssuerData(5),
     SignPos(6)
 }
 
@@ -138,33 +138,33 @@ enum class Settings(val code: Int) {
     ProhibitPurgeWallet(0x0004),
     UseBlock(0x0008),
 
-    AllowSwapPIN(0x0010),
-    AllowSwapPIN2(0x0020),
-    UseCVC(0x0040),
-    ForbidDefaultPIN(0x0080),
+    AllowSetPIN1(0x0010),
+    AllowSetPIN2(0x0020),
+    UseCvc(0x0040),
+    ProhibitDefaultPIN1(0x0080),
 
     UseOneCommandAtTime(0x0100),
-    UseNdef(0x0200),
-    UseDynamicNdef(0x0400),
+    UseNDEF(0x0200),
+    UseDynamicNDEF(0x0400),
     SmartSecurityDelay(0x0800),
 
-    ProtocolAllowUnencrypted(0x1000),
-    ProtocolAllowStaticEncryption(0x2000),
+    AllowUnencrypted(0x1000),
+    AllowFastEncryption(0x2000),
 
     ProtectIssuerDataAgainstReplay(0x4000),
-    RestrictOverwriteIssuerDataEx(0x00100000),
+    RestrictOverwriteIssuerExtraDara(0x00100000),
 
     AllowSelectBlockchain(0x8000),
 
-    DisablePrecomputedNdef(0x00010000),
+    DisablePrecomputedNDEF(0x00010000),
 
     SkipSecurityDelayIfValidatedByLinkedTerminal(0x00080000),
-    SkipCheckPin2andCvcIfValidatedByIssuer(0x00040000),
+    SkipCheckPIN2CVCIfValidatedByIssuer(0x00040000),
     SkipSecurityDelayIfValidatedByIssuer(0x00020000),
 
     RequireTermTxSignature(0x01000000),
     RequireTermCertSignature(0x02000000),
-    CheckPIN3onCard(0x04000000)
+    CheckPIN3OnCard(0x04000000)
 }
 
 
