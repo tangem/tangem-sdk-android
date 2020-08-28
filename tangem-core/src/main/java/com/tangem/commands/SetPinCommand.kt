@@ -1,9 +1,6 @@
 package com.tangem.commands
 
-import com.tangem.CardSession
-import com.tangem.SessionEnvironment
-import com.tangem.TangemError
-import com.tangem.TangemSdkError
+import com.tangem.*
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
@@ -26,13 +23,21 @@ class SetPinResponse(
 ) : CommandResponse
 
 class SetPinCommand(
-        private val pinType: PinType? = null,
+        private val pinType: PinType,
         private var newPin1: ByteArray? = null,
         private var newPin2: ByteArray? = null,
         private var newPin3: ByteArray? = null
-) : Command<SetPinResponse>() {
+) : Command<SetPinResponse>(), CardSessionPreparable {
 
     override val requiresPin2 = true
+
+    override fun prepare(session: CardSession, callback: (result: CompletionResult<Unit>) -> Unit) {
+        if (newPin1 == null && newPin2 == null && newPin3 == null) {
+            requestNewPin(session, callback)
+        } else {
+            callback(CompletionResult.Success(Unit))
+        }
+    }
 
     override fun mapError(card: Card?, error: TangemError): TangemError {
         if (error is TangemSdkError.InvalidParams) {
@@ -42,12 +47,21 @@ class SetPinCommand(
     }
 
     override fun run(session: CardSession, callback: (result: CompletionResult<SetPinResponse>) -> Unit) {
-        if (newPin1 != null || newPin2 != null || newPin3 != null || pinType == null) {
+        if (newPin1 != null || newPin2 != null || newPin3 != null) {
             transceive(session, callback)
             return
         }
 
         session.pause()
+        requestNewPin(session) {
+            session.resume()
+            transceive(session, callback)
+        }
+    }
+
+    private fun requestNewPin(
+            session: CardSession, callback: (result: CompletionResult<Unit>) -> Unit
+    ) {
         session.viewDelegate.onPinChangeRequested(pinType) { pinString ->
             val newPin = pinString.calculateSha256()
             when (pinType) {
@@ -55,8 +69,7 @@ class SetPinCommand(
                 PinType.Pin2 -> newPin2 = newPin
                 PinType.Pin3 -> newPin3 = newPin
             }
-            session.resume()
-            transceive(session, callback)
+            callback(CompletionResult.Success(Unit))
         }
     }
 
