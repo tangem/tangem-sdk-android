@@ -32,6 +32,10 @@ interface CardSessionRunnable<T : CommandResponse> {
     fun run(session: CardSession, callback: (result: CompletionResult<T>) -> Unit)
 }
 
+interface CardSessionPreparable {
+    fun prepare(session: CardSession, callback: (result: CompletionResult<Unit>) -> Unit)
+}
+
 enum class CardSessionState {
     Inactive,
     Active
@@ -97,23 +101,41 @@ class CardSession(
     fun <T : CardSessionRunnable<R>, R : CommandResponse> startWithRunnable(
             runnable: T, callback: (result: CompletionResult<R>) -> Unit
     ) {
+        prepareSession(runnable) { prepareResult ->
+            when (prepareResult) {
+                is CompletionResult.Success -> {
+                    start() { session, error ->
+                        if (error != null) {
+                            callback(CompletionResult.Failure(error))
+                            return@start
+                        }
+                        runnable.run(this) { result ->
+                            when (result) {
+                                is CompletionResult.Success -> stop()
+                                is CompletionResult.Failure -> {
+                                    stopWithError(result.error)
+                                }
+                            }
+                            callback(result)
+                        }
+                    }
+                }
+                is CompletionResult.Failure -> callback(CompletionResult.Failure(prepareResult.error))
+            }
 
+        }
+    }
+
+    private fun <T : CardSessionRunnable<*>> prepareSession(
+            runnable: T, callback: (result: CompletionResult<Unit>) -> Unit
+    ) {
         if ((runnable as? Command<*>)?.performPreflightRead == false) performPreflightRead = false
         pin2Required = runnable.requiresPin2
 
-        start() { session, error ->
-            if (error != null) {
-                callback(CompletionResult.Failure(error))
-                return@start
-            }
-
-            runnable.run(this) { result ->
-                when (result) {
-                    is CompletionResult.Success -> stop()
-                    is CompletionResult.Failure -> { stopWithError(result.error) }
-                }
-                callback(result)
-            }
+        if (runnable is CardSessionPreparable) {
+            runnable.prepare(this, callback)
+        } else {
+            callback(CompletionResult.Success(Unit))
         }
     }
 
