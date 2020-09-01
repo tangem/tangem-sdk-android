@@ -96,7 +96,7 @@ class PersonalizeCommand(
     }
 
     private fun serializeNdef(config: CardConfig): ByteArray {
-        return NdefEncoder(config.ndefRecords, config.useDynamicNdef).encode()
+        return NdefEncoder(config.ndefRecords, config.useDynamicNDEF).encode()
     }
 
     private fun serializeCardData(cardId: String, cardData: CardData): ByteArray {
