@@ -56,7 +56,7 @@ class CardConfig(
         val skipCheckPIN2CVCIfValidatedByIssuer: Boolean,
         val skipSecurityDelayIfValidatedByLinkedTerminal: Boolean,
 
-        val restrictOverwriteIssuerExtraDara: Boolean,
+        val restrictOverwriteIssuerExtraData: Boolean,
 
         val requireTerminalTxSignature: Boolean,
         val requireTerminalCertSignature: Boolean,
