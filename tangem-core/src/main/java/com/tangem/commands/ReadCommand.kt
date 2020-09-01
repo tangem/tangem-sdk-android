@@ -152,7 +152,7 @@ enum class Settings(val code: Int) {
     AllowFastEncryption(0x2000),
 
     ProtectIssuerDataAgainstReplay(0x4000),
-    RestrictOverwriteIssuerExtraDara(0x00100000),
+    RestrictOverwriteIssuerExtraData(0x00100000),
 
     AllowSelectBlockchain(0x8000),
 
