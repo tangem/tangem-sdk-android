@@ -36,7 +36,7 @@ internal fun CardConfig.createSettingsMask(): SettingsMask {
     if (skipSecurityDelayIfValidatedByIssuer) builder.add(Settings.SkipSecurityDelayIfValidatedByIssuer)
 
     if (skipSecurityDelayIfValidatedByLinkedTerminal) builder.add(Settings.SkipSecurityDelayIfValidatedByLinkedTerminal)
-    if (restrictOverwriteIssuerExtraDara) builder.add(Settings.RestrictOverwriteIssuerExtraDara)
+    if (restrictOverwriteIssuerExtraData) builder.add(Settings.RestrictOverwriteIssuerExtraData)
 
     if (requireTerminalTxSignature) builder.add(Settings.RequireTermTxSignature)
 
