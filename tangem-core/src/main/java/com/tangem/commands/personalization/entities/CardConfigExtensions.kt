@@ -7,20 +7,20 @@ import com.tangem.commands.SettingsMaskBuilder
 internal fun CardConfig.createSettingsMask(): SettingsMask {
     val builder = SettingsMaskBuilder()
 
-    if (allowSetPin1) builder.add(Settings.AllowSetPIN1)
-    if (allowSetPin2) builder.add(Settings.AllowSetPIN2)
+    if (allowSetPIN1) builder.add(Settings.AllowSetPIN1)
+    if (allowSetPIN2) builder.add(Settings.AllowSetPIN2)
     if (useCvc) builder.add(Settings.UseCvc)
     if (isReusable) builder.add(Settings.IsReusable)
 
     if (useOneCommandAtTime) builder.add(Settings.UseOneCommandAtTime)
-    if (useNdef) builder.add(Settings.UseNDEF)
-    if (useDynamicNdef) builder.add(Settings.UseDynamicNDEF)
-    if (disablePrecomputedNdef) builder.add(Settings.DisablePrecomputedNDEF)
+    if (useNDEF) builder.add(Settings.UseNDEF)
+    if (useDynamicNDEF) builder.add(Settings.UseDynamicNDEF)
+    if (disablePrecomputedNDEF) builder.add(Settings.DisablePrecomputedNDEF)
 
     if (allowUnencrypted) builder.add(Settings.AllowUnencrypted)
     if (allowFastEncryption) builder.add(Settings.AllowFastEncryption)
 
-    if (prohibitDefaultPin1) builder.add(Settings.ProhibitDefaultPIN1)
+    if (prohibitDefaultPIN1) builder.add(Settings.ProhibitDefaultPIN1)
 
     if (useActivation) builder.add(Settings.UseActivation)
 
@@ -29,7 +29,7 @@ internal fun CardConfig.createSettingsMask(): SettingsMask {
 
     if (protectIssuerDataAgainstReplay) builder.add(Settings.ProtectIssuerDataAgainstReplay)
 
-    if (forbidPurgeWallet) builder.add(Settings.ProhibitPurgeWallet)
+    if (prohibitPurgeWallet) builder.add(Settings.ProhibitPurgeWallet)
     if (allowSelectBlockchain) builder.add(Settings.AllowSelectBlockchain)
 
     if (skipCheckPIN2CVCIfValidatedByIssuer) builder.add(Settings.SkipCheckPIN2CVCIfValidatedByIssuer)
@@ -42,7 +42,7 @@ internal fun CardConfig.createSettingsMask(): SettingsMask {
 
     if (requireTerminalCertSignature) builder.add(Settings.RequireTermCertSignature)
 
-    if (checkPin3onCard) builder.add(Settings.CheckPIN3OnCard)
+    if (checkPIN3OnCard) builder.add(Settings.CheckPIN3OnCard)
 
     return builder.build()
 }
