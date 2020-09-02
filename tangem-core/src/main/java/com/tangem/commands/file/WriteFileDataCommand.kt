@@ -123,7 +123,9 @@ class WriteFileDataCommand(
                             return@transceive
                         }
                         FileDataMode.ConfirmWritingFile -> {
-                            callback(CompletionResult.Success(result.data))
+                            callback(CompletionResult.Success(
+                                    WriteFileDataResponse(result.data.cardId, fileIndex)
+                            ))
                         }
                     }
                 }
