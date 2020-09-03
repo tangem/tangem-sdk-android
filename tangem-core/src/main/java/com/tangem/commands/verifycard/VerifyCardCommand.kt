@@ -23,18 +23,18 @@ import com.tangem.crypto.CryptoUtils
 import kotlinx.coroutines.launch
 
 class VerifyCardResponse(
-    val cardId: String,
-    val verificationState: VerifyCardState? = null,
-    val artworkInfo: ArtworkInfo? = null,
-    internal val salt: ByteArray,
-    internal val cardSignature: ByteArray
+        val cardId: String,
+        val verificationState: VerifyCardState? = null,
+        val artworkInfo: ArtworkInfo? = null,
+        internal val salt: ByteArray,
+        internal val cardSignature: ByteArray
 ) : CommandResponse {
 
     fun verify(publicKey: ByteArray, challenge: ByteArray): Boolean {
         return CryptoUtils.verify(
-            publicKey,
-            challenge + salt,
-            cardSignature
+                publicKey,
+                challenge + salt,
+                cardSignature
         )
     }
 }
@@ -50,8 +50,8 @@ class VerifyCardCommand(private val onlineVerification: Boolean) : Command<Verif
     private val tangemService = TangemService()
 
     override fun run(
-        session: CardSession,
-        callback: (result: CompletionResult<VerifyCardResponse>) -> Unit
+            session: CardSession,
+            callback: (result: CompletionResult<VerifyCardResponse>) -> Unit
     ) {
         val card = session.environment.card
         val cardPublicKey = card?.cardPublicKey
@@ -72,14 +72,10 @@ class VerifyCardCommand(private val onlineVerification: Boolean) : Command<Verif
                         return@run
                     }
                     if (!onlineVerification || card.getType() != CardType.Release) {
-                        callback(
-                            CompletionResult.Success(
-                                VerifyCardResponse(
-                                    response.cardId, VerifyCardState.VerifiedOffline, null,
-                                    response.salt, response.cardSignature
-                                )
-                            )
-                        )
+                        callback(CompletionResult.Success(VerifyCardResponse(
+                                response.cardId, VerifyCardState.VerifiedOffline, null,
+                                response.salt, response.cardSignature
+                        )))
                     } else {
                         verify(result.data, card.cardId, cardPublicKey, session, callback)
                     }
@@ -89,37 +85,29 @@ class VerifyCardCommand(private val onlineVerification: Boolean) : Command<Verif
     }
 
     private fun verify(
-        response: VerifyCardResponse, cardId: String, cardPublicKey: ByteArray,
-        session: CardSession,
-        callback: (result: CompletionResult<VerifyCardResponse>) -> Unit
+            response: VerifyCardResponse, cardId: String, cardPublicKey: ByteArray,
+            session: CardSession,
+            callback: (result: CompletionResult<VerifyCardResponse>) -> Unit
     ) {
         session.scope.launch {
             val result = tangemService.verifyAndGetInfo(cardId, cardPublicKey.toHexString())
 
             when (result) {
                 is Result.Success -> {
-                    if (result.data.results?.firstOrNull()?.passed == true) {
-                        callback(
-                            CompletionResult.Success(
-                                VerifyCardResponse(
-                                    response.cardId, VerifyCardState.VerifiedOnline, response.artworkInfo,
-                                    response.salt, response.cardSignature
-                                )
-                            )
-                        )
+                    val tangemResult = result.data.results?.firstOrNull()
+                    if (tangemResult?.passed == true) {
+                        callback(CompletionResult.Success(VerifyCardResponse(
+                                response.cardId, VerifyCardState.VerifiedOnline, tangemResult.artwork,
+                                response.salt, response.cardSignature
+                        )))
                     } else {
                         callback(CompletionResult.Failure(TangemSdkError.VerificationFailed()))
                     }
                 }
                 is Result.Failure -> {
-                    callback(
-                        CompletionResult.Success(
-                            VerifyCardResponse(
-                                response.cardId, VerifyCardState.VerifiedOffline, null,
-                                response.salt, response.cardSignature
-                            )
-                        )
-                    )
+                    callback(CompletionResult.Success(VerifyCardResponse(
+                            response.cardId, VerifyCardState.VerifiedOffline, null,
+                            response.salt, response.cardSignature)))
                 }
             }
         }
@@ -144,16 +132,16 @@ class VerifyCardCommand(private val onlineVerification: Boolean) : Command<Verif
     }
 
     override fun deserialize(
-        environment: SessionEnvironment,
-        apdu: ResponseApdu
+            environment: SessionEnvironment,
+            apdu: ResponseApdu
     ): VerifyCardResponse {
         val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
 
         val decoder = TlvDecoder(tlvData)
         return VerifyCardResponse(
-            cardId = decoder.decode(TlvTag.CardId),
-            salt = decoder.decode(TlvTag.Salt),
-            cardSignature = decoder.decode(TlvTag.CardSignature)
+                cardId = decoder.decode(TlvTag.CardId),
+                salt = decoder.decode(TlvTag.Salt),
+                cardSignature = decoder.decode(TlvTag.CardSignature)
         )
     }
 }
