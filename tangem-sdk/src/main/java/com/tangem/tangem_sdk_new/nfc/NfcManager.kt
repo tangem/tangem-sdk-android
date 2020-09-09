@@ -75,6 +75,7 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener {
 
     fun onPause() {
         activity?.unregisterReceiver(mBroadcastReceiver)
+        reader.stopSession(true)
         disableReaderMode()
         reader.listener = null
     }
