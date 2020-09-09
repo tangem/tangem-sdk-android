@@ -182,6 +182,7 @@ class CardSession(
                     .onCompletion {
                         if (it is CancellationException
                                 && it.message == TangemSdkError.UserCancelled().customMessage) {
+                            viewDelegate.dismiss()
                             callback(this@CardSession, TangemSdkError.UserCancelled())
                         }
                     }
