@@ -55,6 +55,8 @@ interface SessionViewDelegate {
      * It is called when a user wants to change pin code.
      */
     fun onPinChangeRequested(pinType: PinType, callback: (pin: String) -> Unit)
+
+    fun dismiss()
 }
 
 /**
