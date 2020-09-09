@@ -82,6 +82,10 @@ class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDel
         }
     }
 
+    override fun dismiss() {
+        postUI { readingDialog?.dismiss() }
+    }
+
     private fun setLogger() {
         Log.setLogger(
             object : LoggerInterface {
