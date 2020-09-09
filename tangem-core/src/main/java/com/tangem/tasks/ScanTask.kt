@@ -13,7 +13,7 @@ import com.tangem.common.CompletionResult
  *
  * It performs two commands, [ReadCommand] and [CheckWalletCommand], subsequently.
  */
-internal class ScanTask : CardSessionRunnable<Card> {
+class ScanTask : CardSessionRunnable<Card> {
 
     override val requiresPin2 = false
 
