@@ -15,4 +15,5 @@
 
     <dimen name="bottom_sheet_top_container_height">220dp</dimen>
     <dimen name="bottom_sheet_bottom_container_height">105dp</dimen>
+    <dimen name="phone_height">150dp</dimen>
 </resources>
