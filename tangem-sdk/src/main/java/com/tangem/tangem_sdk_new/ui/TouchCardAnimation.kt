@@ -11,13 +11,16 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.core.animation.addListener
+import com.skyfishjy.library.RippleBackground
+import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.extensions.dpToPx
+import com.tangem.tangem_sdk_new.extensions.pxToDp
 
 class TouchCardAnimation(private var context: Context,
                          private var ivHandCardHorizontal: ImageView,
                          private var ivHandCardVertical: ImageView,
                          private var llHand: LinearLayout,
-                         private var llNfc: LinearLayout) {
+                         private var rippleBackground: RippleBackground) {
 
     companion object {
         const val CARD_ON_BACK = 0
@@ -45,7 +48,7 @@ class TouchCardAnimation(private var context: Context,
     fun animate() {
         handAnimator?.cancel()
         handAnimator = AnimatorSet()
-        handAnimator?.playSequentially(backInAnimation(), downTime(3000), backOutAnimation(), downTime(400))
+        handAnimator?.playSequentially(backInAnimation(), downTime(10000), backOutAnimation(), downTime(400))
 
         var isCancelled = false
         handAnimator?.addListener(
@@ -68,9 +71,9 @@ class TouchCardAnimation(private var context: Context,
     }
 
     private fun backInAnimation(): AnimatorSet {
-        val position = getPosition()
+        val position = calculateYTranslations()
         llHand.translationY = position.first
-        llNfc.translationY = position.second
+        rippleBackground.translationY = position.second
 
         val scaleUpX = ObjectAnimator.ofFloat(llHand, View.SCALE_X, 0.5f, 1f)
         val scaleUpY = ObjectAnimator.ofFloat(llHand, View.SCALE_Y, 0.5f, 1f)
@@ -86,9 +89,9 @@ class TouchCardAnimation(private var context: Context,
     }
 
     private fun backOutAnimation(): AnimatorSet {
-        val position = getPosition()
-        llHand.translationY = position.first
-        llNfc.translationY = position.second
+        val translations = calculateYTranslations()
+        llHand.translationY = translations.first
+        rippleBackground.translationY = translations.second
 
         val scaleUpX = ObjectAnimator.ofFloat(llHand, View.SCALE_X, 1f, 0.5f)
         val scaleUpY = ObjectAnimator.ofFloat(llHand, View.SCALE_Y, 1f, 0.5f)
@@ -103,10 +106,12 @@ class TouchCardAnimation(private var context: Context,
         return animator
     }
 
-    private fun getPosition(): Pair<Float, Float> {
-        val phoneHeight = 150
-        val hand = y * phoneHeight
-        val nfc = y * phoneHeight - phoneHeight
+    private fun calculateYTranslations(): Pair<Float, Float> {
+        val phoneHeightDp = context.pxToDp(context.resources.getDimension(R.dimen.phone_height))
+        val designHeight = phoneHeightDp * context.resources.displayMetrics.density / 2.75f
+        val vectorOffset = (y - 0.5f) * 50
+        val hand = y * designHeight * 2 + vectorOffset
+        val nfc = y * designHeight * 2 - designHeight + vectorOffset
         return Pair(hand, nfc)
     }
 
