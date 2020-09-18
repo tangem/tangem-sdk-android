@@ -362,7 +362,12 @@ class Card(
          * Detailed information about card contents. Format is defined by the card issuer.
          * Cards complaint with Tangem Wallet application should have TLV format.
          */
-        val cardData: CardData?
+        val cardData: CardData?,
+
+        var isPin1Default: Boolean? = null,
+
+        var isPin2Default: Boolean? = null
+
 ) : CommandResponse
 
 /**
