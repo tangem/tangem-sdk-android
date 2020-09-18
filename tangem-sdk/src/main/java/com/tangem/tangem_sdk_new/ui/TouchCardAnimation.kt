@@ -45,7 +45,7 @@ class TouchCardAnimation(private var context: Context,
     fun animate() {
         handAnimator?.cancel()
         handAnimator = AnimatorSet()
-        handAnimator?.playSequentially(backInAnimation(), downTime(3000), backOutAnimation(), downTime(400))
+        handAnimator?.playSequentially(backInAnimation(), downTime(5000), backOutAnimation(), downTime(400))
 
         var isCancelled = false
         handAnimator?.addListener(
@@ -68,9 +68,9 @@ class TouchCardAnimation(private var context: Context,
     }
 
     private fun backInAnimation(): AnimatorSet {
-        val dp = context.resources.displayMetrics.density
-        llHand.translationY = (dp * (-50 + y * 250))
-        llNfc.translationY = (dp * (-105 + y * 250))
+        val position = getPosition()
+        llHand.translationY = position.first
+        llNfc.translationY = position.second
 
         val scaleUpX = ObjectAnimator.ofFloat(llHand, View.SCALE_X, 0.5f, 1f)
         val scaleUpY = ObjectAnimator.ofFloat(llHand, View.SCALE_Y, 0.5f, 1f)
@@ -86,9 +86,9 @@ class TouchCardAnimation(private var context: Context,
     }
 
     private fun backOutAnimation(): AnimatorSet {
-        val dp = context.resources.displayMetrics.density
-        llHand.translationY = (dp * (-50 + y * 250))
-        llNfc.translationY = (dp * (-105 + y * 250))
+        val position = getPosition()
+        llHand.translationY = position.first
+        llNfc.translationY = position.second
 
         val scaleUpX = ObjectAnimator.ofFloat(llHand, View.SCALE_X, 1f, 0.5f)
         val scaleUpY = ObjectAnimator.ofFloat(llHand, View.SCALE_Y, 1f, 0.5f)
@@ -101,6 +101,13 @@ class TouchCardAnimation(private var context: Context,
         animator.duration = 1200
         animator.playTogether(scaleUpX, scaleUpY, xToLeft, alpha)
         return animator
+    }
+
+    private fun getPosition(): Pair<Float, Float> {
+        val phoneHeight = 150
+        val hand = y * phoneHeight
+        val nfc = y * phoneHeight - phoneHeight
+        return Pair(hand, nfc)
     }
 
     private fun getAntennaLocation() {
