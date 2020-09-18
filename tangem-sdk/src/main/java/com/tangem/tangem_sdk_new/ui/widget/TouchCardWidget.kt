@@ -3,7 +3,6 @@ package com.tangem.tangem_sdk_new.ui.widget
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
-import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 import com.skyfishjy.library.RippleBackground
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
@@ -20,9 +19,9 @@ class TouchCardWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView)
     private val ivHandCardVertical = mainView.findViewById<ImageView>(R.id.ivHandCardVertical)
     private val ivPhone = mainView.findViewById<ImageView>(R.id.ivPhone)
     private val llHand = mainView.findViewById<LinearLayout>(R.id.llHand)
-    private val llNfc = mainView.findViewById<LinearLayout>(R.id.llNfc)
+    private val rippleBackground = mainView.findViewById<RippleBackground>(R.id.rippleBackgroundNfc)
 
-    private val nfcDeviceAntenna = TouchCardAnimation(mainView.context, ivHandCardHorizontal, ivHandCardVertical, llHand, llNfc)
+    private val nfcDeviceAntenna = TouchCardAnimation(mainView.context, ivHandCardHorizontal, ivHandCardVertical, llHand, rippleBackground)
 
     init {
         nfcDeviceAntenna.init()
