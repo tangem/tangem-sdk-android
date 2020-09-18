@@ -27,6 +27,8 @@ class ScanTask : CardSessionRunnable<Card> {
             callback(CompletionResult.Failure(TangemSdkError.CardError()))
             return
         }
+        card.isPin1Default = (session.environment.pin1?.isDefault == true)
+
 //        if (session.environment.pin1 != null && session.environment.pin2 != null) {
 //            val checkPinCommand = SetPinCommand(session.environment.pin1!!.value, session.environment.pin2!!.value)
 //            checkPinCommand.run(session) { result ->
@@ -40,8 +42,16 @@ class ScanTask : CardSessionRunnable<Card> {
 //                runCheckWalletIfNeeded(card, session, callback)
 //            }
 //        } else {
-            runCheckWalletIfNeeded(card, session, callback)
-//        }
+        CheckPinCommand().run(session) { result ->
+            when (result) {
+                is CompletionResult.Success -> {
+                    card.isPin2Default = result.data.isPin2Default
+                    session.environment.card = card
+                    runCheckWalletIfNeeded(card, session, callback)
+                }
+                is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+            }
+        }
 
     }
 
