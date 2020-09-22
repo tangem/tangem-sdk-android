@@ -28,4 +28,10 @@ class TangemService {
         return performRequest { tangemApi.getArtwork(artworkId, cardId, cardPublicKey) }
     }
 
+    companion object {
+        fun getUrlForArtwork(cardId: String, cardPublicKey: String, artworkId: String): String {
+            return ApiTangem.ARTWORK + "?artworkId=${artworkId}&CID=${cardId}&publicKey=$cardPublicKey"
+        }
+    }
+
 }
