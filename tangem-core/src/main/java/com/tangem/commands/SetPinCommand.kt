@@ -25,14 +25,14 @@ class SetPinResponse(
 class SetPinCommand(
         private val pinType: PinType,
         private var newPin1: ByteArray? = null,
-        private var newPin2: ByteArray? = null,
-        private var newPin3: ByteArray? = null
+        private var newPin2: ByteArray? = null
 ) : Command<SetPinResponse>(), CardSessionPreparable {
 
     override val requiresPin2 = true
 
     override fun prepare(session: CardSession, callback: (result: CompletionResult<Unit>) -> Unit) {
-        if (newPin1 == null && newPin2 == null && newPin3 == null) {
+        if ((pinType == PinType.Pin1 && newPin1 == null) ||
+                (pinType == PinType.Pin2 && newPin2 == null)) {
             requestNewPin(session, callback)
         } else {
             callback(CompletionResult.Success(Unit))
@@ -47,7 +47,7 @@ class SetPinCommand(
     }
 
     override fun run(session: CardSession, callback: (result: CompletionResult<SetPinResponse>) -> Unit) {
-        if (newPin1 != null || newPin2 != null || newPin3 != null) {
+        if (newPin1 != null || newPin2 != null) {
             transceive(session, callback)
             return
         }
@@ -67,7 +67,6 @@ class SetPinCommand(
             when (pinType) {
                 PinType.Pin1 -> newPin1 = newPin
                 PinType.Pin2 -> newPin2 = newPin
-                PinType.Pin3 -> newPin3 = newPin
             }
             callback(CompletionResult.Success(Unit))
         }
@@ -81,7 +80,6 @@ class SetPinCommand(
         tlvBuilder.append(TlvTag.Cvc, environment.cvc)
         tlvBuilder.append(TlvTag.NewPin, newPin1 ?: environment.pin1?.value)
         tlvBuilder.append(TlvTag.NewPin2, newPin2 ?: environment.pin2?.value)
-        tlvBuilder.append(TlvTag.NewPin3, newPin3)
         return CommandApdu(Instruction.SetPin, tlvBuilder.serialize())
     }
 
@@ -101,14 +99,12 @@ class SetPinCommand(
     companion object {
         fun setPin1(newPin1: ByteArray?): SetPinCommand = SetPinCommand(newPin1 = newPin1, pinType = PinType.Pin1)
         fun setPin2(newPin2: ByteArray?): SetPinCommand = SetPinCommand(newPin2 = newPin2, pinType = PinType.Pin2)
-        fun setPin3(newPin3: ByteArray?): SetPinCommand = SetPinCommand(newPin3 = newPin3, pinType = PinType.Pin3)
     }
 }
 
 enum class PinType {
     Pin1,
     Pin2,
-    Pin3,
     ;
 }
 
