@@ -30,7 +30,8 @@ class TangemService {
 
     companion object {
         fun getUrlForArtwork(cardId: String, cardPublicKey: String, artworkId: String): String {
-            return ApiTangem.ARTWORK + "?artworkId=${artworkId}&CID=${cardId}&publicKey=$cardPublicKey"
+            return ApiTangem.TANGEM_ENDPOINT + ApiTangem.ARTWORK +
+                    "?artworkId=${artworkId}&CID=${cardId}&publicKey=$cardPublicKey"
         }
     }
 
