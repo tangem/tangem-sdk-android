@@ -207,7 +207,6 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
             when (pinType) {
                 PinType.Pin1 -> session.environment.pin1 = PinCode(pin)
                 PinType.Pin2 -> session.environment.pin2 = PinCode(pin)
-                PinType.Pin3 -> {}
             }
             session.resume()
             transceiveInternal(session, callback)
