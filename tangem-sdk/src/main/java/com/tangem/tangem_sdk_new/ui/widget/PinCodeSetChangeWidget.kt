@@ -103,7 +103,6 @@ class PinCodeModificationWidget(
         val nameOfPin = when (pinType) {
             PinType.Pin1 -> getString(R.string.pin1)
             PinType.Pin2 -> getString(R.string.pin2)
-            PinType.Pin3 -> getString(R.string.pin3)
         }
         if (isChangeCodeMode) {
             tvScreenTitle.text = getFormattedString(R.string.pin_change_code_title, nameOfPin)
