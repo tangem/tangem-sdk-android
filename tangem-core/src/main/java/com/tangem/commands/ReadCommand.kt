@@ -234,7 +234,7 @@ class CardData(
 /**
  * Response for [ReadCommand]. Contains detailed card information.
  */
-class Card(
+data class Card(
 
         /**
          * Unique Tangem card ID number.
