@@ -31,7 +31,6 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
                 val nameOfPin = when (params.pinType) {
                     PinType.Pin1 -> getString(R.string.pin1)
                     PinType.Pin2 -> getString(R.string.pin2)
-                    PinType.Pin3 -> getString(R.string.pin3)
                 }
                 tilPinCode.hint = getFormattedString(R.string.pin_enter_code, nameOfPin)
 
