@@ -48,7 +48,7 @@ class TouchCardAnimation(private var context: Context,
     fun animate() {
         handAnimator?.cancel()
         handAnimator = AnimatorSet()
-        handAnimator?.playSequentially(backInAnimation(), downTime(10000), backOutAnimation(), downTime(400))
+        handAnimator?.playSequentially(backInAnimation(), downTime(3000), backOutAnimation(), downTime(400))
 
         var isCancelled = false
         handAnimator?.addListener(
