@@ -20,3 +20,10 @@ fun Card.getType(): CardType {
 enum class CardType {
     Sdk, Release, Unknown
 }
+
+fun Card.getFirmwareNumber(): Double? {
+    return this.firmwareVersion?.let {firmwareVersion ->
+        val matchResult = """(\d+.\d+)([\w\s]+)""".toRegex().find(firmwareVersion)
+        matchResult?.destructured?.component2()?.toDoubleOrNull()
+    }
+}
