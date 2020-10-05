@@ -1,8 +1,10 @@
 package com.tangem.commands
 
+import com.tangem.CardSession
 import com.tangem.SessionEnvironment
 import com.tangem.TangemError
 import com.tangem.TangemSdkError
+import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
@@ -35,8 +37,40 @@ class SignCommand(private val hashes: Array<ByteArray>) : Command<SignResponse>(
 
     override val requiresPin2 = true
 
-
     private val hashSizes = if (hashes.isNotEmpty()) hashes.first().size else 0
+    private val hashesChunked = hashes.asList().chunked(CHUNK_SIZE)
+    private var currentChunk = 0
+    private val responses = mutableListOf<SignResponse>()
+
+    override fun run(session: CardSession, callback: (result: CompletionResult<SignResponse>) -> Unit) {
+        sign(session, callback)
+    }
+
+    private fun sign(session: CardSession, callback: (result: CompletionResult<SignResponse>) -> Unit) {
+        transceive(session) { result ->
+            when (result) {
+                is CompletionResult.Success -> {
+                    responses.add(result.data)
+                    if (currentChunk == hashesChunked.lastIndex) {
+                        val lastResponse = responses.last()
+                        val finalResponse = SignResponse(
+                                cardId = lastResponse.cardId,
+                                signature = responses.fold(byteArrayOf()) { signatures, response ->
+                                    signatures + response.signature
+                                },
+                                walletSignedHashes = lastResponse.walletSignedHashes,
+                                walletRemainingSignatures = lastResponse.walletRemainingSignatures
+                        )
+                        callback(CompletionResult.Success(finalResponse))
+                    } else {
+                        currentChunk += 1
+                        sign(session, callback)
+                    }
+                }
+                is CompletionResult.Failure -> callback(result)
+            }
+        }
+    }
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.isActivated) {
@@ -55,13 +89,9 @@ class SignCommand(private val hashes: Array<ByteArray>) : Command<SignResponse>(
             return TangemSdkError.HashSizeMustBeEqual()
         }
 
-        //TODO: Allow signing more than 10 hashes
-        if (hashes.size > 10) return TangemSdkError.TooManyHashesInOneTransaction()
-
         return when (card.status) {
             CardStatus.Loaded -> null
-            CardStatus.Empty -> TangemSdkError.
-            CardIsEmpty()
+            CardStatus.Empty -> TangemSdkError.CardIsEmpty()
             CardStatus.NotPersonalized -> TangemSdkError.NotPersonalized()
             CardStatus.Purged -> TangemSdkError.CardIsPurged()
             null -> TangemSdkError.CardError()
@@ -90,7 +120,7 @@ class SignCommand(private val hashes: Array<ByteArray>) : Command<SignResponse>(
     }
 
     private fun flattenHashes(): ByteArray {
-        return hashes.reduce { arr1, arr2 -> arr1 + arr2 }
+        return hashesChunked[currentChunk].reduce { arr1, arr2 -> arr1 + arr2 }
     }
 
     /**
@@ -120,5 +150,9 @@ class SignCommand(private val hashes: Array<ByteArray>) : Command<SignResponse>(
             walletRemainingSignatures = decoder.decode(TlvTag.RemainingSignatures),
             walletSignedHashes = decoder.decode(TlvTag.SignedHashes)
         )
+    }
+
+    companion object {
+        const val CHUNK_SIZE = 10
     }
 }
