@@ -24,7 +24,7 @@ class SignResponse(
     val cardId: String,
     val signature: ByteArray,
     val walletRemainingSignatures: Int,
-    val walletSignedHashes: Int
+    val walletSignedHashes: Int?
 ) : CommandResponse
 
 /**
@@ -148,7 +148,7 @@ class SignCommand(private val hashes: Array<ByteArray>) : Command<SignResponse>(
             cardId = decoder.decode(TlvTag.CardId),
             signature = decoder.decode(TlvTag.Signature),
             walletRemainingSignatures = decoder.decode(TlvTag.RemainingSignatures),
-            walletSignedHashes = decoder.decode(TlvTag.SignedHashes)
+            walletSignedHashes = decoder.decodeOptional(TlvTag.SignedHashes)
         )
     }
 
