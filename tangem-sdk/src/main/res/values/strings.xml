@@ -1,40 +1,49 @@
 <resources>
-    <string name="app_name">Tangem Sdk</string>
-    <string name="general_ok">OK</string>
-    <string name="general_cancel">Cancel</string>
-    <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</string>
-    <string name="lorem_ipsum_half">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</string>
+    <string name="app_name" translatable="false">Tangem SDK</string>
+    <string name="common_ok">OK</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_continue">Continue</string>
+    <string name="common_save">Save</string>
+    <string name="common_success">Success</string>
+    <string name="common_error">Error</string>
+
+    <string name="lorem_ipsum" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</string>
+    <string name="lorem_ipsum_half" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</string>
     <string name="dialog_nfc_enable_title">Enable NFC?</string>
     <string name="dialog_nfc_enable_text">This app is useless when NFC is disabled. Reader mode depends on it. Hit OK to go to Settings, where you can enable NFC.</string>
-    <string name="dialog_security_delay">Security delay</string>
-    <string name="dialog_security_delay_description">This card has enforced security delay. Please hold the card firmly until the operation is completed…</string>
-    <string name="dialog_delay">Operation in process</string>
-    <string name="dialog_delay_description">Please hold the card firmly until the operation is completed…</string>
-    <string name="dialog_error">Error</string>
-    <string name="dialog_ready_to_scan">Ready to Scan</string>
-    <string name="dialog_scan_text">Scan card with your phone as shown above</string>
-    <string name="dialog_success">Success</string>
-    <string name="header_card">Card</string>
-    <string name="header_card_any">Any card</string>
 
-    <string name="pin1">Access</string>
-    <string name="pin2">Pass</string>
-    <string name="pin3">PIN 3</string>
+    <string name="view_delegate_security_delay">Security delay</string>
+    <string name="view_delegate_security_delay_description">This card has enforced security delay. Please hold the card firmly until the operation is completed…</string>
+    <string name="view_delegate_delay">Operation in process</string>
+    <string name="view_delegate_delay_description">Please hold the card firmly until the operation is completed…</string>
+    <string name="view_delegate_scan">Ready to Scan</string>
+    <string name="view_delegate_scan_description">Scan card with your phone as shown above</string>
+    <string name="view_delegate_header_card">Card</string>
+    <string name="view_delegate_header_any_card">Any card</string>
 
-    <string name="pin_enter_code">%s code</string>
-    <string name="pin_enter_code_continue">Continue</string>
-    <string name="pin_enter_error_empty">Enter code</string>
+    <string name="pin1">Access code</string>
+    <string name="pin2">Passcode</string>
 
-    <string name="pin_set_code_title">Set %s Code</string>
-    <string name="pin_set_code_hint">%s Code</string>
-    <string name="pin_set_code_confirm_hint">Confirm %s Code</string>
+    <string name="pin_enter_format">Enter %s</string>
+    <string name="pin_set_code_format">Set %s</string>
+    <string name="pin_set_code_confirm_format">Confirm %s</string>
+    <string name="pin_change_code_format">Change %s</string>
+    <string name="pin_change_current_code_format">Current %s</string>
+    <string name="pin_change_new_code_format">New %s</string>
+    <string name="pin_change_new_code_confirm_format">New %s (Confirm)</string>
+    <string name="pin_confirm_error">Codes do not match</string>
 
-    <string name="pin_change_code_title">Change %s Code</string>
-    <string name="pin_change_current_code_hint">Current %s Code</string>
-    <string name="pin_change_new_code_hint">New %s Code</string>
-    <string name="pin_change_new_code_confirm_hint">New %s Code (Confirm)</string>
-
-    <string name="pin_save">Save</string>
-    <string name="pin_code_confirm_error">Codes do not match</string>
+    <!--    iOS Strings-->
+    <string name="nfc_session_timeout">Session timeout. Please, try again</string>
+    <string name="nfc_alert_default">Hold your iPhone near a card</string>
+    <string name="nfc_alert_sign_completed">Transaction has been successfully signed</string>
+    <string name="nfc_seconds_left">%@ left</string>
+    <string name="nfc_unknown_card_state">Unknown card state</string>
+    <string name="nfc_alert_default_done">Done</string>
+    <string name="nfc_stuck_error">It seems that NFC does not work properly on your iPhone</string>
+    <string name="unknownStatus">Unknown card status</string>
+    <string name="generic_error_code">An error occurred during the operation. Code: %@</string>
+    <string name="reading_data_progress">Reading data: %@%%</string>
+    <string name="writing_data_progress">Writing data: %@%%</string>
 
 </resources>

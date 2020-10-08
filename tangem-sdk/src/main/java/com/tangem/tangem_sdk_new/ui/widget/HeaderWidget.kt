@@ -44,9 +44,9 @@ class HeaderWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
                 imvClose.show(false)
                 tvCard.show(true)
                 if (cardId == null) {
-                    tvCard.text = getString(R.string.header_card_any)
+                    tvCard.text = getString(R.string.view_delegate_header_any_card)
                 } else {
-                    tvCard.text = getString(R.string.header_card)
+                    tvCard.text = getString(R.string.view_delegate_header_card)
                     tvCardId.show(true)
                     tvCardId.text = splitByLength(cardId!!, 4)
                 }
