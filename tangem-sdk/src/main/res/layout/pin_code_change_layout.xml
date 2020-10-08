@@ -22,7 +22,7 @@
             android:textColor="#000000"
             android:textSize="20sp"
             android:textStyle="bold"
-            tools:text="@string/pin_set_code_title" />
+            tools:text="@string/pin_set_code_format" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilPinCode"
@@ -53,7 +53,7 @@
             android:layout_marginTop="10dp"
             app:boxBackgroundColor="@android:color/transparent"
             app:errorTextColor="@color/card_sdk_text_error_color"
-            tools:hint="@string/pin_change_new_code_hint">
+            tools:hint="@string/pin_change_new_code_format">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etNewPinCode"
@@ -72,7 +72,7 @@
             android:layout_marginTop="10dp"
             app:boxBackgroundColor="@android:color/transparent"
             app:errorTextColor="@color/card_sdk_text_error_color"
-            tools:hint="@string/pin_set_code_confirm_hint">
+            tools:hint="@string/pin_set_code_confirm_format">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPinCodeConfirm"
@@ -101,6 +101,6 @@
         android:layout_marginBottom="16dp"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        android:text="@string/pin_save" />
+        android:text="@string/common_save" />
 
 </LinearLayout>
