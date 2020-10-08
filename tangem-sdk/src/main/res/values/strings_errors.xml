@@ -32,4 +32,6 @@
     <string name="error_wrong_card_app">This card is configured for a different app. Please see the information on your card and download the related app.</string>
     <string name="error_card_error">Your card is missing essential data</string>
     <string name="error_invalid_response">Invalid Response</string>
+    <string name="error_pin1_required">Access code is required</string>
+    <string name="error_pin2_required">Passcode is required</string>
 </resources>
