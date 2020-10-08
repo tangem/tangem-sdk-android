@@ -18,7 +18,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-medium"
-        android:text="@string/header_card"
+        android:text="@string/view_delegate_header_card"
         android:textColor="@color/card_sdk_text_color_primary"
         android:textSize="15sp"
         android:visibility="gone"
