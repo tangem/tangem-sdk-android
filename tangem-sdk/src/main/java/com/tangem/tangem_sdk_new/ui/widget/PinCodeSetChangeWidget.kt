@@ -105,15 +105,15 @@ class PinCodeModificationWidget(
             PinType.Pin2 -> getString(R.string.pin2)
         }
         if (isChangeCodeMode) {
-            tvScreenTitle.text = getFormattedString(R.string.pin_change_code_title, nameOfPin)
-            tilPinCode.hint = getFormattedString(R.string.pin_change_current_code_hint, nameOfPin)
-            tilNewPinCode.hint = getFormattedString(R.string.pin_change_new_code_hint, nameOfPin)
-            tilPinCodeConfirm.hint = getFormattedString(R.string.pin_change_new_code_confirm_hint, nameOfPin)
+            tvScreenTitle.text = getFormattedString(R.string.pin_change_code_format, nameOfPin)
+            tilPinCode.hint = getFormattedString(R.string.pin_change_current_code_format, nameOfPin)
+            tilNewPinCode.hint = getFormattedString(R.string.pin_change_new_code_format, nameOfPin)
+            tilPinCodeConfirm.hint = getFormattedString(R.string.pin_change_new_code_confirm_format, nameOfPin)
         } else {
-            tvScreenTitle.text = getFormattedString(R.string.pin_set_code_title, nameOfPin)
-            tilPinCode.hint = getFormattedString(R.string.pin_set_code_hint, nameOfPin)
+            tvScreenTitle.text = getFormattedString(R.string.pin_set_code_format, nameOfPin)
+            tilPinCode.hint = nameOfPin
             tilNewPinCode.visibility = View.GONE
-            tilPinCodeConfirm.hint = getFormattedString(R.string.pin_set_code_confirm_hint, nameOfPin)
+            tilPinCodeConfirm.hint = getFormattedString(R.string.pin_set_code_confirm_format, nameOfPin)
         }
     }
 
@@ -149,7 +149,7 @@ class PinCodeModificationWidget(
 
         TransitionManager.beginDelayedTransition(mainView as ViewGroup, AutoTransition())
         if (errorIsVisible) {
-            val errorMessage = getString(R.string.pin_code_confirm_error)
+            val errorMessage = getString(R.string.pin_confirm_error)
             til1.error = errorMessage
             til2.error = errorMessage
         } else {
