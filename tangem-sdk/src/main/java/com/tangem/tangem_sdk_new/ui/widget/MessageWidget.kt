@@ -21,15 +21,15 @@ class MessageWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
     override fun setState(params: SessionViewDelegateState) {
         when (params) {
             is SessionViewDelegateState.Ready -> {
-                setText(tvTaskTitle, params.message?.header, R.string.dialog_ready_to_scan)
-                setText(tvTaskMessage, params.message?.body, R.string.dialog_scan_text)
+                setText(tvTaskTitle, params.message?.header, R.string.view_delegate_scan)
+                setText(tvTaskMessage, params.message?.body, R.string.view_delegate_scan_description)
             }
             is SessionViewDelegateState.Success -> {
-                setText(tvTaskTitle, params.message?.header, R.string.dialog_success)
+                setText(tvTaskTitle, params.message?.header, R.string.common_success)
                 setText(tvTaskMessage, params.message?.body ?: "")
             }
             is SessionViewDelegateState.Error -> {
-                setText(tvTaskTitle, null, R.string.dialog_error)
+                setText(tvTaskTitle, null, R.string.common_error)
 
                 val errorMessage = getErrorMessage(params.error)
                 val formattedErrorMessage = mainView.context.getString(
@@ -40,20 +40,20 @@ class MessageWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
                 setText(tvTaskMessage, formattedErrorMessage)
             }
             is SessionViewDelegateState.SecurityDelay -> {
-                setText(tvTaskTitle, null, R.string.dialog_security_delay)
-                setText(tvTaskMessage, null, R.string.dialog_security_delay_description)
+                setText(tvTaskTitle, null, R.string.view_delegate_security_delay)
+                setText(tvTaskMessage, null, R.string.view_delegate_security_delay_description)
             }
             is SessionViewDelegateState.Delay -> {
-                setText(tvTaskTitle, null, R.string.dialog_delay)
-                setText(tvTaskMessage, null, R.string.dialog_delay_description)
+                setText(tvTaskTitle, null, R.string.view_delegate_delay)
+                setText(tvTaskMessage, null, R.string.view_delegate_delay_description)
             }
             is SessionViewDelegateState.PinRequested -> {
             }
             is SessionViewDelegateState.PinChangeRequested -> {
             }
             is SessionViewDelegateState.TagLost -> {
-                setText(tvTaskTitle, null, R.string.dialog_ready_to_scan)
-                setText(tvTaskMessage, null, R.string.dialog_scan_text)
+                setText(tvTaskTitle, null, R.string.view_delegate_scan)
+                setText(tvTaskMessage, null, R.string.view_delegate_scan_description)
             }
             is SessionViewDelegateState.TagConnected -> {
             }
@@ -64,7 +64,7 @@ class MessageWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
 
                 }
 
-                setText(tvTaskTitle, null, R.string.dialog_error)
+                setText(tvTaskTitle, null, R.string.common_error)
                 val bodyMessage = mainView.context.getString(
                         R.string.error_message,
                         getString(R.string.error_wrong_card),
