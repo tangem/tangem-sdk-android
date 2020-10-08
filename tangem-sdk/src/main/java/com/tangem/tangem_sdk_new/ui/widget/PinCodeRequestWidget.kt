@@ -28,18 +28,19 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
     override fun setState(params: SessionViewDelegateState) {
         when (params) {
             is SessionViewDelegateState.PinRequested -> {
-                val nameOfPin = when (params.pinType) {
+                val code = when (params.pinType) {
                     PinType.Pin1 -> getString(R.string.pin1)
                     PinType.Pin2 -> getString(R.string.pin2)
                 }
-                tilPinCode.hint = getFormattedString(R.string.pin_enter_code, nameOfPin)
-
+                tilPinCode.hint = code
                 etPinCode.setText("")
                 postUI(1000) { etPinCode.showSoftKeyboard() }
                 btnContinue.setOnClickListener {
                     val pin = etPinCode.text.toString()
                     if (pin.isEmpty()) {
-                        tilPinCode.error = mainView.context.getString(R.string.pin_enter_error_empty)
+                        tilPinCode.error = mainView.context.getString(
+                                R.string.pin_enter_format, code
+                        )
                     } else {
                         tilPinCode.error = null
                         tilPinCode.isErrorEnabled = false

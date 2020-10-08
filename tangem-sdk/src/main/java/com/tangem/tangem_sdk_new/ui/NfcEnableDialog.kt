@@ -16,9 +16,9 @@ class NfcEnableDialog {
                 .setIcon(R.drawable.ic_action_nfc_gray)
                 .setTitle(R.string.dialog_nfc_enable_title)
                 .setMessage(R.string.dialog_nfc_enable_text)
-                .setPositiveButton(R.string.general_ok)
+                .setPositiveButton(R.string.common_ok)
                 { _, _ -> activity.startActivity(Intent(Settings.ACTION_NFC_SETTINGS)) }
-                .setNegativeButton(R.string.general_cancel) { dialog, _ -> dialog.cancel() }
+                .setNegativeButton(R.string.common_cancel) { dialog, _ -> dialog.cancel() }
         dialog = builder.create()
         dialog?.show()
     }
