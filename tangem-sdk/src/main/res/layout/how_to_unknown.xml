@@ -95,7 +95,7 @@
         android:layout_marginBottom="32dp"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        android:text="@string/general_cancel"
+        android:text="@string/common_cancel"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
