@@ -31,7 +31,7 @@
         app:rb_type="strokeRipple" />
 
     <ImageView
-        android:id="@+id/imvHandWithCard"
+        android:id="@+id/imvHandWithCardH"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:translationX="-395dp"
