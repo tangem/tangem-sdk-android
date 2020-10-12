@@ -67,7 +67,7 @@
         app:srcCompat="@drawable/phone_mid_back" />
 
     <ImageView
-        android:id="@+id/imvHandWithCard"
+        android:id="@+id/imvHandWithCardH"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:alpha="0"
@@ -76,6 +76,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/imvPhone"
         app:srcCompat="@drawable/hand_full_card_horizontal" />
+
+    <ImageView
+        android:id="@+id/imvHandWithCardV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:alpha="0"
+        app:layout_constraintBottom_toBottomOf="@+id/imvPhone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/imvPhone"
+        app:srcCompat="@drawable/hand_full_card_vertical" />
 
     <TextSwitcher
         android:id="@+id/tvHowToSwitcher"
