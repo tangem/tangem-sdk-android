@@ -18,38 +18,64 @@
         android:id="@+id/rippleBg"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:alpha="0"
         app:layout_constraintBottom_toTopOf="@id/guideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:rb_color="@color/card_sdk_ripple"
         app:rb_duration="4000"
-        app:rb_radius="45dp"
+        app:rb_radius="40dp"
         app:rb_rippleAmount="4"
         app:rb_scale="4"
         app:rb_strokeWidth="20dp"
         app:rb_type="strokeRipple" />
 
     <ImageView
-        android:id="@+id/imvHandWithCard"
+        android:id="@+id/imvNfcBadge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:translationX="-395dp"
-        android:translationY="-25dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:alpha="0"
+        android:paddingStart="10dp"
+        app:layout_constraintBottom_toBottomOf="@+id/imvPhone"
+        app:layout_constraintEnd_toEndOf="@+id/imvPhone"
+        app:layout_constraintStart_toStartOf="@+id/imvPhone"
         app:layout_constraintTop_toTopOf="@+id/imvPhone"
-        app:srcCompat="@drawable/hand_full_card_horizontal" />
+        app:srcCompat="@drawable/ic_nfc_badge" />
 
     <ImageView
         android:id="@+id/imvPhone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/guideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/phone_mid" />
+        app:srcCompat="@drawable/phone_mid"
+        tools:visibility="visible" />
+
+    <ImageView
+        android:id="@+id/imvPhoneBack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:alpha="0"
+        app:layout_constraintBottom_toTopOf="@+id/guideline"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/phone_mid_back" />
+
+    <ImageView
+        android:id="@+id/imvHandWithCard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:alpha="0"
+        app:layout_constraintBottom_toBottomOf="@+id/imvPhone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/imvPhone"
+        app:srcCompat="@drawable/hand_full_card_horizontal" />
 
     <TextSwitcher
         android:id="@+id/tvHowToSwitcher"
