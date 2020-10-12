@@ -1,4 +1,4 @@
-package com.tangem.tangem_sdk_new.ui.widget.howTo
+package com.tangem.tangem_sdk_new.howTo.unknown
 
 import android.animation.Animator
 import android.animation.AnimatorSet
@@ -13,27 +13,23 @@ import com.skyfishjy.library.RippleBackground
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.extensions.dpToPx
 import com.tangem.tangem_sdk_new.extensions.vibrate
+import com.tangem.tangem_sdk_new.howTo.HowToState
 import com.tangem.tangem_sdk_new.postUI
 import com.tangem.tangem_sdk_new.ui.widget.BaseStateWidget
-
 
 /**
 [REDACTED_AUTHOR]
  */
-enum class FindNfcState {
-    FIND_ANTENNA, ANTENNA_FOUND, CANCEL
-}
-
-class HowToUnknownWidget(
+class NfcUnknownWidget(
     mainView: View
-) : BaseStateWidget<FindNfcState>(mainView) {
+) : BaseStateWidget<HowToState.Unknown>(mainView) {
 
     private val handWithCard: View = mainView.findViewById(R.id.imvHandWithCard)
     private val rippleView: RippleBackground = mainView.findViewById(R.id.rippleBg)
     private val tvSwitcher: TextSwitcher = mainView.findViewById(R.id.tvHowToSwitcher)
 
     private val animatorSet: AnimatorSet = AnimatorSet()
-    private var currentState: FindNfcState? = null
+    private var currentState: HowToState.Unknown? = null
 
     init {
         initTextChangesAnimation()
@@ -54,8 +50,8 @@ class HowToUnknownWidget(
         animatorSet.addListener(
             onStart = { handWithCard.alpha = 1f },
             onEnd = {
-                if (currentState == FindNfcState.FIND_ANTENNA) {
-                    postUI(100) { setState(FindNfcState.FIND_ANTENNA) }
+                if (currentState == HowToState.Unknown.FindAntenna) {
+                    postUI(100) { setState(HowToState.Unknown.FindAntenna) }
                 }
             },
             onCancel = {
@@ -104,19 +100,19 @@ class HowToUnknownWidget(
         tvSwitcher.setText(tvSwitcher.context.getString(textId))
     }
 
-    override fun setState(params: FindNfcState) {
+    override fun setState(params: HowToState.Unknown) {
         currentState = params
         when (params) {
-            FindNfcState.FIND_ANTENNA -> {
+            HowToState.Unknown.FindAntenna -> {
                 rippleView.stopRippleAnimation()
                 animatorSet.start()
             }
-            FindNfcState.ANTENNA_FOUND -> {
+            HowToState.Unknown.AntennaFound -> {
                 animatorSet.cancel()
                 rippleView.startRippleAnimation()
                 setText(R.string.how_to_unknown_detected)
             }
-            FindNfcState.CANCEL -> {
+            HowToState.Unknown.Cancel -> {
                 animatorSet.end()
                 animatorSet.cancel()
                 setText(R.string.how_to_unknown_empty)
