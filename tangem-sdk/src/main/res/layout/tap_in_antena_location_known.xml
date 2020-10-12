@@ -13,7 +13,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
-        android:id="@+id/imvHandWithCard"
+        android:id="@+id/imvHandWithCardH"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="100dp"
@@ -30,7 +30,7 @@
         android:layout_marginTop="20dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/imvHandWithCard"
+        app:layout_constraintTop_toTopOf="@+id/imvHandWithCardH"
         app:srcCompat="@drawable/phone" />
 
 

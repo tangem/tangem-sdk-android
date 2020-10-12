@@ -24,7 +24,7 @@ class NfcUnknownWidget(
     mainView: View
 ) : BaseStateWidget<HowToState.Unknown>(mainView) {
 
-    private val handWithCard: View = mainView.findViewById(R.id.imvHandWithCard)
+    private val handWithCard: View = mainView.findViewById(R.id.imvHandWithCardH)
     private val rippleView: RippleBackground = mainView.findViewById(R.id.rippleBg)
     private val tvSwitcher: TextSwitcher = mainView.findViewById(R.id.tvHowToSwitcher)
 
