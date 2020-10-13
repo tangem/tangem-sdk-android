@@ -69,7 +69,7 @@ class NfcUnknownWidget(
         xToRight.interpolator = DecelerateInterpolator()
 
         return AnimatorSet().apply {
-            duration = 3000
+            duration = 2000
             playTogether(scaleUpX, scaleUpY, xToRight)
             doOnStart { setText(R.string.how_to_unknown_tap_card) }
         }
@@ -90,7 +90,7 @@ class NfcUnknownWidget(
         xToLeft.interpolator = AccelerateInterpolator()
 
         return AnimatorSet().apply {
-            duration = 3000
+            duration = 2000
             playTogether(xToLeft, scaleDownX, scaleDownY)
             doOnStart { setText(R.string.how_to_unknown_nothing_happened) }
         }
@@ -101,6 +101,8 @@ class NfcUnknownWidget(
     }
 
     override fun setState(params: HowToState.Unknown) {
+        if (currentState == params) return
+
         currentState = params
         when (params) {
             HowToState.Unknown.FindAntenna -> {
@@ -121,6 +123,7 @@ class NfcUnknownWidget(
     }
 
     override fun onBottomSheetDismiss() {
+        setState(HowToState.Unknown.Cancel)
     }
 
     private fun dpToPx(value: Float): Float = mainView.dpToPx(value)

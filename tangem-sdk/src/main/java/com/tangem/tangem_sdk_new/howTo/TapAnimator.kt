@@ -3,12 +3,14 @@ package com.tangem.tangem_sdk_new.howTo
 import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
+import android.content.Context
 import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import androidx.core.animation.addListener
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
+import com.tangem.tangem_sdk_new.extensions.dpToPx
 
 /**
 [REDACTED_AUTHOR]
@@ -64,6 +66,20 @@ abstract class TapAnimator(
     protected abstract fun tapInAnimation(): AnimatorSet
 
     protected abstract fun tapOutAnimation(): AnimatorSet
+
+    companion object {
+        fun create(view: View, nfcOnTheBack: Boolean, property: AnimationProperty = defaultProperties(view.context)): TapAnimator {
+            return if (nfcOnTheBack) {
+                TapBackAnimator(view, property)
+            } else {
+                TapFrontAnimator(view, property, view.context.dpToPx(200f))
+            }
+        }
+
+        fun defaultProperties(context: Context): AnimationProperty {
+            return AnimationProperty(context.dpToPx(-395f), context.dpToPx(-95f))
+        }
+    }
 }
 
 data class AnimationProperty(
