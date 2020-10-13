@@ -1,4 +1,4 @@
-package com.tangem.tangem_sdk_new.howTo.unknown
+package com.tangem.tangem_sdk_new.ui.widget.howTo.unknown
 
 import android.animation.Animator
 import android.animation.AnimatorSet
@@ -13,9 +13,9 @@ import com.skyfishjy.library.RippleBackground
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.extensions.dpToPx
 import com.tangem.tangem_sdk_new.extensions.vibrate
-import com.tangem.tangem_sdk_new.howTo.HowToState
 import com.tangem.tangem_sdk_new.postUI
 import com.tangem.tangem_sdk_new.ui.widget.BaseStateWidget
+import com.tangem.tangem_sdk_new.ui.widget.howTo.HowToState
 
 /**
 [REDACTED_AUTHOR]
