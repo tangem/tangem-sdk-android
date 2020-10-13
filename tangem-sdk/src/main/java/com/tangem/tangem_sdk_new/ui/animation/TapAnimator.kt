@@ -1,16 +1,14 @@
-package com.tangem.tangem_sdk_new.howTo
+package com.tangem.tangem_sdk_new.ui.animation
 
 import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
-import android.content.Context
 import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import androidx.core.animation.addListener
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
-import com.tangem.tangem_sdk_new.extensions.dpToPx
 
 /**
 [REDACTED_AUTHOR]
@@ -19,7 +17,8 @@ abstract class TapAnimator(
     protected val view: View,
     protected val properties: AnimationProperty
 ) {
-    var onRepeatsFinished: (() -> Unit)? = null
+    var animationCallback: TapAnimationCallback? = null
+    var onRepeatsFinished: VoidCallback? = null
 
     private var tapAnimator: AnimatorSet? = null
     private var repeatedCount = 0
@@ -68,23 +67,27 @@ abstract class TapAnimator(
     protected abstract fun tapOutAnimation(): AnimatorSet
 
     companion object {
-        fun create(view: View, nfcOnTheBack: Boolean, property: AnimationProperty = defaultProperties(view.context)): TapAnimator {
+        fun create(view: View, nfcOnTheBack: Boolean, property: AnimationProperty): TapAnimator {
             return if (nfcOnTheBack) {
                 TapBackAnimator(view, property)
             } else {
-                TapFrontAnimator(view, property, view.context.dpToPx(200f))
+                TapFrontAnimator(view, property)
             }
-        }
-
-        fun defaultProperties(context: Context): AnimationProperty {
-            return AnimationProperty(context.dpToPx(-395f), context.dpToPx(-95f))
         }
     }
 }
 
+class TapAnimationCallback(
+    val onTapInStarted: VoidCallback? = null,
+    val onTapInFinished: VoidCallback? = null,
+    val onTapOutStarted: VoidCallback? = null,
+    val onTapOutFinished: VoidCallback? = null
+)
+
 data class AnimationProperty(
     val xStart: Float,
     val xEnd: Float,
+    val yStart: Float,
     val tapInOutDuration: Long = 1200,
     val tapInDownTimeDuration: Long = 3000,
     val tapOutDownTimeDuration: Long = 400,
@@ -107,6 +110,8 @@ class TapBackAnimator(
         val animator = AnimatorSet()
         animator.duration = properties.tapInOutDuration
         animator.playTogether(scaleUpX, scaleUpY, slideRight, alpha)
+        animator.doOnStart { animationCallback?.onTapInStarted?.invoke() }
+        animator.doOnEnd { animationCallback?.onTapInFinished?.invoke() }
         return animator
     }
 
@@ -121,6 +126,8 @@ class TapBackAnimator(
         val animator = AnimatorSet()
         animator.duration = properties.tapInOutDuration
         animator.playTogether(scaleX, scaleY, slideLeft, alpha)
+        animator.doOnStart { animationCallback?.onTapOutStarted?.invoke() }
+        animator.doOnEnd { animationCallback?.onTapOutFinished?.invoke() }
         return animator
     }
 }
@@ -128,7 +135,6 @@ class TapBackAnimator(
 class TapFrontAnimator(
     view: View,
     property: AnimationProperty,
-    private val yStart: Float,
 ) : TapAnimator(view, property) {
 
     override fun tapInAnimation(): AnimatorSet {
@@ -137,14 +143,18 @@ class TapFrontAnimator(
         val slideRight = ObjectAnimator.ofFloat(view, View.TRANSLATION_X,
             properties.xStart, view.translationX + properties.xEnd)
         val slideUp = ObjectAnimator.ofFloat(view, View.TRANSLATION_Y,
-            view.translationY + yStart, view.translationY)
+            view.translationY + properties.yStart, view.translationY)
         slideRight.interpolator = DecelerateInterpolator()
         slideUp.interpolator = DecelerateInterpolator()
 
         val animator = AnimatorSet()
         animator.duration = properties.tapInOutDuration
         animator.playTogether(scaleX, scaleY, slideRight, slideUp)
-        animator.doOnStart { view.alpha = 1f }
+        animator.doOnStart {
+            view.alpha = 1f
+            animationCallback?.onTapInStarted?.invoke()
+        }
+        animator.doOnEnd { animationCallback?.onTapInFinished?.invoke() }
         return animator
     }
 
@@ -154,14 +164,18 @@ class TapFrontAnimator(
         val slideLeft = ObjectAnimator.ofFloat(view, View.TRANSLATION_X,
             view.translationX + properties.xEnd, properties.xStart)
         val slideDown = ObjectAnimator.ofFloat(view, View.TRANSLATION_Y,
-            view.translationY, view.translationY + yStart)
+            view.translationY, view.translationY + properties.yStart)
         slideLeft.interpolator = AccelerateInterpolator()
         slideDown.interpolator = AccelerateInterpolator()
 
         val animator = AnimatorSet()
         animator.duration = properties.tapInOutDuration
         animator.playTogether(scaleUpX, scaleUpY, slideLeft, slideDown)
-        animator.doOnEnd { view.alpha = 0f }
+        animator.doOnStart { animationCallback?.onTapOutStarted?.invoke() }
+        animator.doOnEnd {
+            view.alpha = 0f
+            animationCallback?.onTapOutFinished?.invoke()
+        }
         return animator
     }
 }

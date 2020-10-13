@@ -1,4 +1,4 @@
-package com.tangem.tangem_sdk_new.howTo
+package com.tangem.tangem_sdk_new.ui.animation
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator

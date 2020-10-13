@@ -1,9 +1,11 @@
 package com.tangem.tangem_sdk_new
 
 import android.app.Activity
+import android.os.Build
 import android.view.ContextThemeWrapper
 import com.tangem.*
 import com.tangem.commands.PinType
+import com.tangem.tangem_sdk_new.nfc.NfcAntennaLocationProvider
 import com.tangem.tangem_sdk_new.nfc.NfcReader
 import com.tangem.tangem_sdk_new.ui.NfcSessionDialog
 
@@ -28,7 +30,8 @@ class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDel
     }
 
     private fun createReadingDialog(activity: Activity) {
-        readingDialog = NfcSessionDialog(ContextThemeWrapper(activity, R.style.CardSdkTheme)).apply {
+        val nfcLocationProvider = NfcAntennaLocationProvider(Build.DEVICE)
+        readingDialog = NfcSessionDialog(ContextThemeWrapper(activity, R.style.CardSdkTheme), nfcLocationProvider).apply {
             dismissWithAnimation = true
             create()
             setOnCancelListener {
