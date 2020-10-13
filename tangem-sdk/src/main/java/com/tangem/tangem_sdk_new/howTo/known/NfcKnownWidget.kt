@@ -13,11 +13,12 @@ import androidx.transition.TransitionManager
 import com.skyfishjy.library.RippleBackground
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.extensions.*
-import com.tangem.tangem_sdk_new.howTo.CardTapWidget
-import com.tangem.tangem_sdk_new.howTo.FlipAnimator
 import com.tangem.tangem_sdk_new.howTo.HowToState
-import com.tangem.tangem_sdk_new.howTo.TapAnimator
 import com.tangem.tangem_sdk_new.ui.NfcLocation
+import com.tangem.tangem_sdk_new.ui.animation.AnimationProperty
+import com.tangem.tangem_sdk_new.ui.animation.FlipAnimator
+import com.tangem.tangem_sdk_new.ui.animation.TouchCardAnimation
+import com.tangem.tangem_sdk_new.ui.animation.TouchCardAnimation.Companion.calculateRelativePosition
 import com.tangem.tangem_sdk_new.ui.widget.BaseStateWidget
 
 
@@ -37,11 +38,11 @@ class NfcKnownWidget(
     private val phone: ImageView = mainView.findViewById(R.id.imvPhone)
     private val phoneBack: ImageView = mainView.findViewById(R.id.imvPhoneBack)
     private val nfcBadge: ImageView = mainView.findViewById(R.id.imvNfcBadge)
-    private val cardTapWidget = CardTapWidget(
+    private val touchCardAnimation = TouchCardAnimation(
         phone,
         mainView.findViewById(R.id.imvHandWithCardH),
         mainView.findViewById(R.id.imvHandWithCardV),
-        TapAnimator.defaultProperties(phone.context),
+        AnimationProperty(context.dpToPx(-395f), context.dpToPx(-95f), context.dpToPx(200f)),
         nfcLocation
     )
 
@@ -95,11 +96,11 @@ class NfcKnownWidget(
             nfcBadge.fadeOut(duration)
         }
 
-        rippleView.translationX = CardTapWidget.calculateRelativePosition(nfcLocation.getX(), phone.width)
-        rippleView.translationY = CardTapWidget.calculateRelativePosition(nfcLocation.getY(), phone.height)
+        rippleView.translationX = calculateRelativePosition(nfcLocation.getX(), phone.width)
+        rippleView.translationY = calculateRelativePosition(nfcLocation.getY(), phone.height)
 
-        nfcBadge.translationX = CardTapWidget.calculateRelativePosition(nfcLocation.getX(), phone.width)
-        nfcBadge.translationY = CardTapWidget.calculateRelativePosition(nfcLocation.getY(), phone.height)
+        nfcBadge.translationX = calculateRelativePosition(nfcLocation.getX(), phone.width)
+        nfcBadge.translationY = calculateRelativePosition(nfcLocation.getY(), phone.height)
 
         rippleView.startRippleAnimation()
         setText(R.string.how_to_known_antenna_is_here)
@@ -118,7 +119,7 @@ class NfcKnownWidget(
 
 
     private fun tapToKnownPosition() {
-        cardTapWidget.onTapAnimationFinished = { onFinished?.invoke() }
+        touchCardAnimation.onTapAnimationFinished = { onFinished?.invoke() }
 
         val duration = 400L
         nfcBadge.fadeIn(duration)
@@ -126,11 +127,11 @@ class NfcKnownWidget(
             rippleView.stopRippleAnimation()
             if (nfcLocation.isOnTheBack()) {
                 setText(R.string.how_to_known_tap_card_to_the_back)
-                phoneFlipAnimator.onEnd = { cardTapWidget.animate() }
+                phoneFlipAnimator.onEnd = { touchCardAnimation.animate() }
                 phoneFlipAnimator.animate()
             } else {
                 setText(R.string.how_to_known_tap_card_to_the_front)
-                cardTapWidget.animate()
+                touchCardAnimation.animate()
             }
         }
     }
