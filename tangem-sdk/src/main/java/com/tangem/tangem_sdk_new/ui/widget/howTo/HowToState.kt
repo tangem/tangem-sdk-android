@@ -1,4 +1,4 @@
-package com.tangem.tangem_sdk_new.howTo
+package com.tangem.tangem_sdk_new.ui.widget.howTo
 
 /**
 [REDACTED_AUTHOR]

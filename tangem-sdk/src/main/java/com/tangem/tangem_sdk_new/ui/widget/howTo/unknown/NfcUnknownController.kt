@@ -1,11 +1,11 @@
-package com.tangem.tangem_sdk_new.howTo.unknown
+package com.tangem.tangem_sdk_new.ui.widget.howTo.unknown
 
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
-import com.tangem.tangem_sdk_new.howTo.HowToState
 import com.tangem.tangem_sdk_new.nfc.NfcManager
 import com.tangem.tangem_sdk_new.postUI
+import com.tangem.tangem_sdk_new.ui.widget.howTo.HowToState
 
 /**
 [REDACTED_AUTHOR]
