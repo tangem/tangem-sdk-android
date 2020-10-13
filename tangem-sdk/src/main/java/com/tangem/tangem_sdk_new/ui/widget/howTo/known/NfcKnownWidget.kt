@@ -1,4 +1,4 @@
-package com.tangem.tangem_sdk_new.howTo.known
+package com.tangem.tangem_sdk_new.ui.widget.howTo.known
 
 import android.content.res.ColorStateList
 import android.view.View
@@ -13,13 +13,13 @@ import androidx.transition.TransitionManager
 import com.skyfishjy.library.RippleBackground
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.extensions.*
-import com.tangem.tangem_sdk_new.howTo.HowToState
 import com.tangem.tangem_sdk_new.ui.NfcLocation
 import com.tangem.tangem_sdk_new.ui.animation.AnimationProperty
 import com.tangem.tangem_sdk_new.ui.animation.FlipAnimator
 import com.tangem.tangem_sdk_new.ui.animation.TouchCardAnimation
 import com.tangem.tangem_sdk_new.ui.animation.TouchCardAnimation.Companion.calculateRelativePosition
 import com.tangem.tangem_sdk_new.ui.widget.BaseStateWidget
+import com.tangem.tangem_sdk_new.ui.widget.howTo.HowToState
 
 
 /**
