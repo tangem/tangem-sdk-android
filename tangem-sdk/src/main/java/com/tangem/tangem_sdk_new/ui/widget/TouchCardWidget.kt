@@ -30,7 +30,7 @@ class TouchCardWidget(
         ivPhone,
         ivHandCardHorizontal,
         ivHandCardVertical,
-        AnimationProperty(mainView.dpToPx(-395f), mainView.dpToPx(-70f), mainView.dpToPx(150f), repeatCount = -1),
+        AnimationProperty(mainView.dpToPx(-160f), mainView.dpToPx(-70f), mainView.dpToPx(150f), repeatCount = -1),
         nfcLocation
     )
 
@@ -38,18 +38,6 @@ class TouchCardWidget(
         ivHandCardHorizontal.setVectorDrawable(R.drawable.hand_full_card_horizontal)
         ivHandCardVertical.setVectorDrawable(R.drawable.hand_full_card_vertical)
         ivPhone.setVectorDrawable(R.drawable.phone)
-
-        touchCardAnimation.tapAnimationCallback = TapAnimationCallback(
-            onTapInFinished = {
-                rippleBackgroundNfc.show()
-                rippleBackgroundNfc.startRippleAnimation()
-
-            },
-            onTapOutStarted = {
-                rippleBackgroundNfc.stopRippleAnimation()
-                rippleBackgroundNfc.hide()
-            }
-        )
     }
 
     override fun setState(params: SessionViewDelegateState) {
@@ -61,6 +49,7 @@ class TouchCardWidget(
     }
 
     private fun animate() {
+        setCallbacks()
         ivPhone.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
                 ivPhone.viewTreeObserver.removeOnGlobalLayoutListener(this)
@@ -71,6 +60,20 @@ class TouchCardWidget(
                 touchCardAnimation.animate()
             }
         })
+    }
+
+    private fun setCallbacks(){
+        touchCardAnimation.tapAnimationCallback = TapAnimationCallback(
+            onTapInFinished = {
+                rippleBackgroundNfc.show()
+                rippleBackgroundNfc.startRippleAnimation()
+
+            },
+            onTapOutStarted = {
+                rippleBackgroundNfc.stopRippleAnimation()
+                rippleBackgroundNfc.hide()
+            }
+        )
     }
 
     private fun stopAnimation() {
