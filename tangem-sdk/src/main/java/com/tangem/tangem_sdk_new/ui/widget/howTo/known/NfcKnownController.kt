@@ -1,7 +1,7 @@
-package com.tangem.tangem_sdk_new.howTo.known
+package com.tangem.tangem_sdk_new.ui.widget.howTo.known
 
-import com.tangem.tangem_sdk_new.howTo.HowToState
 import com.tangem.tangem_sdk_new.postUI
+import com.tangem.tangem_sdk_new.ui.widget.howTo.HowToState
 
 /**
 [REDACTED_AUTHOR]

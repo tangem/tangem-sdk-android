@@ -1,4 +1,4 @@
-package com.tangem.tangem_sdk_new.howTo
+package com.tangem.tangem_sdk_new.ui.widget.howTo
 
 import android.content.Context
 import android.os.Vibrator
@@ -6,12 +6,12 @@ import android.view.LayoutInflater
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.tangem.tangem_sdk_new.R
-import com.tangem.tangem_sdk_new.howTo.known.NfcKnownController
-import com.tangem.tangem_sdk_new.howTo.known.NfcKnownWidget
-import com.tangem.tangem_sdk_new.howTo.unknown.NfcUnknownController
-import com.tangem.tangem_sdk_new.howTo.unknown.NfcUnknownWidget
 import com.tangem.tangem_sdk_new.nfc.NfcLocationProvider
 import com.tangem.tangem_sdk_new.nfc.NfcManager
+import com.tangem.tangem_sdk_new.ui.widget.howTo.known.NfcKnownController
+import com.tangem.tangem_sdk_new.ui.widget.howTo.known.NfcKnownWidget
+import com.tangem.tangem_sdk_new.ui.widget.howTo.unknown.NfcUnknownController
+import com.tangem.tangem_sdk_new.ui.widget.howTo.unknown.NfcUnknownWidget
 
 /**
 [REDACTED_AUTHOR]
