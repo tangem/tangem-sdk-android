@@ -16,10 +16,10 @@
         android:id="@+id/imvHandWithCardH"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
-        android:translationX="-30dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/imvPhone"
+        app:layout_constraintEnd_toEndOf="@+id/imvPhone"
+        app:layout_constraintStart_toStartOf="@+id/imvPhone"
+        app:layout_constraintTop_toTopOf="@+id/imvPhone"
         app:srcCompat="@drawable/hand_full_card_horizontal" />
 
     <ImageView
@@ -27,10 +27,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="28dp"
-        android:layout_marginTop="20dp"
+        app:layout_constraintBottom_toBottomOf="@+id/flBackground"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/imvHandWithCardH"
+        app:layout_constraintTop_toTopOf="@+id/flBackground"
+        app:layout_constraintVertical_bias="0.39"
         app:srcCompat="@drawable/phone" />
 
 
