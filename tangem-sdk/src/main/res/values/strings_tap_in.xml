@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string name="tap_in_how_to">How to</string>
     <string name="tap_in_button">Tap in</string>
 
     <string name="tap_in_known_info_message">Hold your card to the phone as demonstrated when you tap in to connect.</string>
