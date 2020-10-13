@@ -1,7 +1,10 @@
 package com.tangem.tangem_sdk_new.ui
 
 import android.content.Context
-import android.view.*
+import android.view.HapticFeedbackConstants
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -9,12 +12,16 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.tangem.Log
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
+import com.tangem.tangem_sdk_new.nfc.NfcLocationProvider
 import com.tangem.tangem_sdk_new.postUI
 import com.tangem.tangem_sdk_new.ui.widget.*
 import com.tangem.tangem_sdk_new.ui.widget.progressBar.ProgressbarStateWidget
 import kotlinx.android.synthetic.main.bottom_sheet_layout.*
 
-class NfcSessionDialog(context: Context) : BottomSheetDialog(context) {
+class NfcSessionDialog(
+    context: Context,
+    private val nfcLocationProvider: NfcLocationProvider
+) : BottomSheetDialog(context) {
     private val tag = this::class.java.simpleName
 
     private lateinit var mainContentView: View
@@ -38,9 +45,10 @@ class NfcSessionDialog(context: Context) : BottomSheetDialog(context) {
     override fun setContentView(view: View) {
         super.setContentView(view)
 
+        val nfcLocation = nfcLocationProvider.getLocation() ?: NfcLocation.model11
         mainContentView = view
         headerWidget = HeaderWidget(view.findViewById(R.id.llHeader))
-        touchCardWidget = TouchCardWidget(view.findViewById(R.id.rlTouchCard))
+        touchCardWidget = TouchCardWidget(view.findViewById(R.id.rlTouchCard), nfcLocation)
         progressStateWidget = ProgressbarStateWidget(view.findViewById(R.id.clProgress))
         pinCodeRequestWidget = PinCodeRequestWidget(view.findViewById(R.id.csPinCode))
         pinCodeSetChangeWidget = PinCodeModificationWidget(view.findViewById(R.id.llChangePin), 0)
