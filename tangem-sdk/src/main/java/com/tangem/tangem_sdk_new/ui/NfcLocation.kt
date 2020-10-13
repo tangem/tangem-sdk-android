@@ -242,9 +242,4 @@ enum class NfcLocation(val codename: String, val fullName: String, val orientati
     model239("bbb100", "BlackBerry KEYone", 0, 60, 20, 0),
     model240("bbf100", "BlackBerry KEY2", 0, 50, 30, 0),
     model241("CatS61", "Cat S61", 0, 50, 50, 0),
-    model243("raphael", "Xiaomi Mi 9T Pro", 0, 40, 0, 0),
-//    model243("raphael", "Xiaomi Mi 9T Pro", 0, 100, 100, 0),
-//    model243("raphael", "Xiaomi Mi 9T Pro", 0, 0, 0, 1),
-//    model243("raphael", "Xiaomi Mi 9T Pro", 0, 50, 50, 1),
-//    model243("raphael", "Xiaomi Mi 9T Pro", 0, 100, 100, 1),
 }
