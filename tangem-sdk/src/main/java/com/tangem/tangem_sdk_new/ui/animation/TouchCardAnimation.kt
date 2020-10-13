@@ -1,4 +1,4 @@
-package com.tangem.tangem_sdk_new.howTo
+package com.tangem.tangem_sdk_new.ui.animation
 
 import android.view.View
 import com.tangem.tangem_sdk_new.extensions.*
@@ -7,7 +7,7 @@ import com.tangem.tangem_sdk_new.ui.NfcLocation
 /**
 [REDACTED_AUTHOR]
  */
-class CardTapWidget(
+class TouchCardAnimation(
     private val phone: View,
     private val cardHorizontal: View,
     private val cardVertical: View,
@@ -16,6 +16,11 @@ class CardTapWidget(
 ) {
 
     var onTapAnimationFinished: OnTapAnimationFinished? = null
+    var tapAnimationCallback: TapAnimationCallback? = null
+        set(value) {
+            field = value
+            tapAnimator?.animationCallback = value
+        }
 
     private val tappedView: View = if (nfcLocation.isHorizontal()) cardHorizontal else cardVertical
     private var tapAnimator: TapAnimator? = null
@@ -25,13 +30,16 @@ class CardTapWidget(
     }
 
     fun animate() {
+        tapAnimator?.cancel()
         translateToNfcLocation(tappedView, phone, nfcLocation)
         tapAnimator = TapAnimator.create(tappedView, nfcLocation.isOnTheBack(), animationProperty)
+        tapAnimator?.animationCallback = tapAnimationCallback
         tapAnimator?.onRepeatsFinished = { onTapAnimationFinished?.invoke() }
         tapAnimator?.animate()
     }
 
     fun cancel() {
+        tapAnimationCallback = null
         tapAnimator?.cancel()
     }
 
@@ -54,7 +62,6 @@ class CardTapWidget(
             return translateToStartOfView + positionInView
         }
     }
-
 }
 
 typealias VoidCallback = () -> Unit
