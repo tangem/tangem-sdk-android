@@ -55,4 +55,17 @@
         android:padding="16dp"
         app:srcCompat="@drawable/ic_close" />
 
+    <Button
+        android:id="@+id/btnHowTo"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:text="@string/tap_in_how_to"
+        app:icon="@drawable/ic_how_to_play"
+        app:iconGravity="textEnd" />
+
+
+
 </LinearLayout>
