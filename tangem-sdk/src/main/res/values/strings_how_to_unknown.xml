@@ -1,9 +1,0 @@
-<resources>
-
-    <string name="how_to_unknown_empty"></string>
-    <string name="how_to_unknown_tap_card">Tap your card to the back of the phone</string>
-    <string name="how_to_unknown_move_card">To detect where your NFC antenna is located, move the card up and down until confirmation.</string>
-    <string name="how_to_unknown_nothing_happened">Nothing happened? Try removing your card from the phone and then put it back.</string>
-    <string name="how_to_unknown_detected">NFC Detected. This is the placement of your NFC antenna</string>
-
-</resources>
