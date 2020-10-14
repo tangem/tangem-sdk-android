@@ -149,7 +149,7 @@ class PinCodeModificationWidget(
 
         TransitionManager.beginDelayedTransition(mainView as ViewGroup, AutoTransition())
         if (errorIsVisible) {
-            val errorMessage = getString(R.string.pin_confirm_error)
+            val errorMessage = getString(R.string.pin_confirm_error_format)
             til1.error = errorMessage
             til2.error = errorMessage
         } else {
