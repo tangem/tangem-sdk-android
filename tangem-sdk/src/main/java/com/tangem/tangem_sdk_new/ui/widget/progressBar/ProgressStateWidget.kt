@@ -196,24 +196,11 @@ class SecurityDelayState(mainView: View) : BaseProgressState(mainView) {
 
 class DelayState(mainView: View) : BaseProgressState(mainView) {
     override fun setState(params: SessionViewDelegateState) {
-        val delay = params as? SessionViewDelegateState.Delay ?: return
+        changeProgressColor(R.color.progress_bar_color, false)
 
-        hideViews(doneView)
-        hideViews(exclamationView)
-
+        hideViews(tvProgressValue, doneView, exclamationView)
         showViews(progressBar)
-        showViews(tvProgressValue)
 
-        if (delay.current == 0) {
-            setProgress(0f, false)
-        }
-        if (progressBar.progressMax != delay.total.toFloat()) {
-            progressBar.progressMax = delay.total.toFloat()
-        }
-        setProgress(delay.current.toFloat())
-        val percent = delay.current * 100 / delay.total
-        tvProgressValue.text = "$percent %"
-
-        changeProgressColor(R.color.progress_bar_color)
+        progressBar.isIndeterminate = true
     }
 }
