@@ -12,6 +12,7 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
+import com.tangem.common.extensions.getFirmwareNumber
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -52,6 +53,9 @@ class WriteIssuerExtraDataCommand(
     }
 
     override fun performPreCheck(card: Card): TangemSdkError? {
+        if (card.getFirmwareNumber() ?: 0.0 >= 3.29) {
+            return TangemSdkError.FirmwareNotSupported()
+        }
         val publicKey = issuerPublicKey ?: card.issuerPublicKey
         ?: return TangemSdkError.MissingIssuerPubicKey()
 
