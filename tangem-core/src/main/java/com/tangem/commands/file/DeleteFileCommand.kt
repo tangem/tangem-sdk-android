@@ -10,6 +10,7 @@ import com.tangem.commands.SimpleResponse
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
+import com.tangem.common.extensions.getFirmwareNumber
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -18,7 +19,10 @@ import com.tangem.common.tlv.TlvTag
 typealias DeleteFileResponse = SimpleResponse
 
 /**
- * Card Command is in development, subject to future changes
+ * This command allows to delete data written to the card with [WriteFileDataCommand].
+ * Passcode (PIN2) is required to delete the files.
+ *
+ * @property fileIndex index of a file to be deleted.
  */
 class DeleteFileCommand(private val fileIndex: Int) : Command<DeleteFileResponse>() {
 
@@ -30,6 +34,9 @@ class DeleteFileCommand(private val fileIndex: Int) : Command<DeleteFileResponse
         }
         if (card.isActivated) {
             return TangemSdkError.NotActivated()
+        }
+        if (card.getFirmwareNumber() ?: 0.0 < 3.29) {
+            return TangemSdkError.FirmwareNotSupported()
         }
         return null
     }
