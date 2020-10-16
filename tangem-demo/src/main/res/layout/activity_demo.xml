@@ -41,6 +41,8 @@
 
             <include layout="@layout/set_pin" />
 
+            <include layout="@layout/file_data" />
+
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
