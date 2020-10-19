@@ -7,6 +7,7 @@ enum class FileDataMode(val rawValue: Int) {
     ConfirmWritingFile(0x03),
     DeleteFile(0x05),
     ChangeFileSettings(0x06),
+    ReadFileHash(0x01),
     ;
 
     companion object {
