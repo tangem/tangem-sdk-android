@@ -12,6 +12,7 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
+import com.tangem.common.extensions.getFirmwareNumber
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -28,7 +29,12 @@ class ReadFileDataResponse(
 ) : CommandResponse
 
 /**
- * Card Command is in development, subject to future changes
+ * This command allows to read data written to the card with [WriteFileDataCommand].
+ * If the files are private, then Passcode (PIN2) is required to read the files.
+ *
+ * @property fileIndex index of a file
+ * @property readPrivateFiles if set to true, then the command will read private files,
+ * for which it requires PIN2. Otherwise only public files can be read.
  */
 class ReadFileDataCommand(
         private val fileIndex: Int = 0,
@@ -45,6 +51,9 @@ class ReadFileDataCommand(
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.status == CardStatus.NotPersonalized) {
             return TangemSdkError.NotPersonalized()
+        }
+        if (card.getFirmwareNumber() ?: 0.0 < 3.29) {
+            return TangemSdkError.FirmwareNotSupported()
         }
         return null
     }
