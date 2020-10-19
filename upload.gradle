@@ -14,3 +14,19 @@ uploadArchives {
         }
     }
 }
+
+task uploadSnapshot(type: Upload) {
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    def prefix = project.hasProperty('snapshotsPrefix') ? properties.getProperty('snapshotsPrefix') : "tangem"
+
+    configuration = configurations.archives
+    repositories {
+        mavenDeployer {
+            repository(url: "https://nexus.tangem.com/repository/maven-snapshots/") {
+                authentication(userName: "developer", password: "smartcash987")
+            }
+            pom.version = "$prefix-SNAPSHOT"
+        }
+    }
+}
