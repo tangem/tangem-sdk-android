@@ -58,7 +58,7 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener {
     }
 
 
-    fun onResume() {
+    fun onStart() {
         val filter = IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED)
         activity?.registerReceiver(mBroadcastReceiver, filter)
         handleNfcEnabled(nfcAdapter?.isEnabled == true)
@@ -75,7 +75,7 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener {
         }
     }
 
-    fun onPause() {
+    fun onStop() {
         activity?.unregisterReceiver(mBroadcastReceiver)
         reader.stopSession(true)
         disableReaderMode()
