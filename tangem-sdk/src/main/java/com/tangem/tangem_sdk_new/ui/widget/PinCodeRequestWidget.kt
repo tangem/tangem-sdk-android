@@ -39,7 +39,7 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
                     val pin = etPinCode.text.toString()
                     if (pin.isEmpty()) {
                         tilPinCode.error = mainView.context.getString(
-                                R.string.pin_enter_format, code
+                                R.string.pin_enter, code
                         )
                     } else {
                         tilPinCode.error = null
