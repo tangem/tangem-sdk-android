@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="how_to_known_here_how_to_use" translatable="false">Here’s how to use Tangem Cards with (phone)</string>
+    <string name="how_to_known_antenna_is_here" translatable="false">Your NFC antenna is here</string>
+    <string name="how_to_known_tap_card_to_the_back" translatable="false">Tap your card to the back of the phone</string>
+    <string name="how_to_known_tap_card_to_the_front" translatable="false">Tap your card to the front of the phone</string>
+    <string name="tap_in_how_to" translatable="false">How to</string>
+
+</resources>
