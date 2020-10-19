@@ -11,14 +11,14 @@ import com.tangem.tangem_sdk_new.nfc.NfcManager
  */
 class NfcLifecycleObserver(private var nfcManager: NfcManager) : LifecycleObserver {
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    fun onResume(owner: LifecycleOwner) {
-        nfcManager.onResume()
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    fun onStart(owner: LifecycleOwner) {
+        nfcManager.onStart()
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    fun onPause(owner: LifecycleOwner) {
-        nfcManager.onPause()
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    fun onStop(owner: LifecycleOwner) {
+        nfcManager.onStop()
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
