@@ -1,5 +1,56 @@
 <resources>
-    <string name="app_name" translatable="false">Tangem SDK</string>
+    <!-- IOS Strings-->
+    <!-- Error message. When NFC session time is over -->
+    <string name="nfc_session_timeout">Session timeout. Please, try again.</string>
+    <!-- Label. When session is started and we ask user to hold the card near the phone -->
+    <string name="nfc_alert_default">Hold your iPhone near a card</string>
+    <!-- Label. When transaction has been signed -->
+    <string name="nfc_alert_sign_completed">Transaction has been successfully signed</string>
+    <!-- Label. Long Tap is the operation when we ask the user to connect the card and the phone and hold it for several seconds. -->
+    <string name="view_delegate_security_delay">Long tap</string>
+    <!-- Label. During the "Long Tap" we show to the user how many seconds he has to hold the card and count them down. -->
+    <string name="nfc_seconds_left">%s left</string>
+    <!-- Label. Operation is finished. -->
+    <string name="nfc_alert_default_done">Done</string>
+    <!-- Error Label. -->
+    <string name="nfc_stuck_error">It seems that NFC does not work properly on your iPhone</string>
+    <!-- Error Label. -->
+    <string name="unknown_status">Unknown card status</string>
+    <!-- Error Label. Generic error with error code. -->
+    <string name="generic_error_code">An error occurred during the operation. Code: %s</string>
+    <!-- Label. Reading data: 30% -->
+    <string name="reading_data_progress">Reading data: %s%%</string>
+    <!-- Label. Writing data: 30% -->
+    <string name="writing_data_progress">Writing data: %s%%</string>
+
+    <!-- Android Strings-->
+    <!-- Label. Need NFC to be switched on. -->
+    <string name="dialog_nfc_enable_title">Enable NFC?</string>
+    <string name="dialog_nfc_enable_text">This app needs NFC to be switched on. Hit OK to go to Settings, where you can enable NFC.</string>
+    <!-- Label. Long Tap is the operation when we ask the user to connect the card and the phone and hold it for several seconds. -->
+    <string name="view_delegate_security_delay_description">This card has enforced security delay. Please hold the card firmly until the operation is completed.</string>
+    <!-- Label. Something is happening. -->
+    <string name="view_delegate_delay">Operation is in progress</string>
+    <!-- Label. The user has to hold the card near the phone so as not to lose the connection between his phone and his card. -->
+    <string name="view_delegate_delay_description">Please hold the card firmly until the operation is completed</string>
+    <!-- Label. Shows that the app is ready to scan the card. -->
+    <string name="view_delegate_scan">Ready to scan</string>
+    <string name="view_delegate_scan_description">Scan card with your phone as shown above</string>
+    <!-- Label. Shows card number. Card 1234 5678 1234 5678 or any card if number is not important. -->
+    <string name="view_delegate_header_card">Card</string>
+    <string name="view_delegate_header_any_card">Any card</string>
+
+
+    <string name="pin_enter">Enter %s</string>
+    <string name="pin1">Access code</string>
+    <string name="pin2">Passcode</string>
+    <string name="pin_change_new_code_format">New %s</string>
+    <string name="pin_change_code_format">Change %s</string>
+    <string name="pin_change_new_code_confirm_format">New %s (Confirm)</string>
+    <string name="pin_change_current_code_format">Current %s</string>
+    <string name="pin_set_code_confirm_format">Confirm %s</string>
+    <string name="pin_confirm_error_format">Codes do not match</string>
+    <string name="pin_set_code_format">Set %s</string>
     <string name="common_ok">OK</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_continue">Continue</string>
@@ -7,43 +58,51 @@
     <string name="common_success">Success</string>
     <string name="common_error">Error</string>
 
-    <string name="lorem_ipsum" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</string>
-    <string name="lorem_ipsum_half" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</string>
-    <string name="dialog_nfc_enable_title">Enable NFC?</string>
-    <string name="dialog_nfc_enable_text">This app is useless when NFC is disabled. Reader mode depends on it. Hit OK to go to Settings, where you can enable NFC.</string>
+    <!-- Errors -->
+    <string name="error_message" translatable="false">%s: %s</string>
+    <string name="error_operation">An error occurred during the operation</string>
+    <string name="error_tag_lost">Tag lost.</string>
+    <string name="error_already_personalized">This card has already been personalized</string>
+    <string name="error_cannot_be_depersonalized">This card cannot be depersonalized</string>
+    <string name="error_already_created">A wallet has already been created</string>
+    <string name="error_purge_prohibited">This card’s configuration does not allow you to erase the wallet</string>
+    <string name="error_pin1_cannot_be_changed">PIN1 Access Code cannot be changed</string>
+    <string name="error_pin2_cannot_be_changed">PIN2 Passcode cannot be changed</string>
+    <string name="error_pin1_cannot_be_default">PIN1 Access Code cannot be changed to the default value. Please create a new PIN1 Access Code.</string>
+    <string name="error_no_remaining_signatures">You cannot sign data with this wallet because the card has reached its signature limit</string>
+    <string name="error_empty_hashes">There is nothing to sign here</string>
+    <string name="error_cannot_be_signed">This data cannot be signed</string>
+    <string name="error_card_is_empty">Please create a wallet to sign data</string>
+    <string name="error_not_personalized">This card has not been personalized</string>
+    <string name="error_not_activated">This card has not been activated</string>
+    <string name="error_purged">You cannot sign data with this wallet because the card has been purged</string>
+    <string name="error_verification_failed">Data verification failed</string>
+    <string name="error_card_verification_failed">Card verification failed</string>
+    <string name="error_data_size_too_large">Data size exceeds the max limit of 512 bytes</string>
+    <string name="error_data_size_too_large_extended">Data size exceeds the max limit of 32 Kbytes</string>
+    <string name="error_missing_counter">The data cannot be written to the card because there is no counter</string>
+    <string name="error_data_cannot_be_written">The data cannot be written to the card</string>
+    <string name="error_missing_issuer_public_key">The issuer public key is missing</string>
+    <string name="error_user_cancelled">The user cancelled the operation</string>
+    <string name="error_busy">The CardSession is running a command. Please wait and try again</string>
+    <string name="error_wrong_card">Wrong Card</string>
+    <string name="error_wrong_card_number">You tapped a different card. Please match the in-app Card ID to the your physical Card ID to continue this process.</string>
+    <string name="error_wrong_card_type">This card is configured for a different app. Please see the information on your card and download the related app.</string>
+    <string name="error_card_error">Your card is missing essential data</string>
+    <string name="error_pin1_required">Access code is required</string>
+    <string name="error_pin2_required">Passcode is required</string>
+    <string name="error_invalid_response">Invalid Response</string>
 
-    <string name="view_delegate_security_delay">Security delay</string>
-    <string name="view_delegate_security_delay_description">This card has enforced security delay. Please hold the card firmly until the operation is completed…</string>
-    <string name="view_delegate_delay">Operation in process</string>
-    <string name="view_delegate_delay_description">Please hold the card firmly until the operation is completed…</string>
-    <string name="view_delegate_scan">Ready to Scan</string>
-    <string name="view_delegate_scan_description">Scan card with your phone as shown above</string>
-    <string name="view_delegate_header_card">Card</string>
-    <string name="view_delegate_header_any_card">Any card</string>
-
-    <string name="pin1">Access code</string>
-    <string name="pin2">Passcode</string>
-
-    <string name="pin_enter_format">Enter %s</string>
-    <string name="pin_set_code_format">Set %s</string>
-    <string name="pin_set_code_confirm_format">Confirm %s</string>
-    <string name="pin_change_code_format">Change %s</string>
-    <string name="pin_change_current_code_format">Current %s</string>
-    <string name="pin_change_new_code_format">New %s</string>
-    <string name="pin_change_new_code_confirm_format">New %s (Confirm)</string>
-    <string name="pin_confirm_error">Codes do not match</string>
-
-    <!--    iOS Strings-->
-    <string name="nfc_session_timeout">Session timeout. Please, try again</string>
-    <string name="nfc_alert_default">Hold your iPhone near a card</string>
-    <string name="nfc_alert_sign_completed">Transaction has been successfully signed</string>
-    <string name="nfc_seconds_left">%@ left</string>
-    <string name="nfc_unknown_card_state">Unknown card state</string>
-    <string name="nfc_alert_default_done">Done</string>
-    <string name="nfc_stuck_error">It seems that NFC does not work properly on your iPhone</string>
-    <string name="unknownStatus">Unknown card status</string>
-    <string name="generic_error_code">An error occurred during the operation. Code: %@</string>
-    <string name="reading_data_progress">Reading data: %@%%</string>
-    <string name="writing_data_progress">Writing data: %@%%</string>
+    <!-- This is a tutorial how to scan (tap) the card with the phone -->
+    <string name="how_to_unknown_empty" translatable="false"></string>
+    <string name="how_to_unknown_tap_card">Tap your card to the back of the phone</string>
+    <string name="how_to_unknown_move_card">To detect where your NFC antenna is located, move the card up and down until confirmation.</string>
+    <string name="how_to_unknown_nothing_happened">Nothing happened? Try removing your card from the phone and then put it back.</string>
+    <string name="how_to_unknown_detected">Connection was established.. This is the placement of your NFC antenna</string>
+    <string name="tap_in_button">Tap in</string>
+    <string name="tap_in_known_info_message">Hold your card to the phone as demonstrated when you tap in to connect.</string>
+    <string name="tap_in_known_show_how_tap_in_button">Show me how to tap in</string>
+    <string name="tap_in_unknown_info_message">Watch the video to see how to tap in and connect the NFC in your phone to the card.</string>
+    <string name="tap_in_unknown_how_to_tap_in_button">How to tap in</string>
 
 </resources>
