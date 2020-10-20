@@ -1,6 +1,7 @@
 package com.tangem
 
 import com.tangem.commands.*
+import com.tangem.commands.file.*
 import com.tangem.commands.personalization.DepersonalizeCommand
 import com.tangem.commands.personalization.DepersonalizeResponse
 import com.tangem.commands.personalization.PersonalizeCommand
@@ -16,6 +17,7 @@ import com.tangem.common.TerminalKeysService
 import com.tangem.crypto.CryptoUtils
 import com.tangem.tasks.CreateWalletTask
 import com.tangem.tasks.ScanTask
+import com.tangem.tasks.file.*
 
 /**
  * The main interface of Tangem SDK that allows your app to communicate with Tangem cards.
@@ -156,6 +158,9 @@ class TangemSdk(
      * card response in the form of [ReadIssuerExtraDataResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
+    @Deprecated("Not supported in cards with firmware version 3.29 and above, use readFiles instead",
+            replaceWith = ReplaceWith("this.readFiles"),
+            level = DeprecationLevel.WARNING)
     fun readIssuerExtraData(cardId: String? = null, initialMessage: Message? = null,
                             callback: (result: CompletionResult<ReadIssuerExtraDataResponse>) -> Unit) {
         startSessionWithRunnable(ReadIssuerExtraDataCommand(config.issuerPublicKey), cardId, initialMessage, callback)
@@ -186,6 +191,8 @@ class TangemSdk(
      * card response in the form of [WriteIssuerDataResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
+    @Deprecated("Not supported in cards with firmware version 3.29 and above, use writeFilesData instead",
+            ReplaceWith("this.writeFiles"), DeprecationLevel.WARNING)
     fun writeIssuerExtraData(cardId: String? = null,
                              issuerData: ByteArray,
                              startingSignature: ByteArray,
@@ -200,6 +207,102 @@ class TangemSdk(
                 config.issuerPublicKey
         )
         startSessionWithRunnable(command, cardId, initialMessage, callback)
+    }
+
+    /**
+     * This method launches a [WriteFilesTask] on a new thread.
+     *
+     * This task allows to write multiple files to a card. Files can be signed by Issuer
+     * (specified on card during personalization) - [FileData.DataProtectedBySignature] or
+     * files can be written using PIN2 (Passcode) - [FileData.DataProtectedByPasscode].
+     *
+     * @param files files to be written.
+     * @param cardId CID, Unique Tangem card ID number.
+     * @param initialMessage: A custom description that shows at the beginning of the NFC session.
+     * If null, default message will be used.
+     * @param callback is triggered on the completion of the [WriteFilesTask] and provides
+     * card response in the form of [WriteFileDataResponse] if the task was performed successfully
+     * or [TangemSdkError] in case of an error.
+     */
+    fun writeFiles(
+            files: List<FileData>,
+            cardId: String? = null, initialMessage: Message? = null,
+            callback: (result: CompletionResult<WriteFileDataResponse>) -> Unit
+    ) {
+        startSessionWithRunnable(WriteFilesTask(files), cardId, initialMessage, callback)
+    }
+
+    /**
+     * This method launches a [ReadFilesTask] on a new thread.
+     *
+     * This task allows to read multiple files from a card. If the files are private,
+     * then Passcode (PIN2) is required to read the files.
+     *
+     * @param readPrivateFiles if set to true, then the task will read private files,
+     * for which it requires PIN2. Otherwise only public files can be read.
+     * @param indices indices of files to be read. If not provided, the task will read and return
+     * all files from a card that satisfy the access level condition (either only public or private and public).
+     * @param cardId CID, Unique Tangem card ID number.
+     * @param initialMessage: A custom description that shows at the beginning of the NFC session.
+     * If null, default message will be used.
+     * @param callback is triggered on the completion of the [ReadFilesTask] and provides
+     * card response in the form of [ReadFilesResponse] if the task was performed successfully
+     * or [TangemSdkError] in case of an error.
+     */
+    fun readFiles(
+            readPrivateFiles: Boolean = false, indices: List<Int>? = null,
+            cardId: String? = null, initialMessage: Message? = null,
+            callback: (result: CompletionResult<ReadFilesResponse>) -> Unit
+    ) {
+        startSessionWithRunnable(ReadFilesTask(readPrivateFiles, indices), cardId, initialMessage, callback)
+    }
+
+    /**
+     * This method launches a [ChangeFilesSettingsTask] on a new thread.
+     *
+     * This task allows to change settings of multiple files written to the card with [WriteFileDataCommand].
+     * Passcode (PIN2) is required for this operation.
+     * [FileSettings] change access level to a file - it can be [FileSettings.Private],
+     * accessible only with PIN2, or [FileSettings.Public], accessible without PIN2
+     *
+     * @param changes contains list of [FileSettingsChange] -
+     * indices of files that are to be changed and desired settings.
+     * @param cardId CID, Unique Tangem card ID number.
+     * @param initialMessage: A custom description that shows at the beginning of the NFC session.
+     * If null, default message will be used.
+     * @param callback is triggered on the completion of the [ChangeFilesSettingsTask] and provides
+     * card response in the form of [ChangeFileSettingsResponse] if the task was performed successfully
+     * or [TangemSdkError] in case of an error.
+     */
+    fun changeFilesSettings(
+            changes: List<FileSettingsChange>,
+            cardId: String? = null, initialMessage: Message? = null,
+            callback: (result: CompletionResult<ChangeFileSettingsResponse>) -> Unit
+    ) {
+        startSessionWithRunnable(ChangeFilesSettingsTask(changes), cardId, initialMessage, callback)
+    }
+
+    /**
+     * This method launches a [DeleteFilesTask] on a new thread.
+     *
+     * This task allows to delete multiple or all files written to the card with [WriteFileDataCommand].
+     * Passcode (PIN2) is required to delete the files.
+     *
+     * @param indices indices of files to be deleted. If [indices] are not provided,
+     * then all files will be deleted.
+     * @param cardId CID, Unique Tangem card ID number.
+     * @param initialMessage: A custom description that shows at the beginning of the NFC session.
+     * If null, default message will be used.
+     * @param callback is triggered on the completion of the [DeleteFilesTask] and provides
+     * card response in the form of [DeleteFileResponse] if the task was performed successfully
+     * or [TangemSdkError] in case of an error.
+     */
+    fun deleteFiles(
+            indices: List<Int>? = null,
+            cardId: String? = null, initialMessage: Message? = null,
+            callback: (result: CompletionResult<DeleteFileResponse>) -> Unit
+    ) {
+        startSessionWithRunnable(DeleteFilesTask(indices), cardId, initialMessage, callback)
     }
 
     /**
@@ -458,7 +561,8 @@ class TangemSdk(
      * @param callback is triggered on the completion of the [DepersonalizeCommand] and provides
      * card response in the form of [DepersonalizeResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
-     * */    fun changePin2(cardId: String? = null,
+     * */
+    fun changePin2(cardId: String? = null,
                    pin: ByteArray? = null,
                    initialMessage: Message? = null,
                    callback: (result: CompletionResult<SetPinResponse>) -> Unit) {
