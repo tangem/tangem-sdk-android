@@ -1,4 +1,4 @@
-package com.tangem.tangem_sdk_new.ui.widget.howTo.unknown
+package com.tangem.tangem_sdk_new.ui.widget.howTo
 
 import android.animation.Animator
 import android.animation.AnimatorSet
@@ -6,39 +6,24 @@ import android.animation.ObjectAnimator
 import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
-import android.widget.TextSwitcher
 import androidx.core.animation.addListener
 import androidx.core.animation.doOnStart
-import com.skyfishjy.library.RippleBackground
 import com.tangem.tangem_sdk_new.R
-import com.tangem.tangem_sdk_new.extensions.dpToPx
-import com.tangem.tangem_sdk_new.extensions.vibrate
-import com.tangem.tangem_sdk_new.postUI
-import com.tangem.tangem_sdk_new.ui.widget.BaseStateWidget
-import com.tangem.tangem_sdk_new.ui.widget.howTo.HowToState
+import com.tangem.tangem_sdk_new.extensions.fadeOut
 
 /**
 [REDACTED_AUTHOR]
  */
 class NfcUnknownWidget(
     mainView: View
-) : BaseStateWidget<HowToState.Unknown>(mainView) {
+) : NfcHowToWidget(mainView) {
 
     private val handWithCard: View = mainView.findViewById(R.id.imvHandWithCardH)
-    private val rippleView: RippleBackground = mainView.findViewById(R.id.rippleBg)
-    private val tvSwitcher: TextSwitcher = mainView.findViewById(R.id.tvHowToSwitcher)
 
     private val animatorSet: AnimatorSet = AnimatorSet()
-    private var currentState: HowToState.Unknown? = null
 
     init {
-        initTextChangesAnimation()
         initHandAnimators()
-    }
-
-    private fun initTextChangesAnimation() {
-        tvSwitcher.setInAnimation(mainView.context, android.R.anim.slide_in_left)
-        tvSwitcher.setOutAnimation(mainView.context, android.R.anim.slide_out_right)
     }
 
     private fun initHandAnimators() {
@@ -49,17 +34,12 @@ class NfcUnknownWidget(
         animatorSet.playSequentially(list)
         animatorSet.addListener(
             onStart = { handWithCard.alpha = 1f },
-            onEnd = {
-                if (currentState == HowToState.Unknown.FindAntenna) {
-                    postUI(100) { setState(HowToState.Unknown.FindAntenna) }
-                }
-            },
+            onEnd = { if (!isCancelled) onFinished?.invoke() },
             onCancel = {
-                setText(R.string.how_to_unknown_empty)
-                ObjectAnimator.ofFloat(handWithCard, View.ALPHA, 1f, 0.0f).apply { duration = 1000 }.start()
-                mainView.context.vibrate(longArrayOf(0, 100, 30, 350))
+                handWithCard.fadeOut(1000)
             }
         )
+        animatorSet.startDelay = 1000
     }
 
     private fun getSlideRightAnimation(): Animator {
@@ -76,8 +56,8 @@ class NfcUnknownWidget(
     }
 
     private fun getSlideDownAnimation(): Animator {
-        return ObjectAnimator.ofFloat(handWithCard, View.TRANSLATION_Y, dpToPx(-25f), dpToPx(145f)).apply {
-            duration = 10500
+        return ObjectAnimator.ofFloat(handWithCard, View.TRANSLATION_Y, dpToPx(-25f), dpToPx(125f)).apply {
+            duration = 9500
             doOnStart { setText(R.string.how_to_unknown_move_card) }
         }
     }
@@ -96,35 +76,30 @@ class NfcUnknownWidget(
         }
     }
 
-    private fun setText(textId: Int) {
-        tvSwitcher.setText(tvSwitcher.context.getString(textId))
-    }
-
-    override fun setState(params: HowToState.Unknown) {
-        if (currentState == params) return
-
-        currentState = params
+    override fun setState(params: HowToState) {
         when (params) {
-            HowToState.Unknown.FindAntenna -> {
+            HowToState.Init -> {
+                isCancelled = false
+                setMainButtonText(R.string.common_cancel)
+            }
+            HowToState.Animate -> {
                 rippleView.stopRippleAnimation()
                 animatorSet.start()
             }
-            HowToState.Unknown.AntennaFound -> {
+            HowToState.AntennaFound -> {
+                if (currentState == HowToState.AntennaFound) return
+
+                isCancelled = true
                 animatorSet.cancel()
                 rippleView.startRippleAnimation()
-                setText(R.string.how_to_unknown_detected)
+                setText(R.string.how_to_nfc_detected)
+                setMainButtonText(R.string.how_to_got_it_button)
             }
-            HowToState.Unknown.Cancel -> {
-                animatorSet.end()
+            HowToState.Cancel -> {
+                isCancelled = true
                 animatorSet.cancel()
-                setText(R.string.how_to_unknown_empty)
             }
         }
+        currentState = params
     }
-
-    override fun onBottomSheetDismiss() {
-        setState(HowToState.Unknown.Cancel)
-    }
-
-    private fun dpToPx(value: Float): Float = mainView.dpToPx(value)
 }
