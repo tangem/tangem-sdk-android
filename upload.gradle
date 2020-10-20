@@ -7,10 +7,17 @@ uploadArchives {
             repository(url: "https://nexus.tangem.com/repository/maven-releases/") {
                 authentication(userName: "$nexusUser", password: "$nexusPass")
             }
+
             pom.groupId = "$artifactConfig.group"
             pom.version = "$artifactConfig.version"
             pom.artifactId = artifactId
             pom.packaging = artifactPackaging
+
+            pom.whenConfigured {
+                p -> p.dependencies = p.dependencies.findAll {
+                    dep -> dep.groupId != "com.tangem" && dep.artifactId != "tangem-core"
+                }
+            }
         }
     }
 }
@@ -27,6 +34,12 @@ task uploadSnapshot(type: Upload) {
                 authentication(userName: "developer", password: "smartcash987")
             }
             pom.version = "$prefix-SNAPSHOT"
+
+            pom.whenConfigured {
+                p -> p.dependencies = p.dependencies.findAll {
+                    dep -> dep.groupId != "com.tangem" && dep.artifactId != "tangem-core"
+                }
+            }
         }
     }
 }
