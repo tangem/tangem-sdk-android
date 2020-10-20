@@ -5,26 +5,31 @@ import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.tangem.Log
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
+import com.tangem.tangem_sdk_new.extensions.hide
+import com.tangem.tangem_sdk_new.extensions.show
 import com.tangem.tangem_sdk_new.nfc.NfcLocationProvider
+import com.tangem.tangem_sdk_new.nfc.NfcManager
 import com.tangem.tangem_sdk_new.postUI
 import com.tangem.tangem_sdk_new.ui.widget.*
+import com.tangem.tangem_sdk_new.ui.widget.howTo.HowToTapWidget
 import com.tangem.tangem_sdk_new.ui.widget.progressBar.ProgressbarStateWidget
 import kotlinx.android.synthetic.main.bottom_sheet_layout.*
 
 class NfcSessionDialog(
     context: Context,
+    private val nfcManager: NfcManager,
     private val nfcLocationProvider: NfcLocationProvider
 ) : BottomSheetDialog(context) {
     private val tag = this::class.java.simpleName
 
-    private lateinit var mainContentView: View
+    private lateinit var taskContainer: ViewGroup
+    private lateinit var howToContainer: ViewGroup
 
     private lateinit var headerWidget: HeaderWidget
     private lateinit var touchCardWidget: TouchCardWidget
@@ -32,6 +37,7 @@ class NfcSessionDialog(
     private lateinit var pinCodeRequestWidget: PinCodeRequestWidget
     private lateinit var pinCodeSetChangeWidget: PinCodeModificationWidget
     private lateinit var messageWidget: MessageWidget
+    private lateinit var howToTapWidget: HowToTapWidget
 
     private val stateWidgets = mutableListOf<StateWidget<*>>()
 
@@ -45,14 +51,18 @@ class NfcSessionDialog(
     override fun setContentView(view: View) {
         super.setContentView(view)
 
-        val nfcLocation = nfcLocationProvider.getLocation() ?: NfcLocation.model11
-        mainContentView = view
+        val nfcLocation = nfcLocationProvider.getLocation() ?: NfcLocation.model13
+
+        taskContainer = view.findViewById(R.id.taskContainer)
+        howToContainer = view.findViewById(R.id.howToContainer)
+
         headerWidget = HeaderWidget(view.findViewById(R.id.llHeader))
         touchCardWidget = TouchCardWidget(view.findViewById(R.id.rlTouchCard), nfcLocation)
         progressStateWidget = ProgressbarStateWidget(view.findViewById(R.id.clProgress))
         pinCodeRequestWidget = PinCodeRequestWidget(view.findViewById(R.id.csPinCode))
         pinCodeSetChangeWidget = PinCodeModificationWidget(view.findViewById(R.id.llChangePin), 0)
         messageWidget = MessageWidget(view.findViewById(R.id.llMessage))
+        howToTapWidget = HowToTapWidget(howToContainer, nfcManager, nfcLocationProvider)
 
         stateWidgets.add(headerWidget)
         stateWidgets.add(touchCardWidget)
@@ -60,6 +70,9 @@ class NfcSessionDialog(
         stateWidgets.add(pinCodeRequestWidget)
         stateWidgets.add(pinCodeSetChangeWidget)
         stateWidgets.add(messageWidget)
+        stateWidgets.add(howToTapWidget)
+
+        headerWidget.onHowTo = { show(SessionViewDelegateState.HowToTap) }
 
         behavior.state = BottomSheetBehavior.STATE_COLLAPSED
     }
@@ -74,9 +87,10 @@ class NfcSessionDialog(
             is SessionViewDelegateState.Delay -> onDelay(state)
             is SessionViewDelegateState.PinRequested -> onPinRequested(state)
             is SessionViewDelegateState.PinChangeRequested -> onPinChangeRequested(state)
-            is SessionViewDelegateState.TagLost -> onTagLost(state)
-            is SessionViewDelegateState.TagConnected -> onTagConnected(state)
             is SessionViewDelegateState.WrongCard -> onWrongCard(state)
+            SessionViewDelegateState.TagConnected -> onTagConnected(state)
+            SessionViewDelegateState.TagLost -> onTagLost(state)
+            SessionViewDelegateState.HowToTap -> howToTap(state)
         }
         currentState = state
     }
@@ -179,6 +193,30 @@ class NfcSessionDialog(
         }
     }
 
+    private fun howToTap(state: SessionViewDelegateState) {
+        enableBottomSheetAnimation()
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        taskContainer.hide()
+        findDesignBottomSheetView()?.let { it.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT }
+        howToContainer.show()
+
+        howToTapWidget.previousState = currentState
+        howToTapWidget.onOk = {
+            howToTapWidget.onOk = null
+            enableBottomSheetAnimation()
+            howToContainer.hide()
+            findDesignBottomSheetView()?.let { it.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT }
+            taskContainer.show()
+
+            howToTapWidget.previousState?.let {
+                howToTapWidget.setState(it)
+                show(it)
+            }
+            howToTapWidget.previousState = null
+        }
+        setStateAndShow(state, howToTapWidget)
+    }
+
     private fun setStateAndShow(state: SessionViewDelegateState, vararg views: StateWidget<SessionViewDelegateState>) {
         views.forEach { it.setState(state) }
 
@@ -201,8 +239,13 @@ class NfcSessionDialog(
     }
 
     private fun enableBottomSheetAnimation() {
-        val dialogContainer = delegate.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.parent
-        dialogContainer.let { TransitionManager.beginDelayedTransition(it as ViewGroup, AutoTransition()) }
+        (findDesignBottomSheetView()?.parent as? ViewGroup)?.let {
+            TransitionManager.beginDelayedTransition(it)
+        }
+    }
+
+    private fun findDesignBottomSheetView(): View? {
+        return delegate.findViewById(com.google.android.material.R.id.design_bottom_sheet)
     }
 
     override fun dismiss() {
