@@ -6,6 +6,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
+import com.tangem.tangem_sdk_new.extensions.hide
 import com.tangem.tangem_sdk_new.extensions.hideSoftKeyboard
 import com.tangem.tangem_sdk_new.extensions.setVectorDrawable
 import com.tangem.tangem_sdk_new.extensions.show
@@ -47,28 +48,28 @@ class HeaderWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
         when (params) {
             is SessionViewDelegateState.Ready -> {
                 cardId = params.cardId
-                imvClose.show(false)
-                btnHowTo.show(true)
-                tvCard.show(true)
+                imvClose.hide()
+                btnHowTo.show()
+                tvCard.show()
                 if (cardId == null) {
                     tvCard.text = getString(R.string.view_delegate_header_any_card)
                 } else {
                     tvCard.text = getString(R.string.view_delegate_header_card)
-                    tvCardId.show(true)
+                    tvCardId.show()
                     tvCardId.text = splitByLength(cardId!!, 4)
                 }
             }
             is SessionViewDelegateState.PinChangeRequested -> {
-                btnHowTo.show(false)
-                imvClose.show(true)
+                btnHowTo.hide()
+                imvClose.show()
             }
             is SessionViewDelegateState.PinRequested -> {
-                btnHowTo.show(false)
+                btnHowTo.hide()
                 imvClose.show(isFullScreenMode)
             }
             else -> {
-                imvClose.show(false)
-                btnHowTo.show(true)
+                imvClose.hide()
+                btnHowTo.show()
             }
         }
     }
