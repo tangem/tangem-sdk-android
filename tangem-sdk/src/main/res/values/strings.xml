@@ -92,6 +92,7 @@
     <string name="error_pin1_required">Access code is required</string>
     <string name="error_pin2_required">Passcode is required</string>
     <string name="error_invalid_response">Invalid Response</string>
+    <string name="error_old_firmware">The command requires a card with a different firmware version</string>
 
     <!-- This is a tutorial how to scan (tap) the card with the phone -->
     <string name="how_to_unknown_empty" translatable="false"></string>
