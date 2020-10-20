@@ -16,7 +16,7 @@ class TouchCardAnimation(
     private val nfcLocation: NfcLocation
 ) {
 
-    var onFinished: OnTapAnimationFinished? = null
+    var onEnd: VoidCallback? = null
 
     var tapAnimationCallback: TapAnimationCallback? = null
         set(value) {
@@ -43,7 +43,7 @@ class TouchCardAnimation(
         tapAnimator = TapAnimator.create(touchView, nfcLocation.isOnTheBack(), animationProperty)
         tapAnimator?.tapAnimationCallback = tapAnimationCallback
         tapAnimator?.animatorCallback = animatorCallback
-        tapAnimator?.onRepeatsFinished = { onFinished?.invoke() }
+        tapAnimator?.onEnd = onEnd
         tapAnimator?.animate()
     }
 
@@ -82,4 +82,3 @@ class TouchCardAnimation(
 }
 
 typealias VoidCallback = () -> Unit
-typealias OnTapAnimationFinished = VoidCallback
