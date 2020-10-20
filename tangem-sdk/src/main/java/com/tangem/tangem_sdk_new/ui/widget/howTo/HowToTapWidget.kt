@@ -77,7 +77,7 @@ interface OkCallback {
 
 abstract class NfcHowToWidget(mainView: View) : BaseStateWidget<HowToState>(mainView), OkCallback {
 
-    var onFinished: (() -> Unit)? = null
+    var onEnd: VoidCallback? = null
     override var onOk: VoidCallback? = null
 
     protected val context = mainView.context
