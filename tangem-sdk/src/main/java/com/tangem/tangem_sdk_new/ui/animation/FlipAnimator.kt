@@ -5,6 +5,7 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.view.View
 import androidx.core.animation.doOnEnd
+import androidx.core.animation.doOnStart
 
 /**
 [REDACTED_AUTHOR]
@@ -16,39 +17,71 @@ class FlipAnimator(
 ) {
     var onEnd: (() -> Unit)? = null
 
+    var visibleSide = Side.FRONT
+        private set
+
+    var animationInProgress = false
+        private set
+
     private var animatorSet: AnimatorSet? = null
-    private var isBackViewVisible = false
 
     fun animate() {
-        animatorSet = if (!isBackViewVisible) {
-            isBackViewVisible = true
-            AnimatorSet().apply {
-                playTogether(
-                    frontView.flipStart(flipDuration),
-                    frontView.wiggleToRight(flipDuration),
-                    backView.flipEnd(flipDuration),
-                    backView.wiggleToRight(flipDuration)
-                )
+        val toSide = if (visibleSide == Side.FRONT) Side.BACK else Side.FRONT
+        animateToSide(toSide, flipDuration)
+    }
+
+    fun animateToSide(side: Side, duration: Long) {
+        if (visibleSide == side || animationInProgress) return
+
+        animatorSet = when (side) {
+            Side.FRONT -> {
+                visibleSide = Side.FRONT
+                toFrontAnimator(duration)
             }
-        } else {
-            isBackViewVisible = false
-            AnimatorSet().apply {
-                playTogether(
-                    frontView.flipEnd(flipDuration),
-                    frontView.wiggleToRight(flipDuration),
-                    backView.flipStart(flipDuration),
-                    backView.wiggleToRight(flipDuration)
-                )
+            Side.BACK -> {
+                visibleSide = Side.BACK
+                toBackAnimator(duration)
             }
         }
-        animatorSet?.doOnEnd { onEnd?.invoke() }
+        animatorSet?.doOnStart { animationInProgress = true }
+        animatorSet?.doOnEnd {
+            animationInProgress = false
+            onEnd?.invoke()
+        }
         animatorSet?.start()
     }
 
     fun cancel() {
         onEnd = null
         animatorSet?.cancel()
+        animatorSet = null
     }
+
+    private fun toFrontAnimator(duration: Long): AnimatorSet {
+        return AnimatorSet().apply {
+            playTogether(
+                frontView.flipEnd(duration),
+                frontView.wiggleToRight(duration),
+                backView.flipStart(duration),
+                backView.wiggleToRight(duration)
+            )
+        }
+    }
+
+    private fun toBackAnimator(duration: Long): AnimatorSet {
+        return AnimatorSet().apply {
+            playTogether(
+                frontView.flipStart(duration),
+                frontView.wiggleToRight(duration),
+                backView.flipEnd(duration),
+                backView.wiggleToRight(duration)
+            )
+        }
+    }
+}
+
+enum class Side {
+    FRONT, BACK
 }
 
 private fun View.flipStart(duration: Long): AnimatorSet {
