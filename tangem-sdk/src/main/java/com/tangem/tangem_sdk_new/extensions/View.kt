@@ -2,14 +2,16 @@ package com.tangem.tangem_sdk_new.extensions
 
 import android.content.Context
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.AccelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 
 internal fun View.show() {
-    this.visibility = View.VISIBLE
+    this.show(true)
 }
 
 internal fun View.hide() {
-    this.visibility = View.GONE
+    this.show(false)
 }
 
 internal fun View.show(show: Boolean) {
@@ -18,6 +20,26 @@ internal fun View.show(show: Boolean) {
     } else {
         if (visibility != View.GONE) visibility = View.GONE
     }
+}
+
+fun View.fadeOut(fadeOutDuration: Long, delayStart: Long = 0, onEnd: (() -> Unit)? = null) {
+    animate().apply {
+        alpha(0f)
+        startDelay = delayStart
+        duration = fadeOutDuration
+        interpolator = AccelerateDecelerateInterpolator()
+        withEndAction { onEnd?.invoke() }
+    }.start()
+}
+
+fun View.fadeIn(fadeInDuration: Long, delayStart: Long = 0, onEnd: (() -> Unit)? = null) {
+    animate().apply {
+        this.alpha(1f)
+        startDelay = delayStart
+        duration = fadeInDuration
+        interpolator = AccelerateInterpolator()
+        withEndAction { onEnd?.invoke() }
+    }.start()
 }
 
 fun View.dpToPx(dp: Float): Float = context.dpToPx(dp)
