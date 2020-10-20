@@ -17,6 +17,8 @@ abstract class TapAnimator(
     protected val view: View,
     protected val properties: AnimationProperty
 ) {
+    var onEnd: VoidCallback? = null
+
     var tapAnimationCallback: TapAnimationCallback? = null
 
     var animatorCallback: Animator.AnimatorListener? = null
@@ -25,8 +27,6 @@ abstract class TapAnimator(
             tapAnimator?.addListener((value))
             field = value
         }
-
-    var onRepeatsFinished: VoidCallback? = null
 
     private var tapAnimator: AnimatorSet? = null
     private var repeatedCount = 0
@@ -51,7 +51,7 @@ abstract class TapAnimator(
                     if (properties.repeatCount == -1 || repeatedCount < properties.repeatCount) {
                         tapAnimator?.start()
                     } else {
-                        onRepeatsFinished?.invoke()
+                        onEnd?.invoke()
                     }
                 }
             },
