@@ -59,7 +59,6 @@ class NfcKnownWidget(
                 setMainButtonText(R.string.common_cancel)
                 isCancelled = false
                 setDefaultElevations()
-                btnCancel.setOnClickListener { onOk?.invoke() }
                 touchCardAnimation.hideTouchView(0)
             }
             HowToState.Animate -> {
@@ -88,8 +87,8 @@ class NfcKnownWidget(
 
     private fun setDefaultElevations() {
         // touchViewElevation = 0 or 4
-        val phoneElevation = context.dpToPx(2f)
-        val badgeElevation = context.dpToPx(3f)
+        val phoneElevation = dpToPx(2f)
+        val badgeElevation = dpToPx(3f)
         phone.elevation = phoneElevation
         phoneBack.elevation = phoneElevation
         rippleView.elevation = badgeElevation
@@ -167,7 +166,7 @@ class NfcKnownWidget(
 
         val showCardAndRippleView = {
             touchCardAnimation.showTouchViewAtNfcPosition(FADE_DURATION) {
-                rippleView.elevation = if (nfcLocation.isOnTheBack()) 1f else rippleView.elevation
+                rippleView.elevation = if (nfcLocation.isOnTheBack()) dpToPx(1f) else rippleView.elevation
                 rippleView.alpha = 1f
                 rippleView.startRippleAnimation()
             }
