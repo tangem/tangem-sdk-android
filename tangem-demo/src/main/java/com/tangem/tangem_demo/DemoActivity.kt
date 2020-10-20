@@ -11,14 +11,22 @@ import com.google.gson.Gson
 import com.tangem.Config
 import com.tangem.TangemSdk
 import com.tangem.commands.Card
+import com.tangem.commands.PinType
+import com.tangem.commands.SetPinCommand
 import com.tangem.commands.WriteIssuerExtraDataCommand
 import com.tangem.commands.common.ResponseConverter
+import com.tangem.commands.file.FileData
+import com.tangem.commands.file.FileDataSignature
+import com.tangem.commands.file.FileSettings
+import com.tangem.commands.file.FileSettingsChange
 import com.tangem.common.CompletionResult
+import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.sign
 import com.tangem.tangem_sdk_new.extensions.init
+import kotlinx.android.synthetic.main.file_data.*
 import kotlinx.android.synthetic.main.issuer_data.*
 import kotlinx.android.synthetic.main.issuer_ex_data.*
 import kotlinx.android.synthetic.main.scan_card.*
@@ -49,15 +57,16 @@ class DemoActivity : AppCompatActivity() {
         issuerExData()
         userData()
         setPin()
+        setupFileDataButtons()
     }
 
-	private fun scanCard() {
-		btnScanCard.setOnClickListener { sdk.scanCard { handleResult(it) } }
-	}
+    private fun scanCard() {
+        btnScanCard.setOnClickListener { sdk.scanCard { handleResult(it) } }
+    }
 
     private fun sign() {
         btnSign.setOnClickListener {
-            val listOfData = MutableList(Utils.randomInt(1, 10)) { Utils.randomString(20) }
+            val listOfData = MutableList(10) { Utils.randomString(20) }
             val listOfHashes = listOfData.map { it.toByteArray() }
             sdk.sign(listOfHashes.toTypedArray(), card?.cardId) { handleResult(it) }
         }
@@ -99,9 +108,8 @@ class DemoActivity : AppCompatActivity() {
 
             val counter = 1
             val issuerData = CryptoUtils.generateRandomBytes(WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE * 5)
-            val issuerPrivateKey = Utils.issuer().dataKeyPair.privateKey
-            val startingSignature = (cardId.hexToBytes() + counter.toByteArray(4) + issuerData.size.toByteArray(2)).sign(issuerPrivateKey)
-            val finalizingSignature = (cardId.hexToBytes() + issuerData + counter.toByteArray(4)).sign(issuerPrivateKey)
+            val startingSignature = getStartingSignature(issuerData, counter, cardId)
+            val finalizingSignature = getFinalizingSignature(issuerData, counter, cardId)
 
             sdk.writeIssuerExtraData(cardId, issuerData, startingSignature, finalizingSignature, counter) { handleResult(it) }
         }
@@ -109,7 +117,7 @@ class DemoActivity : AppCompatActivity() {
     }
 
     private fun userData() {
-        btnReadUserData.setOnClickListener { sdk.readUserData(card?.cardId) { handleResult(it) } }
+        btnReadUserData.setOnClickListener { sdk.verify(card?.cardId) { handleResult(it) } }
 
         btnWriteUserData.setOnClickListener {
             val userData = "Some of user data ${Utils.randomString(20)}".toByteArray()
@@ -125,14 +133,51 @@ class DemoActivity : AppCompatActivity() {
     }
 
     private fun setPin() {
-//        fun getPin(): ByteArray? {
-//            val pin = etPinCode.text.toString()
-//            return if (pin.isEmpty()) null else pin.calculateSha256()
-//        }
-//        btnSetPin1.setOnClickListener { sdk.changePin1(card?.cardId, getPin()) { handleResult(it) } }
-//        btnSetPin2.setOnClickListener { sdk.changePin2(card?.cardId, getPin()) { handleResult(it) } }
-		btnSetPin1.setOnClickListener { sdk.changePin1(card?.cardId) { handleResult(it) } }
-		btnSetPin2.setOnClickListener { sdk.changePin2(card?.cardId) { handleResult(it) } }
+        btnSetPin1.setOnClickListener {
+            sdk.startSessionWithRunnable(
+                    SetPinCommand(PinType.Pin1, null, sdk.config.defaultPin2.calculateSha256()), card?.cardId) { handleResult(it) }
+        }
+        btnSetPin2.setOnClickListener {
+            sdk.startSessionWithRunnable(
+                    SetPinCommand(PinType.Pin2, sdk.config.defaultPin1.calculateSha256(), null), card?.cardId) { handleResult(it) }
+        }
+    }
+
+    private fun setupFileDataButtons() {
+        btnReadAllFiles.setOnClickListener {
+            sdk.readFiles(true) { handleResult(it) }
+        }
+        btnReadPublicFiles.setOnClickListener {
+            sdk.readFiles { handleResult(it) }
+        }
+        btnWriteSignedFile.setOnClickListener {
+            val cardId = card?.cardId
+            if (cardId == null) {
+                showToast("CardId required. Scan your card before proceeding")
+                return@setOnClickListener
+            }
+            val file = prepareSignedData(cardId)
+            sdk.writeFiles(listOf(file)) { handleResult(it) }
+        }
+        btnWriteFilesWithPasscode.setOnClickListener {
+            val issuerData = CryptoUtils.generateRandomBytes(WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE * 5)
+            val files = listOf(FileData.DataProtectedByPasscode(issuerData), FileData.DataProtectedByPasscode(issuerData))
+            sdk.writeFiles(files) { handleResult(it) }
+        }
+        btnDeleteAll.setOnClickListener {
+            sdk.deleteFiles { handleResult(it) }
+        }
+        btnDeleteFirst.setOnClickListener {
+            sdk.deleteFiles(listOf(0)) { handleResult(it) }
+        }
+        btnMakeFilePublic.setOnClickListener {
+            val change = FileSettingsChange(0, FileSettings.Public)
+            sdk.changeFilesSettings(listOf(change)) { handleResult(it) }
+        }
+        btnMakeFilePrivate.setOnClickListener {
+            val change = FileSettingsChange(0, FileSettings.Private)
+            sdk.changeFilesSettings(listOf(change)) { handleResult(it) }
+        }
     }
 
     private fun handleResult(completionResult: CompletionResult<*>) {
@@ -165,4 +210,29 @@ class DemoActivity : AppCompatActivity() {
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
+
+    private fun prepareSignedData(cardId: String): FileData.DataProtectedBySignature {
+        val counter = 1
+        val issuerData = CryptoUtils.generateRandomBytes(WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE * 5)
+        val startingSignature = getStartingSignature(issuerData, counter, cardId)
+        val finalizingSignature = getFinalizingSignature(issuerData, counter, cardId)
+
+        return FileData.DataProtectedBySignature(
+                issuerData, counter,
+                FileDataSignature(startingSignature, finalizingSignature),
+                Utils.issuer().dataKeyPair.publicKey
+        )
+    }
+
+    private fun getStartingSignature(data: ByteArray, counter: Int, cardId: String): ByteArray {
+        return (cardId.hexToBytes() + counter.toByteArray(4) + data.size.toByteArray(2))
+                .sign(Utils.issuer().dataKeyPair.privateKey)
+    }
+
+    private fun getFinalizingSignature(data: ByteArray, counter: Int, cardId: String): ByteArray {
+        return (cardId.hexToBytes() + data + counter.toByteArray(4))
+                .sign(Utils.issuer().dataKeyPair.privateKey)
+    }
+
+
 }

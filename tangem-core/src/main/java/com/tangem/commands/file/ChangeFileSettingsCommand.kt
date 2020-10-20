@@ -10,6 +10,7 @@ import com.tangem.commands.SimpleResponse
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
+import com.tangem.common.extensions.getFirmwareNumber
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -27,12 +28,21 @@ enum class FileSettings(val rawValue: Int) {
 
 typealias ChangeFileSettingsResponse = SimpleResponse
 
+data class FileSettingsChange(
+        val fileIndex: Int,
+        val settings: FileSettings
+)
+
 /**
- * Card Command is in development, subject to future changes
+ * This command allows to change settings of a file written to the card with [WriteFileDataCommand].
+ * Passcode (PIN2) is required for this operation.
+ * [FileSettings] change access level to a file - it can be [FileSettings.Private],
+ * accessible only with PIN2, or [FileSettings.Public], accessible without PIN2
+ *
+ * @property data contains index of a file that is to be changed and desired settings.
  */
 class ChangeFileSettingsCommand(
-        private val settings: FileSettings,
-        private val fileIndex: Int
+        private val data: FileSettingsChange
 ) : Command<ChangeFileSettingsResponse>() {
 
     override val requiresPin2 = true
@@ -43,6 +53,9 @@ class ChangeFileSettingsCommand(
         }
         if (card.isActivated) {
             return TangemSdkError.NotActivated()
+        }
+        if (card.getFirmwareNumber() ?: 0.0 < 3.29) {
+            return TangemSdkError.FirmwareNotSupported()
         }
         return null
     }
@@ -61,8 +74,8 @@ class ChangeFileSettingsCommand(
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
         tlvBuilder.append(TlvTag.Pin2, environment.pin2?.value)
         tlvBuilder.append(TlvTag.WriteFileMode, FileDataMode.ChangeFileSettings)
-        tlvBuilder.append(TlvTag.FileIndex, fileIndex)
-        tlvBuilder.append(TlvTag.FileSettings, settings)
+        tlvBuilder.append(TlvTag.FileIndex, data.fileIndex)
+        tlvBuilder.append(TlvTag.FileSettings, data.settings)
 
         return CommandApdu(Instruction.WriteFileData, tlvBuilder.serialize())
     }

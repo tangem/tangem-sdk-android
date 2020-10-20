@@ -54,5 +54,6 @@ fun TangemSdkError.localizedDescription(): Int {
         is TangemSdkError.WrongCardType -> R.string.error_wrong_card_type
         is TangemSdkError.CardError -> R.string.error_card_error
         is TangemSdkError.InvalidResponse -> R.string.error_invalid_response
+        is TangemSdkError.FirmwareNotSupported -> R.string.error_old_firmware
     }
 }
