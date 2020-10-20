@@ -29,7 +29,7 @@ class HowToController(
         stateWidget.setState(HowToState.Cancel)
         stateWidget.setState(HowToState.Init)
         stateWidget.setState(HowToState.Animate)
-        stateWidget.onFinished = { start() }
+        stateWidget.onEnd = { start() }
         initTagDiscoveredCallback()
     }
 
