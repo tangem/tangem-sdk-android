@@ -1,5 +1,6 @@
 package com.tangem.tangem_sdk_new.ui.widget
 
+import android.animation.Animator
 import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.ImageView
@@ -38,6 +39,7 @@ class TouchCardWidget(
         ivHandCardHorizontal.setVectorDrawable(R.drawable.hand_full_card_horizontal)
         ivHandCardVertical.setVectorDrawable(R.drawable.hand_full_card_vertical)
         ivPhone.setVectorDrawable(R.drawable.phone)
+        rippleBackgroundNfc.alpha = 0f
     }
 
     override fun setState(params: SessionViewDelegateState) {
@@ -55,25 +57,34 @@ class TouchCardWidget(
                 ivPhone.viewTreeObserver.removeOnGlobalLayoutListener(this)
                 val rippleElevation = if (nfcLocation.isOnTheBack()) ivPhone.elevation - 1 else ivPhone.elevation + 1
                 rippleBackgroundNfc.elevation = rippleElevation
-                rippleBackgroundNfc.translationY = calculateRelativePosition(nfcLocation.getY(), ivPhone.height)
-                rippleBackgroundNfc.translationX = calculateRelativePosition(nfcLocation.getX(), ivPhone.width)
+                rippleBackgroundNfc.translationX = calculateRelativePosition(nfcLocation.x, ivPhone.width)
+                rippleBackgroundNfc.translationY = calculateRelativePosition(nfcLocation.y, ivPhone.height)
                 touchCardAnimation.animate()
             }
         })
     }
 
-    private fun setCallbacks(){
+    private fun setCallbacks() {
         touchCardAnimation.tapAnimationCallback = TapAnimationCallback(
             onTapInFinished = {
-                rippleBackgroundNfc.show()
+                rippleBackgroundNfc.alpha = 1f
                 rippleBackgroundNfc.startRippleAnimation()
 
             },
             onTapOutStarted = {
+                rippleBackgroundNfc.fadeOut(800) { rippleBackgroundNfc.stopRippleAnimation() }
+            }
+        )
+        touchCardAnimation.animatorCallback = object : Animator.AnimatorListener {
+            override fun onAnimationStart(animation: Animator) {}
+            override fun onAnimationEnd(animation: Animator) {}
+            override fun onAnimationCancel(animation: Animator) {
                 rippleBackgroundNfc.stopRippleAnimation()
                 rippleBackgroundNfc.hide()
             }
-        )
+
+            override fun onAnimationRepeat(animation: Animator) {}
+        }
     }
 
     private fun stopAnimation() {

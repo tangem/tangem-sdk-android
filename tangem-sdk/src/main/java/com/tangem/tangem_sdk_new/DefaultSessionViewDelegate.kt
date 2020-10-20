@@ -6,14 +6,14 @@ import android.view.ContextThemeWrapper
 import com.tangem.*
 import com.tangem.commands.PinType
 import com.tangem.tangem_sdk_new.nfc.NfcAntennaLocationProvider
-import com.tangem.tangem_sdk_new.nfc.NfcReader
+import com.tangem.tangem_sdk_new.nfc.NfcManager
 import com.tangem.tangem_sdk_new.ui.NfcSessionDialog
 
 /**
  * Default implementation of [SessionViewDelegate].
  * If no customisation is required, this is the preferred way to use Tangem SDK.
  */
-class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDelegate {
+class DefaultSessionViewDelegate(private val nfcManager: NfcManager) : SessionViewDelegate {
 
     lateinit var activity: Activity
     private var readingDialog: NfcSessionDialog? = null
@@ -31,11 +31,12 @@ class DefaultSessionViewDelegate(private val reader: NfcReader) : SessionViewDel
 
     private fun createReadingDialog(activity: Activity) {
         val nfcLocationProvider = NfcAntennaLocationProvider(Build.DEVICE)
-        readingDialog = NfcSessionDialog(ContextThemeWrapper(activity, R.style.CardSdkTheme), nfcLocationProvider).apply {
+        val themeWrapper = ContextThemeWrapper(activity, R.style.CardSdkTheme)
+        readingDialog = NfcSessionDialog(themeWrapper, nfcManager, nfcLocationProvider).apply {
             dismissWithAnimation = true
             create()
             setOnCancelListener {
-                reader.stopSession(true)
+                nfcManager.reader.stopSession(true)
                 createReadingDialog(activity)
             }
         }
