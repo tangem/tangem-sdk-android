@@ -15,7 +15,7 @@ class FlipAnimator(
     private val backView: View,
     val flipDuration: Long
 ) {
-    var onEnd: (() -> Unit)? = null
+    var onEnd: VoidCallback? = null
 
     var visibleSide = Side.FRONT
         private set

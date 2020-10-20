@@ -34,10 +34,8 @@ class NfcUnknownWidget(
         animatorSet.playSequentially(list)
         animatorSet.addListener(
             onStart = { handWithCard.alpha = 1f },
-            onEnd = { if (!isCancelled) onFinished?.invoke() },
-            onCancel = {
-                handWithCard.fadeOut(1000)
-            }
+            onEnd = { if (!isCancelled) onEnd?.invoke() },
+            onCancel = { handWithCard.fadeOut(1000) }
         )
         animatorSet.startDelay = 1000
     }
