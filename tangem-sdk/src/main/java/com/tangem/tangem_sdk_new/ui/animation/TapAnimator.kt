@@ -17,7 +17,15 @@ abstract class TapAnimator(
     protected val view: View,
     protected val properties: AnimationProperty
 ) {
-    var animationCallback: TapAnimationCallback? = null
+    var tapAnimationCallback: TapAnimationCallback? = null
+
+    var animatorCallback: Animator.AnimatorListener? = null
+        set(value) {
+            tapAnimator?.removeListener(field)
+            tapAnimator?.addListener((value))
+            field = value
+        }
+
     var onRepeatsFinished: VoidCallback? = null
 
     private var tapAnimator: AnimatorSet? = null
@@ -34,6 +42,7 @@ abstract class TapAnimator(
         )
 
         var isCancelled = false
+        animatorCallback?.let { tapAnimator?.addListener(it) }
         tapAnimator?.addListener(
             onStart = { isCancelled = false },
             onEnd = {
@@ -54,7 +63,12 @@ abstract class TapAnimator(
 
     fun cancel() {
         tapAnimator?.cancel()
+        tapAnimator?.removeListener(animatorCallback)
         tapAnimator = null
+
+        view.scaleX = 1f
+        view.scaleY = 1f
+        view.alpha = 0f
         repeatedCount = 0
     }
 
@@ -112,8 +126,8 @@ class TapBackAnimator(
         animator.startDelay = properties.tapInStartDelay
         animator.duration = properties.tapDuration
         animator.playTogether(scaleUpX, scaleUpY, slideRight, alpha)
-        animator.doOnStart { animationCallback?.onTapInStarted?.invoke() }
-        animator.doOnEnd { animationCallback?.onTapInFinished?.invoke() }
+        animator.doOnStart { tapAnimationCallback?.onTapInStarted?.invoke() }
+        animator.doOnEnd { tapAnimationCallback?.onTapInFinished?.invoke() }
         return animator
     }
 
@@ -128,8 +142,8 @@ class TapBackAnimator(
         val animator = AnimatorSet()
         animator.duration = properties.tapDuration
         animator.playTogether(scaleX, scaleY, slideLeft, alpha)
-        animator.doOnStart { animationCallback?.onTapOutStarted?.invoke() }
-        animator.doOnEnd { animationCallback?.onTapOutFinished?.invoke() }
+        animator.doOnStart { tapAnimationCallback?.onTapOutStarted?.invoke() }
+        animator.doOnEnd { tapAnimationCallback?.onTapOutFinished?.invoke() }
         return animator
     }
 }
@@ -159,9 +173,9 @@ class TapFrontAnimator(
             ObjectAnimator.ofFloat(view, View.ALPHA, 0f, 1f).setDuration(fadeDuration).apply {
                 startDelay = properties.tapInStartDelay
             }.start()
-            animationCallback?.onTapInStarted?.invoke()
+            tapAnimationCallback?.onTapInStarted?.invoke()
         }
-        animator.doOnEnd { animationCallback?.onTapInFinished?.invoke() }
+        animator.doOnEnd { tapAnimationCallback?.onTapInFinished?.invoke() }
         return animator
     }
 
@@ -182,9 +196,9 @@ class TapFrontAnimator(
             ObjectAnimator.ofFloat(view, View.ALPHA, 1f, 0f).setDuration(fadeDuration).apply {
                 startDelay = properties.tapDuration - fadeDuration - 10
             }.start()
-            animationCallback?.onTapOutStarted?.invoke()
+            tapAnimationCallback?.onTapOutStarted?.invoke()
         }
-        animator.doOnEnd { animationCallback?.onTapOutFinished?.invoke() }
+        animator.doOnEnd { tapAnimationCallback?.onTapOutFinished?.invoke() }
         return animator
     }
 }
