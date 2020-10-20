@@ -137,7 +137,7 @@ class NfcKnownWidget(
     }
 
     private fun tapToKnownPosition() {
-        touchCardAnimation.onFinished = { if (!isCancelled) onFinished?.invoke() }
+        touchCardAnimation.onEnd = { if (!isCancelled) onEnd?.invoke() }
 
         nfcBadge.fadeOut(FADE_DURATION)
         rippleView.fadeOut(FADE_DURATION) {
