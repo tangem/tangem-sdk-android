@@ -7,6 +7,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
+import com.tangem.tangem_sdk_new.extensions.hide
 import com.tangem.tangem_sdk_new.extensions.setAnimVectorDrawable
 import com.tangem.tangem_sdk_new.extensions.show
 import com.tangem.tangem_sdk_new.ui.widget.BaseSessionDelegateStateWidget
@@ -78,15 +79,15 @@ abstract class BaseProgressState(mainView: View) : BaseSessionDelegateStateWidge
     }
 
     protected fun showViews(vararg views: View) {
-        views.forEach { it.show(true) }
+        views.forEach { it.show() }
     }
 
     protected fun hideViews(vararg views: View) {
-        views.forEach { it.show(false) }
+        views.forEach { it.hide() }
     }
 
     protected fun showAndAnimateDrawable(view: ImageView) {
-        view.show(true)
+        view.show()
         (view.drawable as? Animatable)?.start()
     }
 }
