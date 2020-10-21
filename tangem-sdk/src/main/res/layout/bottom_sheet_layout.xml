@@ -1,60 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:keepScreenOn="true"
     android:orientation="vertical">
 
-    <include
-        android:id="@+id/llHeader"
-        layout="@layout/header_layout" />
+    <FrameLayout
+        android:id="@+id/howToContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <include
-        android:id="@+id/llChangePin"
-        layout="@layout/pin_code_change_layout"
-        android:visibility="gone" />
-
-    <include
-        android:id="@+id/csPinCode"
-        layout="@layout/pin_code_enter_layout"
-        android:visibility="gone" />
+    </FrameLayout>
 
     <FrameLayout
+        android:id="@+id/taskContainer"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/bottom_sheet_top_container_height">
+        android:layout_height="wrap_content">
 
         <include
             android:id="@+id/rlTouchCard"
             layout="@layout/touch_card_layout"
-            android:visibility="gone" />
+            android:visibility="visible" />
 
-        <include
-            android:id="@+id/clProgress"
-            layout="@layout/progress_bar_layout"
-            android:layout_width="@dimen/progress_bar_state_width"
-            android:layout_height="@dimen/bottom_sheet_top_container_height"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="20dp"
-            android:visibility="gone" />
-
-    </FrameLayout>
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="@dimen/bottom_sheet_bottom_container_height"
-        android:layout_marginTop="16dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp">
-
-        <include
-            android:id="@+id/llMessage"
-            layout="@layout/message_layout"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="top"
-            android:visibility="gone" />
+            android:orientation="vertical">
+
+            <include
+                android:id="@+id/llHeader"
+                layout="@layout/header_layout" />
+
+            <include
+                android:id="@+id/llChangePin"
+                layout="@layout/pin_code_change_layout"
+                android:visibility="gone" />
+
+            <include
+                android:id="@+id/csPinCode"
+                layout="@layout/pin_code_enter_layout"
+                android:visibility="gone" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/bottom_sheet_top_container_height">
+
+                <include
+                    android:id="@+id/clProgress"
+                    layout="@layout/progress_bar_layout"
+                    android:layout_width="@dimen/progress_bar_state_width"
+                    android:layout_height="@dimen/bottom_sheet_top_container_height"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="20dp"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:minHeight="@dimen/bottom_sheet_bottom_container_height"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <include
+                    android:id="@+id/llMessage"
+                    layout="@layout/message_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
+        </LinearLayout>
 
     </FrameLayout>
 
-</LinearLayout>
+</FrameLayout>
