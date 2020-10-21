@@ -1,36 +1,45 @@
 package com.tangem.tangem_sdk_new.ui.widget
 
+import android.animation.Animator
 import android.view.View
+import android.view.ViewTreeObserver
 import android.widget.ImageView
-import android.widget.LinearLayout
 import com.skyfishjy.library.RippleBackground
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
-import com.tangem.tangem_sdk_new.extensions.setVectorDrawable
-import com.tangem.tangem_sdk_new.ui.TouchCardAnimation
+import com.tangem.tangem_sdk_new.extensions.*
+import com.tangem.tangem_sdk_new.ui.NfcLocation
+import com.tangem.tangem_sdk_new.ui.animation.AnimationProperty
+import com.tangem.tangem_sdk_new.ui.animation.TapAnimationCallback
+import com.tangem.tangem_sdk_new.ui.animation.TouchCardAnimation
+import com.tangem.tangem_sdk_new.ui.animation.TouchCardAnimation.Companion.calculateRelativePosition
 
 /**
 [REDACTED_AUTHOR]
  */
-class TouchCardWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
+class TouchCardWidget(
+    mainView: View,
+    private val nfcLocation: NfcLocation
+) : BaseSessionDelegateStateWidget(mainView) {
 
     private val rippleBackgroundNfc = mainView.findViewById<RippleBackground>(R.id.rippleBackgroundNfc)
     private val ivHandCardHorizontal = mainView.findViewById<ImageView>(R.id.ivHandCardHorizontal)
     private val ivHandCardVertical = mainView.findViewById<ImageView>(R.id.ivHandCardVertical)
     private val ivPhone = mainView.findViewById<ImageView>(R.id.ivPhone)
-    private val llHand = mainView.findViewById<LinearLayout>(R.id.llHand)
-    private val rippleBackground = mainView.findViewById<RippleBackground>(R.id.rippleBackgroundNfc)
 
-    private val nfcDeviceAntenna = TouchCardAnimation(mainView.context, ivHandCardHorizontal, ivHandCardVertical, llHand, rippleBackground)
+    private val touchCardAnimation = TouchCardAnimation(
+        ivPhone,
+        ivHandCardHorizontal,
+        ivHandCardVertical,
+        AnimationProperty(mainView.dpToPx(-160f), mainView.dpToPx(-70f), mainView.dpToPx(150f), repeatCount = -1),
+        nfcLocation
+    )
 
     init {
-        nfcDeviceAntenna.init()
-        nfcDeviceAntenna.onCardOnBack = { rippleBackgroundNfc.startRippleAnimation() }
-        nfcDeviceAntenna.onCardMoveOut = { rippleBackgroundNfc.stopRippleAnimation() }
-
         ivHandCardHorizontal.setVectorDrawable(R.drawable.hand_full_card_horizontal)
         ivHandCardVertical.setVectorDrawable(R.drawable.hand_full_card_vertical)
         ivPhone.setVectorDrawable(R.drawable.phone)
+        rippleBackgroundNfc.alpha = 0f
     }
 
     override fun setState(params: SessionViewDelegateState) {
@@ -42,12 +51,45 @@ class TouchCardWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView)
     }
 
     private fun animate() {
-        nfcDeviceAntenna.animate()
+        setCallbacks()
+        ivPhone.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                ivPhone.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                val rippleElevation = if (nfcLocation.isOnTheBack()) ivPhone.elevation - 1 else ivPhone.elevation + 1
+                rippleBackgroundNfc.elevation = rippleElevation
+                rippleBackgroundNfc.translationX = calculateRelativePosition(nfcLocation.x, ivPhone.width)
+                rippleBackgroundNfc.translationY = calculateRelativePosition(nfcLocation.y, ivPhone.height)
+                touchCardAnimation.animate()
+            }
+        })
+    }
+
+    private fun setCallbacks() {
+        touchCardAnimation.tapAnimationCallback = TapAnimationCallback(
+            onTapInFinished = {
+                rippleBackgroundNfc.alpha = 1f
+                rippleBackgroundNfc.startRippleAnimation()
+
+            },
+            onTapOutStarted = {
+                rippleBackgroundNfc.fadeOut(800) { rippleBackgroundNfc.stopRippleAnimation() }
+            }
+        )
+        touchCardAnimation.animatorCallback = object : Animator.AnimatorListener {
+            override fun onAnimationStart(animation: Animator) {}
+            override fun onAnimationEnd(animation: Animator) {}
+            override fun onAnimationCancel(animation: Animator) {
+                rippleBackgroundNfc.stopRippleAnimation()
+                rippleBackgroundNfc.hide()
+            }
+
+            override fun onAnimationRepeat(animation: Animator) {}
+        }
     }
 
     private fun stopAnimation() {
         rippleBackgroundNfc.stopRippleAnimation()
-        nfcDeviceAntenna.stopAnimation()
+        touchCardAnimation.cancel()
     }
 
     override fun onBottomSheetDismiss() {
