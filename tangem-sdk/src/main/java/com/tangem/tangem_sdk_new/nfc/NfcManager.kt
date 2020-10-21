@@ -29,6 +29,7 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener {
             }
             field = value
         }
+    var onTagDiscovered: (() -> Unit)? = null
 
     val reader = NfcReader()
     private var activity: Activity? = null
@@ -52,6 +53,7 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener {
 
     override fun onTagDiscovered(tag: Tag?) {
         Log.i(this::class.simpleName!!, "Nfc tag is discovered")
+        onTagDiscovered?.invoke()
         if (readingIsActive) reader.onTagDiscovered(tag) else ignoreTag(tag)
     }
 
@@ -69,7 +71,7 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener {
             nfcEnableDialog?.cancel()
         } else {
             nfcEnableDialog = NfcEnableDialog()
-            activity?.let{ nfcEnableDialog?.show(it) }
+            activity?.let { nfcEnableDialog?.show(it) }
         }
     }
 
@@ -104,9 +106,9 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener {
     companion object {
         // reader mode flags: listen for type A (not B), skipping ndef check
         private const val READER_FLAGS = NfcAdapter.FLAG_READER_NFC_A or
-                NfcAdapter.FLAG_READER_NFC_V or
-                NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK or
-                NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS
+            NfcAdapter.FLAG_READER_NFC_V or
+            NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK or
+            NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS
     }
 
 }
