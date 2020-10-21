@@ -16,4 +16,5 @@ sealed class SessionViewDelegateState() {
     data class WrongCard(val wrongValueType: WrongValueType) : SessionViewDelegateState()
     object TagLost : SessionViewDelegateState()
     object TagConnected : SessionViewDelegateState()
+    object HowToTap : SessionViewDelegateState()
 }
