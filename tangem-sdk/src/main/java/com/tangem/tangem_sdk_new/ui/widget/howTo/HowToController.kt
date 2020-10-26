@@ -3,6 +3,7 @@ package com.tangem.tangem_sdk_new.ui.widget.howTo
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.view.View
 import com.tangem.tangem_sdk_new.nfc.NfcManager
 import com.tangem.tangem_sdk_new.postUI
 import com.tangem.tangem_sdk_new.ui.animation.VoidCallback
@@ -13,28 +14,30 @@ import com.tangem.tangem_sdk_new.ui.animation.VoidCallback
 class HowToController(
     private val stateWidget: NfcHowToWidget,
     private val vibrator: Vibrator,
-    private val nfcManager: NfcManager,
-) : OkCallback {
+    private val nfcManager: NfcManager
+) {
 
-    override var onOk: VoidCallback? = null
+    var onClose: VoidCallback?
+        get() = stateWidget.onClose
         set(value) {
-            field = value
-            stateWidget.onOk = {
-                stateWidget.setState(HowToState.Cancel)
-                value?.invoke()
-            }
+            stateWidget.onClose = value
         }
 
+    fun getView(): View = stateWidget.view
+
     fun start() {
+        nfcManager.readingIsActive = false
         stateWidget.setState(HowToState.Cancel)
         stateWidget.setState(HowToState.Init)
         stateWidget.setState(HowToState.Animate)
-        stateWidget.onEnd = { start() }
+        stateWidget.onAnimationEnd = { start() }
         initTagDiscoveredCallback()
     }
 
     fun stop() {
         nfcManager.onTagDiscovered = null
+        nfcManager.readingIsActive = true
+        stateWidget.setState(HowToState.Cancel)
     }
 
     private fun initTagDiscoveredCallback() {
@@ -49,9 +52,13 @@ class HowToController(
     }
 }
 
-sealed class HowToState {
-    object Init : HowToState()
-    object Animate : HowToState()
-    object AntennaFound : HowToState()
-    object Cancel : HowToState()
+enum class HowToMode {
+    KNOWN, UNKNOWN
+}
+
+enum class HowToState {
+    Init,
+    Animate,
+    AntennaFound,
+    Cancel,
 }
