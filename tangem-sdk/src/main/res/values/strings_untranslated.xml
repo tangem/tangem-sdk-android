@@ -7,4 +7,7 @@
     <string name="how_to_button" translatable="false">How to</string>
     <string name="how_to_got_it_button" translatable="false">Ok, got it!</string>
 
+    <string name="how_to_try_other_way" translatable="false">Try the other way</string>
+    <string name="how_to_show_again" translatable="false">Show again</string>
+
 </resources>
