@@ -53,7 +53,7 @@ class NfcUnknownWidget(
     }
 
     private fun getSlideDownAnimation(): Animator {
-        return ObjectAnimator.ofFloat(handWithCard, View.TRANSLATION_Y, dpToPx(-25f), dpToPx(125f)).apply {
+        return ObjectAnimator.ofFloat(handWithCard, View.TRANSLATION_Y, dpToPx(-45f), dpToPx(135f)).apply {
             duration = 9500
             doOnStart { setText(R.string.how_to_unknown_move_card) }
         }
