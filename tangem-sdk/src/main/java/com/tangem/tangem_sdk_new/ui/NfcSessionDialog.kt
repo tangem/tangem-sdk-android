@@ -201,8 +201,8 @@ class NfcSessionDialog(
         howToContainer.show()
 
         howToTapWidget.previousState = currentState
-        howToTapWidget.onOk = {
-            howToTapWidget.onOk = null
+        howToTapWidget.onCloseListener = {
+            howToTapWidget.onCloseListener = null
             enableBottomSheetAnimation()
             howToContainer.hide()
             findDesignBottomSheetView()?.let { it.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT }

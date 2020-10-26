@@ -9,17 +9,17 @@ import android.view.animation.DecelerateInterpolator
 import androidx.core.animation.addListener
 import androidx.core.animation.doOnStart
 import com.tangem.tangem_sdk_new.R
+import com.tangem.tangem_sdk_new.extensions.fadeIn
 import com.tangem.tangem_sdk_new.extensions.fadeOut
 
 /**
 [REDACTED_AUTHOR]
  */
 class NfcUnknownWidget(
-    mainView: View
+    mainView: View,
 ) : NfcHowToWidget(mainView) {
 
     private val handWithCard: View = mainView.findViewById(R.id.imvHandWithCardH)
-
     private val animatorSet: AnimatorSet = AnimatorSet()
 
     init {
@@ -34,7 +34,7 @@ class NfcUnknownWidget(
         animatorSet.playSequentially(list)
         animatorSet.addListener(
             onStart = { handWithCard.alpha = 1f },
-            onEnd = { if (!isCancelled) onEnd?.invoke() },
+            onEnd = { if (!isCancelled) onAnimationEnd?.invoke() },
             onCancel = { handWithCard.fadeOut(1000) }
         )
         animatorSet.startDelay = 1000
@@ -49,7 +49,6 @@ class NfcUnknownWidget(
         return AnimatorSet().apply {
             duration = 2000
             playTogether(scaleUpX, scaleUpY, xToRight)
-            doOnStart { setText(R.string.how_to_unknown_tap_card) }
         }
     }
 
@@ -79,6 +78,8 @@ class NfcUnknownWidget(
             HowToState.Init -> {
                 isCancelled = false
                 setMainButtonText(R.string.common_cancel)
+                setText(R.string.how_to_unknown_tap_card)
+                btnShowAgain.fadeOut(FADE_DURATION)
             }
             HowToState.Animate -> {
                 rippleView.stopRippleAnimation()
@@ -89,6 +90,7 @@ class NfcUnknownWidget(
 
                 isCancelled = true
                 animatorSet.cancel()
+                btnShowAgain.fadeIn(FADE_DURATION)
                 rippleView.startRippleAnimation()
                 setText(R.string.how_to_nfc_detected)
                 setMainButtonText(R.string.how_to_got_it_button)
