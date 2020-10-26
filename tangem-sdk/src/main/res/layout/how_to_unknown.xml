@@ -93,6 +93,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="46dp"
         android:layout_marginEnd="46dp"
+        android:layout_marginBottom="4dp"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:text="@string/how_to_show_again"
