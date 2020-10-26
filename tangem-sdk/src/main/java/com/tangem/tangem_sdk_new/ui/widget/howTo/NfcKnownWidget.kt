@@ -1,13 +1,10 @@
 package com.tangem.tangem_sdk_new.ui.widget.howTo
 
-import android.content.res.ColorStateList
 import android.os.Handler
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
-import androidx.core.content.ContextCompat
-import androidx.core.widget.ImageViewCompat
 import androidx.transition.TransitionManager
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.extensions.*
@@ -137,13 +134,9 @@ class NfcKnownWidget(
         rippleView.startRippleAnimation()
 
         if (nfcLocation.isOnTheBack()) {
-            val badgeColor = ContextCompat.getColor(context, R.color.nfc_badge_back)
-            ImageViewCompat.setImageTintList(nfcBadge, ColorStateList.valueOf(badgeColor))
             phoneFlipAnimator.onAnimationEnd = fadeIn
             phoneFlipAnimator.animate()
         } else {
-            val badgeColor = ContextCompat.getColor(context, R.color.nfc_badge_front)
-            ImageViewCompat.setImageTintList(nfcBadge, ColorStateList.valueOf(badgeColor))
             fadeIn()
         }
     }
