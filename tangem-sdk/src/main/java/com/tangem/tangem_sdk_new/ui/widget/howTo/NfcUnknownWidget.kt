@@ -9,6 +9,7 @@ import android.view.animation.DecelerateInterpolator
 import androidx.core.animation.addListener
 import androidx.core.animation.doOnStart
 import com.tangem.tangem_sdk_new.R
+import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.fadeIn
 import com.tangem.tangem_sdk_new.extensions.fadeOut
 
@@ -80,6 +81,7 @@ class NfcUnknownWidget(
                 setMainButtonText(R.string.common_cancel)
                 setText(R.string.how_to_unknown_tap_card)
                 btnShowAgain.fadeOut(FADE_DURATION)
+                progressStateWidget.setState(SessionViewDelegateState.None)
             }
             HowToState.Animate -> {
                 rippleView.stopRippleAnimation()
@@ -91,7 +93,7 @@ class NfcUnknownWidget(
                 isCancelled = true
                 animatorSet.cancel()
                 btnShowAgain.fadeIn(FADE_DURATION)
-                rippleView.startRippleAnimation()
+                progressStateWidget.setState(SessionViewDelegateState.Success(null))
                 setText(R.string.how_to_nfc_detected)
                 setMainButtonText(R.string.how_to_got_it_button)
             }
