@@ -24,7 +24,8 @@ import kotlinx.android.synthetic.main.bottom_sheet_layout.*
 class NfcSessionDialog(
     context: Context,
     private val nfcManager: NfcManager,
-    private val nfcLocationProvider: NfcLocationProvider
+    private val nfcLocationProvider: NfcLocationProvider,
+    private val howToIsEnabled: Boolean
 ) : BottomSheetDialog(context) {
     private val tag = this::class.java.simpleName
 
@@ -56,7 +57,7 @@ class NfcSessionDialog(
         taskContainer = view.findViewById(R.id.taskContainer)
         howToContainer = view.findViewById(R.id.howToContainer)
 
-        headerWidget = HeaderWidget(view.findViewById(R.id.llHeader))
+        headerWidget = HeaderWidget(view.findViewById(R.id.llHeader), howToIsEnabled)
         touchCardWidget = TouchCardWidget(view.findViewById(R.id.rlTouchCard), nfcLocation)
         progressStateWidget = ProgressbarStateWidget(view.findViewById(R.id.clProgress))
         pinCodeRequestWidget = PinCodeRequestWidget(view.findViewById(R.id.csPinCode))

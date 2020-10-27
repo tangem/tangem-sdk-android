@@ -88,6 +88,16 @@
         app:layout_constraintTop_toTopOf="@+id/imvPhone"
         app:srcCompat="@drawable/hand_full_card_vertical" />
 
+    <include
+        android:id="@+id/clProgress"
+        layout="@layout/how_to_nfc_found_layout"
+        android:layout_width="75dp"
+        android:layout_height="75dp"
+        app:layout_constraintBottom_toBottomOf="@+id/imvPhone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/imvPhone" />
+
     <TextSwitcher
         android:id="@+id/tvHowToSwitcher"
         android:layout_width="0dp"
