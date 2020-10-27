@@ -88,15 +88,15 @@
         app:layout_constraintTop_toTopOf="@+id/imvPhone"
         app:srcCompat="@drawable/hand_full_card_vertical" />
 
-    <include
-        android:id="@+id/clProgress"
-        layout="@layout/how_to_nfc_found_layout"
-        android:layout_width="75dp"
-        android:layout_height="75dp"
+    <ImageView
+        android:id="@+id/imvSuccess"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="@+id/imvPhone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/imvPhone" />
+        app:layout_constraintEnd_toEndOf="@+id/imvPhone"
+        app:layout_constraintStart_toStartOf="@+id/imvPhone"
+        app:layout_constraintTop_toTopOf="@+id/imvPhone"
+        app:srcCompat="@drawable/ic_success_thin_anim" />
 
     <TextSwitcher
         android:id="@+id/tvHowToSwitcher"
