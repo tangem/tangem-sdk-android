@@ -15,7 +15,10 @@ import com.tangem.tangem_sdk_new.ui.animation.VoidCallback
 /**
 [REDACTED_AUTHOR]
  */
-class HeaderWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
+class HeaderWidget(
+    mainView: View,
+    private val howToIsEnabled: Boolean
+) : BaseSessionDelegateStateWidget(mainView) {
 
     private val tvCard = mainView.findViewById<TextView>(R.id.tvCard)
     private val tvCardId = mainView.findViewById<TextView>(R.id.tvCardId)
@@ -36,7 +39,7 @@ class HeaderWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
             mainView.requestFocus()
             onClose?.invoke()
         }
-
+        btnHowTo.show(howToIsEnabled)
         btnHowTo.setOnClickListener { onHowTo?.invoke() }
     }
 
@@ -49,43 +52,34 @@ class HeaderWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
             is SessionViewDelegateState.Ready -> {
                 cardId = params.cardId
                 imvClose.hide()
-                btnHowTo.show()
+                showHowToButton(true)
                 tvCard.show()
                 if (cardId == null) {
                     tvCard.text = getString(R.string.view_delegate_header_any_card)
                 } else {
                     tvCard.text = getString(R.string.view_delegate_header_card)
                     tvCardId.show()
-                    tvCardId.text = splitByLength(cardId!!, 4)
+                    tvCardId.text = cardId!!.chunked(4).joinToString(" ")
                 }
             }
             is SessionViewDelegateState.PinChangeRequested -> {
-                btnHowTo.hide()
+                showHowToButton(false)
                 imvClose.show()
             }
             is SessionViewDelegateState.PinRequested -> {
-                btnHowTo.hide()
+                showHowToButton(false)
                 imvClose.show(isFullScreenMode)
             }
             else -> {
                 imvClose.hide()
-                btnHowTo.show()
+                showHowToButton(true)
             }
         }
     }
 
-    private fun splitByLength(value: String, sizeOfChunk: Int): String {
-        val length = value.length
-        if (length <= sizeOfChunk) return value
+    private fun showHowToButton(show: Boolean) {
+        if (!howToIsEnabled) return
 
-        val countOfFullSizedChunk = length / sizeOfChunk
-        val builder = StringBuilder()
-        var startPosition = 0
-        for (i in 0 until countOfFullSizedChunk) {
-            val endPosition = startPosition + sizeOfChunk
-            builder.append(value.substring(startPosition, endPosition)).append(" ")
-            startPosition = endPosition
-        }
-        return builder.append(value.substring(startPosition, length)).toString().trim()
+        btnHowTo.show(show)
     }
 }
