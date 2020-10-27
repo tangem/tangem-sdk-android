@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.ImageView
 import androidx.transition.TransitionManager
 import com.tangem.tangem_sdk_new.R
+import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.*
 import com.tangem.tangem_sdk_new.ui.NfcLocation
 import com.tangem.tangem_sdk_new.ui.animation.*
@@ -64,7 +65,6 @@ class NfcKnownWidget(
                 prepareInitialState()
             }
             HowToState.Animate -> {
-//                prepareInitialState()
                 animationScheduler.postDelayed(::showNfcPosition, 3000)
                 animationScheduler.postDelayed(::tapToKnownPosition, 9000)
             }
@@ -115,6 +115,7 @@ class NfcKnownWidget(
         phoneFlipAnimator.animateToSide(Side.FRONT, 0)
         phone.show()
         btnShowAgain.hideWithFade(FADE_DURATION_HALF) { btnSwitchMode.showWithFade(FADE_DURATION_HALF) }
+        progressStateWidget.setState(SessionViewDelegateState.None)
 
         rippleView.alpha = 0f
         nfcBadge.alpha = 0f
@@ -177,6 +178,7 @@ class NfcKnownWidget(
                 rippleView.elevation = if (nfcLocation.isOnTheBack()) dpToPx(1f) else rippleView.elevation
                 rippleView.alpha = 1f
                 rippleView.startRippleAnimation()
+                progressStateWidget.setState(SessionViewDelegateState.Success(null))
             }
         }
 
