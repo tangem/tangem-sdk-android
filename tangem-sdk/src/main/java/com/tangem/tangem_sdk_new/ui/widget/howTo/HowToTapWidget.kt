@@ -17,7 +17,6 @@ import com.tangem.tangem_sdk_new.nfc.NfcManager
 import com.tangem.tangem_sdk_new.ui.animation.VoidCallback
 import com.tangem.tangem_sdk_new.ui.widget.BaseSessionDelegateStateWidget
 import com.tangem.tangem_sdk_new.ui.widget.BaseStateWidget
-import com.tangem.tangem_sdk_new.ui.widget.progressBar.ProgressbarStateWidget
 
 /**
 [REDACTED_AUTHOR]
@@ -97,11 +96,7 @@ abstract class NfcHowToWidget(mainView: View) : BaseStateWidget<HowToState>(main
     protected val phone: ImageView = mainView.findViewById(R.id.imvPhone)
     protected val btnCancel: Button = mainView.findViewById(R.id.btnCancel)
     protected val btnShowAgain: Button = mainView.findViewById(R.id.btnShowAgain)
-    protected val progressStateWidget: ProgressbarStateWidget by lazy {
-        val view = mainView.findViewById<View>(R.id.clProgress)
-        view.elevation = view.dpToPx(5f)
-        ProgressbarStateWidget(view)
-    }
+    protected val imvSuccess: ImageView = mainView.findViewById(R.id.imvSuccess)
 
     protected var currentState: HowToState? = null
     protected var isCancelled = false
@@ -114,7 +109,8 @@ abstract class NfcHowToWidget(mainView: View) : BaseStateWidget<HowToState>(main
             setState(HowToState.Animate)
         }
         btnCancel.setOnClickListener { onClose?.invoke() }
-        progressStateWidget.setState(SessionViewDelegateState.None)
+        imvSuccess.alpha = 0f
+        imvSuccess.elevation = imvSuccess.dpToPx(5f)
     }
 
     override fun onBottomSheetDismiss() {
