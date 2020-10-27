@@ -24,7 +24,6 @@
     <string name="how_to_unknown_tap_card">Appuyez votre carte au dos de votre téléphone </string>
     <string name="how_to_unknown_move_card">Pour déterminer où se trouve votre antenne NFC, déplacez la carte de haut en bas jusqu\'à ce que la confirmation soit reçue </string>
     <string name="how_to_unknown_nothing_happened">Aucun résultat? Essayez de retirer la carte de votre téléphone, puis de la reappuyer </string>
-    <string name="how_to_nfc_detected">La connexion a été établie. Votre antenne NFC se trouve ici </string>
     <string name="tap_in_button">Connecter </string>
     <string name="tap_in_known_info_message">Tenez fermement la carte près du téléphone comme indiqué sur l\'image lorsque vous l\'utilisez pour vous connecter </string>
     <string name="tap_in_known_show_how_tap_in_button">Montrez-moi comment me connecter </string>
