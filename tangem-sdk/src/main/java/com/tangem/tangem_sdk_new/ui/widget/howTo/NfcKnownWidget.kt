@@ -7,7 +7,6 @@ import android.widget.Button
 import android.widget.ImageView
 import androidx.transition.TransitionManager
 import com.tangem.tangem_sdk_new.R
-import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.*
 import com.tangem.tangem_sdk_new.ui.NfcLocation
 import com.tangem.tangem_sdk_new.ui.animation.*
@@ -40,6 +39,17 @@ class NfcKnownWidget(
     init {
         changeCameraDistance()
         btnSwitchMode.setOnClickListener { handleSwitchMode() }
+        touchCardAnimation.hideTouchView(0)
+        phone.hide()
+        phoneFlipAnimator.animateToSide(Side.FRONT, 0)
+        phone.show()
+
+        btnShowAgain.alpha = 0f
+        btnSwitchMode.alpha = 1f
+
+        rippleView.alpha = 0f
+        nfcBadge.alpha = 0f
+        imvSuccess.alpha = 0f
     }
 
     private fun changeCameraDistance() {
@@ -110,15 +120,15 @@ class NfcKnownWidget(
         setDefaultElevations()
         TransitionManager.beginDelayedTransition(mainView as ViewGroup)
 
-        touchCardAnimation.hideTouchView(0)
+        touchCardAnimation.hideTouchView(FADE_DURATION)
         phone.hide()
         phoneFlipAnimator.animateToSide(Side.FRONT, 0)
         phone.show()
         btnShowAgain.hideWithFade(FADE_DURATION_HALF) { btnSwitchMode.showWithFade(FADE_DURATION_HALF) }
-        progressStateWidget.setState(SessionViewDelegateState.None)
 
-        rippleView.alpha = 0f
-        nfcBadge.alpha = 0f
+        rippleView.fadeOut(FADE_DURATION)
+        nfcBadge.fadeOut(FADE_DURATION)
+        imvSuccess.fadeOut(FADE_DURATION)
     }
 
     private fun showNfcPosition() {
@@ -178,7 +188,7 @@ class NfcKnownWidget(
                 rippleView.elevation = if (nfcLocation.isOnTheBack()) dpToPx(1f) else rippleView.elevation
                 rippleView.alpha = 1f
                 rippleView.startRippleAnimation()
-                progressStateWidget.setState(SessionViewDelegateState.Success(null))
+                imvSuccess.fadeIn(FADE_DURATION)
             }
         }
 
