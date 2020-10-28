@@ -14,6 +14,8 @@ import com.tangem.commands.verifycard.VerifyCardResponse
 import com.tangem.common.CardValuesStorage
 import com.tangem.common.CompletionResult
 import com.tangem.common.TerminalKeysService
+import com.tangem.common.files.FileHashData
+import com.tangem.common.files.FileHashHelper
 import com.tangem.crypto.CryptoUtils
 import com.tangem.tasks.CreateWalletTask
 import com.tangem.tasks.ScanTask
@@ -303,6 +305,21 @@ class TangemSdk(
             callback: (result: CompletionResult<DeleteFileResponse>) -> Unit
     ) {
         startSessionWithRunnable(DeleteFilesTask(indices), cardId, initialMessage, callback)
+    }
+
+    /**
+     * Creates hashes and signatures for [com.tangem.commands.file.FileData.DataProtectedBySignature]
+     * @param cardId: CID, Unique Tangem card ID number.
+     * @param fileData: File data that will be written on card
+     * @param fileCounter: A counter that protects issuer data against replay attack.
+     * @param privateKey: Optional private key that will be used for signing files hashes.
+     * If it is provided, then [FileHashData] will contain signed file signatures.
+     * @return [FileHashData] with hashes to sign and signatures if [privateKey] was provided.
+     */
+    fun prepareHashes(
+            cardId: String, fileData: ByteArray, fileCounter: Int, privateKey: ByteArray? = null
+    ): FileHashData {
+        return FileHashHelper.prepareHashes(cardId, fileData, fileCounter, privateKey)
     }
 
     /**
