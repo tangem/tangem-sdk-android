@@ -23,6 +23,7 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
+import com.tangem.common.files.FileHashHelper
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.sign
 import com.tangem.tangem_sdk_new.extensions.init
@@ -108,10 +109,15 @@ class DemoActivity : AppCompatActivity() {
 
             val counter = 1
             val issuerData = CryptoUtils.generateRandomBytes(WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE * 5)
-            val startingSignature = getStartingSignature(issuerData, counter, cardId)
-            val finalizingSignature = getFinalizingSignature(issuerData, counter, cardId)
+            val signatures = FileHashHelper.prepareHashes(
+                    cardId, issuerData, counter, Utils.issuer().dataKeyPair.privateKey
+            )
 
-            sdk.writeIssuerExtraData(cardId, issuerData, startingSignature, finalizingSignature, counter) { handleResult(it) }
+            sdk.writeIssuerExtraData(
+                    cardId, issuerData,
+                    signatures.startingSignature!!, signatures.finalizingSignature!!,
+                    counter
+            ) { handleResult(it) }
         }
 
     }
@@ -214,25 +220,13 @@ class DemoActivity : AppCompatActivity() {
     private fun prepareSignedData(cardId: String): FileData.DataProtectedBySignature {
         val counter = 1
         val issuerData = CryptoUtils.generateRandomBytes(WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE * 5)
-        val startingSignature = getStartingSignature(issuerData, counter, cardId)
-        val finalizingSignature = getFinalizingSignature(issuerData, counter, cardId)
-
+        val signatures = FileHashHelper.prepareHashes(
+                cardId, issuerData, counter, Utils.issuer().dataKeyPair.privateKey
+        )
         return FileData.DataProtectedBySignature(
                 issuerData, counter,
-                FileDataSignature(startingSignature, finalizingSignature),
+                FileDataSignature(signatures.startingSignature!!, signatures.finalizingSignature!!),
                 Utils.issuer().dataKeyPair.publicKey
         )
     }
-
-    private fun getStartingSignature(data: ByteArray, counter: Int, cardId: String): ByteArray {
-        return (cardId.hexToBytes() + counter.toByteArray(4) + data.size.toByteArray(2))
-                .sign(Utils.issuer().dataKeyPair.privateKey)
-    }
-
-    private fun getFinalizingSignature(data: ByteArray, counter: Int, cardId: String): ByteArray {
-        return (cardId.hexToBytes() + data + counter.toByteArray(4))
-                .sign(Utils.issuer().dataKeyPair.privateKey)
-    }
-
-
 }
