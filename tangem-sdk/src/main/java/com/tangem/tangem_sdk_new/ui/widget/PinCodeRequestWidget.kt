@@ -1,6 +1,7 @@
 package com.tangem.tangem_sdk_new.ui.widget
 
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -23,6 +24,18 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
     private val btnContinue = mainView.findViewById<Button>(R.id.btnContinue)
     private val expandingView = mainView.findViewById<View>(R.id.expandingView)
 
+    init {
+        etPinCode.isSingleLine = true
+        etPinCode.imeOptions = EditorInfo.IME_ACTION_DONE
+        etPinCode.setOnEditorActionListener { v, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                btnContinue.performClick()
+                return@setOnEditorActionListener true
+            }
+            return@setOnEditorActionListener false
+        }
+    }
+
     fun canExpand(): Boolean = expandingView != null
 
     override fun setState(params: SessionViewDelegateState) {
@@ -39,7 +52,7 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
                     val pin = etPinCode.text.toString()
                     if (pin.isEmpty()) {
                         tilPinCode.error = mainView.context.getString(
-                                R.string.pin_enter, code
+                            R.string.pin_enter, code
                         )
                     } else {
                         tilPinCode.error = null
