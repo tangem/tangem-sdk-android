@@ -28,8 +28,6 @@ class NfcSessionDialog(
 ) : BottomSheetDialog(context) {
     private val tag = this::class.java.simpleName
 
-    var howToIsEnabled: Boolean = false;
-
     private lateinit var taskContainer: ViewGroup
     private lateinit var howToContainer: ViewGroup
 
@@ -58,7 +56,7 @@ class NfcSessionDialog(
         taskContainer = view.findViewById(R.id.taskContainer)
         howToContainer = view.findViewById(R.id.howToContainer)
 
-        headerWidget = HeaderWidget(view.findViewById(R.id.llHeader), howToIsEnabled)
+        headerWidget = HeaderWidget(view.findViewById(R.id.llHeader))
         touchCardWidget = TouchCardWidget(view.findViewById(R.id.rlTouchCard), nfcLocation)
         progressStateWidget = ProgressbarStateWidget(view.findViewById(R.id.clProgress))
         pinCodeRequestWidget = PinCodeRequestWidget(view.findViewById(R.id.csPinCode))
@@ -77,6 +75,10 @@ class NfcSessionDialog(
         headerWidget.onHowTo = { show(SessionViewDelegateState.HowToTap) }
 
         behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+    }
+
+    fun enableHowTo(enable: Boolean) {
+        headerWidget.howToIsEnabled = enable
     }
 
     fun show(state: SessionViewDelegateState) {
