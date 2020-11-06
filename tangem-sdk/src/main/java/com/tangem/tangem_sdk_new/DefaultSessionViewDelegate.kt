@@ -27,7 +27,7 @@ class DefaultSessionViewDelegate(
     override fun onSessionStarted(cardId: String?, message: Message?, enableHowTo: Boolean) {
         postUI {
             if (readingDialog == null) createReadingDialog(activity)
-            readingDialog?.howToIsEnabled = enableHowTo
+            readingDialog?.enableHowTo(enableHowTo)
             readingDialog?.show(SessionViewDelegateState.Ready(cardId, message))
         }
     }
