@@ -17,4 +17,5 @@ sealed class SessionViewDelegateState() {
     object TagLost : SessionViewDelegateState()
     object TagConnected : SessionViewDelegateState()
     object HowToTap : SessionViewDelegateState()
+    object None : SessionViewDelegateState()
 }
