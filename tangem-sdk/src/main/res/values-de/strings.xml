@@ -77,4 +77,14 @@
     <string name="error_pin2_required">Der Passcode ist erforderlich</string>
     <string name="error_invalid_response">Ungültige Antwort</string>
 
+    <string name="how_to_nfc_detected">Sie haben gerade den Standort Ihrer NFC-Antenne gefunden. Bitte merken Sie sich diesen Standort.</string>
+    <string name="how_to_known_here_how_to_use">Hier finden Sie Informationen, wie man Tangem Cards mit (Telefon) verwendet</string>
+    <string name="how_to_known_antenna_is_here">Ihre NFC-Antenne ist hier</string>
+    <string name="how_to_known_tap_card_to_the_back">Legen Sie Ihre Karte zu der Rückseite des Telefons an</string>
+    <string name="how_to_known_tap_card_to_the_front">Legen Sie Ihre Karte zu der Vorderseite des Telefons an</string>
+    <string name="how_to_button">Anweisungen</string>
+    <string name="how_to_got_it_button">Ok, verstanden!</string>
+    <string name="how_to_try_other_way_button">Funktioniert immer noch nicht</string>
+    <string name="how_to_show_again_button">Noch einmal anzeigen</string>
+
 </resources>
