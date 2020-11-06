@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="how_to_nfc_detected" translatable="false">You just found the location of your NFC antenna. Please remember it.</string>
-    <string name="how_to_known_here_how_to_use" translatable="false">Here’s how to use Tangem Cards with (phone)</string>
-    <string name="how_to_known_antenna_is_here" translatable="false">Your NFC antenna is here</string>
-    <string name="how_to_known_tap_card_to_the_back" translatable="false">Tap your card to the back of the phone</string>
-    <string name="how_to_known_tap_card_to_the_front" translatable="false">Tap your card to the front of the phone</string>
-    <string name="how_to_button" translatable="false">How to</string>
-    <string name="how_to_got_it_button" translatable="false">Ok, got it!</string>
 
-    <string name="how_to_try_other_way" translatable="false">Still not working</string>
-    <string name="how_to_show_again" translatable="false">Show again</string>
 
 </resources>

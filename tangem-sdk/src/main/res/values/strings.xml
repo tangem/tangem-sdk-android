@@ -105,4 +105,16 @@
     <string name="tap_in_unknown_info_message">Watch the video to see how to tap in and connect the NFC in your phone to the card.</string>
     <string name="tap_in_unknown_how_to_tap_in_button">How to tap in</string>
 
+    <string name="how_to_known_here_how_to_use">Here’s how to use Tangem Cards with (phone)</string>
+    <string name="how_to_known_antenna_is_here">Your NFC antenna is here</string>
+    <string name="how_to_known_tap_card_to_the_back">Tap your card to the back of the phone</string>
+    <string name="how_to_known_tap_card_to_the_front">Tap your card to the front of the phone</string>
+    <string name="how_to_button">How to</string>
+    <string name="how_to_got_it_button">Ok, got it!</string>
+
+    <string name="how_to_nfc_detected">You just found the location of your NFC antenna. Please remember it.</string>
+
+    <string name="how_to_try_other_way_button">Still not working</string>
+    <string name="how_to_show_again_button">Show again</string>
+
 </resources>
