@@ -15,7 +15,6 @@ import com.tangem.tangem_sdk_new.ui.NfcSessionDialog
  */
 class DefaultSessionViewDelegate(
     private val nfcManager: NfcManager,
-    private val howToIsEnabled: Boolean = true,
 ) : SessionViewDelegate {
 
     lateinit var activity: Activity
@@ -25,9 +24,10 @@ class DefaultSessionViewDelegate(
         setLogger()
     }
 
-    override fun onSessionStarted(cardId: String?, message: Message?) {
+    override fun onSessionStarted(cardId: String?, message: Message?, enableHowTo: Boolean) {
         postUI {
             if (readingDialog == null) createReadingDialog(activity)
+            readingDialog?.howToIsEnabled = enableHowTo
             readingDialog?.show(SessionViewDelegateState.Ready(cardId, message))
         }
     }
@@ -35,7 +35,7 @@ class DefaultSessionViewDelegate(
     private fun createReadingDialog(activity: Activity) {
         val nfcLocationProvider = NfcAntennaLocationProvider(Build.DEVICE)
         val themeWrapper = ContextThemeWrapper(activity, R.style.CardSdkTheme)
-        readingDialog = NfcSessionDialog(themeWrapper, nfcManager, nfcLocationProvider, howToIsEnabled).apply {
+        readingDialog = NfcSessionDialog(themeWrapper, nfcManager, nfcLocationProvider).apply {
             dismissWithAnimation = true
             create()
             setOnCancelListener {
