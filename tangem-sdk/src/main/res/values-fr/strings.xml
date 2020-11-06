@@ -24,7 +24,6 @@
     <string name="how_to_unknown_tap_card">Appuyez votre carte au dos de votre téléphone </string>
     <string name="how_to_unknown_move_card">Pour déterminer où se trouve votre antenne NFC, déplacez la carte de haut en bas jusqu\'à ce que la confirmation soit reçue </string>
     <string name="how_to_unknown_nothing_happened">Aucun résultat? Essayez de retirer la carte de votre téléphone, puis de la reappuyer </string>
-    <string name="how_to_nfc_detected">La connexion a été établie. Votre antenne NFC se trouve ici </string>
     <string name="tap_in_button">Connecter </string>
     <string name="tap_in_known_info_message">Tenez fermement la carte près du téléphone comme indiqué sur l\'image lorsque vous l\'utilisez pour vous connecter </string>
     <string name="tap_in_known_show_how_tap_in_button">Montrez-moi comment me connecter </string>
@@ -79,5 +78,14 @@
     <string name="error_pin2_required">Mot de passe est requis </string>
     <string name="error_invalid_response">Réponse incorrecte</string>
 
+    <string name="how_to_nfc_detected">Vous venez de trouver l’emplacement de votre antenne NFC. Veuillez le mémoriser</string>
+    <string name="how_to_known_here_how_to_use">Ici est expliqué comment utiliser les cartes Tangem avec (le téléphone)</string>
+    <string name="how_to_known_antenna_is_here">Votre antenne NFC est ici</string>
+    <string name="how_to_known_tap_card_to_the_back">Posez votre carte sur le dos du téléphone</string>
+    <string name="how_to_known_tap_card_to_the_front">Posez votre carte sur l’écran du téléphone</string>
+    <string name="how_to_button">Consigne</string>
+    <string name="how_to_got_it_button">OK, j’ai compris !</string>
+    <string name="how_to_try_other_way_button">Ceci ne fonctionne toujours pas</string>
+    <string name="how_to_show_again_button">Montrer encore une fois</string>
 
 </resources>
