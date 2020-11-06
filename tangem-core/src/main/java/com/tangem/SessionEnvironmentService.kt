@@ -11,6 +11,8 @@ class SessionEnvironmentService(
 
 //    private val cardValuesStorage = if (config.useCardValuesStorage) cardValuesStorage else null
 
+    fun howToIsEnabled(): Boolean = config.howToIsEnabled
+
     fun createEnvironment(cardId: String?): SessionEnvironment {
         val terminalKeys = if (config.linkedTerminal) terminalKeysService?.getKeys() else null
 
