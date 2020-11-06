@@ -17,7 +17,6 @@ import com.tangem.tangem_sdk_new.ui.animation.VoidCallback
  */
 class HeaderWidget(
     mainView: View,
-    private val howToIsEnabled: Boolean
 ) : BaseSessionDelegateStateWidget(mainView) {
 
     private val tvCard = mainView.findViewById<TextView>(R.id.tvCard)
@@ -32,6 +31,12 @@ class HeaderWidget(
     var cardId: String? = null
         private set
 
+    var howToIsEnabled: Boolean = false
+        set(value) {
+            field = value
+            btnHowTo.show(value)
+        }
+
     init {
         imvClose.setVectorDrawable(R.drawable.ic_close)
         imvClose.setOnClickListener {
@@ -39,7 +44,6 @@ class HeaderWidget(
             mainView.requestFocus()
             onClose?.invoke()
         }
-        btnHowTo.show(howToIsEnabled)
         btnHowTo.setOnClickListener { onHowTo?.invoke() }
     }
 
