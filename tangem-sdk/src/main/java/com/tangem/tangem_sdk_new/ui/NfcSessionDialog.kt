@@ -25,9 +25,10 @@ class NfcSessionDialog(
     context: Context,
     private val nfcManager: NfcManager,
     private val nfcLocationProvider: NfcLocationProvider,
-    private val howToIsEnabled: Boolean
 ) : BottomSheetDialog(context) {
     private val tag = this::class.java.simpleName
+
+    var howToIsEnabled: Boolean = false;
 
     private lateinit var taskContainer: ViewGroup
     private lateinit var howToContainer: ViewGroup
