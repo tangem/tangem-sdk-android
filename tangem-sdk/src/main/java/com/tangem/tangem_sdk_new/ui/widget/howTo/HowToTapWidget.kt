@@ -11,7 +11,7 @@ import android.widget.TextSwitcher
 import com.skyfishjy.library.RippleBackground
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
-import com.tangem.tangem_sdk_new.extensions.dpToPx
+import com.tangem.tangem_sdk_new.extensions.*
 import com.tangem.tangem_sdk_new.nfc.NfcLocationProvider
 import com.tangem.tangem_sdk_new.nfc.NfcManager
 import com.tangem.tangem_sdk_new.ui.animation.VoidCallback
@@ -25,73 +25,92 @@ class HowToTapWidget constructor(
     mainView: View,
     private val nfcManager: NfcManager,
     private val nfcLocationProvider: NfcLocationProvider,
-) : BaseSessionDelegateStateWidget(mainView), OkCallback {
+) : BaseSessionDelegateStateWidget(mainView) {
 
-    var previousState: SessionViewDelegateState? = null
-
-    private val view: View
-    private val controller: HowToController
-
-    override var onOk: VoidCallback? = null
+    var onCloseListener: VoidCallback? = null
         set(value) {
             field = value
-            controller.onOk = value
+            controller?.onClose = value
         }
+    var previousState: SessionViewDelegateState? = null
 
-    init {
-        val layoutInflater = LayoutInflater.from(mainView.context)
-        val nfcLocation = nfcLocationProvider.getLocation()
-        val vibrator = mainView.context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    private val vibrator = mainView.context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    private val nfcLocation = nfcLocationProvider.getLocation()
 
-        val widget = if (nfcLocation == null) {
-            view = layoutInflater.inflate(R.layout.how_to_unknown, null)
-            NfcUnknownWidget(view)
-        } else {
-            view = layoutInflater.inflate(R.layout.how_to_known, null)
-            NfcKnownWidget(view, nfcLocation)
-        }
-        controller = HowToController(widget, vibrator, nfcManager)
+    private var initialMode: HowToMode = if (nfcLocation == null) HowToMode.UNKNOWN else HowToMode.KNOWN
+    private var currentMode: HowToMode = initialMode
+    private var controller: HowToController? = null
 
-    }
+    private val viewContainer = mainView as ViewGroup
 
     override fun setState(params: SessionViewDelegateState) {
         when (params) {
             SessionViewDelegateState.HowToTap -> {
-                nfcManager.readingIsActive = false
-                (mainView as? ViewGroup)?.addView(view)
-                controller.start()
+                controller = HowToController(createWidget(currentMode), vibrator, nfcManager)
+                controller?.onClose = onCloseListener
+                viewContainer.removeAllViews()
+                viewContainer.addView(controller?.getView())
+                controller?.start()
             }
             else -> {
-                controller.stop()
-                nfcManager.readingIsActive = true
-                (mainView as? ViewGroup)?.removeAllViews()
+                currentMode = initialMode
+                controller?.stop()
+                viewContainer.removeAllViews()
+            }
+        }
+    }
+
+    private fun createWidget(mode: HowToMode): NfcHowToWidget {
+        val layoutInflater = LayoutInflater.from(mainView.context)
+        return when (mode) {
+            HowToMode.KNOWN -> {
+                val view = layoutInflater.inflate(R.layout.how_to_known, null)
+                NfcKnownWidget(view, nfcLocation!!, onSwitch = {
+                    currentMode = HowToMode.UNKNOWN
+                    setState(SessionViewDelegateState.HowToTap)
+                })
+            }
+            HowToMode.UNKNOWN -> {
+                NfcUnknownWidget(layoutInflater.inflate(R.layout.how_to_unknown, null))
             }
         }
     }
 }
 
 
-interface OkCallback {
-    var onOk: VoidCallback?
-}
+abstract class NfcHowToWidget(mainView: View) : BaseStateWidget<HowToState>(mainView) {
 
-abstract class NfcHowToWidget(mainView: View) : BaseStateWidget<HowToState>(mainView), OkCallback {
+    var onClose: VoidCallback? = null
+    var onAnimationEnd: VoidCallback? = null
 
-    var onEnd: VoidCallback? = null
-    override var onOk: VoidCallback? = null
+    val view: View
+        get() = mainView
+
+    protected val FLIP_DURATION = 650L
+    protected val FADE_DURATION = 400L
+    protected val FADE_DURATION_HALF = FADE_DURATION / 2
 
     protected val context = mainView.context
     protected val rippleView: RippleBackground = mainView.findViewById(R.id.rippleBg)
     protected val tvSwitcher: TextSwitcher = mainView.findViewById(R.id.tvHowToSwitcher)
     protected val phone: ImageView = mainView.findViewById(R.id.imvPhone)
     protected val btnCancel: Button = mainView.findViewById(R.id.btnCancel)
+    protected val btnShowAgain: Button = mainView.findViewById(R.id.btnShowAgain)
+    protected val imvSuccess: ImageView = mainView.findViewById(R.id.imvSuccess)
 
     protected var currentState: HowToState? = null
     protected var isCancelled = false
 
     init {
         initTextChangesAnimation()
-        btnCancel.setOnClickListener { onOk?.invoke() }
+        btnShowAgain.hideWithFade(0)
+        btnShowAgain.setOnClickListener {
+            setState(HowToState.Init)
+            setState(HowToState.Animate)
+        }
+        btnCancel.setOnClickListener { onClose?.invoke() }
+        imvSuccess.alpha = 0f
+        imvSuccess.elevation = imvSuccess.dpToPx(5f)
     }
 
     override fun onBottomSheetDismiss() {
@@ -112,4 +131,16 @@ abstract class NfcHowToWidget(mainView: View) : BaseStateWidget<HowToState>(main
         tvSwitcher.setInAnimation(context, android.R.anim.slide_in_left)
         tvSwitcher.setOutAnimation(context, android.R.anim.slide_out_right)
     }
+}
+
+fun View.hideWithFade(duration: Long, onEnd: VoidCallback? = null) {
+    this.fadeOut(duration) {
+        this.hide()
+        onEnd?.invoke()
+    }
+}
+
+fun View.showWithFade(duration: Long, onEnd: VoidCallback? = null) {
+    this.show()
+    this.fadeIn(duration, onEnd = onEnd)
 }

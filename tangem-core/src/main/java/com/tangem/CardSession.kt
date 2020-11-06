@@ -171,7 +171,7 @@ class CardSession(
 //        }
 
         state = CardSessionState.Active
-        viewDelegate.onSessionStarted(cardId, initialMessage)
+        viewDelegate.onSessionStarted(cardId, initialMessage, environmentService.howToIsEnabled())
 
         reader.scope = scope
         reader.startSession()
