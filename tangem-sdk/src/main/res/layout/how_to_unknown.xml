@@ -106,7 +106,7 @@
         android:layout_marginBottom="4dp"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        android:text="@string/how_to_show_again"
+        android:text="@string/how_to_show_again_button"
         app:layout_constraintBottom_toTopOf="@+id/btnCancel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
