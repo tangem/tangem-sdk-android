@@ -168,7 +168,7 @@ enum class NfcLocation(val codename: String, val fullName: String, val orientati
     model165("lmi", "Poco F2 pro", 0, 0.25f, 0.10f, 0),
     model166("surya", "Poco X3", 0, 0.50f, 0.20f, 0),
     model167("aura", "Razer Phone 2", 0, 0.50f, 0.50f, 0),
-//    model168("raphael", "Redmi K20 Pro", 0, 0.30f, 0.45f, 0),
+    model168("raphael", "Redmi K20 Pro", 0, 0.30f, 0.45f, 0),
     model169("lmipro", "Redmi K30 Pro", 0, 0.25f, 0.10f, 0),
     model170("begonia", "Redmi Note 8 Pro", 0, 0.50f, 0.20f, 0),
     model171("galahad", "Redmi Note 9", 0, 0.50f, 0.25f, 0),
