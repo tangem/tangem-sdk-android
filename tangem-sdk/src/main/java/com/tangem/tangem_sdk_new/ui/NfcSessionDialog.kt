@@ -24,7 +24,7 @@ import kotlinx.android.synthetic.main.bottom_sheet_layout.*
 class NfcSessionDialog(
     context: Context,
     private val nfcManager: NfcManager,
-    private val nfcLocationProvider: NfcLocationProvider
+    private val nfcLocationProvider: NfcLocationProvider,
 ) : BottomSheetDialog(context) {
     private val tag = this::class.java.simpleName
 
@@ -75,6 +75,10 @@ class NfcSessionDialog(
         headerWidget.onHowTo = { show(SessionViewDelegateState.HowToTap) }
 
         behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+    }
+
+    fun enableHowTo(enable: Boolean) {
+        headerWidget.howToIsEnabled = enable
     }
 
     fun show(state: SessionViewDelegateState) {
@@ -201,8 +205,8 @@ class NfcSessionDialog(
         howToContainer.show()
 
         howToTapWidget.previousState = currentState
-        howToTapWidget.onOk = {
-            howToTapWidget.onOk = null
+        howToTapWidget.onCloseListener = {
+            howToTapWidget.onCloseListener = null
             enableBottomSheetAnimation()
             howToContainer.hide()
             findDesignBottomSheetView()?.let { it.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT }
