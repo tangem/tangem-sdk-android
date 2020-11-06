@@ -15,7 +15,7 @@ class FlipAnimator(
     private val backView: View,
     val flipDuration: Long
 ) {
-    var onEnd: VoidCallback? = null
+    var onAnimationEnd: VoidCallback? = null
 
     var visibleSide = Side.FRONT
         private set
@@ -46,13 +46,13 @@ class FlipAnimator(
         animatorSet?.doOnStart { animationInProgress = true }
         animatorSet?.doOnEnd {
             animationInProgress = false
-            onEnd?.invoke()
+            onAnimationEnd?.invoke()
         }
         animatorSet?.start()
     }
 
     fun cancel() {
-        onEnd = null
+        onAnimationEnd = null
         animatorSet?.cancel()
         animatorSet = null
     }

@@ -35,7 +35,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:translationX="-395dp"
-        android:translationY="-25dp"
+        android:translationY="-45dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/imvPhone"
@@ -51,6 +51,16 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/phone_mid" />
 
+    <ImageView
+        android:id="@+id/imvSuccess"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/imvPhone"
+        app:layout_constraintEnd_toEndOf="@+id/imvPhone"
+        app:layout_constraintStart_toStartOf="@+id/imvPhone"
+        app:layout_constraintTop_toTopOf="@+id/imvPhone"
+        app:srcCompat="@drawable/ic_success_thin_anim" />
+
     <TextSwitcher
         android:id="@+id/tvHowToSwitcher"
         android:layout_width="0dp"
@@ -58,7 +68,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
         android:foregroundGravity="center"
-        app:layout_constraintBottom_toTopOf="@+id/btnCancel"
+        app:layout_constraintBottom_toTopOf="@+id/btnShowAgain"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/guideline">
@@ -72,7 +82,7 @@
             app:autoSizeMaxTextSize="15sp"
             app:autoSizeMinTextSize="12sp"
             app:autoSizeTextType="uniform"
-            tools:text="@string/lorem_ipsum_half" />
+            tools:text="lorem_ipsum_half" />
 
         <TextView
             android:layout_width="match_parent"
@@ -83,8 +93,23 @@
             app:autoSizeMaxTextSize="15sp"
             app:autoSizeMinTextSize="12sp"
             app:autoSizeTextType="uniform"
-            tools:text="@string/lorem_ipsum_half" />
+            tools:text="lorem_ipsum_half" />
     </TextSwitcher>
+
+    <Button
+        android:id="@+id/btnShowAgain"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="46dp"
+        android:layout_marginEnd="46dp"
+        android:layout_marginBottom="4dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:text="@string/how_to_show_again_button"
+        app:layout_constraintBottom_toTopOf="@+id/btnCancel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/btnCancel"
