@@ -87,6 +87,7 @@ class DefaultSessionViewDelegate(
             if (readingDialog == null) {
                 createReadingDialog(activity)
             }
+            readingDialog?.enableHowTo(false)
             readingDialog?.show(SessionViewDelegateState.PinChangeRequested(pinType, callback))
         }
     }
