@@ -13,7 +13,9 @@ import com.tangem.tangem_sdk_new.ui.NfcSessionDialog
  * Default implementation of [SessionViewDelegate].
  * If no customisation is required, this is the preferred way to use Tangem SDK.
  */
-class DefaultSessionViewDelegate(private val nfcManager: NfcManager) : SessionViewDelegate {
+class DefaultSessionViewDelegate(
+    private val nfcManager: NfcManager,
+) : SessionViewDelegate {
 
     lateinit var activity: Activity
     private var readingDialog: NfcSessionDialog? = null
@@ -22,9 +24,10 @@ class DefaultSessionViewDelegate(private val nfcManager: NfcManager) : SessionVi
         setLogger()
     }
 
-    override fun onSessionStarted(cardId: String?, message: Message?) {
+    override fun onSessionStarted(cardId: String?, message: Message?, enableHowTo: Boolean) {
         postUI {
             if (readingDialog == null) createReadingDialog(activity)
+            readingDialog?.enableHowTo(enableHowTo)
             readingDialog?.show(SessionViewDelegateState.Ready(cardId, message))
         }
     }
@@ -81,7 +84,10 @@ class DefaultSessionViewDelegate(private val nfcManager: NfcManager) : SessionVi
 
     override fun onPinChangeRequested(pinType: PinType, callback: (pin: String) -> Unit) {
         postUI {
-            if (readingDialog == null) { createReadingDialog(activity) }
+            if (readingDialog == null) {
+                createReadingDialog(activity)
+            }
+            readingDialog?.enableHowTo(false)
             readingDialog?.show(SessionViewDelegateState.PinChangeRequested(pinType, callback))
         }
     }
