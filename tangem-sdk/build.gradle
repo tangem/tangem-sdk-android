@@ -18,6 +18,7 @@ android {
         targetSdkVersion 29
         versionCode 1
         versionName "$artifactConfig.version"
+        vectorDrawables.useSupportLibrary = true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
