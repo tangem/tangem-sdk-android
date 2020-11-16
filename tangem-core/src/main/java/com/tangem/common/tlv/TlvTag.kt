@@ -89,6 +89,7 @@ enum class TlvTag(val code: Int) {
     TransactionOutHashSize(0x51),
     TransactionOutRaw(0x52),
 
+    WalletsCount(0x66),
     WalletPublicKey(0x60),
     Signature(0x61),
     RemainingSignatures(0x62),
@@ -138,7 +139,7 @@ enum class TlvTag(val code: Int) {
             CurveId -> TlvValueType.EllipticCurve
             PauseBeforePin2, RemainingSignatures, SignedHashes, Health, TokenDecimal,
             Offset, Size -> TlvValueType.Uint16
-            FileIndex -> TlvValueType.Uint8
+            FileIndex, WalletsCount -> TlvValueType.Uint8
             MaxSignatures, UserCounter, UserProtectedCounter, IssuerDataCounter -> TlvValueType.Uint32
             IsActivated, TerminalIsLinked, CreateWalletAtPersonalize -> TlvValueType.BoolValue
             ManufactureDateTime -> TlvValueType.DateTime
