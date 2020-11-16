@@ -81,6 +81,7 @@ class PersonalizeCommand(
             tlvBuilder.append(TlvTag.NdefData, serializeNdef(config))
 
         tlvBuilder.append(TlvTag.CreateWalletAtPersonalize, config.createWallet)
+        tlvBuilder.append(TlvTag.WalletsCount, config.walletsCount)
 
         tlvBuilder.append(TlvTag.NewPin, config.pin)
         tlvBuilder.append(TlvTag.NewPin2, config.pin2)
