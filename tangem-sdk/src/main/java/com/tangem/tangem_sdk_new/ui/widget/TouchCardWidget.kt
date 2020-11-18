@@ -7,7 +7,10 @@ import android.widget.ImageView
 import com.skyfishjy.library.RippleBackground
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
-import com.tangem.tangem_sdk_new.extensions.*
+import com.tangem.tangem_sdk_new.extensions.dpToPx
+import com.tangem.tangem_sdk_new.extensions.fadeOut
+import com.tangem.tangem_sdk_new.extensions.hide
+import com.tangem.tangem_sdk_new.extensions.isOnTheBack
 import com.tangem.tangem_sdk_new.ui.NfcLocation
 import com.tangem.tangem_sdk_new.ui.animation.AnimationProperty
 import com.tangem.tangem_sdk_new.ui.animation.TapAnimationCallback
@@ -36,9 +39,6 @@ class TouchCardWidget(
     )
 
     init {
-        ivHandCardHorizontal.setVectorDrawable(R.drawable.hand_full_card_horizontal)
-        ivHandCardVertical.setVectorDrawable(R.drawable.hand_full_card_vertical)
-        ivPhone.setVectorDrawable(R.drawable.phone)
         rippleBackgroundNfc.alpha = 0f
     }
 
