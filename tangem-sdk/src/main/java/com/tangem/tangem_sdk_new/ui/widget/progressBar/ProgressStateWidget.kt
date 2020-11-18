@@ -8,7 +8,6 @@ import androidx.core.content.ContextCompat
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.hide
-import com.tangem.tangem_sdk_new.extensions.setAnimVectorDrawable
 import com.tangem.tangem_sdk_new.extensions.show
 import com.tangem.tangem_sdk_new.ui.widget.BaseSessionDelegateStateWidget
 
@@ -50,8 +49,6 @@ abstract class BaseProgressState(mainView: View) : BaseSessionDelegateStateWidge
 
 
     init {
-        doneView.setAnimVectorDrawable(R.drawable.ic_success_anim)
-        exclamationView.setAnimVectorDrawable(R.drawable.ic_exclamation_anim)
         hideViews(tvProgressValue, progressBar, doneView, exclamationView)
     }
 
