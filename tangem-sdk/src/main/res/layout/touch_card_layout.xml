@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:clipToPadding="false">
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/ivHandCardHorizontal"
         android:layout_width="230dp"
         android:layout_height="188dp"
@@ -17,7 +17,7 @@
         app:layout_constraintTop_toTopOf="@+id/ivPhone"
         app:srcCompat="@drawable/hand_full_card_horizontal" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/ivHandCardVertical"
         android:layout_width="187dp"
         android:layout_height="204dp"
@@ -47,7 +47,7 @@
         app:rb_strokeWidth="8dp"
         app:rb_type="strokeRipple" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/ivPhone"
         android:layout_width="75dp"
         android:layout_height="@dimen/phone_height"
