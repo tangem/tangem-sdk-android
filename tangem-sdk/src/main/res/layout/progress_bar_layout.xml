@@ -24,7 +24,7 @@
             app:pb_secondary_thickness="6dp"
             app:pb_thickness="6dp" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/imvSuccess"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -35,7 +35,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_success_anim" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/imvExclamation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
