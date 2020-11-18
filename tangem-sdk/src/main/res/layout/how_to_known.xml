@@ -31,7 +31,7 @@
         app:rb_strokeWidth="20dp"
         app:rb_type="strokeRipple" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/imvNfcBadge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -42,7 +42,7 @@
         app:layout_constraintTop_toTopOf="@+id/imvPhone"
         app:srcCompat="@drawable/ic_nfc_badge" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/imvPhone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -54,7 +54,7 @@
         app:srcCompat="@drawable/phone_mid"
         tools:visibility="visible" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/imvPhoneBack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -65,7 +65,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/phone_mid_back" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/imvHandWithCardH"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -76,7 +76,7 @@
         app:layout_constraintTop_toTopOf="@+id/imvPhone"
         app:srcCompat="@drawable/hand_full_card_horizontal" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/imvHandWithCardV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -88,7 +88,7 @@
         app:layout_constraintTop_toTopOf="@+id/imvPhone"
         app:srcCompat="@drawable/hand_full_card_vertical" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/imvSuccess"
         android:layout_width="50dp"
         android:layout_height="wrap_content"
@@ -145,7 +145,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSwitchMode"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
@@ -157,7 +157,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnShowAgain"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
@@ -172,7 +172,7 @@
 
     </FrameLayout>
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnCancel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
