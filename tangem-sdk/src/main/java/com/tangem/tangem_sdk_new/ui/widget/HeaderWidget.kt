@@ -8,7 +8,6 @@ import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.hide
 import com.tangem.tangem_sdk_new.extensions.hideSoftKeyboard
-import com.tangem.tangem_sdk_new.extensions.setVectorDrawable
 import com.tangem.tangem_sdk_new.extensions.show
 import com.tangem.tangem_sdk_new.ui.animation.VoidCallback
 
@@ -38,7 +37,6 @@ class HeaderWidget(
         }
 
     init {
-        imvClose.setVectorDrawable(R.drawable.ic_close)
         imvClose.setOnClickListener {
             mainView.hideSoftKeyboard()
             mainView.requestFocus()
