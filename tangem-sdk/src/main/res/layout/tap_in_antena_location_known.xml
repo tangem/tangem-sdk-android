@@ -12,7 +12,7 @@
         app:layout_constraintBottom_toTopOf="@+id/llButtonsContainer"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/imvHandWithCardH"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -22,7 +22,7 @@
         app:layout_constraintTop_toTopOf="@+id/imvPhone"
         app:srcCompat="@drawable/hand_full_card_horizontal" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/imvPhone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -64,7 +64,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnTapIn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -72,7 +72,7 @@
             android:insetBottom="0dp"
             android:text="@string/tap_in_button" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnShowHowToTap"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
