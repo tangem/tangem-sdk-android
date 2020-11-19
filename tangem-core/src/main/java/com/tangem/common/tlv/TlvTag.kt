@@ -125,7 +125,10 @@ enum class TlvTag(val code: Int) {
 
     WriteFileMode(0x23),
     FileIndex(0x26),
-    FileSettings(0x27)
+    FileSettings(0x27),
+
+    FileName(0x70),
+    FileData(0x71)
     ;
 
     /**
@@ -134,8 +137,8 @@ enum class TlvTag(val code: Int) {
     fun valueType(): TlvValueType {
         return when (this) {
             CardId, Batch, CrExKey -> TlvValueType.HexString
-            ManufactureId, Firmware, IssuerId, BlockchainId, TokenSymbol, TokenContractAddress ->
-                TlvValueType.Utf8String
+            ManufactureId, Firmware, IssuerId, BlockchainId, TokenSymbol, TokenContractAddress,
+            FileName -> TlvValueType.Utf8String
             CurveId -> TlvValueType.EllipticCurve
             PauseBeforePin2, RemainingSignatures, SignedHashes, Health, TokenDecimal,
             Offset, Size -> TlvValueType.Uint16
