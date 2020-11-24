@@ -1,13 +1,14 @@
 package com.tangem.commands
 
-import com.tangem.CardSession
-import com.tangem.SessionEnvironment
-import com.tangem.TangemError
-import com.tangem.TangemSdkError
+import com.tangem.*
+import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.CardStatus
+import com.tangem.commands.common.card.masks.SigningMethod
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
+import com.tangem.common.extensions.getFirmwareVersion
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -31,9 +32,13 @@ class SignResponse(
  * Signs transaction hashes using a wallet private key, stored on the card.
  *
  * @property hashes Array of transaction hashes.
+ * @property walletPointer Pointer to wallet for interaction (works only on COS v.4.0 and higher. For previous version pointer will be ignored).
  * @property cardId CID, Unique Tangem card ID number
  */
-class SignCommand(private val hashes: Array<ByteArray>) : Command<SignResponse>() {
+class SignCommand(
+    private val hashes: Array<ByteArray>,
+    override var walletPointer: WalletPointer? = null
+) : Command<SignResponse>(), WalletPointable {
 
     override val requiresPin2 = true
 
@@ -76,7 +81,8 @@ class SignCommand(private val hashes: Array<ByteArray>) : Command<SignResponse>(
         if (card.isActivated) {
             return TangemSdkError.NotActivated()
         }
-        if (card.walletRemainingSignatures == 0) {
+        if (card.getFirmwareVersion() < FirmwareConstraints.DeprecationVersions.walletRemainingSignatures &&
+            card.walletRemainingSignatures == 0) {
             return TangemSdkError.NoRemainingSignatures()
         }
         if (card.signingMethods?.contains(SigningMethod.SignHash) != true) {
@@ -114,6 +120,8 @@ class SignCommand(private val hashes: Array<ByteArray>) : Command<SignResponse>(
         tlvBuilder.append(TlvTag.TransactionOutHashSize, byteArrayOf(hashSizes.toByte()))
         tlvBuilder.append(TlvTag.TransactionOutHash, dataToSign)
         tlvBuilder.append(TlvTag.Cvc, environment.cvc)
+        tlvBuilder.append(TlvTag.Cvc, environment.cvc)
+        walletPointer?.addTlvData(tlvBuilder)
 
         addTerminalSignature(environment, dataToSign, tlvBuilder)
         return CommandApdu(Instruction.Sign, tlvBuilder.serialize())
@@ -147,7 +155,7 @@ class SignCommand(private val hashes: Array<ByteArray>) : Command<SignResponse>(
         return SignResponse(
             cardId = decoder.decode(TlvTag.CardId),
             signature = decoder.decode(TlvTag.Signature),
-            walletRemainingSignatures = decoder.decode(TlvTag.RemainingSignatures),
+            walletRemainingSignatures = decoder.decodeOptional(TlvTag.RemainingSignatures) ?:99999, // In COS v.4.0 remaining signatures was removed
             walletSignedHashes = decoder.decodeOptional(TlvTag.SignedHashes)
         )
     }

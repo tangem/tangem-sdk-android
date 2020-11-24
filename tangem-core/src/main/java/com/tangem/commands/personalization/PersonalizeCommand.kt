@@ -4,11 +4,11 @@ import com.tangem.CardSession
 import com.tangem.EncryptionMode
 import com.tangem.SessionEnvironment
 import com.tangem.TangemSdkError
-import com.tangem.commands.Card
-import com.tangem.commands.CardData
-import com.tangem.commands.CardStatus
 import com.tangem.commands.Command
-import com.tangem.commands.common.CardDeserializer
+import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.CardData
+import com.tangem.commands.common.card.CardDeserializer
+import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.personalization.entities.*
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
@@ -63,7 +63,7 @@ class PersonalizeCommand(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): Card {
-       return CardDeserializer.deserialize(apdu)
+        return CardDeserializer.deserialize(apdu)
     }
 
     private fun serializePersonalizationData(config: CardConfig): ByteArray {
@@ -114,8 +114,8 @@ class PersonalizeCommand(
             tlvBuilder.append(TlvTag.TokenDecimal, cardData.tokenDecimal)
         }
         tlvBuilder.append(
-                TlvTag.CardIdManufacturerSignature,
-                cardId.hexToBytes().sign(manufacturer.keyPair.privateKey)
+            TlvTag.CardIdManufacturerSignature,
+            cardId.hexToBytes().sign(manufacturer.keyPair.privateKey)
         )
         return tlvBuilder.serialize()
     }
