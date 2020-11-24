@@ -1,6 +1,7 @@
 package com.tangem.commands
 
 import com.tangem.*
+import com.tangem.commands.common.card.Card
 import com.tangem.common.CompletionResult
 import com.tangem.common.PinCode
 import com.tangem.common.apdu.*

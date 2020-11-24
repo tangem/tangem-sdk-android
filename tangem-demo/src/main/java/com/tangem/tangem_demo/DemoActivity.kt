@@ -10,11 +10,11 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.gson.Gson
 import com.tangem.Config
 import com.tangem.TangemSdk
-import com.tangem.commands.Card
 import com.tangem.commands.PinType
 import com.tangem.commands.SetPinCommand
 import com.tangem.commands.WriteIssuerExtraDataCommand
 import com.tangem.commands.common.ResponseConverter
+import com.tangem.commands.common.card.Card
 import com.tangem.commands.file.FileData
 import com.tangem.commands.file.FileDataSignature
 import com.tangem.commands.file.FileSettings
