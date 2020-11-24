@@ -2,8 +2,12 @@ package com.tangem.common.tlv
 
 import com.tangem.Log
 import com.tangem.TangemSdkError
-import com.tangem.commands.*
 import com.tangem.commands.common.IssuerDataMode
+import com.tangem.commands.common.card.CardStatus
+import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.commands.common.card.masks.ProductMask
+import com.tangem.commands.common.card.masks.SettingsMask
+import com.tangem.commands.common.card.masks.SigningMethodMask
 import com.tangem.commands.file.FileDataMode
 import com.tangem.commands.file.FileSettings
 import com.tangem.common.extensions.toDate
@@ -22,7 +26,7 @@ class TlvDecoder(val tlvList: List<Tlv>) {
 
     init {
         Log.v("TLV",
-                "Decoding data from TLV:\n${tlvList.joinToString("\n")}")
+            "Decoding data from TLV:\n${tlvList.joinToString("\n")}")
     }
 
     /**
@@ -34,11 +38,11 @@ class TlvDecoder(val tlvList: List<Tlv>) {
      * @return Value converted to a nullable type [T].
      */
     inline fun <reified T> decodeOptional(tag: TlvTag): T? =
-            try {
-                decode<T>(tag, false)
-            } catch (exception: TangemSdkError.DecodingFailedMissingTag) {
-                null
-            }
+        try {
+            decode<T>(tag, false)
+        } catch (exception: TangemSdkError.DecodingFailedMissingTag) {
+            null
+        }
 
     /**
      * Finds [Tlv] by its [TlvTag].
@@ -53,16 +57,16 @@ class TlvDecoder(val tlvList: List<Tlv>) {
      */
     inline fun <reified T> decode(tag: TlvTag, logError: Boolean = true): T {
         val tlvValue: ByteArray = tlvList.find { it.tag == tag }?.value
-                ?: if (tag.valueType() == TlvValueType.BoolValue && T::class == Boolean::class) {
-                    return false as T
+            ?: if (tag.valueType() == TlvValueType.BoolValue && T::class == Boolean::class) {
+                return false as T
+            } else {
+                if (logError) {
+                    Log.e(this::class.simpleName!!, "TLV $tag not found")
                 } else {
-                    if (logError) {
-                        Log.e(this::class.simpleName!!, "TLV $tag not found")
-                    } else {
-                        Log.v(this::class.simpleName!!, "TLV $tag not found, but it is not required")
-                    }
-                    throw TangemSdkError.DecodingFailedMissingTag()
+                    Log.v(this::class.simpleName!!, "TLV $tag not found, but it is not required")
                 }
+                throw TangemSdkError.DecodingFailedMissingTag()
+            }
 
         return when (tag.valueType()) {
             TlvValueType.HexString, TlvValueType.HexStringToHash -> {
@@ -168,13 +172,13 @@ class TlvDecoder(val tlvList: List<Tlv>) {
 
     fun logException(tag: TlvTag, value: String, exception: Exception) {
         Log.e(this::class.simpleName!!,
-                "Unknown ${tag.name} with value of: value, \n${exception.message}")
+            "Unknown ${tag.name} with value of: value, \n${exception.message}")
     }
 
     inline fun <reified T, reified ExpectedT> typeCheck(tag: TlvTag) {
         if (T::class != ExpectedT::class) {
             Log.e(this::class.simpleName!!,
-                    "Mapping error. Type for tag: $tag must be ${tag.valueType()}. It is ${T::class}")
+                "Mapping error. Type for tag: $tag must be ${tag.valueType()}. It is ${T::class}")
             throw TangemSdkError.DecodingFailedTypeMismatch()
         }
     }
