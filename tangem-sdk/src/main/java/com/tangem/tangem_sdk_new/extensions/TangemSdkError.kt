@@ -55,5 +55,8 @@ fun TangemSdkError.localizedDescription(): Int {
         is TangemSdkError.CardError -> R.string.error_card_error
         is TangemSdkError.InvalidResponse -> R.string.error_invalid_response
         is TangemSdkError.FirmwareNotSupported -> R.string.error_old_firmware
+        is TangemSdkError.MaxNumberOfWalletsCreated -> R.string.error_no_space_for_new_wallet
+        is TangemSdkError.WalletIndexExceedsMaxValue -> R.string.error_wallet_index_exceeds_max_value
+        is TangemSdkError.WalletNotFound -> R.string.error_wallet_not_found
     }
 }

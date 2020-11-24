@@ -1,6 +1,7 @@
 package com.tangem
 
-import com.tangem.common.extensions.CardType
+import com.tangem.commands.common.card.CardType
+import com.tangem.commands.common.card.FirmwareType
 import java.util.*
 
 /**
@@ -10,5 +11,5 @@ import java.util.*
  */
 data class CardFilter(
 
-        var allowedCardTypes: EnumSet<CardType> = EnumSet.allOf(CardType::class.java)
+    var allowedCardTypes: EnumSet<FirmwareType> = EnumSet.allOf(CardType::class.java)
 )
