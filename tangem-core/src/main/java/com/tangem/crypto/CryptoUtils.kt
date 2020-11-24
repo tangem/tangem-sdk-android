@@ -1,6 +1,6 @@
 package com.tangem.crypto
 
-import com.tangem.commands.EllipticCurve
+import com.tangem.commands.common.card.EllipticCurve
 import net.i2p.crypto.eddsa.EdDSASecurityProvider
 import org.spongycastle.jce.provider.BouncyCastleProvider
 import java.security.PublicKey
