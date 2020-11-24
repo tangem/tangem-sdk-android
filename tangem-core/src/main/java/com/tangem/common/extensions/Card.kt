@@ -12,8 +12,4 @@ fun Card.getType(): CardType {
 fun Card.getFirmwareVersion(): FirmwareVersion {
     val version = this.firmwareVersion ?: return FirmwareVersion.zero
     return FirmwareVersion(version)
-//    return this.firmwareVersion?.let {firmwareVersion ->
-//        val matchResult = """(\d+.\d+)([\w\s]+)""".toRegex().find(firmwareVersion)
-//        matchResult?.destructured?.component1()?.toDoubleOrNull()
-//    }
 }
