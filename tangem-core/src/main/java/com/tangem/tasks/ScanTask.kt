@@ -11,7 +11,6 @@ import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.common.card.FirmwareVersion
 import com.tangem.commands.common.card.masks.Product
 import com.tangem.common.CompletionResult
-import com.tangem.common.extensions.getFirmwareVersion
 
 /**
  * Task that allows to read Tangem card and verify its private key.
@@ -19,8 +18,8 @@ import com.tangem.common.extensions.getFirmwareVersion
  * It performs two commands, [ReadCommand] and [CheckWalletCommand], subsequently.
  */
 class ScanTask(
-    override var walletPointer: WalletPointer?
-) : CardSessionRunnable<Card>, WalletPointable {
+    override var walletIndex: WalletIndex?
+) : CardSessionRunnable<Card>, WalletSelectable {
 
     override val requiresPin2 = false
 
@@ -50,7 +49,7 @@ class ScanTask(
 //            }
 //        } else {
 
-        val firmwareNumber = card.getFirmwareVersion()
+        val firmwareNumber = card.firmwareVersion
         if (firmwareNumber != FirmwareVersion.zero && firmwareNumber > FirmwareVersion(1, 19)) { // >1.19 cards without SD on CheckPin
             CheckPinCommand().run(session) { result ->
                 when (result) {
@@ -82,7 +81,7 @@ class ScanTask(
             callback(CompletionResult.Failure(TangemSdkError.CardError()))
 
         } else {
-            val checkWalletCommand = CheckWalletCommand(card.curve, card.walletPublicKey, walletPointer)
+            val checkWalletCommand = CheckWalletCommand(card.curve, card.walletPublicKey, walletIndex)
             checkWalletCommand.run(session) { result ->
                 when (result) {
                     is CompletionResult.Success -> callback(CompletionResult.Success(card))

@@ -8,7 +8,6 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
-import com.tangem.common.extensions.getFirmwareVersion
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -31,14 +30,15 @@ class SignResponse(
 /**
  * Signs transaction hashes using a wallet private key, stored on the card.
  *
+ * Note: Wallet index works only on COS v.4.0 and higher. For previous version index will be ignored
  * @property hashes Array of transaction hashes.
- * @property walletPointer Pointer to wallet for interaction (works only on COS v.4.0 and higher. For previous version pointer will be ignored).
+ * @property walletIndex Index to wallet for interaction.
  * @property cardId CID, Unique Tangem card ID number
  */
 class SignCommand(
     private val hashes: Array<ByteArray>,
-    override var walletPointer: WalletPointer? = null
-) : Command<SignResponse>(), WalletPointable {
+    override var walletIndex: WalletIndex? = null
+) : Command<SignResponse>(), WalletSelectable {
 
     override val requiresPin2 = true
 
@@ -81,7 +81,7 @@ class SignCommand(
         if (card.isActivated) {
             return TangemSdkError.NotActivated()
         }
-        if (card.getFirmwareVersion() < FirmwareConstraints.DeprecationVersions.walletRemainingSignatures &&
+        if (card.firmwareVersion < FirmwareConstraints.DeprecationVersions.walletRemainingSignatures &&
             card.walletRemainingSignatures == 0) {
             return TangemSdkError.NoRemainingSignatures()
         }
@@ -121,7 +121,7 @@ class SignCommand(
         tlvBuilder.append(TlvTag.TransactionOutHash, dataToSign)
         tlvBuilder.append(TlvTag.Cvc, environment.cvc)
         tlvBuilder.append(TlvTag.Cvc, environment.cvc)
-        walletPointer?.addTlvData(tlvBuilder)
+        walletIndex?.addTlvData(tlvBuilder)
 
         addTerminalSignature(environment, dataToSign, tlvBuilder)
         return CommandApdu(Instruction.Sign, tlvBuilder.serialize())
