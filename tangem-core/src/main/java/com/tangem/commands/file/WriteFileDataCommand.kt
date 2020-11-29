@@ -17,7 +17,6 @@ import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.extensions.calculateSha256
-import com.tangem.common.extensions.getFirmwareVersion
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -83,9 +82,8 @@ class WriteFileDataCommand(
     }
 
     override fun performPreCheck(card: Card): TangemSdkError? {
-        val firmwareVersion = card.getFirmwareVersion()
-        if (firmwareVersion < FirmwareConstraints.AvailabilityVersions.files ||
-            firmwareVersion < fileData.minFirmwareVersion)
+        if (card.firmwareVersion < FirmwareConstraints.AvailabilityVersions.files ||
+            card.firmwareVersion < fileData.minFirmwareVersion)
             return TangemSdkError.FirmwareNotSupported()
 
         if (fileData is FileData.DataProtectedBySignature) {

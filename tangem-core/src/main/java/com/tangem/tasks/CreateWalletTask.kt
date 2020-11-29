@@ -7,7 +7,6 @@ import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.commands.common.card.FirmwareVersion
 import com.tangem.common.CompletionResult
-import com.tangem.common.extensions.getFirmwareVersion
 import com.tangem.common.extensions.guard
 
 /**
@@ -18,20 +17,21 @@ import com.tangem.common.extensions.guard
  * If index not provided task
  * attempt to create wallet at any empty index, until success or reach max index
  *
- * Note: `WalletConfig` and `WalletIndexPointer` available for cards with COS v.4.0 and higher.
- * @property walletConfig: if not set task will create wallet with settings that was specified in card data
+ * Note: `WalletConfig` and `WalletIndexValue` available for cards with COS v.4.0 and higher.
+ * @property config: if not set task will create wallet with settings that was specified in card data
  * while personalization
- * @property walletIndexPointer: If not provided task will attempt to create wallet on default index.
+ * @property walletIndexValue: If not provided task will attempt to create wallet on default index.
  * If failed - task will keep trying to create.
  */
 class CreateWalletTask(
-    private val walletConfig: WalletConfig?,
-    private var walletIndexPointer: WalletIndexPointer?
-) : CardSessionRunnable<CreateWalletResponse>, WalletPointable {
+    private val config: WalletConfig?,
+    private var walletIndexValue: Int?
+) : CardSessionRunnable<CreateWalletResponse>, WalletSelectable {
 
     override val requiresPin2 = false
 
-    override var walletPointer: WalletPointer? = walletIndexPointer
+    override var walletIndex: WalletIndex? = null
+        get() = if (walletIndexValue == null) null else WalletIndex.Index(walletIndexValue!!)
 
     private var firstAttemptWalletIndex: Int? = null
     private var shouldCreateAtAnyIndex: Boolean = false
@@ -46,23 +46,27 @@ class CreateWalletTask(
             return
         }
 
-        val firmwareVersion = session.environment.card?.getFirmwareVersion() ?: FirmwareVersion.zero
+        val firmwareVersion = session.environment.card?.firmwareVersion ?: FirmwareVersion.zero
         if (firmwareVersion >= FirmwareConstraints.AvailabilityVersions.walletData) {
-            walletConfig?.curveId?.let { curve = it }
-            shouldCreateAtAnyIndex = walletIndexPointer == null
+            config?.curveId?.let { curve = it }
+            if (walletIndexValue == null) {
+                shouldCreateAtAnyIndex = true
+                // If wallet index wasn't specified, attempt to create wallet at first position
+                walletIndexValue = 0
+            }
         }
 
-        createWallet(session, card, walletIndexPointer ?: WalletIndexPointer(0), curve, callback)
+        createWallet(session, card, walletIndexValue, curve, callback)
     }
 
     private fun createWallet(
         session: CardSession,
         card: Card,
-        index: WalletIndexPointer,
+        index: Int?,
         curve: EllipticCurve,
         callback: (result: CompletionResult<CreateWalletResponse>) -> Unit
     ) {
-        val command = CreateWalletCommand(walletConfig, walletIndexPointer)
+        val command = CreateWalletCommand(config, index)
         command.run(session) { createWalletResult ->
             when (createWalletResult) {
                 is CompletionResult.Success -> {
@@ -70,7 +74,7 @@ class CreateWalletTask(
                         callback(CompletionResult.Failure(TangemSdkError.UnknownError()))
                     } else {
                         val checkWalletCommand = CheckWalletCommand(
-                            curve, createWalletResult.data.walletPublicKey, walletPointer
+                            curve, createWalletResult.data.walletPublicKey, walletIndex
                         )
                         checkWalletCommand.run(session) { result ->
                             when (result) {
@@ -85,11 +89,11 @@ class CreateWalletTask(
                     if (shouldCreateAtAnyIndex) {
                         when (error) {
                             is TangemSdkError.AlreadyCreated, is TangemSdkError.CardIsPurged, is TangemSdkError.InvalidState -> {
-                                val nextIndex = updateWalletPointerToNext(index, card.walletsCount).guard {
+                                val nextIndex = updateWalletIndexToNext(index, card.walletsCount).guard {
                                     callback(CompletionResult.Failure(TangemSdkError.MaxNumberOfWalletsCreated()))
                                     return@run
                                 }
-                                walletIndexPointer = nextIndex
+                                walletIndexValue = nextIndex
                                 createWallet(session, card, nextIndex, curve, callback)
                                 return@run
                             }
@@ -104,8 +108,8 @@ class CreateWalletTask(
         }
     }
 
-    private fun updateWalletPointerToNext(currentPointer: WalletIndexPointer?, walletsCount: Int?): WalletIndexPointer? {
-        val currentIndex = currentPointer?.index ?: return null
+    private fun updateWalletIndexToNext(index: Int?, walletsCount: Int?): Int? {
+        val currentIndex = index ?: return null
         val walletsCount = walletsCount ?: return null
 
         var isFirstAttempt = false
@@ -123,6 +127,6 @@ class CreateWalletTask(
             newIndex += if (firstAttemptWalletIndex == newIndex) 1 else 0
         }
 
-        return if (newIndex >= walletsCount) null else WalletIndexPointer(newIndex)
+        return if (newIndex >= walletsCount) null else newIndex
     }
 }
