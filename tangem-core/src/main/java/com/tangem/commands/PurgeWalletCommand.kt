@@ -32,8 +32,8 @@ class PurgeWalletResponse(
  * @property cardId CID, Unique Tangem card ID number.
  */
 class PurgeWalletCommand(
-    override var walletPointer: WalletPointer?
-) : Command<PurgeWalletResponse>(), WalletPointable {
+    override var walletIndex: WalletIndex?
+) : Command<PurgeWalletResponse>(), WalletSelectable {
 
     override val requiresPin2 = true
 
@@ -70,7 +70,7 @@ class PurgeWalletCommand(
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Pin2, environment.pin2?.value)
-        walletPointer?.addTlvData(tlvBuilder)
+        walletIndex?.addTlvData(tlvBuilder)
         return CommandApdu(Instruction.PurgeWallet, tlvBuilder.serialize())
     }
 

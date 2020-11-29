@@ -58,16 +58,16 @@ class TangemSdk(
      * it obtains the card data. Optionally, if the card contains a wallet (private and public key pair),
      * it proves that the wallet owns a private key that corresponds to a public one.
      *
-     * Note: `WalletPointer` available for cards with COS v.4.0 or higher.
-     * @param walletPointer: Pointer to wallet which data should be read.
-     * if not specified - wallet at default index will be read. See `WalletPointer` for more info.
+     * Note: `WalletIndex` available for cards with COS v.4.0 or higher.
+     * @param walletIndex: Pointer to wallet which data should be read.
+     * if not specified - wallet at default index will be read. See `WalletIndex` for more info.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
      * * @param callback is triggered on the completion of the [ScanTask] and provides card response
      * in the form of [Card] if the task was performed successfully or [TangemSdkError] in case of an error.
      */
-    fun scanCard(walletPointer: WalletPointer? = null, initialMessage: Message? = null, callback: (result: CompletionResult<Card>) -> Unit) {
-        startSessionWithRunnable(ScanTask(walletPointer), null, initialMessage, callback)
+    fun scanCard(walletIndex: WalletIndex? = null, initialMessage: Message? = null, callback: (result: CompletionResult<Card>) -> Unit) {
+        startSessionWithRunnable(ScanTask(walletIndex), null, initialMessage, callback)
     }
 
     /**
@@ -82,10 +82,10 @@ class TangemSdk(
      * that may last up to 45 seconds, depending on a card.
      * It is for [SessionViewDelegate] to notify users of security delay.
      *
-     * Note: `WalletPointer` available for cards with COS v.4.0 or higher.
+     * Note: `WalletIndex` available for cards with COS v.4.0 or higher.
      * @param hashes Array of transaction hashes. It can be from one or up to ten hashes of the same length.
-     * @param walletPointer: Pointer to wallet that should sign hashes.
-     * If not specified - wallet at default index will sign hashes. See `WalletPointer` for more info.
+     * @param walletIndex: Pointer to wallet that should sign hashes.
+     * If not specified - wallet at default index will sign hashes. See `WalletIndex` for more info.
      * @param cardId CID, Unique Tangem card ID number
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
@@ -93,9 +93,9 @@ class TangemSdk(
      * in the form of [SignResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
-    fun sign(hashes: Array<ByteArray>, walletPointer: WalletPointer? = null, cardId: String? = null,
+    fun sign(hashes: Array<ByteArray>, walletIndex: WalletIndex? = null, cardId: String? = null,
              initialMessage: Message? = null, callback: (result: CompletionResult<SignResponse>) -> Unit) {
-        startSessionWithRunnable(SignCommand(hashes, walletPointer), cardId, initialMessage, callback)
+        startSessionWithRunnable(SignCommand(hashes, walletIndex), cardId, initialMessage, callback)
     }
 
     /**
@@ -441,11 +441,12 @@ class TangemSdk(
      * WalletPrivateKey is never revealed by the card and will be used by [SignCommand] and [CheckWalletCommand].
      * RemainingSignature is set to MaxSignatures.
      *
-     * Note: 'WalletConfig' and 'WalletIndexPointer' available for cards with COS v.4.0 and higher. For earlier
+     * Note: 'WalletConfig' and 'WalletIndex' available for cards with COS v.4.0 and higher. For earlier
      * versions it will be ignored.
 
+     * This parameter available for cards with COS v.4.0 and higher. For earlier versions it will be ignored
 
-
+     * This parameter available for cards with COS v.4.0 and higher. For earlier versions it will be ignored
      * @param cardId CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
@@ -453,10 +454,10 @@ class TangemSdk(
      * card response in the form of [CreateWalletResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
-    fun createWallet(walletConfig: WalletConfig? = null, walletIndexPointer: WalletIndexPointer? = null,
+    fun createWallet(config: WalletConfig? = null, walletIndex: Int? = null,
                      cardId: String? = null, initialMessage: Message? = null,
                      callback: (result: CompletionResult<CreateWalletResponse>) -> Unit) {
-        startSessionWithRunnable(CreateWalletTask(walletConfig, walletIndexPointer), cardId, initialMessage, callback)
+        startSessionWithRunnable(CreateWalletTask(config, walletIndex), cardId, initialMessage, callback)
     }
 
     /**
@@ -468,9 +469,9 @@ class TangemSdk(
      * If IsReusable flag is disabled, the card switches to ‘Purged’ state.
      * ‘Purged’ state is final, it makes the card useless.
      *
-     * Note: 'WalletPointer' available for cards with COS v.4.0 or higher
-     * @param walletPointer: Pointer to wallet that should be purged.
-     * If not specified - wallet at default index will be purged. See `WalletPointer` for more info
+     * Note: 'WalletIndex' available for cards with COS v.4.0 or higher
+     * @param walletIndex: Pointer to wallet that should be purged.
+     * If not specified - wallet at default index will be purged. See `WalletIndex` for more info
      * @param cardId CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
@@ -478,9 +479,9 @@ class TangemSdk(
      * card response in the form of [PurgeWalletResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
-    fun purgeWallet(walletPointer: WalletPointer?, cardId: String? = null, initialMessage: Message? = null,
+    fun purgeWallet(walletIndex: WalletIndex?, cardId: String? = null, initialMessage: Message? = null,
                     callback: (result: CompletionResult<PurgeWalletResponse>) -> Unit) {
-        startSessionWithRunnable(PurgeWalletCommand(walletPointer), cardId, initialMessage, callback)
+        startSessionWithRunnable(PurgeWalletCommand(walletIndex), cardId, initialMessage, callback)
     }
 
     /**
