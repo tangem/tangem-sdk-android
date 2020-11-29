@@ -91,6 +91,7 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
     class WalletIndexExceedsMaxValue : TangemSdkError(47901)
     class MaxNumberOfWalletsCreated : TangemSdkError(47902)
     class WalletNotFound : TangemSdkError(47903)
+    class CardReadWrongWallet : TangemSdkError(47904)
 
     //PurgeWallet Errors
     class PurgeWalletProhibited : TangemSdkError(40601)
