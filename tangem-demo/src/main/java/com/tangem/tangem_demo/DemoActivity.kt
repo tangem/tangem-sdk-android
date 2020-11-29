@@ -3,18 +3,20 @@ package com.tangem.tangem_demo
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.slider.Slider
 import com.google.gson.Gson
 import com.tangem.Config
 import com.tangem.TangemSdk
-import com.tangem.commands.PinType
-import com.tangem.commands.SetPinCommand
-import com.tangem.commands.WriteIssuerExtraDataCommand
+import com.tangem.commands.*
 import com.tangem.commands.common.ResponseConverter
 import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.commands.common.card.masks.SigningMethod
 import com.tangem.commands.file.FileData
 import com.tangem.commands.file.FileDataSignature
 import com.tangem.commands.file.FileSettings
@@ -44,6 +46,9 @@ class DemoActivity : AppCompatActivity() {
     private lateinit var sdk: TangemSdk
     private var card: Card? = null
 
+    private var walletIndexValue = 0
+    private var walletIndex: WalletIndex = WalletIndex.Index(walletIndexValue)
+
     private var bshDlg: BottomSheetDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,13 +74,21 @@ class DemoActivity : AppCompatActivity() {
         btnSign.setOnClickListener {
             val listOfData = MutableList(10) { Utils.randomString(20) }
             val listOfHashes = listOfData.map { it.toByteArray() }
-            sdk.sign(listOfHashes.toTypedArray(), card?.cardId) { handleResult(it) }
+            sdk.sign(listOfHashes.toTypedArray(), walletIndex, card?.cardId) { handleResult(it) }
         }
     }
 
     private fun wallet() {
-        btnCreateWallet.setOnClickListener { sdk.createWallet(card?.cardId) { handleResult(it) } }
-        btnPurgeWallet.setOnClickListener { sdk.purgeWallet(card?.cardId) { handleResult(it) } }
+        val walletData = WalletData("BCH")
+        val walletConfig = WalletConfig(
+            true,
+            false,
+            EllipticCurve.Secp256k1,
+            SigningMethod.SignHash,
+            walletData
+        )
+        btnCreateWallet.setOnClickListener { sdk.createWallet(walletConfig, walletIndexValue, card?.cardId) { handleResult(it) } }
+        btnPurgeWallet.setOnClickListener { sdk.purgeWallet(walletIndex, card?.cardId) { handleResult(it) } }
     }
 
     private fun issuerData() {
@@ -110,13 +123,13 @@ class DemoActivity : AppCompatActivity() {
             val counter = 1
             val issuerData = CryptoUtils.generateRandomBytes(WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE * 5)
             val signatures = FileHashHelper.prepareHashes(
-                    cardId, issuerData, counter, Utils.issuer().dataKeyPair.privateKey
+                cardId, issuerData, counter, Utils.issuer().dataKeyPair.privateKey
             )
 
             sdk.writeIssuerExtraData(
-                    cardId, issuerData,
-                    signatures.startingSignature!!, signatures.finalizingSignature!!,
-                    counter
+                cardId, issuerData,
+                signatures.startingSignature!!, signatures.finalizingSignature!!,
+                counter
             ) { handleResult(it) }
         }
 
@@ -141,11 +154,11 @@ class DemoActivity : AppCompatActivity() {
     private fun setPin() {
         btnSetPin1.setOnClickListener {
             sdk.startSessionWithRunnable(
-                    SetPinCommand(PinType.Pin1, null, sdk.config.defaultPin2.calculateSha256()), card?.cardId) { handleResult(it) }
+                SetPinCommand(PinType.Pin1, null, sdk.config.defaultPin2.calculateSha256()), card?.cardId) { handleResult(it) }
         }
         btnSetPin2.setOnClickListener {
             sdk.startSessionWithRunnable(
-                    SetPinCommand(PinType.Pin2, sdk.config.defaultPin1.calculateSha256(), null), card?.cardId) { handleResult(it) }
+                SetPinCommand(PinType.Pin2, sdk.config.defaultPin1.calculateSha256(), null), card?.cardId) { handleResult(it) }
         }
     }
 
@@ -190,7 +203,30 @@ class DemoActivity : AppCompatActivity() {
         when (completionResult) {
             is CompletionResult.Success -> {
                 if (completionResult.data is Card) {
-                    card = completionResult.data as Card
+                    card = completionResult.data as? Card
+
+                    val touchListener = object : Slider.OnSliderTouchListener {
+                        override fun onStartTrackingTouch(slider: Slider) {
+                            walletIndexValue = slider.value.toInt()
+                        }
+
+                        override fun onStopTrackingTouch(slider: Slider) {
+                            walletIndexValue = slider.value.toInt()
+                        }
+                    }
+                    sliderWallet.post {
+                        if (card?.walletsCount == null) {
+                            sliderWallet.visibility = View.GONE
+                            sliderWallet.removeOnSliderTouchListener(touchListener)
+                        } else {
+                            sliderWallet.stepSize = 1f
+                            sliderWallet.valueFrom = card?.walletsCount?.toFloat() ?: 0f
+                            sliderWallet.valueTo = 20f
+                            sliderWallet.value = sliderWallet.valueFrom
+                            sliderWallet.visibility = View.VISIBLE
+                            sliderWallet.addOnSliderTouchListener(touchListener)
+                        }
+                    }
                 }
 
                 val json = gson.toJson(completionResult.data)
@@ -221,12 +257,12 @@ class DemoActivity : AppCompatActivity() {
         val counter = 1
         val issuerData = CryptoUtils.generateRandomBytes(WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE * 5)
         val signatures = FileHashHelper.prepareHashes(
-                cardId, issuerData, counter, Utils.issuer().dataKeyPair.privateKey
+            cardId, issuerData, counter, Utils.issuer().dataKeyPair.privateKey
         )
         return FileData.DataProtectedBySignature(
-                issuerData, counter,
-                FileDataSignature(signatures.startingSignature!!, signatures.finalizingSignature!!),
-                Utils.issuer().dataKeyPair.publicKey
+            issuerData, counter,
+            FileDataSignature(signatures.startingSignature!!, signatures.finalizingSignature!!),
+            Utils.issuer().dataKeyPair.publicKey
         )
     }
 }
