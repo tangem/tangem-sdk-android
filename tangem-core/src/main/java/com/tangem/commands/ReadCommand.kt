@@ -1,5 +1,6 @@
 package com.tangem.commands
 
+import com.tangem.FirmwareConstraints
 import com.tangem.SessionEnvironment
 import com.tangem.TangemError
 import com.tangem.TangemSdkError
@@ -16,7 +17,7 @@ import com.tangem.common.tlv.TlvTag
  * including unique card number (CID or cardId) that has to be submitted while calling all other commands.
  */
 class ReadCommand(
-    private var walletPointer: WalletPointer?
+    private var walletIndex: WalletIndex?
 ) : Command<Card>() {
 
     override val performPreflightRead = false
@@ -38,11 +39,26 @@ class ReadCommand(
          */
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
         tlvBuilder.append(TlvTag.TerminalPublicKey, environment.terminalKeys?.publicKey)
-        walletPointer?.addTlvData(tlvBuilder)
+        walletIndex?.addTlvData(tlvBuilder)
         return CommandApdu(Instruction.Read, tlvBuilder.serialize())
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): Card {
-        return CardDeserializer.deserialize(apdu)
+        val response = CardDeserializer.deserialize(apdu)
+        if (response.firmwareVersion >= FirmwareConstraints.AvailabilityVersions.walletData) {
+            when (walletIndex) {
+                is WalletIndex.Index -> {
+                    if ((walletIndex as WalletIndex.Index).index != response.walletIndex) {
+                        throw TangemSdkError.CardReadWrongWallet()
+                    }
+                }
+                is WalletIndex.PublicKey -> {
+                    if((walletIndex as WalletIndex.PublicKey).data != response.cardPublicKey) {
+                        throw TangemSdkError.CardReadWrongWallet()
+                    }
+                }
+            }
+        }
+        return response
     }
 }

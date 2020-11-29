@@ -11,7 +11,6 @@ import com.tangem.commands.common.card.CardStatus
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
-import com.tangem.common.extensions.getFirmwareVersion
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -36,7 +35,7 @@ class DeleteFileCommand(private val fileIndex: Int) : Command<DeleteFileResponse
         if (card.isActivated) {
             return TangemSdkError.NotActivated()
         }
-        if (card.getFirmwareVersion() < FirmwareConstraints.AvailabilityVersions.files) {
+        if (card.firmwareVersion < FirmwareConstraints.AvailabilityVersions.files) {
             return TangemSdkError.FirmwareNotSupported()
         }
         return null
