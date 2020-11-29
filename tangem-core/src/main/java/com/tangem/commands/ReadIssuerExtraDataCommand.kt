@@ -14,7 +14,6 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
-import com.tangem.common.extensions.getFirmwareVersion
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -73,7 +72,7 @@ class ReadIssuerExtraDataCommand(
     private var issuerDataSize: Int = 0
 
     override fun performPreCheck(card: Card): TangemSdkError? {
-        if (card.getFirmwareVersion() >= FirmwareConstraints.AvailabilityVersions.files) {
+        if (card.firmwareVersion >= FirmwareConstraints.AvailabilityVersions.files) {
             return TangemSdkError.FirmwareNotSupported()
         }
         if (card.status == CardStatus.NotPersonalized) {
