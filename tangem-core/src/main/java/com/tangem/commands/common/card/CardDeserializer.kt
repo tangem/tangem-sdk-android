@@ -12,13 +12,14 @@ class CardDeserializer() {
             val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
 
             val decoder = TlvDecoder(tlvData)
-
+            val version: String? = decoder.decodeOptional(TlvTag.Firmware)
+            val firmwareVersion = if (version == null) FirmwareVersion.zero else FirmwareVersion(version)
             return Card(
                     cardId = decoder.decodeOptional(TlvTag.CardId) ?: "",
                     manufacturerName = decoder.decodeOptional(TlvTag.ManufactureId) ?: "",
                     status = decoder.decodeOptional(TlvTag.Status),
 
-                    firmwareVersion = decoder.decodeOptional(TlvTag.Firmware),
+                    firmwareVersion = firmwareVersion,
                     cardPublicKey = decoder.decodeOptional(TlvTag.CardPublicKey),
                     settingsMask = decoder.decodeOptional(TlvTag.SettingsMask),
                     issuerPublicKey = decoder.decodeOptional(TlvTag.IssuerDataPublicKey),

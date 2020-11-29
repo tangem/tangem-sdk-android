@@ -32,7 +32,7 @@ data class Card(
     /**
      * Version of Tangem COS.
      */
-    val firmwareVersion: String?,
+    val firmwareVersion: FirmwareVersion,
 
     /**
      * Public key that is used to authenticate the card against manufacturer’s database.
