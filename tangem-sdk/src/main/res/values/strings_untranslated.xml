@@ -4,5 +4,6 @@
     <string name="error_no_space_for_new_wallet" translatable="false">Max number of wallets already created</string>
     <string name="error_wallet_index_exceeds_max_value" translatable="false">Wallet index exceeds max value</string>
     <string name="error_wallet_not_found" translatable="false">Max number of wallets already created</string>
+    <string name="error_card_read_wrong_wallet" translatable="false">Card read wrong wallet</string>
 
 </resources>

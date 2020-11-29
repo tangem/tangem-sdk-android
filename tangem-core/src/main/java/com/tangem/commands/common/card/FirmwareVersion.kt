@@ -75,3 +75,5 @@ class FirmwareVersion: Comparable<FirmwareVersion> {
         val max = FirmwareVersion(Int.MAX_VALUE, 0)
     }
 }
+
+fun FirmwareVersion?.compareTo(other: FirmwareVersion) = -1
