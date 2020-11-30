@@ -24,8 +24,8 @@ import com.tangem.common.extensions.guard
  * If failed - task will keep trying to create.
  */
 class CreateWalletTask(
-    private val config: WalletConfig?,
-    private var walletIndexValue: Int?
+    private val config: WalletConfig? = null,
+    private var walletIndexValue: Int? = null
 ) : CardSessionRunnable<CreateWalletResponse>, WalletSelectable {
 
     override val requiresPin2 = false
