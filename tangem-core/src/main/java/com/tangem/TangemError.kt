@@ -1,7 +1,7 @@
 package com.tangem
 
-import com.tangem.commands.Card
 import com.tangem.commands.ReadCommand
+import com.tangem.commands.common.card.Card
 import com.tangem.common.apdu.StatusWord
 import com.tangem.tasks.ScanTask
 
@@ -76,6 +76,7 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
      */
     class NeedEncryption : TangemSdkError(30006)
     class FileNotFound : TangemSdkError(30007)
+    class WalletNotFound : TangemSdkError(30008)
 
     //Personalization Errors
     class AlreadyPersonalized : TangemSdkError(40101)
@@ -85,9 +86,12 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
 
     //Read Errors
     class Pin1Required : TangemSdkError(40401)
+    class CardReadWrongWallet : TangemSdkError(40402)
 
     //CreateWallet Errors
     class AlreadyCreated : TangemSdkError(40501)
+    class WalletIndexExceedsMaxValue : TangemSdkError(40502)
+    class MaxNumberOfWalletsCreated : TangemSdkError(40503)
 
     //PurgeWallet Errors
     class PurgeWalletProhibited : TangemSdkError(40601)
