@@ -32,7 +32,7 @@ class PurgeWalletResponse(
  * @property cardId CID, Unique Tangem card ID number.
  */
 class PurgeWalletCommand(
-    override var walletIndex: WalletIndex?
+    override var walletIndex: WalletIndex? = null
 ) : Command<PurgeWalletResponse>(), WalletSelectable {
 
     override val requiresPin2 = true
