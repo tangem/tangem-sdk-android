@@ -53,7 +53,7 @@ class ReadCommand(
                     }
                 }
                 is WalletIndex.PublicKey -> {
-                    if((walletIndex as WalletIndex.PublicKey).data != response.cardPublicKey) {
+                    if(!(walletIndex as WalletIndex.PublicKey).data.contentEquals(response.cardPublicKey)) {
                         throw TangemSdkError.CardReadWrongWallet()
                     }
                 }
