@@ -1,20 +1,22 @@
 package com.tangem.commands.file
 
-import com.tangem.CardSession
-import com.tangem.SessionEnvironment
-import com.tangem.TangemError
-import com.tangem.TangemSdkError
-import com.tangem.commands.*
+import com.tangem.*
+import com.tangem.commands.Command
+import com.tangem.commands.CommandResponse
+import com.tangem.commands.WriteIssuerExtraDataCommand
 import com.tangem.commands.common.DefaultIssuerDataVerifier
 import com.tangem.commands.common.IssuerDataToVerify
 import com.tangem.commands.common.IssuerDataVerifier
+import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.CardStatus
+import com.tangem.commands.common.card.FirmwareVersion
+import com.tangem.commands.common.card.masks.Settings
 import com.tangem.commands.file.WriteFileDataCommand.Companion.MAX_SIZE
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.extensions.calculateSha256
-import com.tangem.common.extensions.getFirmwareNumber
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -29,15 +31,26 @@ class FileDataSignature(
         val finalizingSignature: ByteArray,
 )
 
-sealed class FileData(val data: ByteArray) {
+interface FirmwareRestrictible {
+    val minFirmwareVersion: FirmwareVersion
+    val maxFirmwareVersion: FirmwareVersion
+}
+
+sealed class FileData(val data: ByteArray) : FirmwareRestrictible {
     class DataProtectedBySignature(
             data: ByteArray,
             val counter: Int,
             val signature: FileDataSignature,
             val issuerPublicKey: ByteArray? = null
-    ) : FileData(data)
+    ) : FileData(data) {
+        override val minFirmwareVersion: FirmwareVersion = FirmwareVersion(3, 29)
+        override val maxFirmwareVersion: FirmwareVersion = FirmwareVersion.max
+    }
 
-    class DataProtectedByPasscode(data: ByteArray) : FileData(data)
+    class DataProtectedByPasscode(data: ByteArray) : FileData(data) {
+        override val minFirmwareVersion: FirmwareVersion = FirmwareVersion(3, 34)
+        override val maxFirmwareVersion: FirmwareVersion = FirmwareVersion.max
+    }
 }
 
 /**
@@ -69,13 +82,10 @@ class WriteFileDataCommand(
     }
 
     override fun performPreCheck(card: Card): TangemSdkError? {
-        val firmwareVersion = card.getFirmwareNumber() ?: 0.0
-        when (fileData) {
-            is FileData.DataProtectedByPasscode ->
-                if (firmwareVersion < 3.37) return TangemSdkError.FirmwareNotSupported()
-            is FileData.DataProtectedBySignature ->
-                if (firmwareVersion < 3.29) return TangemSdkError.FirmwareNotSupported()
-        }
+        if (card.firmwareVersion < FirmwareConstraints.AvailabilityVersions.files ||
+            card.firmwareVersion < fileData.minFirmwareVersion)
+            return TangemSdkError.FirmwareNotSupported()
+
         if (fileData is FileData.DataProtectedBySignature) {
             val publicKey = fileData.issuerPublicKey ?: card.issuerPublicKey
             ?: return TangemSdkError.MissingIssuerPubicKey()

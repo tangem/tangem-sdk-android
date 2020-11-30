@@ -3,6 +3,8 @@ package com.tangem.commands
 import com.tangem.SessionEnvironment
 import com.tangem.TangemError
 import com.tangem.TangemSdkError
+import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.CardStatus
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu

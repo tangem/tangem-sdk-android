@@ -1,16 +1,16 @@
 package com.tangem.commands.file
 
+import com.tangem.FirmwareConstraints
 import com.tangem.SessionEnvironment
 import com.tangem.TangemError
 import com.tangem.TangemSdkError
-import com.tangem.commands.Card
-import com.tangem.commands.CardStatus
 import com.tangem.commands.Command
 import com.tangem.commands.SimpleResponse
+import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.CardStatus
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
-import com.tangem.common.extensions.getFirmwareNumber
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -54,7 +54,7 @@ class ChangeFileSettingsCommand(
         if (card.isActivated) {
             return TangemSdkError.NotActivated()
         }
-        if (card.getFirmwareNumber() ?: 0.0 < 3.29) {
+        if (card.firmwareVersion < FirmwareConstraints.AvailabilityVersions.files) {
             return TangemSdkError.FirmwareNotSupported()
         }
         return null
