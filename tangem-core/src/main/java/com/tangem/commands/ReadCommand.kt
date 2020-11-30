@@ -17,7 +17,7 @@ import com.tangem.common.tlv.TlvTag
  * including unique card number (CID or cardId) that has to be submitted while calling all other commands.
  */
 class ReadCommand(
-    private var walletIndex: WalletIndex?
+    private var walletIndex: WalletIndex? = null
 ) : Command<Card>() {
 
     override val performPreflightRead = false
