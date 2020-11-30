@@ -1,8 +1,6 @@
-package com.tangem.commands.common
+package com.tangem.commands.common.card
 
 import com.tangem.TangemSdkError
-import com.tangem.commands.Card
-import com.tangem.commands.CardData
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.tlv.Tlv
 import com.tangem.common.tlv.TlvDecoder
@@ -14,13 +12,14 @@ class CardDeserializer() {
             val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
 
             val decoder = TlvDecoder(tlvData)
-
+            val version: String? = decoder.decodeOptional(TlvTag.Firmware)
+            val firmwareVersion = if (version == null) FirmwareVersion.zero else FirmwareVersion(version)
             return Card(
                     cardId = decoder.decodeOptional(TlvTag.CardId) ?: "",
                     manufacturerName = decoder.decodeOptional(TlvTag.ManufactureId) ?: "",
                     status = decoder.decodeOptional(TlvTag.Status),
 
-                    firmwareVersion = decoder.decodeOptional(TlvTag.Firmware),
+                    firmwareVersion = firmwareVersion,
                     cardPublicKey = decoder.decodeOptional(TlvTag.CardPublicKey),
                     settingsMask = decoder.decodeOptional(TlvTag.SettingsMask),
                     issuerPublicKey = decoder.decodeOptional(TlvTag.IssuerDataPublicKey),
@@ -31,6 +30,8 @@ class CardDeserializer() {
                     walletPublicKey = decoder.decodeOptional(TlvTag.WalletPublicKey),
                     walletRemainingSignatures = decoder.decodeOptional(TlvTag.RemainingSignatures),
                     walletSignedHashes = decoder.decodeOptional(TlvTag.SignedHashes),
+                    walletsCount = decoder.decodeOptional(TlvTag.WalletsCount),
+                    walletIndex = decoder.decodeOptional(TlvTag.WalletsIndex),
                     health = decoder.decodeOptional(TlvTag.Health),
                     isActivated = decoder.decode(TlvTag.IsActivated),
                     activationSeed = decoder.decodeOptional(TlvTag.ActivationSeed),

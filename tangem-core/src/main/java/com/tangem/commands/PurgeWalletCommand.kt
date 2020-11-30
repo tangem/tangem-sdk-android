@@ -3,6 +3,9 @@ package com.tangem.commands
 import com.tangem.SessionEnvironment
 import com.tangem.TangemError
 import com.tangem.TangemSdkError
+import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.CardStatus
+import com.tangem.commands.common.card.masks.Settings
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
@@ -28,7 +31,9 @@ class PurgeWalletResponse(
  * ‘Purged’ state is final, it makes the card useless.
  * @property cardId CID, Unique Tangem card ID number.
  */
-class PurgeWalletCommand : Command<PurgeWalletResponse>() {
+class PurgeWalletCommand(
+    override var walletIndex: WalletIndex?
+) : Command<PurgeWalletResponse>(), WalletSelectable {
 
     override val requiresPin2 = true
 
@@ -65,6 +70,7 @@ class PurgeWalletCommand : Command<PurgeWalletResponse>() {
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Pin2, environment.pin2?.value)
+        walletIndex?.addTlvData(tlvBuilder)
         return CommandApdu(Instruction.PurgeWallet, tlvBuilder.serialize())
     }
 

@@ -1,9 +1,6 @@
 package com.tangem
 
-import com.tangem.commands.Command
-import com.tangem.commands.CommandResponse
-import com.tangem.commands.OpenSessionCommand
-import com.tangem.commands.ReadCommand
+import com.tangem.commands.*
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.ResponseApdu
@@ -126,9 +123,11 @@ class CardSession(
         }
     }
 
+    private var walletIndexForInteraction: WalletIndex? = null
     private fun <T : CardSessionRunnable<*>> prepareSession(
             runnable: T, callback: (result: CompletionResult<Unit>) -> Unit
     ) {
+        walletIndexForInteraction = (runnable as? WalletSelectable)?.walletIndex
         if ((runnable as? Command<*>)?.performPreflightRead == false) performPreflightRead = false
         pin2Required = runnable.requiresPin2
 
@@ -211,7 +210,7 @@ class CardSession(
     }
 
     private fun preflightCheck(callback: (session: CardSession, error: TangemError?) -> Unit) {
-        val readCommand = ReadCommand()
+        val readCommand = ReadCommand(walletIndexForInteraction)
         readCommand.run(this) { result ->
             when (result) {
                 is CompletionResult.Failure -> {
@@ -272,6 +271,7 @@ class CardSession(
         environmentService.saveEnvironmentValues(environment, cardId)
         reader.stopSession()
         scope.cancel()
+        walletIndexForInteraction = null
     }
 
     fun send(apdu: CommandApdu, callback: (result: CompletionResult<ResponseApdu>) -> Unit) {
