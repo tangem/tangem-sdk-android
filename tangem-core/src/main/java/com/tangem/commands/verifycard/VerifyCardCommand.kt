@@ -3,17 +3,17 @@ package com.tangem.commands.verifycard
 import com.tangem.CardSession
 import com.tangem.SessionEnvironment
 import com.tangem.TangemSdkError
-import com.tangem.commands.Card
-import com.tangem.commands.CardStatus
 import com.tangem.commands.Command
 import com.tangem.commands.CommandResponse
+import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.CardStatus
+import com.tangem.commands.common.card.FirmwareType
 import com.tangem.commands.common.network.Result
 import com.tangem.commands.common.network.TangemService
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
-import com.tangem.common.extensions.CardType
 import com.tangem.common.extensions.getType
 import com.tangem.common.extensions.toHexString
 import com.tangem.common.tlv.TlvBuilder
@@ -71,7 +71,7 @@ class VerifyCardCommand(private val onlineVerification: Boolean) : Command<Verif
                         callback(CompletionResult.Failure(TangemSdkError.VerificationFailed()))
                         return@run
                     }
-                    if (!onlineVerification || card.getType() != CardType.Release) {
+                    if (!onlineVerification || card.getType() != FirmwareType.Release) {
                         callback(CompletionResult.Success(VerifyCardResponse(
                                 response.cardId, VerifyCardState.VerifiedOffline, null,
                                 response.salt, response.cardSignature
