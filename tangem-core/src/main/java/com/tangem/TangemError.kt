@@ -76,6 +76,7 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
      */
     class NeedEncryption : TangemSdkError(30006)
     class FileNotFound : TangemSdkError(30007)
+    class WalletNotFound : TangemSdkError(30008)
 
     //Personalization Errors
     class AlreadyPersonalized : TangemSdkError(40101)
@@ -85,13 +86,12 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
 
     //Read Errors
     class Pin1Required : TangemSdkError(40401)
+    class CardReadWrongWallet : TangemSdkError(40402)
 
     //CreateWallet Errors
     class AlreadyCreated : TangemSdkError(40501)
-    class WalletIndexExceedsMaxValue : TangemSdkError(47901)
-    class MaxNumberOfWalletsCreated : TangemSdkError(47902)
-    class WalletNotFound : TangemSdkError(47903)
-    class CardReadWrongWallet : TangemSdkError(47904)
+    class WalletIndexExceedsMaxValue : TangemSdkError(40502)
+    class MaxNumberOfWalletsCreated : TangemSdkError(40503)
 
     //PurgeWallet Errors
     class PurgeWalletProhibited : TangemSdkError(40601)
