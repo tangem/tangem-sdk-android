@@ -46,8 +46,7 @@ class DemoActivity : AppCompatActivity() {
     private lateinit var sdk: TangemSdk
     private var card: Card? = null
 
-    private var walletIndexValue = 0
-    private var walletIndex: WalletIndex = WalletIndex.Index(walletIndexValue)
+    private var walletIndex: WalletIndex? = null
 
     private var bshDlg: BottomSheetDialog? = null
 
@@ -67,7 +66,7 @@ class DemoActivity : AppCompatActivity() {
     }
 
     private fun scanCard() {
-        btnScanCard.setOnClickListener { sdk.scanCard { handleResult(it) } }
+        btnScanCard.setOnClickListener { sdk.scanCard(walletIndex) { handleResult(it) } }
     }
 
     private fun sign() {
@@ -87,7 +86,10 @@ class DemoActivity : AppCompatActivity() {
             SigningMethod.SignHash,
             walletData
         )
-        btnCreateWallet.setOnClickListener { sdk.createWallet(walletConfig, walletIndexValue, card?.cardId) { handleResult(it) } }
+        btnCreateWallet.setOnClickListener {
+            val index = (walletIndex as? WalletIndex.Index)?.index ?: 0
+            sdk.createWallet(walletConfig, index, card?.cardId) { handleResult(it) }
+        }
         btnPurgeWallet.setOnClickListener { sdk.purgeWallet(walletIndex, card?.cardId) { handleResult(it) } }
     }
 
@@ -205,26 +207,30 @@ class DemoActivity : AppCompatActivity() {
                 if (completionResult.data is Card) {
                     card = completionResult.data as? Card
 
-                    val touchListener = object : Slider.OnSliderTouchListener {
-                        override fun onStartTrackingTouch(slider: Slider) {
-                            walletIndexValue = slider.value.toInt()
-                        }
+                    if (walletIndex == null) {
+                        val touchListener = object : Slider.OnSliderTouchListener {
+                            override fun onStartTrackingTouch(slider: Slider) {
+                            }
 
-                        override fun onStopTrackingTouch(slider: Slider) {
-                            walletIndexValue = slider.value.toInt()
+                            override fun onStopTrackingTouch(slider: Slider) {
+                                val value = slider.value.toInt()
+                                walletIndex = WalletIndex.Index(value)
+                                tvWalletIndex.text = "$value"
+                            }
                         }
-                    }
-                    sliderWallet.post {
-                        if (card?.walletsCount == null) {
-                            sliderWallet.visibility = View.GONE
-                            sliderWallet.removeOnSliderTouchListener(touchListener)
-                        } else {
-                            sliderWallet.stepSize = 1f
-                            sliderWallet.valueFrom = card?.walletsCount?.toFloat() ?: 0f
-                            sliderWallet.valueTo = 20f
-                            sliderWallet.value = sliderWallet.valueFrom
-                            sliderWallet.visibility = View.VISIBLE
-                            sliderWallet.addOnSliderTouchListener(touchListener)
+                        sliderWallet.post {
+                            if (card?.walletsCount == null) {
+                                walletIndexesContainer.visibility = View.GONE
+                                sliderWallet.removeOnSliderTouchListener(touchListener)
+                            } else {
+                                walletIndexesContainer.visibility = View.VISIBLE
+                                sliderWallet.stepSize = 1f
+                                sliderWallet.valueFrom = 0f
+                                sliderWallet.valueTo = card?.walletsCount?.toFloat() ?: 0f
+                                sliderWallet.value = sliderWallet.valueFrom
+                                sliderWallet.addOnSliderTouchListener(touchListener)
+                                tvWalletIndex.text = "0"
+                            }
                         }
                     }
                 }
