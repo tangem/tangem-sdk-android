@@ -5,16 +5,21 @@ import com.tangem.CardSessionRunnable
 import com.tangem.TagType
 import com.tangem.TangemSdkError
 import com.tangem.commands.*
-import com.tangem.commands.common.CardDeserializer
+import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.CardDeserializer
+import com.tangem.commands.common.card.CardStatus
+import com.tangem.commands.common.card.FirmwareVersion
+import com.tangem.commands.common.card.masks.Product
 import com.tangem.common.CompletionResult
-import com.tangem.common.extensions.getFirmwareNumber
 
 /**
  * Task that allows to read Tangem card and verify its private key.
  *
  * It performs two commands, [ReadCommand] and [CheckWalletCommand], subsequently.
  */
-class ScanTask : CardSessionRunnable<Card> {
+class ScanTask(
+    override var walletIndex: WalletIndex?
+) : CardSessionRunnable<Card>, WalletSelectable {
 
     override val requiresPin2 = false
 
@@ -44,8 +49,8 @@ class ScanTask : CardSessionRunnable<Card> {
 //            }
 //        } else {
 
-        val firmwareNumber = card.getFirmwareNumber()
-        if (firmwareNumber != null && firmwareNumber > 1.19) { // >1.19 cards without SD on CheckPin
+        val firmwareNumber = card.firmwareVersion
+        if (firmwareNumber != FirmwareVersion.zero && firmwareNumber > FirmwareVersion(1, 19)) { // >1.19 cards without SD on CheckPin
             CheckPinCommand().run(session) { result ->
                 when (result) {
                     is CompletionResult.Success -> {
@@ -63,8 +68,8 @@ class ScanTask : CardSessionRunnable<Card> {
     }
 
     private fun runCheckWalletIfNeeded(
-            card: Card, session: CardSession,
-            callback: (result: CompletionResult<Card>) -> Unit
+        card: Card, session: CardSession,
+        callback: (result: CompletionResult<Card>) -> Unit
     ) {
         if (card.cardData?.productMask?.contains(Product.Tag) != false) {
             callback(CompletionResult.Success(card))
@@ -76,7 +81,7 @@ class ScanTask : CardSessionRunnable<Card> {
             callback(CompletionResult.Failure(TangemSdkError.CardError()))
 
         } else {
-            val checkWalletCommand = CheckWalletCommand(card.curve, card.walletPublicKey)
+            val checkWalletCommand = CheckWalletCommand(card.curve, card.walletPublicKey, walletIndex)
             checkWalletCommand.run(session) { result ->
                 when (result) {
                     is CompletionResult.Success -> callback(CompletionResult.Success(card))

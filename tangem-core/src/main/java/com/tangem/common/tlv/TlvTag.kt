@@ -88,9 +88,14 @@ enum class TlvTag(val code: Int) {
     TransactionOutHash(0x50),
     TransactionOutHashSize(0x51),
     TransactionOutRaw(0x52),
+    Pin2IsDefault(0x59),
 
+    WalletsIndex(0x65),
     WalletsCount(0x66),
+    WalletData(0x67),
+    WalletInfo(0x68),
     WalletPublicKey(0x60),
+
     Signature(0x61),
     RemainingSignatures(0x62),
     SignedHashes(0x63),
@@ -136,13 +141,13 @@ enum class TlvTag(val code: Int) {
      */
     fun valueType(): TlvValueType {
         return when (this) {
-            CardId, Batch, CrExKey -> TlvValueType.HexString
+            CardId, Batch, CrExKey, Pin2IsDefault -> TlvValueType.HexString
             ManufactureId, Firmware, IssuerId, BlockchainId, TokenSymbol, TokenContractAddress,
             FileName -> TlvValueType.Utf8String
             CurveId -> TlvValueType.EllipticCurve
             PauseBeforePin2, RemainingSignatures, SignedHashes, Health, TokenDecimal,
             Offset, Size -> TlvValueType.Uint16
-            FileIndex, WalletsCount -> TlvValueType.Uint8
+            FileIndex, WalletsIndex, WalletsCount -> TlvValueType.Uint8
             MaxSignatures, UserCounter, UserProtectedCounter, IssuerDataCounter -> TlvValueType.Uint32
             IsActivated, TerminalIsLinked, CreateWalletAtPersonalize -> TlvValueType.BoolValue
             ManufactureDateTime -> TlvValueType.DateTime
