@@ -1,7 +1,8 @@
 package com.tangem.commands.common
 
 import com.google.gson.*
-import com.tangem.commands.*
+import com.tangem.commands.CommandResponse
+import com.tangem.commands.common.card.masks.*
 import com.tangem.common.extensions.print
 import com.tangem.common.extensions.toHexString
 import java.lang.reflect.Type

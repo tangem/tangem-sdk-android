@@ -1,7 +1,7 @@
 package com.tangem
 
-import com.tangem.commands.Card
-import com.tangem.commands.EllipticCurve
+import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.common.PinCode
 import com.tangem.crypto.CryptoUtils.generatePublicKey
 

@@ -1,8 +1,9 @@
 package com.tangem.commands.personalization.entities
 
-import com.tangem.commands.Settings
-import com.tangem.commands.SettingsMask
-import com.tangem.commands.SettingsMaskBuilder
+import com.tangem.commands.common.card.masks.Settings
+import com.tangem.commands.common.card.masks.SettingsMask
+import com.tangem.commands.common.card.masks.SettingsMaskBuilder
+
 
 internal fun CardConfig.createSettingsMask(): SettingsMask {
     val builder = SettingsMaskBuilder()
