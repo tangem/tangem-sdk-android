@@ -18,7 +18,7 @@ import com.tangem.common.CompletionResult
  * It performs two commands, [ReadCommand] and [CheckWalletCommand], subsequently.
  */
 class ScanTask(
-    override var walletIndex: WalletIndex?
+    override var walletIndex: WalletIndex? = null
 ) : CardSessionRunnable<Card>, WalletSelectable {
 
     override val requiresPin2 = false
