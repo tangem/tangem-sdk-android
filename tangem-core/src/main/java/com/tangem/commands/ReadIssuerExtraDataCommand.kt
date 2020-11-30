@@ -1,17 +1,19 @@
 package com.tangem.commands
 
 import com.tangem.CardSession
+import com.tangem.FirmwareConstraints
 import com.tangem.SessionEnvironment
 import com.tangem.TangemSdkError
 import com.tangem.commands.common.DefaultIssuerDataVerifier
 import com.tangem.commands.common.IssuerDataMode
 import com.tangem.commands.common.IssuerDataToVerify
 import com.tangem.commands.common.IssuerDataVerifier
+import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.CardStatus
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
-import com.tangem.common.extensions.getFirmwareNumber
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -70,7 +72,7 @@ class ReadIssuerExtraDataCommand(
     private var issuerDataSize: Int = 0
 
     override fun performPreCheck(card: Card): TangemSdkError? {
-        if (card.getFirmwareNumber() ?: 0.0 >= 3.29) {
+        if (card.firmwareVersion >= FirmwareConstraints.AvailabilityVersions.files) {
             return TangemSdkError.FirmwareNotSupported()
         }
         if (card.status == CardStatus.NotPersonalized) {
