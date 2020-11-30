@@ -2,7 +2,9 @@ package com.tangem.common.tlv
 
 import com.google.common.truth.Truth.assertThat
 import com.tangem.TangemSdkError
-import com.tangem.commands.*
+import com.tangem.commands.common.card.CardStatus
+import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.commands.common.card.masks.*
 import com.tangem.common.extensions.hexToBytes
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
