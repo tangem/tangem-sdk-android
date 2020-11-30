@@ -46,8 +46,8 @@ class CreateWalletResponse(
  * @property cardId CID, Unique Tangem card ID number.
  */
 class CreateWalletCommand(
-    private val walletConfig: WalletConfig?,
-    private val walletIndexValue: Int?
+    private val walletConfig: WalletConfig? = null,
+    private val walletIndexValue: Int? = null
 ) : Command<CreateWalletResponse>(), WalletSelectable {
 
     override val requiresPin2 = true
