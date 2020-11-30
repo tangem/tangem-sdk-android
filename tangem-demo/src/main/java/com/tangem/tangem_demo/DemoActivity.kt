@@ -223,13 +223,17 @@ class DemoActivity : AppCompatActivity() {
                                 walletIndexesContainer.visibility = View.GONE
                                 sliderWallet.removeOnSliderTouchListener(touchListener)
                             } else {
-                                walletIndexesContainer.visibility = View.VISIBLE
-                                sliderWallet.stepSize = 1f
-                                sliderWallet.valueFrom = 0f
-                                sliderWallet.valueTo = card?.walletsCount?.toFloat() ?: 0f
-                                sliderWallet.value = sliderWallet.valueFrom
-                                sliderWallet.addOnSliderTouchListener(touchListener)
-                                tvWalletIndex.text = "0"
+                                val walletsCount = card?.walletsCount?.toFloat() ?: 1f
+                                if (walletsCount > 1) {
+                                    walletIndexesContainer.visibility = View.VISIBLE
+                                    sliderWallet.stepSize = 1f
+                                    sliderWallet.valueFrom = 0f
+                                    sliderWallet.valueTo = walletsCount - 1f
+                                    sliderWallet.value = sliderWallet.valueFrom
+                                    sliderWallet.addOnSliderTouchListener(touchListener)
+                                    tvWalletIndex.text = "0"
+                                }
+
                             }
                         }
                     }
