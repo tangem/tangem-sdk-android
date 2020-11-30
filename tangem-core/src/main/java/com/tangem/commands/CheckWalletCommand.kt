@@ -48,7 +48,7 @@ class CheckWalletResponse(
 class CheckWalletCommand(
     private val curve: EllipticCurve,
     private val publicKey: ByteArray,
-    override var walletIndex: WalletIndex?
+    override var walletIndex: WalletIndex? = null
 ) : Command<CheckWalletResponse>(), WalletSelectable {
 
     private val challenge = CryptoUtils.generateRandomBytes(16)
