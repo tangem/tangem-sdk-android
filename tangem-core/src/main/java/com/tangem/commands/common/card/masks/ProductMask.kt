@@ -16,7 +16,7 @@ enum class Product(val code: Int) {
     Tag(0x02),
     IdCard(0x04),
     IdIssuer(0x08),
-    TwinCard(0x10),
+    TwinCard(0x20),
 }
 
 class ProductMaskBuilder() {
