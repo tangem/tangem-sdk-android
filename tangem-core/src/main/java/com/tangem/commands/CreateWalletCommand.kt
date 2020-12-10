@@ -103,6 +103,7 @@ class CreateWalletCommand(
             if (card.firmwareVersion >= FirmwareConstraints.AvailabilityVersions.pin2IsDefault && card.isPin2Default == true) {
                 return TangemSdkError.AlreadyCreated()
             }
+            return TangemSdkError.Pin2OrCvcRequired()
         }
         return error
     }
