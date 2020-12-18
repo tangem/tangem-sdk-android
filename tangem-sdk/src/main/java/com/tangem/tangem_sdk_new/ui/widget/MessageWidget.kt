@@ -84,15 +84,11 @@ class MessageWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
     }
 
     fun setMessage(message: Message?) {
-        postUI {
-            outerMessage = message
-            setText(tvTaskTitle, message?.header)
-            setText(tvTaskMessage, message?.body)
-        }
+        outerMessage = message
     }
 
     private fun getMessage(params: SessionViewDelegateState): Message? {
-        return when(params) {
+        return when (params) {
             is SessionViewDelegateState.Ready -> {
                 outerMessage = null
                 params.message
