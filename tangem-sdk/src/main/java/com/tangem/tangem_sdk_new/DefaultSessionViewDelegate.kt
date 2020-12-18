@@ -98,6 +98,10 @@ class DefaultSessionViewDelegate(
         sdkConfig = config
     }
 
+    override fun setMessage(message: Message?) {
+        readingDialog?.setMessage(message)
+    }
+
     override fun dismiss() {
         postUI { readingDialog?.dismiss() }
     }
