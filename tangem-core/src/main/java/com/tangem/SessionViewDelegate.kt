@@ -58,6 +58,8 @@ interface SessionViewDelegate {
 
     fun setConfig(config: Config)
 
+    fun setMessage(message: Message?)
+
     fun dismiss()
 }
 

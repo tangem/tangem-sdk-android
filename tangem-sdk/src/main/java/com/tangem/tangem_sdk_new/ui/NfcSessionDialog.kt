@@ -9,6 +9,7 @@ import androidx.transition.TransitionManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.tangem.Log
+import com.tangem.Message
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.hide
@@ -79,6 +80,10 @@ class NfcSessionDialog(
 
     fun enableHowTo(enable: Boolean) {
         headerWidget.howToIsEnabled = enable
+    }
+
+    fun setMessage(message: Message?) {
+        messageWidget.setMessage(message)
     }
 
     fun show(state: SessionViewDelegateState) {
