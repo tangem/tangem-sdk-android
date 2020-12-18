@@ -621,6 +621,7 @@ class TangemSdk(
     fun <T : CommandResponse> startSessionWithRunnable(
             runnable: CardSessionRunnable<T>, cardId: String? = null, initialMessage: Message? = null,
             callback: (result: CompletionResult<T>) -> Unit) {
+        viewDelegate.setConfig(config)
         val cardSession = CardSession(environmentService, reader, viewDelegate, cardId, initialMessage)
         Thread().run { cardSession.startWithRunnable(runnable, callback) }
     }
@@ -639,6 +640,7 @@ class TangemSdk(
      */
     fun startSession(cardId: String? = null, initialMessage: Message? = null,
                      callback: (session: CardSession, error: TangemError?) -> Unit) {
+        viewDelegate.setConfig(config)
         val cardSession = CardSession(environmentService, reader, viewDelegate, cardId, initialMessage)
         Thread().run { cardSession.start(callback = callback) }
     }
