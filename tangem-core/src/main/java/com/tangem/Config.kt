@@ -49,7 +49,7 @@ class Config(
         var howToIsEnabled: Boolean = true,
 
         /**
-         * Full CID will be displayed if nul
+         * Full CID will be displayed if null
          */
         var cardIdDisplayedNumbersCount: Int? = null
 
