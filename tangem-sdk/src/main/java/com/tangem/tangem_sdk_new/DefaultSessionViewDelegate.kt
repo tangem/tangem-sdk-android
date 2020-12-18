@@ -14,8 +14,10 @@ import com.tangem.tangem_sdk_new.ui.NfcSessionDialog
  * If no customisation is required, this is the preferred way to use Tangem SDK.
  */
 class DefaultSessionViewDelegate(
-    private val nfcManager: NfcManager,
+    private val nfcManager: NfcManager
 ) : SessionViewDelegate {
+
+    var sdkConfig: Config? = null
 
     lateinit var activity: Activity
     private var readingDialog: NfcSessionDialog? = null
@@ -28,7 +30,7 @@ class DefaultSessionViewDelegate(
         postUI {
             if (readingDialog == null) createReadingDialog(activity)
             readingDialog?.enableHowTo(enableHowTo)
-            readingDialog?.show(SessionViewDelegateState.Ready(cardId, message))
+            readingDialog?.show(SessionViewDelegateState.Ready(formatCardId(cardId), message))
         }
     }
 
@@ -92,8 +94,19 @@ class DefaultSessionViewDelegate(
         }
     }
 
+    override fun setConfig(config: Config) {
+        sdkConfig = config
+    }
+
     override fun dismiss() {
         postUI { readingDialog?.dismiss() }
+    }
+
+    private fun formatCardId(cardId: String?): String? {
+        val cardId = cardId ?: return null
+        val displayedNumbersCount = sdkConfig?.cardIdDisplayedNumbersCount ?: return cardId
+
+        return cardId.dropLast(1).takeLast(displayedNumbersCount)
     }
 
     private fun setLogger() {

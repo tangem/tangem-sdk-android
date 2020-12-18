@@ -56,6 +56,8 @@ interface SessionViewDelegate {
      */
     fun onPinChangeRequested(pinType: PinType, callback: (pin: String) -> Unit)
 
+    fun setConfig(config: Config)
+
     fun dismiss()
 }
 
