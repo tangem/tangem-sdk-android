@@ -82,6 +82,10 @@ class CardSession(
 
     val environment = environmentService.createEnvironment(cardId)
 
+    fun setInitialMessage(message: Message?){
+        viewDelegate.setMessage(message)
+    }
+
     private fun handleError(throwable: Throwable) {
         val sw = StringWriter()
         throwable.printStackTrace(PrintWriter(sw))
