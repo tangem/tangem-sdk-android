@@ -87,6 +87,8 @@ class NfcSessionDialog(
     }
 
     fun show(state: SessionViewDelegateState) {
+        if (ownerActivity == null || ownerActivity?.isFinishing == true) return
+
         if (!this.isShowing) this.show()
         when (state) {
             is SessionViewDelegateState.Ready -> onReady(state)
@@ -259,6 +261,8 @@ class NfcSessionDialog(
 
     override fun dismiss() {
         stateWidgets.forEach { it.onBottomSheetDismiss() }
+        if (ownerActivity == null || ownerActivity?.isFinishing == true) return
+
         super.dismiss()
     }
 }
