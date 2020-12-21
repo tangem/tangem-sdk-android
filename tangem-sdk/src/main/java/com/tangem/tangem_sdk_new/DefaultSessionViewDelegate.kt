@@ -38,6 +38,7 @@ class DefaultSessionViewDelegate(
         val nfcLocationProvider = NfcAntennaLocationProvider(Build.DEVICE)
         val themeWrapper = ContextThemeWrapper(activity, R.style.CardSdkTheme)
         readingDialog = NfcSessionDialog(themeWrapper, nfcManager, nfcLocationProvider).apply {
+            setOwnerActivity(activity)
             dismissWithAnimation = true
             create()
             setOnCancelListener {
