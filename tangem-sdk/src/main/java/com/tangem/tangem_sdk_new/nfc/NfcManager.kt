@@ -13,6 +13,7 @@ import android.os.Bundle
 import com.tangem.Log
 import com.tangem.ReadingActiveListener
 import com.tangem.tangem_sdk_new.ui.NfcEnableDialog
+import com.tangem.tangem_sdk_new.ui.animation.VoidCallback
 
 /**
  * Helps use NFC, leveraging Android NFC functionality.
@@ -29,12 +30,20 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener {
             }
             field = value
         }
-    var onTagDiscovered: (() -> Unit)? = null
+    private val onTagDiscoveredListeners: MutableList<VoidCallback> = mutableListOf()
 
     val reader = NfcReader()
     private var activity: Activity? = null
     private var nfcAdapter: NfcAdapter? = null
     private var nfcEnableDialog: NfcEnableDialog? = null
+
+    fun addTagDiscoveredListener(listener: VoidCallback) {
+        onTagDiscoveredListeners.add(listener)
+    }
+
+    fun removeTagDiscoveredListener(listener: VoidCallback) {
+        onTagDiscoveredListeners.remove(listener)
+    }
 
     fun setCurrentActivity(activity: Activity) {
         this.activity = activity
@@ -53,7 +62,7 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener {
 
     override fun onTagDiscovered(tag: Tag?) {
         Log.i(this::class.simpleName!!, "Nfc tag is discovered")
-        onTagDiscovered?.invoke()
+        onTagDiscoveredListeners.forEach { it.invoke() }
         if (readingIsActive) reader.onTagDiscovered(tag) else ignoreTag(tag)
     }
 
