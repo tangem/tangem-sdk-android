@@ -145,7 +145,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                             }
                             Log.i(
                                     this::class.simpleName!!,
-                                    "Nfc command ${this::class.simpleName!!} " +
+                                    "NFC command ${this::class.simpleName!!} " +
                                             "triggered security delay of $remainingTime milliseconds"
                             )
                             transceiveApdu(apdu, session, callback)
