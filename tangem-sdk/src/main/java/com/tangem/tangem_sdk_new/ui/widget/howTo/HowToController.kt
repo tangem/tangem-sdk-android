@@ -35,20 +35,22 @@ class HowToController(
     }
 
     fun stop() {
-        nfcManager.onTagDiscovered = null
+        nfcManager.removeTagDiscoveredListener(tagDiscoveredListener)
         nfcManager.readingIsActive = true
         stateWidget.setState(HowToState.Cancel)
     }
 
     private fun initTagDiscoveredCallback() {
-        nfcManager.onTagDiscovered = {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
-            } else {
-                vibrator.vibrate(100)
-            }
-            postUI { stateWidget.setState(HowToState.AntennaFound) }
+        nfcManager.addTagDiscoveredListener(tagDiscoveredListener)
+    }
+
+    private val tagDiscoveredListener = {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            vibrator.vibrate(100)
         }
+        postUI { stateWidget.setState(HowToState.AntennaFound) }
     }
 }
 

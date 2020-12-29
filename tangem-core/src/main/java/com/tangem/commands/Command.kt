@@ -135,19 +135,15 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                         }
                         StatusWord.NeedPause -> {
                             // NeedPause is returned from the card whenever security delay is triggered.
-                            val remainingTime =
-                                    deserializeSecurityDelay(responseApdu)
+                            val remainingTime = deserializeSecurityDelay(responseApdu)
                             if (remainingTime != null) {
                                 session.viewDelegate.onSecurityDelay(
-                                        remainingTime,
-                                        session.environment.card?.pauseBeforePin2 ?: 0
+                                    remainingTime,
+                                    session.environment.card?.pauseBeforePin2 ?: 0
                                 )
                             }
-                            Log.i(
-                                    this::class.simpleName!!,
-                                    "Nfc command ${this::class.simpleName!!} " +
-                                            "triggered security delay of $remainingTime milliseconds"
-                            )
+                            Log.write(SecurityDelayMessage(remainingTime ?: 0,
+                                session.environment.card?.pauseBeforePin2 ?: 0))
                             transceiveApdu(apdu, session, callback)
                         }
                         StatusWord.NeedEncryption -> {
@@ -182,6 +178,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                 is CompletionResult.Failure ->
                     if (result.error is TangemSdkError.TagLost) {
                         session.viewDelegate.onTagLost()
+                        Log.e(this::class.java.simpleName, "Tag lost")
                     } else {
                         callback(CompletionResult.Failure(result.error))
                     }
