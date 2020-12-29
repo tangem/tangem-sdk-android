@@ -1,5 +1,6 @@
 package com.tangem.commands.common.card
 
+import com.tangem.Log
 import com.tangem.TangemSdkError
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.tlv.Tlv
@@ -50,6 +51,7 @@ class CardDeserializer() {
             }
             if (cardDataTlvs.isNullOrEmpty()) return null
 
+            Log.i(this::class.simpleName!!, "Decoded CardData")
             val decoder = TlvDecoder(cardDataTlvs)
             return CardData(
                     batchId = decoder.decodeOptional(TlvTag.Batch),

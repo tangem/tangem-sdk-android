@@ -73,7 +73,7 @@ class Tlv {
     }
 
     override fun toString(): String {
-        return "${this.tag} ($tagRaw): ${value.toHexString()}"
+        return "${this.tag} [${String.format("0x%02x", tagRaw)}:${value.size}]: ${value.toHexString()}"
     }
 
 }
