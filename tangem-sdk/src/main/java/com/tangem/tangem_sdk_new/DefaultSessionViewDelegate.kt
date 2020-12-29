@@ -22,10 +22,6 @@ class DefaultSessionViewDelegate(
     lateinit var activity: Activity
     private var readingDialog: NfcSessionDialog? = null
 
-    init {
-        setLogger()
-    }
-
     override fun onSessionStarted(cardId: String?, message: Message?, enableHowTo: Boolean) {
         postUI {
             if (readingDialog == null) createReadingDialog(activity)
@@ -114,9 +110,9 @@ class DefaultSessionViewDelegate(
         return cardId.dropLast(1).takeLast(displayedNumbersCount)
     }
 
-    private fun setLogger() {
-        Log.setLogger(
-            object : LoggerInterface {
+    companion object {
+        fun createLogger(): LoggerInterface {
+            return object : LoggerInterface {
                 override fun i(logTag: String, message: String) {
                     android.util.Log.i(logTag, message)
                 }
@@ -128,7 +124,14 @@ class DefaultSessionViewDelegate(
                 override fun v(logTag: String, message: String) {
                     android.util.Log.v(logTag, message)
                 }
+
+                override fun write(message: LogMessage) {
+                    when (message.type) {
+                        MessageType.ERROR -> e(message.type.name, message.message)
+                        else -> i(message.type.name, message.message)
+                    }
+                }
             }
-        )
+        }
     }
 }

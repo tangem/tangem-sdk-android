@@ -5,6 +5,7 @@ import android.view.View
 import com.google.android.material.slider.Slider
 import com.google.gson.Gson
 import com.tangem.Config
+import com.tangem.Log
 import com.tangem.TangemSdk
 import com.tangem.commands.WalletIndex
 import com.tangem.commands.common.ResponseConverter
@@ -12,8 +13,10 @@ import com.tangem.commands.common.card.Card
 import com.tangem.commands.file.FileSettings
 import com.tangem.commands.file.FileSettingsChange
 import com.tangem.common.CompletionResult
+import com.tangem.tangem_demo.DemoActivity
 import com.tangem.tangem_demo.R
 import com.tangem.tangem_demo.ui.BaseFragment
+import com.tangem.tangem_sdk_new.DefaultSessionViewDelegate
 import com.tangem.tangem_sdk_new.extensions.init
 import kotlinx.android.synthetic.main.file_data.*
 import kotlinx.android.synthetic.main.issuer_data.*
@@ -30,6 +33,7 @@ import kotlinx.android.synthetic.main.wallet.*
 class CommandListFragment : BaseFragment() {
 
     private val gson: Gson = ResponseConverter().gson
+    private val logger = DefaultSessionViewDelegate.createLogger()
 
     override fun initSdk(): TangemSdk = TangemSdk.init(this.requireActivity(), Config())
 
@@ -38,6 +42,10 @@ class CommandListFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        (requireActivity() as? DemoActivity)?.listenPageChanges {
+            if (it == 0) Log.addLogger(logger)
+            else Log.removeLogger(logger)
+        }
         btnScanCard.setOnClickListener { scanCard() }
         btnSign.setOnClickListener { sign(prepareHashesToSign()) }
 
@@ -78,7 +86,7 @@ class CommandListFragment : BaseFragment() {
         }
     }
 
-    private fun updateWalletsSlider(){
+    private fun updateWalletsSlider() {
         if (walletIndex == null) {
             val touchListener = object : Slider.OnSliderTouchListener {
                 override fun onStartTrackingTouch(slider: Slider) {

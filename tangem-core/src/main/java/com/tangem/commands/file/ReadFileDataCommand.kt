@@ -3,6 +3,7 @@ package com.tangem.commands.file
 import com.tangem.*
 import com.tangem.commands.Command
 import com.tangem.commands.CommandResponse
+import com.tangem.commands.WriteIssuerExtraDataCommand
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardStatus
 import com.tangem.common.CompletionResult
@@ -73,6 +74,7 @@ class ReadFileDataCommand(
     ) {
 
         if (dataSize != 0) {
+            Log.write(DelayMessage(dataSize, offset, WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE))
             session.viewDelegate.onDelay(
                     dataSize, offset, WriteFileDataCommand.SINGLE_WRITE_SIZE
             )

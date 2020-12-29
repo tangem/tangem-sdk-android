@@ -147,6 +147,7 @@ class WriteFileDataCommand(
     ) {
 
         if (mode == FileDataMode.WriteFile) {
+            Log.write(DelayMessage(fileData.data.size, offset, WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE))
             session.viewDelegate.onDelay(
                     fileData.data.size,
                     offset,
