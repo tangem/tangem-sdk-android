@@ -1,7 +1,6 @@
 package com.tangem.common.tlv
 
-import com.tangem.Log
-import com.tangem.TangemSdkError
+import com.tangem.*
 import com.tangem.commands.common.IssuerDataMode
 import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.common.card.EllipticCurve
@@ -25,8 +24,7 @@ import java.util.*
 class TlvDecoder(val tlvList: List<Tlv>) {
 
     init {
-        Log.v("TLV",
-            "Decoding data from TLV:\n${tlvList.joinToString("\n")}")
+        Log.write(TypedMessage(MessageType.RECEIVE_TLV, tlvList.joinToString("\n")))
     }
 
     /**
@@ -63,7 +61,7 @@ class TlvDecoder(val tlvList: List<Tlv>) {
                 if (logError) {
                     Log.e(this::class.simpleName!!, "TLV $tag not found")
                 } else {
-                    Log.v(this::class.simpleName!!, "TLV $tag not found, but it is not required")
+                    Log.i(this::class.simpleName!!, "TLV $tag not found, but it is not required")
                 }
                 throw TangemSdkError.DecodingFailedMissingTag()
             }
