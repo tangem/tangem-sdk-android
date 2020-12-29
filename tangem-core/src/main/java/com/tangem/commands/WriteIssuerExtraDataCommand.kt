@@ -108,6 +108,7 @@ class WriteIssuerExtraDataCommand(
     ) {
 
         if (mode == IssuerDataMode.WriteExtraData) {
+            Log.write(DelayMessage(issuerData.size, offset, SINGLE_WRITE_SIZE))
             session.viewDelegate.onDelay(
                 issuerData.size,
                 offset,
