@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clipToPadding="false"
+    android:paddingTop="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <include layout="@layout/scan_card" />
+
+        <include layout="@layout/sign" />
+
+        <include layout="@layout/wallet" />
+
+        <include layout="@layout/issuer_data" />
+
+        <include layout="@layout/issuer_ex_data" />
+
+        <include layout="@layout/user_data" />
+
+        <include layout="@layout/set_pin" />
+
+        <include layout="@layout/file_data" />
+
+    </LinearLayout>
+
+</ScrollView>
