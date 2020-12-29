@@ -4,9 +4,12 @@
     <color name="colorPrimaryDark">#027AFF</color>
     <color name="colorAccent">#027AFF</color>
 
-    <color name="grey">#4A4A4A</color>
-    <color name="blue">#0467D5</color>
-    <color name="red">#CF0303</color>
-    <color name="green">#049712</color>
+    <color name="grey">#9E9F9E</color>
+    <color name="blue">#ff0099cc</color>
+    <color name="dark_blue">#103DAF</color>
+    <color name="red">#ffff4444</color>
+    <color name="green">#FF00CC00</color>
+    <color name="dark_green">#048110</color>
     <color name="black">#000000</color>
+    <color name="orange">#977F04</color>
 </resources>

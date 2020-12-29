@@ -36,7 +36,7 @@ class NfcReader : CardReader {
         }
 
     override fun startSession() {
-        Log.i(this::class.simpleName!!, "NFC reader is starting NFC session")
+        Log.write(TypedMessage(MessageType.START_SESSION))
         nfcTag = null
         listener?.readingIsActive = true
     }
@@ -61,14 +61,15 @@ class NfcReader : CardReader {
     }
 
     private fun connect(isoDep: IsoDep) {
+        Log.write(TypedMessage(MessageType.CONNECT))
         isoDep.connect()
         isoDep.close()
         isoDep.connect()
         isoDep.timeout = 240000
-        Log.i(this::class.simpleName!!, "NFC tag is connected")
     }
 
     override fun stopSession(cancelled: Boolean) {
+        Log.write(TypedMessage(MessageType.STOP_SESSION))
         listener?.readingIsActive = false
         if (cancelled) {
             scope?.cancel(CancellationException(TangemSdkError.UserCancelled().customMessage))
@@ -100,10 +101,10 @@ class NfcReader : CardReader {
     }
 
     private fun transcieveAndLog(data:  ByteArray): ByteArray? {
-        Log.i(this::class.simpleName!!, "Sending data to the card, size is ${data.size}")
-        Log.v(this::class.simpleName!!, "Raw data that is to be sent to the card: ${data.toHexString()}")
+        Log.write(TypedMessage(MessageType.SEND_DATA, "[${data.size} bytes] ${data.toHexString()}"))
         val rawResponse = nfcTag?.isoDep?.transceive(data)
-        Log.v(this::class.simpleName!!, "Raw data that was received from the card: ${rawResponse?.toHexString()}")
+        Log.write(TypedMessage(MessageType.RECEIVE_DATA,
+            "[${rawResponse?.size ?: 0} bytes] ${rawResponse?.toHexString()}"))
         return rawResponse
     }
 
