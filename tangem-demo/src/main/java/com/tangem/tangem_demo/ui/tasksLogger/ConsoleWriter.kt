@@ -1,89 +1,47 @@
 package com.tangem.tangem_demo.ui.tasksLogger
 
-import com.tangem.*
-import com.tangem.commands.PinType
+import com.tangem.LogMessage
+import com.tangem.LoggerInterface
+import com.tangem.MessageType
 
 /**
 [REDACTED_AUTHOR]
  */
-enum class MessageType {
-    VERBOSE,
-    INFO,
-    ERROR,
-    VIEW_DELEGATE,
-}
-
-data class ConsoleMessage(val type: MessageType, val message: String)
-
 interface ConsoleWriter {
-    fun addLogMessage(message: ConsoleMessage)
+    fun write(message: LogMessage)
 }
 
 class SdkLogger(private val consoleWriter: ConsoleWriter) : LoggerInterface {
-    override fun i(logTag: String, message: String) {
-        consoleWriter.addLogMessage(ConsoleMessage(MessageType.INFO, message))
-    }
+    private var startTime: Long = 0
+    private var prevMessageStartTime: Long = 0
 
-    override fun e(logTag: String, message: String) {
-        consoleWriter.addLogMessage(ConsoleMessage(MessageType.ERROR, message))
-    }
+    override fun i(logTag: String, message: String) {}
+    override fun e(logTag: String, message: String) {}
+    override fun v(logTag: String, message: String) {}
 
-    override fun v(logTag: String, message: String) {
-        consoleWriter.addLogMessage(ConsoleMessage(MessageType.VERBOSE, message))
-    }
-}
+    override fun write(message: LogMessage) {
+        if (message.type == MessageType.VERBOSE) return
 
-class EmptyViewDelegate(private val consoleWriter: ConsoleWriter) : SessionViewDelegate {
-
-    override fun onSessionStarted(cardId: String?, message: Message?, enableHowTo: Boolean) {
-//        consoleWriter.addLogMessage(MessageType.VIEW_DELEGATE, "onSessionStarted")
-    }
-
-    override fun onSecurityDelay(ms: Int, totalDurationSeconds: Int) {
-        consoleWriter.addLogMessage(ConsoleMessage(MessageType.VIEW_DELEGATE, "SecDelay - ${totalDurationSeconds - ms}"))
-    }
-
-    override fun onDelay(total: Int, current: Int, step: Int) {
-        consoleWriter.addLogMessage(ConsoleMessage(MessageType.VIEW_DELEGATE, "Delay - total: $total, current: $current, step: $step"))
-    }
-
-    override fun onTagLost() {
-        consoleWriter.addLogMessage(ConsoleMessage(MessageType.ERROR, "onTagLost"))
-    }
-
-    override fun onTagConnected() {
-        consoleWriter.addLogMessage(ConsoleMessage(MessageType.VIEW_DELEGATE, "onTagConnected"))
-    }
-
-    override fun onWrongCard(wrongValueType: WrongValueType) {
-//        consoleWriter.addLogMessage(MessageType.VIEW_DELEGATE, "onWrongCard")
-    }
-
-    override fun onSessionStopped(message: Message?) {
-//        consoleWriter.addLogMessage(MessageType.VIEW_DELEGATE, "onSessionStopped")
-    }
-
-    override fun onError(error: TangemError) {
-        consoleWriter.addLogMessage(ConsoleMessage(MessageType.VIEW_DELEGATE, "onError"))
-    }
-
-    override fun onPinRequested(pinType: PinType, callback: (pin: String) -> Unit) {
-        consoleWriter.addLogMessage(ConsoleMessage(MessageType.VIEW_DELEGATE, "onPinRequested"))
-    }
-
-    override fun onPinChangeRequested(pinType: PinType, callback: (pin: String) -> Unit) {
-        consoleWriter.addLogMessage(ConsoleMessage(MessageType.VIEW_DELEGATE, "onPinChangeRequested"))
-    }
-
-    override fun setConfig(config: Config) {
-//        consoleWriter.addLogMessage(MessageType.VIEW_DELEGATE, "setConfig")
-    }
-
-    override fun setMessage(message: Message?) {
-//        consoleWriter.addLogMessage(MessageType.VIEW_DELEGATE, "setMessage")
-    }
-
-    override fun dismiss() {
-//        consoleWriter.addLogMessage(MessageType.VIEW_DELEGATE, "dismiss")
+        if (message.type == MessageType.STOP_SESSION) {
+            if (startTime == 0L && prevMessageStartTime == 0L) {
+                message.time = 0.toDouble()
+                message.duration = 0.toDouble()
+            } else {
+                message.time = (message.initTime - startTime).toDouble()
+                message.duration = (message.initTime - prevMessageStartTime).toDouble()
+            }
+            startTime = 0
+            prevMessageStartTime = 0
+        }
+        if (startTime != 0L) {
+            message.time = (message.initTime - startTime).toDouble()
+            message.duration = (message.initTime - prevMessageStartTime).toDouble()
+            prevMessageStartTime = message.initTime
+        }
+        if (message.type == MessageType.CONNECT) {
+            startTime = message.initTime
+            prevMessageStartTime = message.initTime
+        }
+        consoleWriter.write(message)
     }
 }

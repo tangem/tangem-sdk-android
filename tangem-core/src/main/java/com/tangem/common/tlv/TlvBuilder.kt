@@ -1,6 +1,8 @@
 package com.tangem.common.tlv
 
 import com.tangem.Log
+import com.tangem.MessageType
+import com.tangem.TypedMessage
 
 class TlvBuilder {
     private val tlvs = mutableListOf<Tlv>()
@@ -13,8 +15,7 @@ class TlvBuilder {
     }
 
     fun serialize(): ByteArray {
-        Log.v("TLV",
-                "Data encoded to TLVs:\n${tlvs.joinToString("\n")}")
+        Log.write(TypedMessage(MessageType.SEND_TLV, tlvs.joinToString("\n")))
         return tlvs.serialize()
     }
 

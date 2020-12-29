@@ -6,10 +6,8 @@ import android.widget.AdapterView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.sqldelight.android.AndroidSqliteDriver
-import com.tangem.Config
-import com.tangem.Database
-import com.tangem.Log
-import com.tangem.TangemSdk
+import com.tangem.*
+import com.tangem.commands.PinType
 import com.tangem.commands.file.FileSettings
 import com.tangem.commands.file.FileSettingsChange
 import com.tangem.common.CardValuesDbStorage
@@ -36,7 +34,7 @@ class SdkTaskSpinnerFragment : BaseFragment() {
 
     override fun initSdk(): TangemSdk {
         Log.addLogger(logger)
-        val viewDelegate = EmptyViewDelegate(rvConsoleAdapter)
+        val viewDelegate = EmptyViewDelegate()
         val activity = requireActivity()
         nfcManager = TangemSdk.initNfcManager(activity)
 
@@ -51,6 +49,16 @@ class SdkTaskSpinnerFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        (requireActivity() as? DemoActivity)?.listenPageChanges {
+            if (it == 1) {
+                Log.addLogger(logger)
+                handleCommandSelection(commandState.selectedType)
+            } else {
+                Log.removeLogger(logger)
+                commandState.reset()
+                nfcManager.reader.stopSession(true)
+            }
+        }
         initSpinner()
         initRecycler()
         btnClearConsole.setOnClickListener { rvConsoleAdapter.clear() }
@@ -62,7 +70,11 @@ class SdkTaskSpinnerFragment : BaseFragment() {
         postWorker {
             spCommandSelector.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    // close the session from a previous command
+                    if (commandState.isActive) nfcManager.reader.stopSession(true)
+
                     commandState.reset()
+                    btnClearConsole.performClick()
                     handleCommandSelection(CommandType.values()[position])
                 }
 
@@ -126,6 +138,11 @@ class SdkTaskSpinnerFragment : BaseFragment() {
     }
 
     override fun handleCommandResult(result: CompletionResult<*>) {
+        when (result) {
+            is CompletionResult.Failure -> {
+                if (result.error is TangemSdkError.UserCancelled) return
+            }
+        }
         commandState.isActive = false
     }
 
@@ -137,7 +154,6 @@ class SdkTaskSpinnerFragment : BaseFragment() {
     }
 
     override fun onDestroy() {
-        Log.removeLogger(logger)
         nfcManager.removeTagDiscoveredListener(tagDiscoveredListener)
         super.onDestroy()
     }
@@ -151,6 +167,22 @@ class SdkTaskSpinnerFragment : BaseFragment() {
             isActive = false
             canBeReactivated = true
         }
+    }
+
+    class EmptyViewDelegate : SessionViewDelegate {
+        override fun onSessionStarted(cardId: String?, message: Message?, enableHowTo: Boolean) {}
+        override fun onSecurityDelay(ms: Int, totalDurationSeconds: Int) {}
+        override fun onDelay(total: Int, current: Int, step: Int) {}
+        override fun onTagLost() {}
+        override fun onTagConnected() {}
+        override fun onWrongCard(wrongValueType: WrongValueType) {}
+        override fun onSessionStopped(message: Message?) {}
+        override fun onError(error: TangemError) {}
+        override fun onPinRequested(pinType: PinType, callback: (pin: String) -> Unit) {}
+        override fun onPinChangeRequested(pinType: PinType, callback: (pin: String) -> Unit) {}
+        override fun setConfig(config: Config) {}
+        override fun setMessage(message: Message?) {}
+        override fun dismiss() {}
     }
 }
 
