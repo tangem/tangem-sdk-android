@@ -1,9 +1,6 @@
 package com.tangem.commands
 
-import com.tangem.CardSession
-import com.tangem.FirmwareConstraints
-import com.tangem.SessionEnvironment
-import com.tangem.TangemSdkError
+import com.tangem.*
 import com.tangem.commands.common.DefaultIssuerDataVerifier
 import com.tangem.commands.common.IssuerDataMode
 import com.tangem.commands.common.IssuerDataToVerify
@@ -96,6 +93,7 @@ class ReadIssuerExtraDataCommand(
     ) {
 
         if (issuerDataSize != 0) {
+            Log.write(DelayMessage(issuerDataSize, offset, WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE))
             session.viewDelegate.onDelay(
                 issuerDataSize, offset, WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE
             )
