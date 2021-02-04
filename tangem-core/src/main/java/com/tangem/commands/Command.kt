@@ -87,12 +87,10 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                     if (session.environment.handleErrors) {
                         val error = mapError(session.environment.card, result.error)
                         if (error is TangemSdkError.Pin1Required) {
-                            session.environment.pin1 = null
                             requestPin(PinType.Pin1, session, callback)
                             return@transceiveApdu
                         }
                         if (error is TangemSdkError.Pin2OrCvcRequired) {
-                            session.environment.pin2 = null
                             requestPin(PinType.Pin2, session, callback)
                             return@transceiveApdu
                         }
@@ -204,7 +202,12 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
     private fun requestPin(pinType: PinType,
                            session: CardSession, callback: (result: CompletionResult<T>) -> Unit) {
         session.pause()
-        session.viewDelegate.onPinRequested(pinType) { pin ->
+        val isFirstAttempt = pinType.isWrongPinEntered(session.environment)
+        when (pinType) {
+            PinType.Pin1 -> session.environment.pin1 = null
+            PinType.Pin2 -> session.environment.pin2 = null
+        }
+        session.viewDelegate.onPinRequested(pinType, isFirstAttempt) { pin ->
             when (pinType) {
                 PinType.Pin1 -> session.environment.pin1 = PinCode(pin)
                 PinType.Pin2 -> session.environment.pin2 = PinCode(pin)
