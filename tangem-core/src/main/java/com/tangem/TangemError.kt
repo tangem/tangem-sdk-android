@@ -146,6 +146,9 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
     class MissingIssuerPubicKey : TangemSdkError(40010)
     class CardVerificationFailed : TangemSdkError(40011)
 
+    class WrongPin1 : TangemSdkError(40012)
+    class WrongPin2 : TangemSdkError(40013)
+
 
     //SDK Errors
     class UnknownError: TangemSdkError(50001)
