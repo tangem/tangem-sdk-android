@@ -68,7 +68,7 @@ class CheckWalletCommand(
                     if (verified) {
                         callback(CompletionResult.Success(result.data))
                     } else {
-                        callback(CompletionResult.Failure(TangemSdkError.VerificationFailed()))
+                        callback(CompletionResult.Failure(TangemSdkError.CardVerificationFailed()))
                     }
                 }
             }
