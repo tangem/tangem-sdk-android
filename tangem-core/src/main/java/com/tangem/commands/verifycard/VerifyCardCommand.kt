@@ -68,7 +68,7 @@ class VerifyCardCommand(private val onlineVerification: Boolean) : Command<Verif
                     val response = result.data
                     val verified = response.verify(cardPublicKey, challenge)
                     if (!verified) {
-                        callback(CompletionResult.Failure(TangemSdkError.VerificationFailed()))
+                        callback(CompletionResult.Failure(TangemSdkError.CardVerificationFailed()))
                         return@run
                     }
                     if (!onlineVerification || card.getType() != FirmwareType.Release) {
@@ -101,7 +101,7 @@ class VerifyCardCommand(private val onlineVerification: Boolean) : Command<Verif
                                 response.salt, response.cardSignature
                         )))
                     } else {
-                        callback(CompletionResult.Failure(TangemSdkError.VerificationFailed()))
+                        callback(CompletionResult.Failure(TangemSdkError.CardVerificationFailed()))
                     }
                 }
                 is Result.Failure -> {
