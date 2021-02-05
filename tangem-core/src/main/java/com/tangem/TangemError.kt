@@ -144,6 +144,8 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
     class OverwritingDataIsProhibited : TangemSdkError(40008)
     class DataCannotBeWritten : TangemSdkError(40009)
     class MissingIssuerPubicKey : TangemSdkError(40010)
+    class CardVerificationFailed : TangemSdkError(40011)
+
 
     //SDK Errors
     class UnknownError: TangemSdkError(50001)
