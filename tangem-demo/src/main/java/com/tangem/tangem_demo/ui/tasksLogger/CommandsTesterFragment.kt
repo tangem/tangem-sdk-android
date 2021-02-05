@@ -178,7 +178,7 @@ class SdkTaskSpinnerFragment : BaseFragment() {
         override fun onWrongCard(wrongValueType: WrongValueType) {}
         override fun onSessionStopped(message: Message?) {}
         override fun onError(error: TangemError) {}
-        override fun onPinRequested(pinType: PinType, callback: (pin: String) -> Unit) {}
+        override fun onPinRequested(pinType: PinType, isFirstAttempt: Boolean, callback: (pin: String) -> Unit) {}
         override fun onPinChangeRequested(pinType: PinType, callback: (pin: String) -> Unit) {}
         override fun setConfig(config: Config) {}
         override fun setMessage(message: Message?) {}
