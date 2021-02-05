@@ -136,3 +136,10 @@ enum class SetPinStatus {
         }
     }
 }
+
+fun PinType.isWrongPinEntered(environment: SessionEnvironment?): Boolean {
+    return when (this) {
+        PinType.Pin1 -> environment?.pin1?.isDefault == true
+        PinType.Pin2 -> environment?.pin2?.isDefault == true
+    }
+}
