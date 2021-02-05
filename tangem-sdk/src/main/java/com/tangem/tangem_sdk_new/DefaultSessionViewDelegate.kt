@@ -78,8 +78,8 @@ class DefaultSessionViewDelegate(
         postUI { readingDialog?.show(SessionViewDelegateState.Error(error)) }
     }
 
-    override fun onPinRequested(pinType: PinType, callback: (pin: String) -> Unit) {
-        postUI { readingDialog?.show(SessionViewDelegateState.PinRequested(pinType, callback)) }
+    override fun onPinRequested(pinType: PinType, isFirstAttempt: Boolean, callback: (pin: String) -> Unit) {
+        postUI { readingDialog?.show(SessionViewDelegateState.PinRequested(pinType,  isFirstAttempt, callback)) }
     }
 
     override fun onPinChangeRequested(pinType: PinType, callback: (pin: String) -> Unit) {
