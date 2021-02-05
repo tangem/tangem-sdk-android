@@ -46,6 +46,7 @@ fun TangemSdkError.localizedDescription(): Int {
         is TangemSdkError.OverwritingDataIsProhibited -> R.string.error_data_cannot_be_written
         is TangemSdkError.DataCannotBeWritten -> R.string.error_data_cannot_be_written
         is TangemSdkError.MissingIssuerPubicKey -> R.string.error_missing_issuer_public_key
+        is TangemSdkError.CardVerificationFailed -> R.string.error_card_verification_failed
         is TangemSdkError.UnknownError -> R.string.error_operation
         is TangemSdkError.UserCancelled -> R.string.error_user_cancelled
         is TangemSdkError.Busy -> R.string.error_busy
