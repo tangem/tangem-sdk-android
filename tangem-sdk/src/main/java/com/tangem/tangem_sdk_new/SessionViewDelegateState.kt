@@ -11,7 +11,10 @@ sealed class SessionViewDelegateState() {
     data class SecurityDelay(val ms: Int, val totalDurationSeconds: Int) : SessionViewDelegateState()
     data class Delay(val total: Int, val current: Int, val step: Int) : SessionViewDelegateState()
     data class Ready(val cardId: String?, val message: Message?) : SessionViewDelegateState()
-    data class PinRequested(val pinType: PinType, val callback: (pin: String) -> Unit) : SessionViewDelegateState()
+    data class PinRequested(
+            val pinType: PinType, val isFirstAttempt: Boolean, val callback: (pin: String) -> Unit
+    ) : SessionViewDelegateState()
+
     data class PinChangeRequested(val pinType: PinType, val callback: (pin: String) -> Unit) : SessionViewDelegateState()
     data class WrongCard(val wrongValueType: WrongValueType) : SessionViewDelegateState()
     object TagLost : SessionViewDelegateState()
