@@ -66,9 +66,9 @@
     <string name="error_cannot_be_depersonalized">This card cannot be depersonalized</string>
     <string name="error_already_created">A wallet has already been created</string>
     <string name="error_purge_prohibited">This card’s configuration does not allow you to erase the wallet</string>
-    <string name="error_pin1_cannot_be_changed">PIN1 Access Code cannot be changed</string>
-    <string name="error_pin2_cannot_be_changed">PIN2 Passcode cannot be changed</string>
-    <string name="error_pin1_cannot_be_default">PIN1 Access Code cannot be changed to the default value. Please create a new PIN1 Access Code.</string>
+    <string name="error_pin1_cannot_be_changed">Access code cannot be changed</string>
+    <string name="error_pin2_cannot_be_changed">Passcode cannot be changed</string>
+    <string name="error_pin1_cannot_be_default">Access code cannot be changed to the default value. Please create a new Access code.</string>
     <string name="error_no_remaining_signatures">You cannot sign data with this wallet because the card has reached its signature limit</string>
     <string name="error_empty_hashes">There is nothing to sign here</string>
     <string name="error_cannot_be_signed">This data cannot be signed</string>
@@ -92,7 +92,7 @@
     <string name="error_pin1_required">Access code is required</string>
     <string name="error_pin2_required">Passcode is required</string>
     <string name="error_invalid_response">Invalid Response</string>
-    <string name="error_old_firmware">The command requires a card with a different firmware version</string>
+
 
     <!-- This is a tutorial how to scan (tap) the card with the phone -->
     <string name="how_to_unknown_empty" translatable="false"></string>

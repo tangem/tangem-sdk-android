@@ -5,10 +5,12 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.tangem.TangemSdkError
 import com.tangem.commands.PinType
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.hideSoftKeyboard
+import com.tangem.tangem_sdk_new.extensions.localizedDescription
 import com.tangem.tangem_sdk_new.extensions.showSoftKeyboard
 import com.tangem.tangem_sdk_new.postUI
 
@@ -46,13 +48,18 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
                     PinType.Pin2 -> getString(R.string.pin2)
                 }
                 tilPinCode.hint = code
+                val error = when (params.pinType) {
+                    PinType.Pin1 -> TangemSdkError.WrongPin1().localizedDescription()
+                    PinType.Pin2 -> TangemSdkError.WrongPin1().localizedDescription()
+                }
+                if (!params.isFirstAttempt) tilPinCode.error = mainView.context.getText(error)
                 etPinCode.setText("")
                 postUI(1000) { etPinCode.showSoftKeyboard() }
                 btnContinue.setOnClickListener {
                     val pin = etPinCode.text.toString()
                     if (pin.isEmpty()) {
                         tilPinCode.error = mainView.context.getString(
-                            R.string.pin_enter, code
+                                R.string.pin_enter, code
                         )
                     } else {
                         tilPinCode.error = null

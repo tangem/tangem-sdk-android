@@ -60,5 +60,7 @@ fun TangemSdkError.localizedDescription(): Int {
         is TangemSdkError.CardReadWrongWallet -> R.string.error_card_read_wrong_wallet
         is TangemSdkError.WalletIndexExceedsMaxValue -> R.string.error_wallet_index_exceeds_max_value
         is TangemSdkError.WalletNotFound -> R.string.error_wallet_not_found
+        is TangemSdkError.WrongPin1 -> R.string.error_wrong_pin1
+        is TangemSdkError.WrongPin2 -> R.string.error_wrong_pin2
     }
 }
