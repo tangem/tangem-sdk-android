@@ -47,7 +47,7 @@ class CheckPinCommand : Command<CheckPinResponse>() {
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): CheckPinResponse {
         val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
         return CheckPinResponse(
-                isPin2Default = true
+                isPin2Default = environment.pin2?.isDefault == true
         )
     }
 
