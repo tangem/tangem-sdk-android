@@ -103,7 +103,7 @@ class MessageWidget(mainView: View) : BaseSessionDelegateStateWidget(mainView) {
 
     private fun getErrorMessage(error: TangemError): String {
         return if (error is TangemSdkError) {
-            getString(error.localizedDescription())
+            error.localizedDescription(mainView.context)
         } else {
             val localizedMessage = error.messageResId?.let { mainView.context.getString(it) }
             localizedMessage ?: error.customMessage
