@@ -36,11 +36,11 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
 
     class SerializeCommandError : TangemSdkError(20001)
     class DeserializeApduFailed : TangemSdkError(20002)
-    class EncodingFailedTypeMismatch : TangemSdkError(20003)
-    class EncodingFailed : TangemSdkError(20004)
-    class DecodingFailedMissingTag : TangemSdkError(20005)
-    class DecodingFailedTypeMismatch : TangemSdkError(20006)
-    class DecodingFailed : TangemSdkError(20007)
+    class EncodingFailedTypeMismatch(override var customMessage: String) : TangemSdkError(20003)
+    class EncodingFailed(override var customMessage: String) : TangemSdkError(20004)
+    class DecodingFailedMissingTag(override var customMessage: String) : TangemSdkError(20005)
+    class DecodingFailedTypeMismatch(override var customMessage: String) : TangemSdkError(20006)
+    class DecodingFailed(override var customMessage: String) : TangemSdkError(20007)
     class InvalidResponse : TangemSdkError(20008)
 
     /**
