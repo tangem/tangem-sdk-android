@@ -72,10 +72,8 @@
     <string name="error_no_remaining_signatures">You cannot sign data with this wallet because the card has reached its signature limit</string>
     <string name="error_empty_hashes">There is nothing to sign here</string>
     <string name="error_cannot_be_signed">This data cannot be signed</string>
-    <string name="error_card_is_empty">Please create a wallet to sign data</string>
     <string name="error_not_personalized">This card has not been personalized</string>
     <string name="error_not_activated">This card has not been activated</string>
-    <string name="error_purged">You cannot sign data with this wallet because the card has been purged</string>
     <string name="error_verification_failed">Data verification failed</string>
     <string name="error_card_verification_failed">Card verification failed</string>
     <string name="error_data_size_too_large">Data size exceeds the max limit of 512 bytes</string>

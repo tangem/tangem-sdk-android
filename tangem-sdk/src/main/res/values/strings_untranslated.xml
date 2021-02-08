@@ -8,5 +8,7 @@
     <string name="error_old_firmware" translatable="false">The command requires a card with a different firmware version</string>
     <string name="error_wrong_pin1" translatable="false">Wrong access code</string>
     <string name="error_wrong_pin2" translatable="false">Wrong passcode</string>
+    <string name="error_card_is_empty" translatable="false">The operation can’t be completed. There is no wallet on the card.</string>
+
 
 </resources>
