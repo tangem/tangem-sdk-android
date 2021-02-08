@@ -101,7 +101,10 @@ class VerifyCardCommand(private val onlineVerification: Boolean) : Command<Verif
                                 response.salt, response.cardSignature
                         )))
                     } else {
-                        callback(CompletionResult.Failure(TangemSdkError.CardVerificationFailed()))
+                        // Don't return failure if online verification failed
+                        callback(CompletionResult.Success(VerifyCardResponse(
+                                response.cardId, VerifyCardState.VerifiedOffline, null,
+                                response.salt, response.cardSignature)))
                     }
                 }
                 is Result.Failure -> {
