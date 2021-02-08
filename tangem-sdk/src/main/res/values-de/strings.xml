@@ -56,10 +56,8 @@
     <string name="error_no_remaining_signatures">Sie können die Daten mit diesem Wallet nicht signieren, weil die Karte die Unterschriftsbeschränkung erreicht hat</string>
     <string name="error_empty_hashes">Hier gibt es nichts zu signieren</string>
     <string name="error_cannot_be_signed">Diese Daten können nicht signiert werden</string>
-    <string name="error_card_is_empty">Bitte erstellen Sie ein Wallet um die Daten zu signieren</string>
     <string name="error_not_personalized">Diese Karte ist nicht personalisiert worden</string>
     <string name="error_not_activated">Diese Karte ist nicht aktiviert worden</string>
-    <string name="error_purged"> Sie können die Daten mit diesem Wallet nicht signieren, weil ist Karte gelöscht worden ist</string>
     <string name="error_verification_failed">Die Datenverifizierung ist fehlgeschlagen</string>
     <string name="error_card_verification_failed">Die Kartenverifizierung ist fehlgeschlagen</string>
     <string name="error_data_size_too_large">Die Datengröße überschreitet die Höchstgrenze von 512 B</string>
@@ -82,7 +80,7 @@
     <string name="how_to_known_antenna_is_here">Ihre NFC-Antenne ist hier</string>
     <string name="how_to_known_tap_card_to_the_back">Legen Sie Ihre Karte zu der Rückseite des Telefons an</string>
     <string name="how_to_known_tap_card_to_the_front">Legen Sie Ihre Karte zu der Vorderseite des Telefons an</string>
-    <string name="how_to_button">Anweisungen</string>
+    <string name="how_to_button">Anleitungen</string>
     <string name="how_to_got_it_button">Ok, verstanden!</string>
     <string name="how_to_try_other_way_button">Funktioniert immer noch nicht</string>
     <string name="how_to_show_again_button">Noch einmal anzeigen</string>

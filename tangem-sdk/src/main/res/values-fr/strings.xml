@@ -57,10 +57,8 @@
     <string name="error_no_remaining_signatures">Vous ne pouvez pas signer les données avec ce portefeuille car la carte a atteint sa limite de signatures </string>
     <string name="error_empty_hashes">Il n\'y a rien à signer ici </string>
     <string name="error_cannot_be_signed">Ces données ne peuvent pas être signées </string>
-    <string name="error_card_is_empty">Créez un portefeuille pour signer les données </string>
     <string name="error_not_personalized">Cette carte n\'a pas été personnalisée </string>
     <string name="error_not_activated">Cette carte n\'a pas été activée </string>
-    <string name="error_purged">Vous ne pouvez pas signer les données avec ce portefeuille car la carte a été effacée </string>
     <string name="error_verification_failed">Erreur de validation des données </string>
     <string name="error_card_verification_failed">Erreur de validation de la carte </string>
     <string name="error_data_size_too_large">La taille des données dépasse la limite maximale de 512 bytes </string>
