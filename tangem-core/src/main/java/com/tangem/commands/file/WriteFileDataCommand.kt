@@ -165,7 +165,7 @@ class WriteFileDataCommand(
                             return@transceive
                         }
                         FileDataMode.WriteFile -> {
-                            offset += WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE
+                            offset += SINGLE_WRITE_SIZE
                             if (offset >= fileData.data.size) {
                                 mode = FileDataMode.ConfirmWritingFile
                             }
