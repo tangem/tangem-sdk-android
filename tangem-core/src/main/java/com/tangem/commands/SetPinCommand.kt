@@ -88,7 +88,7 @@ class SetPinCommand(
         val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
 
         val status = SetPinStatus.fromStatusWord(apdu.statusWord)
-                ?: throw TangemSdkError.DecodingFailed()
+                ?: throw TangemSdkError.DecodingFailed("Failed to parse set pin status")
 
         val decoder = TlvDecoder(tlvData)
         return SetPinResponse(
