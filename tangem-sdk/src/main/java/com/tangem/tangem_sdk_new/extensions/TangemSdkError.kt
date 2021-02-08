@@ -32,12 +32,11 @@ fun TangemSdkError.localizedDescription(): Int {
         is TangemSdkError.NoRemainingSignatures -> R.string.error_no_remaining_signatures
         is TangemSdkError.EmptyHashes -> R.string.error_empty_hashes
         is TangemSdkError.HashSizeMustBeEqual -> R.string.error_cannot_be_signed
-        is TangemSdkError.CardIsEmpty -> R.string.error_card_is_empty
+        is TangemSdkError.CardIsEmpty, is TangemSdkError.CardIsPurged -> R.string.error_card_is_empty
         is TangemSdkError.SignHashesNotAvailable -> R.string.error_cannot_be_signed
         is TangemSdkError.TooManyHashesInOneTransaction -> R.string.error_cannot_be_signed
         is TangemSdkError.NotPersonalized -> R.string.error_not_personalized
         is TangemSdkError.NotActivated -> R.string.error_not_activated
-        is TangemSdkError.CardIsPurged -> R.string.error_purged
         is TangemSdkError.Pin2OrCvcRequired -> R.string.error_operation
         is TangemSdkError.VerificationFailed -> R.string.error_verification_failed
         is TangemSdkError.DataSizeTooLarge -> R.string.error_data_size_too_large
