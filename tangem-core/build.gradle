@@ -23,13 +23,13 @@ dependencies {
 
     // misc
     implementation 'com.google.code.gson:gson:2.8.6'
-    implementation "com.squareup.sqldelight:sqlite-driver:1.4.0"
+    implementation "com.squareup.sqldelight:sqlite-driver:1.4.3"
 
     //network
     implementation 'com.squareup.retrofit2:retrofit:2.8.1'
     implementation 'com.squareup.retrofit2:converter-moshi:2.6.0'
-    implementation 'com.squareup.moshi:moshi:1.9.2'
-    implementation "com.squareup.moshi:moshi-kotlin:1.9.2"
+    implementation 'com.squareup.moshi:moshi:1.9.3'
+    implementation "com.squareup.moshi:moshi-kotlin:1.9.3"
     kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.2")
     implementation 'com.squareup.okhttp3:logging-interceptor:4.2.2'
 
