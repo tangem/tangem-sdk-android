@@ -30,8 +30,9 @@ class TlvEncoder {
         if (value != null) {
             return Tlv(tag, encodeValue(tag, value))
         } else {
-            Log.e(this::class.simpleName!!, "Encoding error. Value for tag $tag is null")
-            throw TangemSdkError.EncodingFailed()
+            val error = TangemSdkError.EncodingFailed("Encoding error. Value for tag $tag is null")
+            Log.e(this::class.simpleName!!, error.customMessage)
+            throw error
         }
     }
 
@@ -129,9 +130,11 @@ class TlvEncoder {
 
     inline fun <reified T, reified ExpectedT> typeCheck(tag: TlvTag) {
         if (T::class != ExpectedT::class) {
-            Log.e(this::class.simpleName!!,
-                "Mapping error. Type for tag: $tag must be ${tag.valueType()}. It is ${T::class}")
-            throw TangemSdkError.EncodingFailedTypeMismatch()
+            val error = TangemSdkError.EncodingFailedTypeMismatch(
+                    "Mapping error. Type for tag: $tag must be ${tag.valueType()}. It is ${T::class}"
+            )
+            Log.e(this::class.simpleName!!, error.customMessage)
+            throw error
         }
     }
 }

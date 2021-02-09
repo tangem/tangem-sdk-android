@@ -1,19 +1,19 @@
 package com.tangem.tangem_sdk_new.extensions
 
+import android.content.Context
 import com.tangem.TangemSdkError
 import com.tangem.tangem_sdk_new.R
 
-fun TangemSdkError.localizedDescription(): Int {
-    return when (this) {
+fun TangemSdkError.localizedDescription(context: Context): String {
+    val resId = when (this) {
+        is TangemSdkError.EncodingFailedTypeMismatch, is TangemSdkError.EncodingFailed,
+        is TangemSdkError.DecodingFailedMissingTag, is TangemSdkError.DecodingFailedTypeMismatch,
+        is TangemSdkError.DecodingFailed -> null
+
         is TangemSdkError.TagLost -> R.string.error_tag_lost
         is TangemSdkError.ExtendedLengthNotSupported -> R.string.error_operation
         is TangemSdkError.SerializeCommandError -> R.string.error_operation
         is TangemSdkError.DeserializeApduFailed -> R.string.error_operation
-        is TangemSdkError.EncodingFailedTypeMismatch -> R.string.error_operation
-        is TangemSdkError.EncodingFailed -> R.string.error_operation
-        is TangemSdkError.DecodingFailedMissingTag -> R.string.error_operation
-        is TangemSdkError.DecodingFailedTypeMismatch -> R.string.error_operation
-        is TangemSdkError.DecodingFailed -> R.string.error_operation
         is TangemSdkError.UnknownStatus -> R.string.error_operation
         is TangemSdkError.ErrorProcessingCommand -> R.string.error_operation
         is TangemSdkError.InvalidState -> R.string.error_operation
@@ -61,5 +61,10 @@ fun TangemSdkError.localizedDescription(): Int {
         is TangemSdkError.WalletNotFound -> R.string.error_wallet_not_found
         is TangemSdkError.WrongPin1 -> R.string.error_wrong_pin1
         is TangemSdkError.WrongPin2 -> R.string.error_wrong_pin2
+    }
+    return if (resId != null) {
+        context.getString(resId)
+    } else {
+        this.customMessage
     }
 }
