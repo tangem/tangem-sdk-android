@@ -148,6 +148,7 @@ class IndeterminateProgressState(mainView: View) : BaseProgressState(mainView) {
 }
 
 class SecurityDelayState(mainView: View) : BaseProgressState(mainView) {
+
     override fun setState(params: SessionViewDelegateState) {
         val delay = params as? SessionViewDelegateState.SecurityDelay ?: return
 
@@ -156,38 +157,50 @@ class SecurityDelayState(mainView: View) : BaseProgressState(mainView) {
         showViews(progressBar, tvProgressValue)
 
         if (delay.totalDurationSeconds == 0) {
-            invertDelay(delay)
+            countDown(delay)
         } else {
-            if (progressBar.progressMax != delay.totalDurationSeconds.toFloat()) {
-                progressBar.progressMax = delay.totalDurationSeconds.toFloat()
-            }
-            val progress = delay.totalDurationSeconds - delay.ms
-            setProgress(progress.toFloat())
-            tvProgressValue.text = delay.ms.div(100).toString()
+            countUp(delay)
         }
     }
 
-    private fun invertDelay(delay: SessionViewDelegateState.SecurityDelay) {
-        val msDiv100 = delay.ms.div(100)
-        if (msDiv100 == 0 && !progressBar.externalLogicOfProgressIsInActiveState) {
-            setProgress(progressBar.progressMax)
-            showViews(progressBar, doneView)
-            return
-        }
+    private fun countDown(delay: SessionViewDelegateState.SecurityDelay) {
+        val seconds = delay.ms.div(100)
 
-        if (!progressBar.externalLogicOfProgressIsInActiveState) {
-            progressBar.externalLogicOfProgressIsInActiveState = true
-            progressBar.progressMax = msDiv100.toFloat()
-        } else if (msDiv100 == 0) {
-            progressBar.externalLogicOfProgressIsInActiveState = false
-            hideViews(tvProgressValue)
-            showViews(progressBar, doneView)
-            setProgress(progressBar.progressMax)
-            return
+        when {
+            !isCountDownInActiveState() && seconds == 0 -> {
+                // handle the single tick of starting count down SD
+                setProgress(progressBar.progressMax)
+                showViews(progressBar, doneView)
+                return
+            }
+            !isCountDownInActiveState() -> {
+                setProgress(0f, false)
+                progressBar.isCountDownActive = true
+                progressBar.progressMax = seconds.toFloat()
+            }
+            isCountDownFinished(seconds) -> {
+                progressBar.isCountDownActive = false
+                hideViews(tvProgressValue)
+                showViews(progressBar, doneView)
+                setProgress(progressBar.progressMax)
+            }
         }
+        if (isCountDownFinished(seconds)) return
 
-        val progress = progressBar.progressMax - msDiv100
+        val progress = progressBar.progressMax - seconds
         setProgress(progress)
+        tvProgressValue.text = delay.ms.div(100).toString()
+    }
+
+    private fun isCountDownInActiveState(): Boolean = progressBar.isCountDownActive
+    private fun isCountDownFinished(seconds: Int): Boolean = isCountDownInActiveState() && seconds == 0
+
+    private fun countUp(delay: SessionViewDelegateState.SecurityDelay) {
+        if (progressBar.progressMax != delay.totalDurationSeconds.toFloat()) {
+            progressBar.progressMax = delay.totalDurationSeconds.toFloat()
+        }
+        val progress = delay.totalDurationSeconds - delay.ms
+        setProgress(progress.toFloat())
         tvProgressValue.text = delay.ms.div(100).toString()
     }
 }
