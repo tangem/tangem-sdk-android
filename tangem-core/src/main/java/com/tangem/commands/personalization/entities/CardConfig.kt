@@ -63,7 +63,7 @@ class CardConfig(
         val checkPIN3OnCard: Boolean,
 
         val createWallet: Boolean,
-        val walletsCount: Int = 1,
+        val walletsCount: Int,
 
         val cardData: CardData,
         val ndefRecords: List<NdefRecord>
