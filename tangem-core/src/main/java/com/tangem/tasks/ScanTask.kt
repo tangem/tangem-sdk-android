@@ -10,6 +10,7 @@ import com.tangem.commands.common.card.CardDeserializer
 import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.common.card.FirmwareVersion
 import com.tangem.commands.common.card.masks.Product
+import com.tangem.commands.common.card.masks.Settings
 import com.tangem.common.CompletionResult
 
 /**
@@ -50,7 +51,8 @@ class ScanTask(
 //        } else {
 
         val firmwareNumber = card.firmwareVersion
-        if (firmwareNumber != FirmwareVersion.zero && firmwareNumber > FirmwareVersion(1, 19)) { // >1.19 cards without SD on CheckPin
+        if (firmwareNumber != FirmwareVersion.zero && firmwareNumber > FirmwareVersion(1, 19) // >1.19 cards without SD on CheckPin
+                && card.settingsMask?.contains(Settings.ProhibitDefaultPIN1) != true) {
             CheckPinCommand().run(session) { result ->
                 when (result) {
                     is CompletionResult.Success -> {
