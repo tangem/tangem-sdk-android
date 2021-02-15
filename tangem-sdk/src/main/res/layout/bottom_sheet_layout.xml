@@ -38,7 +38,7 @@
 
             <include
                 android:id="@+id/csPinCode"
-                layout="@layout/pin_code_enter_layout"
+                layout="@layout/pin_code_request_layout"
                 android:visibility="gone" />
 
             <FrameLayout
