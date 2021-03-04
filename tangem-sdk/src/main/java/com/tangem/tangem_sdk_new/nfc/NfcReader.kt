@@ -8,7 +8,6 @@ import com.tangem.*
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.ResponseApdu
-import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
@@ -32,20 +31,23 @@ class NfcReader : CardReader {
     private var nfcTag: NfcTag? = null
         set(value) {
             field = value
+            Log.nfc { "Received tag: ${value?.type}" }
             scope?.launch { tag.send(value?.type) }
         }
 
     override fun startSession() {
-        Log.write(TypedMessage(MessageType.START_SESSION))
+        Log.nfc { "Start NFC session" }
         nfcTag = null
         listener?.readingIsActive = true
     }
 
     override fun pauseSession() {
+        Log.nfc { "Pause NFC session" }
         listener?.readingIsActive = false
     }
 
     override fun resumeSession() {
+        Log.nfc { "Resume NFC session" }
         listener?.readingIsActive = true
     }
 
@@ -61,7 +63,7 @@ class NfcReader : CardReader {
     }
 
     private fun connect(isoDep: IsoDep) {
-        Log.write(TypedMessage(MessageType.CONNECT))
+        Log.nfc { "Connect" }
         isoDep.connect()
         isoDep.close()
         isoDep.connect()
@@ -69,7 +71,7 @@ class NfcReader : CardReader {
     }
 
     override fun stopSession(cancelled: Boolean) {
-        Log.write(TypedMessage(MessageType.STOP_SESSION))
+        Log.nfc { "Stop NFC session" }
         listener?.readingIsActive = false
         if (cancelled) {
             scope?.cancel(CancellationException(TangemSdkError.UserCancelled().customMessage))
@@ -87,29 +89,37 @@ class NfcReader : CardReader {
 
     override fun transceiveApdu(apdu: CommandApdu, callback: (response: CompletionResult<ResponseApdu>) -> Unit) {
         val rawResponse: ByteArray? = try {
+            Log.apdu { apdu.toString() }
             transcieveAndLog(apdu.apduData)
         } catch (exception: TagLostException) {
+            Log.nfc { "Error transceiving data: ${exception.localizedMessage}" }
             callback.invoke(CompletionResult.Failure(TangemSdkError.TagLost()))
             nfcTag = null
             return
         } catch (exception: Exception) {
+            Log.nfc { "Error transceiving data: ${exception.localizedMessage}" }
             tryHandleNfcError(exception, callback)
             nfcTag = null
             return
         }
-        rawResponse?.let { callback.invoke(CompletionResult.Success(ResponseApdu(it))) }
+        rawResponse?.let {
+            val rApdu = ResponseApdu(it)
+            Log.apdu { rApdu.toString() }
+            callback.invoke(CompletionResult.Success(rApdu))
+        }
     }
 
-    private fun transcieveAndLog(data:  ByteArray): ByteArray? {
-        Log.write(TypedMessage(MessageType.SEND_DATA, "[${data.size} bytes] ${data.toHexString()}"))
+    private fun transcieveAndLog(data: ByteArray): ByteArray? {
+        Log.nfc { "Transcieve invoked" }
+        val startTime = System.currentTimeMillis()
         val rawResponse = nfcTag?.isoDep?.transceive(data)
-        Log.write(TypedMessage(MessageType.RECEIVE_DATA,
-            "[${rawResponse?.size ?: 0} bytes] ${rawResponse?.toHexString()}"))
+        val finishTime = System.currentTimeMillis()
+        Log.command { "Command execution time is: ${finishTime - startTime} ms" }
+        Log.nfc { "Success response from card received" }
         return rawResponse
     }
 
     private fun tryHandleNfcError(exception: Exception, callback: (response: CompletionResult<ResponseApdu>) -> Unit) {
-        Log.i(this::class.simpleName!!, exception.localizedMessage ?: "Error tranceiving data")
         // The messages of errors can vary on different Android devices,
         // but we try to identify it by parsing the message.
         if (exception.message?.contains("length") == true) {
@@ -126,10 +136,11 @@ class NfcReader : CardReader {
         val response = SlixTagReader().transceive(nfcV)
         when (response) {
             is SlixReadResult.Failure -> {
-                Log.e(this::class.simpleName!!, "${response.exception.message}")
+                Log.nfc { "Read Slix tag error: ${response.exception.message}" }
                 callback.invoke(CompletionResult.Failure(TangemSdkError.ErrorProcessingCommand()))
             }
             is SlixReadResult.Success -> {
+                Log.nfc { "Read Slix tag succeed" }
                 callback.invoke(CompletionResult.Success(ResponseApdu(response.data)))
             }
         }
