@@ -50,7 +50,7 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
                 tilPinCode.hint = code
                 val error = when (params.pinType) {
                     PinType.Pin1 -> TangemSdkError.WrongPin1().localizedDescription(mainView.context)
-                    PinType.Pin2 -> TangemSdkError.WrongPin1().localizedDescription(mainView.context)
+                    PinType.Pin2 -> TangemSdkError.WrongPin2().localizedDescription(mainView.context)
                 }
                 if (!params.isFirstAttempt) tilPinCode.error = error
                 etPinCode.setText("")

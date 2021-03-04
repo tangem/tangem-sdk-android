@@ -157,15 +157,17 @@ class SecurityDelayState(mainView: View) : BaseProgressState(mainView) {
         showViews(progressBar, tvProgressValue)
 
         if (delay.totalDurationSeconds == 0) {
-            countDown(delay)
+            pin1FailsSd(delay)
         } else {
-            countUp(delay)
+            otherSd(delay)
         }
     }
 
-    private fun countDown(delay: SessionViewDelegateState.SecurityDelay) {
-        val seconds = delay.ms.div(100)
+    private fun pin1FailsSd(delay: SessionViewDelegateState.SecurityDelay) {
+        fun isCountDownInActiveState(): Boolean = progressBar.isCountDownActive
+        fun isCountDownFinished(seconds: Int): Boolean = isCountDownInActiveState() && seconds == 0
 
+        val seconds = delay.ms.div(100)
         when {
             !isCountDownInActiveState() && seconds == 0 -> {
                 // handle the single tick of starting count down SD
@@ -192,16 +194,20 @@ class SecurityDelayState(mainView: View) : BaseProgressState(mainView) {
         tvProgressValue.text = delay.ms.div(100).toString()
     }
 
-    private fun isCountDownInActiveState(): Boolean = progressBar.isCountDownActive
-    private fun isCountDownFinished(seconds: Int): Boolean = isCountDownInActiveState() && seconds == 0
-
-    private fun countUp(delay: SessionViewDelegateState.SecurityDelay) {
-        if (progressBar.progressMax != delay.totalDurationSeconds.toFloat()) {
-            progressBar.progressMax = delay.totalDurationSeconds.toFloat()
+    private fun otherSd(delay: SessionViewDelegateState.SecurityDelay) {
+        val seconds = delay.ms.div(100).toFloat()
+        if (seconds == 0f) {
+            progressBar.isCountDownActive = false
+            hideViews(tvProgressValue)
+            showViews(progressBar, doneView)
+            setProgress(progressBar.progressMax)
+        } else if (!progressBar.isCountDownActive) {
+            progressBar.isCountDownActive = true
+            progressBar.progressMax = seconds
+            setProgress(0f, false)
         }
-        val progress = delay.totalDurationSeconds - delay.ms
-        setProgress(progress.toFloat())
-        tvProgressValue.text = delay.ms.div(100).toString()
+        setProgress(progressBar.progressMax - seconds)
+        tvProgressValue.text = seconds.toInt().toString()
     }
 }
 
