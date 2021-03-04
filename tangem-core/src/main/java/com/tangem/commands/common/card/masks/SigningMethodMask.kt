@@ -12,6 +12,10 @@ data class SigningMethodMask(val rawValue: Int) {
             rawValue and (0x01 shl signingMethod.code) != 0
         }
     }
+
+    override fun toString(): String {
+        return SigningMethod.values().filter { contains(it) }.joinToString(", ")
+    }
 }
 
 enum class SigningMethod(val code: Int) {
