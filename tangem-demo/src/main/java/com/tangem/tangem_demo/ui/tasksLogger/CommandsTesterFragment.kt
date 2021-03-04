@@ -27,13 +27,11 @@ import kotlinx.android.synthetic.main.fg_commands_tester.*
 class SdkTaskSpinnerFragment : BaseFragment() {
 
     private val rvConsoleAdapter = RvConsoleAdapter()
-    private val logger = SdkLogger(rvConsoleAdapter)
 
     private lateinit var nfcManager: NfcManager
     private var commandState = ActiveCommandState()
 
     override fun initSdk(): TangemSdk {
-        Log.addLogger(logger)
         val viewDelegate = EmptyViewDelegate()
         val activity = requireActivity()
         nfcManager = TangemSdk.initNfcManager(activity)
@@ -49,12 +47,13 @@ class SdkTaskSpinnerFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        Log.addLogger(rvConsoleAdapter)
         (requireActivity() as? DemoActivity)?.listenPageChanges {
             if (it == 1) {
-                Log.addLogger(logger)
+                Log.addLogger(rvConsoleAdapter)
                 handleCommandSelection(commandState.selectedType)
             } else {
-                Log.removeLogger(logger)
+                Log.removeLogger(rvConsoleAdapter)
                 commandState.reset()
                 nfcManager.reader.stopSession(true)
             }

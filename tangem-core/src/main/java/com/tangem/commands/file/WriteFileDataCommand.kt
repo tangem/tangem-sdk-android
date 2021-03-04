@@ -3,7 +3,6 @@ package com.tangem.commands.file
 import com.tangem.*
 import com.tangem.commands.Command
 import com.tangem.commands.CommandResponse
-import com.tangem.commands.WriteIssuerExtraDataCommand
 import com.tangem.commands.common.DefaultIssuerDataVerifier
 import com.tangem.commands.common.IssuerDataToVerify
 import com.tangem.commands.common.IssuerDataVerifier
@@ -145,14 +144,8 @@ class WriteFileDataCommand(
             session: CardSession,
             callback: (result: CompletionResult<WriteFileDataResponse>) -> Unit
     ) {
-
         if (mode == FileDataMode.WriteFile) {
-            Log.write(DelayMessage(fileData.data.size, offset, WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE))
-            session.viewDelegate.onDelay(
-                    fileData.data.size,
-                    offset,
-                    SINGLE_WRITE_SIZE
-            )
+            session.viewDelegate.onDelay(fileData.data.size, offset, SINGLE_WRITE_SIZE)
         }
         transceive(session) { result ->
             when (result) {
