@@ -99,7 +99,7 @@ class WriteIssuerExtraDataCommand(
         val secondData = IssuerDataToVerify(cardId, issuerData, issuerDataCounter)
 
         return verify(publicKey, startingSignature, firstData) &&
-                verify(publicKey, finalizingSignature, secondData)
+            verify(publicKey, finalizingSignature, secondData)
     }
 
     private fun writeIssuerData(
@@ -108,12 +108,7 @@ class WriteIssuerExtraDataCommand(
     ) {
 
         if (mode == IssuerDataMode.WriteExtraData) {
-            Log.write(DelayMessage(issuerData.size, offset, SINGLE_WRITE_SIZE))
-            session.viewDelegate.onDelay(
-                issuerData.size,
-                offset,
-                SINGLE_WRITE_SIZE
-            )
+            session.viewDelegate.onDelay(issuerData.size, offset, SINGLE_WRITE_SIZE)
         }
         transceive(session) { result ->
             when (result) {

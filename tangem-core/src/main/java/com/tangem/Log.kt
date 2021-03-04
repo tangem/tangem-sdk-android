@@ -2,101 +2,88 @@ package com.tangem
 
 object Log {
 
-    private val loggerList: MutableList<LoggerInterface> = mutableListOf()
+    private val loggers: MutableList<TangemSdkLogger> = mutableListOf()
+    private val logLevels: MutableList<Level> = mutableListOf()
 
-    fun i(logTag: String, message: String) {
-        loggerList.forEach { it.i(logTag, message) }
-        write(TypedMessage(MessageType.INFO, (message)))
+    fun setLevels(levels: List<Level>) {
+        logLevels.clear()
+        logLevels.addAll(levels)
     }
 
-    fun e(logTag: String, message: String) {
-        loggerList.forEach { it.e(logTag, message) }
-        write(TypedMessage(MessageType.ERROR, (message)))
+    fun command(message: () -> String) {
+        logInternal(message, Level.Command)
     }
 
-    fun v(logTag: String, message: String) {
-        loggerList.forEach { it.v(logTag, message) }
-        write(TypedMessage(MessageType.VERBOSE, message))
+    fun tlv(message: () -> String) {
+        logInternal(message, Level.Tlv)
     }
 
-    fun write(message: LogMessage) {
-        loggerList.forEach { it.write(message) }
+    fun apdu(message: () -> String) {
+        logInternal(message, Level.Apdu)
     }
 
-    fun addLogger(logger: LoggerInterface) {
-        loggerList.add(logger)
+    fun session(message: () -> String) {
+        logInternal(message, Level.Session)
     }
 
-    fun removeLogger(logger: LoggerInterface) {
-        loggerList.remove(logger)
-    }
-}
-
-/**
- * Interface for logging events within the SDK.
- *
- * It allows to use Android logger or to choose another.
- */
-interface LoggerInterface {
-    fun i(logTag: String, message: String)
-    fun e(logTag: String, message: String)
-    fun v(logTag: String, message: String)
-    fun write(message: LogMessage)
-}
-
-enum class MessageType {
-    START_SESSION,
-    CONNECT,
-    STOP_SESSION,
-    VERBOSE,
-    INFO,
-    ERROR,
-    SEND_DATA,
-    RECEIVE_DATA,
-    SEND_TLV,
-    RECEIVE_TLV,
-    SECURITY_DELAY,
-    DELAY,
-}
-
-interface LogMessage {
-    val type: MessageType
-    val message: String
-    val initTime: Long
-    var time: Double
-    var duration: Double
-}
-
-abstract class BaseLogMessage(
-    override val type: MessageType,
-    override val initTime: Long = System.nanoTime(),
-    override var time: Double = 0.toDouble(),
-    override var duration: Double = 0.toDouble()
-) : LogMessage {
-    override fun toString(): String {
-        val name = if (message.isEmpty()) type.name else "${type.name}:"
-        val prefix = "${time.toSeconds()}s (${duration.toSeconds()}s) $name"
-        return "$prefix ${messageAtNewString()}"
+    fun nfc(message: () -> String) {
+        logInternal(message, Level.Nfc)
     }
 
-    private fun messageAtNewString(): String = when (type) {
-        MessageType.SEND_TLV, MessageType.RECEIVE_TLV,
-        MessageType.SEND_DATA, MessageType.RECEIVE_DATA -> "\n$message"
-        else -> message
+    fun warning(message: () -> String) {
+        logInternal(message, Level.Warning)
     }
 
-    private fun Double.toSeconds(): String {
-        return if (this == 0.toDouble()) "0"
-        else String.format("%.3f", this / 1000000000)
+    fun error(message: () -> String) {
+        logInternal(message, Level.Error)
+    }
+
+    fun debug(message: () -> String) {
+        logInternal(message, Level.Debug)
+    }
+
+    fun network(message: () -> String) {
+        logInternal(message, Level.Network)
+    }
+
+    fun view(message: () -> String) {
+        logInternal(message, Level.View)
+    }
+
+    private fun logInternal(message: () -> String, level: Level) {
+        if (loggers.isEmpty()) return
+
+        loggers.forEach { it.log(message, level) }
+    }
+
+    fun addLogger(logger: TangemSdkLogger) {
+        loggers.add(logger)
+    }
+
+    fun removeLogger(logger: TangemSdkLogger) {
+        loggers.remove(logger)
+    }
+
+    enum class Level(val prefix: String) {
+        Command(""),
+        Tlv(""),
+        Apdu(""),
+        Session("CardSession"),
+        Nfc("NFCReader"),
+        Warning(""),
+        Error(""),
+        Debug(""),
+        Network(""),
+        View("ViewDelegate"),
+    }
+
+    enum class Config(val levels: List<Level>) {
+        Release(listOf(Level.Error)),
+        Debug(listOf(Level.Warning, Level.Error)),
+        Verbose(Level.values().toList()),
     }
 }
 
-class TypedMessage(type: MessageType, override val message: String = "") : BaseLogMessage(type)
-
-class DelayMessage(total: Int, current: Int, step: Int) : BaseLogMessage(MessageType.DELAY) {
-    override val message: String = "total: $total, current: $current, step: $step"
-}
-
-class SecurityDelayMessage(remaining: Int, totalDurationSeconds: Int) : BaseLogMessage(MessageType.DELAY) {
-    override val message: String = "remaining: $remaining, total: $totalDurationSeconds"
+interface TangemSdkLogger {
+    fun log(message: ()->String, level: Log.Level)
 }

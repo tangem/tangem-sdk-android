@@ -8,6 +8,9 @@ import com.tangem.commands.PinType
 import com.tangem.tangem_sdk_new.nfc.NfcAntennaLocationProvider
 import com.tangem.tangem_sdk_new.nfc.NfcManager
 import com.tangem.tangem_sdk_new.ui.NfcSessionDialog
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * Default implementation of [SessionViewDelegate].
@@ -24,6 +27,7 @@ class DefaultSessionViewDelegate(
     private var readingDialog: NfcSessionDialog? = null
 
     override fun onSessionStarted(cardId: String?, message: Message?, enableHowTo: Boolean) {
+        Log.view { "Session started" }
         postUI {
             if (readingDialog == null) createReadingDialog(activity)
             readingDialog?.enableHowTo(enableHowTo)
@@ -45,33 +49,38 @@ class DefaultSessionViewDelegate(
         }
     }
 
+    override fun onSessionStopped(message: Message?) {
+        Log.view { "Session stopped" }
+        postUI { readingDialog?.show(SessionViewDelegateState.Success(message)) }
+    }
+
     override fun onSecurityDelay(ms: Int, totalDurationSeconds: Int) {
+        Log.view { "Showing security delay: $ms, $totalDurationSeconds" }
         postUI {
             readingDialog?.show(SessionViewDelegateState.SecurityDelay(ms, totalDurationSeconds))
         }
     }
 
     override fun onDelay(total: Int, current: Int, step: Int) {
+        Log.view { "Showing delay" }
         postUI {
             readingDialog?.show(SessionViewDelegateState.Delay(total, current, step))
         }
     }
 
     override fun onTagLost() {
+        Log.view { "Tag lost" }
         postUI { readingDialog?.show(SessionViewDelegateState.TagLost) }
-
     }
 
     override fun onTagConnected() {
+        Log.view { "Tag connected" }
         postUI { readingDialog?.show(SessionViewDelegateState.TagConnected) }
     }
 
     override fun onWrongCard(wrongValueType: WrongValueType) {
+        Log.view { "Wrong card detected" }
         postUI { readingDialog?.show(SessionViewDelegateState.WrongCard(wrongValueType)) }
-    }
-
-    override fun onSessionStopped(message: Message?) {
-        postUI { readingDialog?.show(SessionViewDelegateState.Success(message)) }
     }
 
     override fun onError(error: TangemError) {
@@ -79,10 +88,12 @@ class DefaultSessionViewDelegate(
     }
 
     override fun onPinRequested(pinType: PinType, isFirstAttempt: Boolean, callback: (pin: String) -> Unit) {
-        postUI { readingDialog?.show(SessionViewDelegateState.PinRequested(pinType,  isFirstAttempt, callback)) }
+        Log.view { "Showing pin request with type: $pinType" }
+        postUI { readingDialog?.show(SessionViewDelegateState.PinRequested(pinType, isFirstAttempt, callback)) }
     }
 
     override fun onPinChangeRequested(pinType: PinType, callback: (pin: String) -> Unit) {
+        Log.view { "Showing pin change request with type: $pinType" }
         postUI {
             if (readingDialog == null) {
                 createReadingDialog(activity)
@@ -97,6 +108,7 @@ class DefaultSessionViewDelegate(
     }
 
     override fun setMessage(message: Message?) {
+        Log.view { "Set message with header: ${message?.header}, and body: ${message?.body}" }
         readingDialog?.setMessage(message)
     }
 
@@ -112,24 +124,21 @@ class DefaultSessionViewDelegate(
     }
 
     companion object {
-        fun createLogger(): LoggerInterface {
-            return object : LoggerInterface {
-                override fun i(logTag: String, message: String) {
-                    android.util.Log.i(logTag, message)
-                }
+        fun createLogger(): TangemSdkLogger {
+            return object : TangemSdkLogger {
+                private val tag = "TangemSdkLogger"
+                private val dateFormatter: DateFormat = SimpleDateFormat("HH:mm:ss:SSS", Locale.getDefault())
 
-                override fun e(logTag: String, message: String) {
-                    android.util.Log.e(logTag, message)
-                }
+                override fun log(message: () -> String, level: Log.Level) {
+                    if (!Log.Config.Verbose.levels.contains(level)) return
 
-                override fun v(logTag: String, message: String) {
-                    android.util.Log.v(logTag, message)
-                }
-
-                override fun write(message: LogMessage) {
-                    when (message.type) {
-                        MessageType.ERROR -> e(message.type.name, message.message)
-                        else -> i(message.type.name, message.message)
+                    val prefixDelimiter = if (level.prefix.isEmpty()) "" else ": "
+                    val logMessage = "${dateFormatter.format(Date())}: ${level.prefix}$prefixDelimiter${message()}"
+                    when (level) {
+                        Log.Level.Debug -> android.util.Log.d(tag, logMessage)
+                        Log.Level.Warning -> android.util.Log.w(tag, logMessage)
+                        Log.Level.Error -> android.util.Log.e(tag, logMessage)
+                        else -> android.util.Log.v(tag, logMessage)
                     }
                 }
             }

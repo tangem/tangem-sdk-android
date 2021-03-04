@@ -42,6 +42,7 @@ class CommandListFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        Log.setLevels(Log.Level.values().toList())
         (requireActivity() as? DemoActivity)?.listenPageChanges {
             if (it == 0) Log.addLogger(logger)
             else Log.removeLogger(logger)
