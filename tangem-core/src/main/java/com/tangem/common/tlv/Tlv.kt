@@ -62,8 +62,8 @@ class Tlv {
                 try {
                     tlv = tlvFromBytes(stream)
                     if (tlv != null) tlvList.add(tlv)
-                } catch (e: IOException) {
-                    Log.e(this::class.java.simpleName,"TLVError: " + e.message)
+                } catch (ex: IOException) {
+                    Log.warning { "Failed to read tag from stream: ${ex.localizedMessage}" }
                     if (nfcV) break else return null
                 }
 
@@ -73,9 +73,11 @@ class Tlv {
     }
 
     override fun toString(): String {
-        return "${this.tag} [${String.format("0x%02x", tagRaw)}:${value.size}]: ${value.toHexString()}"
+        val tagName = this.tag.toString().capitalize()
+        val tagFullName = "TAG_$tagName"
+        val size = String.format("%02d", value.size)
+        return "$tagFullName [0x$tagRaw:$size]: ${value.toHexString()}"
     }
-
 }
 
 fun List<Tlv>.serialize(): ByteArray =

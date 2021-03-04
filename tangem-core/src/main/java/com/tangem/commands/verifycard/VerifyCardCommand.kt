@@ -1,6 +1,7 @@
 package com.tangem.commands.verifycard
 
 import com.tangem.CardSession
+import com.tangem.Log
 import com.tangem.SessionEnvironment
 import com.tangem.TangemSdkError
 import com.tangem.commands.Command
@@ -108,6 +109,7 @@ class VerifyCardCommand(private val onlineVerification: Boolean) : Command<Verif
                     }
                 }
                 is Result.Failure -> {
+                    result.error?.localizedMessage?.let { Log.network { it } }
                     callback(CompletionResult.Success(VerifyCardResponse(
                             response.cardId, VerifyCardState.VerifiedOffline, null,
                             response.salt, response.cardSignature)))

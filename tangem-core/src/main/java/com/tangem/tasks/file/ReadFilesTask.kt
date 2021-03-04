@@ -2,6 +2,7 @@ package com.tangem.tasks.file
 
 import com.tangem.CardSession
 import com.tangem.CardSessionRunnable
+import com.tangem.Log
 import com.tangem.TangemSdkError
 import com.tangem.commands.CommandResponse
 import com.tangem.commands.file.FileSettings
@@ -71,6 +72,7 @@ class ReadFilesTask(
             when (result) {
                 is CompletionResult.Failure -> {
                     if (result.error is TangemSdkError.FileNotFound) {
+                        Log.debug { "Receive files not found error" }
                         callback(CompletionResult.Success(ReadFilesResponse(files)))
                     } else {
                         callback(CompletionResult.Failure(result.error))
