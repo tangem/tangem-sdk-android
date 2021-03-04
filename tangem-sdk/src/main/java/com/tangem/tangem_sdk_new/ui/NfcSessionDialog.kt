@@ -188,6 +188,10 @@ class NfcSessionDialog(
 
     private fun onTagConnected(state: SessionViewDelegateState) {
         Log.i(tag, "onTagConnected")
+        if (currentState is SessionViewDelegateState.PinRequested) {
+            return
+        }
+
         setStateAndShow(state, progressStateWidget, messageWidget)
     }
 
