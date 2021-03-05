@@ -3,12 +3,6 @@ package com.tangem
 object Log {
 
     private val loggers: MutableList<TangemSdkLogger> = mutableListOf()
-    private val logLevels: MutableList<Level> = mutableListOf()
-
-    fun setLevels(levels: List<Level>) {
-        logLevels.clear()
-        logLevels.addAll(levels)
-    }
 
     fun command(message: () -> String) {
         logInternal(message, Level.Command)
