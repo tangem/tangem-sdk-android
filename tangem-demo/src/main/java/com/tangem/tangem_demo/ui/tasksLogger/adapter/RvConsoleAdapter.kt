@@ -6,21 +6,20 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-import com.tangem.LogMessage
-import com.tangem.MessageType
+import com.tangem.Log
+import com.tangem.TangemSdkLogger
 import com.tangem.tangem_demo.R
 import com.tangem.tangem_demo.postUi
-import com.tangem.tangem_demo.ui.tasksLogger.ConsoleWriter
 
 /**
 [REDACTED_AUTHOR]
  */
-class RvConsoleAdapter : RecyclerView.Adapter<ConsoleVH>(), ConsoleWriter {
-    private val itemList = mutableListOf<LogMessage>()
+class RvConsoleAdapter : RecyclerView.Adapter<ConsoleVH>(), TangemSdkLogger {
+    private val itemList = mutableListOf<ConsoleMessage>()
 
     var onItemCountChanged: ((Int) -> Unit)? = null
 
-    fun addItem(item: LogMessage) {
+    fun addItem(item: ConsoleMessage) {
         postUi {
             itemList.add(item)
             notifyDataSetChanged()
@@ -49,40 +48,32 @@ class RvConsoleAdapter : RecyclerView.Adapter<ConsoleVH>(), ConsoleWriter {
 
     override fun getItemCount(): Int = itemList.size
 
-    override fun write(message: LogMessage) {
-        addItem(message)
+    override fun log(message: () -> String, level: Log.Level) {
+        addItem(ConsoleMessage(message, level))
     }
 }
+
+data class ConsoleMessage(val message: () -> String, val level: Log.Level)
 
 class ConsoleVH(view: View) : RecyclerView.ViewHolder(view) {
 
     private val tvLogMessage = view.findViewById<TextView>(R.id.tvLogMessage)
     private val bottomSeparator = view.findViewById<View>(R.id.bottomSeparator)
 
-    fun bindData(data: LogMessage) {
+    fun bindData(data: ConsoleMessage) {
         val context = tvLogMessage.context
-        showSeparator(data.type)
-        tvLogMessage.setTextColor(ContextCompat.getColor(context, getColorResource(data.type)))
-        tvLogMessage.text = "$data"
+        bottomSeparator.visibility = View.GONE
+
+        tvLogMessage.setTextColor(ContextCompat.getColor(context, getColorResource(data.level)))
+        tvLogMessage.text = data.message()
     }
 
-    private fun showSeparator(type: MessageType) {
-        when (type) {
-            MessageType.STOP_SESSION -> bottomSeparator.visibility = View.VISIBLE
-            else -> {
-                bottomSeparator.visibility = View.GONE
-            }
-        }
-    }
-
-    private fun getColorResource(type: MessageType): Int {
-        return when (type) {
-            MessageType.ERROR -> R.color.red
-            MessageType.SEND_DATA -> R.color.blue
-            MessageType.RECEIVE_DATA -> R.color.green
-            MessageType.SEND_TLV -> R.color.dark_blue
-            MessageType.RECEIVE_TLV -> R.color.dark_green
-            MessageType.DELAY, MessageType.SECURITY_DELAY -> R.color.green
+    private fun getColorResource(level: Log.Level): Int {
+        return when (level) {
+            Log.Level.Debug -> R.color.grey
+            Log.Level.Warning -> R.color.orange
+            Log.Level.Error -> R.color.red
+            Log.Level.Tlv -> R.color.blue
             else -> R.color.black
         }
     }

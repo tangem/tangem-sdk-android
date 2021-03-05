@@ -23,10 +23,6 @@ import java.util.*
  */
 class TlvDecoder(val tlvList: List<Tlv>) {
 
-    init {
-        Log.write(TypedMessage(MessageType.RECEIVE_TLV, tlvList.joinToString("\n")))
-    }
-
     /**
      * Finds [Tlv] by its [TlvTag].
      * Returns null if [Tlv] is not found, otherwise converts its value to [T].
@@ -36,11 +32,11 @@ class TlvDecoder(val tlvList: List<Tlv>) {
      * @return Value converted to a nullable type [T].
      */
     inline fun <reified T> decodeOptional(tag: TlvTag): T? =
-            try {
-                decode<T>(tag, false)
-            } catch (exception: TangemSdkError.DecodingFailedMissingTag) {
-                null
-            }
+        try {
+            decode<T>(tag, false)
+        } catch (exception: TangemSdkError.DecodingFailedMissingTag) {
+            null
+        }
 
     /**
      * Finds [Tlv] by its [TlvTag].
@@ -54,19 +50,20 @@ class TlvDecoder(val tlvList: List<Tlv>) {
      * @throws [TangemSdkError.DecodingFailedMissingTag] exception if no [Tlv] is found by the Tag.
      */
     inline fun <reified T> decode(tag: TlvTag, logError: Boolean = true): T {
-        val tlvValue: ByteArray = tlvList.find { it.tag == tag }?.value
-                ?: if (tag.valueType() == TlvValueType.BoolValue && T::class == Boolean::class) {
-                    return false as T
+        val tlv = tlvList.find { it.tag == tag }
+        val tlvValue: ByteArray = tlv?.value
+            ?: if (tag.valueType() == TlvValueType.BoolValue && T::class == Boolean::class) {
+                logTlv(Tlv(tag, "00".toByteArray()), false)
+                return false as T
+            } else {
+                if (logError) {
+                    Log.error { "TLV $tag not found" }
                 } else {
-                    if (logError) {
-                        Log.e(this::class.simpleName!!, "TLV $tag not found")
-                    } else {
-                        Log.i(this::class.simpleName!!, "TLV $tag not found, but it is not required")
-                    }
-                    throw TangemSdkError.DecodingFailedMissingTag("TLV $tag not found")
+                    Log.warning { "TLV $tag not found, but it is not required" }
                 }
-
-        return when (tag.valueType()) {
+                throw TangemSdkError.DecodingFailedMissingTag("TLV $tag not found")
+            }
+        val decodedValue = when (tag.valueType()) {
             TlvValueType.HexString, TlvValueType.HexStringToHash -> {
                 typeCheck<T, String>(tag)
                 tlvValue.toHexString() as T
@@ -80,7 +77,7 @@ class TlvDecoder(val tlvList: List<Tlv>) {
                 try {
                     tlvValue.toInt() as T
                 } catch (exception: IllegalArgumentException) {
-                    Log.e(this::class.simpleName!!, exception.message ?: "")
+                    logException(tag, tlvValue.toHexString(), exception)
                     throw TangemSdkError.DecodingFailed(provideDecodingFailedMessage(tag))
                 }
             }
@@ -100,8 +97,6 @@ class TlvDecoder(val tlvList: List<Tlv>) {
                     logException(tag, tlvValue.toUtf8(), exception)
                     throw TangemSdkError.DecodingFailed(provideDecodingFailedMessage(tag))
                 }
-
-
             }
             TlvValueType.DateTime -> {
                 typeCheck<T, Date>(tag)
@@ -166,22 +161,31 @@ class TlvDecoder(val tlvList: List<Tlv>) {
                 }
             }
         }
+        logTlv(tlv, decodedValue)
+        return decodedValue
+    }
+
+    fun <T> logTlv(tlv: Tlv, value: T) {
+        var tlvString = tlv.toString()
+        if (tlv.tag.valueType() != TlvValueType.ByteArray && tlv.tag.valueType() != TlvValueType.HexString) {
+            tlvString += " ($value)"
+        }
+        Log.tlv { tlvString }
     }
 
     fun provideDecodingFailedMessage(tag: TlvTag): String =
-            "Decoding failed. Failed to convert $tag to ${tag.valueType()}"
+        "Decoding failed. Failed to convert $tag to ${tag.valueType()}"
 
     fun logException(tag: TlvTag, value: String, exception: Exception) {
-        Log.e(this::class.simpleName!!,
-                "Unknown ${tag.name} with value of: $value, \n${exception.message}")
+        Log.error { "Unknown ${tag.name} with value of: $value, \n${exception.message}" }
     }
 
     inline fun <reified T, reified ExpectedT> typeCheck(tag: TlvTag) {
         if (T::class != ExpectedT::class) {
             val error = TangemSdkError.DecodingFailedTypeMismatch(
-                    "Mapping error. Type for tag: $tag must be ${tag.valueType()}. It is ${T::class}"
+                "Mapping error. Type for tag: $tag must be ${tag.valueType()}. It is ${T::class}"
             )
-            Log.e(this::class.simpleName!!, error.customMessage)
+            Log.error { error.customMessage }
             throw error
         }
     }
