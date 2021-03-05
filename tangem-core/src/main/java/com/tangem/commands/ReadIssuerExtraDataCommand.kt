@@ -93,7 +93,6 @@ class ReadIssuerExtraDataCommand(
     ) {
 
         if (issuerDataSize != 0) {
-            Log.write(DelayMessage(issuerDataSize, offset, WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE))
             session.viewDelegate.onDelay(
                 issuerDataSize, offset, WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE
             )
