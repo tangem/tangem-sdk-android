@@ -8,6 +8,10 @@ package com.tangem.commands.common.card.masks
  */
 data class SettingsMask(val rawValue: Int) {
     fun contains(settings: Settings): Boolean = (rawValue and settings.code) != 0
+
+    override fun toString(): String {
+        return Settings.values().filter { contains(it) }.joinToString(", ")
+    }
 }
 
 enum class Settings(val code: Int) {

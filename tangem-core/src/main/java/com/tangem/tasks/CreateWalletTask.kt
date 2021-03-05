@@ -87,6 +87,7 @@ class CreateWalletTask(
                 is CompletionResult.Failure -> {
                     val error = createWalletResult.error
                     if (shouldCreateAtAnyIndex) {
+                        Log.error { "Failure while creating wallet. ${error.customMessage}" }
                         when (error) {
                             is TangemSdkError.AlreadyCreated, is TangemSdkError.CardIsPurged, is TangemSdkError.InvalidState -> {
                                 val nextIndex = updateWalletIndexToNext(index, card.walletsCount).guard {
@@ -98,7 +99,7 @@ class CreateWalletTask(
                                 return@run
                             }
                             else -> {
-                                Log.e(this::class.java.simpleName, "Default error case while creating wallet $error")
+                                Log.error { "Default error case while creating wallet $error" }
                             }
                         }
                     }

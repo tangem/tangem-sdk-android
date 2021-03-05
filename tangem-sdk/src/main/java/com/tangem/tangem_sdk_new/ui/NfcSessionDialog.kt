@@ -27,7 +27,6 @@ class NfcSessionDialog(
     private val nfcManager: NfcManager,
     private val nfcLocationProvider: NfcLocationProvider,
 ) : BottomSheetDialog(context) {
-    private val tag = this::class.java.simpleName
 
     private lateinit var taskContainer: ViewGroup
     private lateinit var howToContainer: ViewGroup
@@ -107,37 +106,31 @@ class NfcSessionDialog(
     }
 
     private fun onReady(state: SessionViewDelegateState.Ready) {
-        Log.i(tag, "onReady")
         setStateAndShow(state, headerWidget, touchCardWidget, messageWidget)
     }
 
     private fun onSuccess(state: SessionViewDelegateState.Success) {
-        Log.i(tag, "onSuccess")
         setStateAndShow(state, progressStateWidget, messageWidget)
         performHapticFeedback()
         postUI(1000) { cancel() }
     }
 
     private fun onError(state: SessionViewDelegateState.Error) {
-        Log.i(tag, "onError")
         setStateAndShow(state, progressStateWidget, messageWidget)
         performHapticFeedback()
     }
 
     private fun onSecurityDelay(state: SessionViewDelegateState.SecurityDelay) {
-        Log.i(tag, "onSecurityDelay: ${state.ms}, ${state.totalDurationSeconds}")
         setStateAndShow(state, progressStateWidget, messageWidget)
         performHapticFeedback()
     }
 
     private fun onDelay(state: SessionViewDelegateState.Delay) {
-        Log.i(tag, "onDelay")
         setStateAndShow(state, progressStateWidget, messageWidget)
         performHapticFeedback()
     }
 
     private fun onPinRequested(state: SessionViewDelegateState.PinRequested) {
-        Log.i(tag, "onPinRequested")
         enableBottomSheetAnimation()
         if (pinCodeRequestWidget.canExpand()) {
             headerWidget.isFullScreenMode = true
@@ -159,7 +152,6 @@ class NfcSessionDialog(
     }
 
     private fun onPinChangeRequested(state: SessionViewDelegateState.PinChangeRequested) {
-        Log.i(tag, "onPinChangeRequested")
         enableBottomSheetAnimation()
         behavior.state = BottomSheetBehavior.STATE_EXPANDED
 
@@ -177,7 +169,6 @@ class NfcSessionDialog(
     }
 
     private fun onTagLost(state: SessionViewDelegateState) {
-        Log.i(tag, "onTagLost")
         if (currentState is SessionViewDelegateState.Success ||
             currentState is SessionViewDelegateState.PinRequested ||
             currentState is SessionViewDelegateState.PinChangeRequested) {
@@ -187,7 +178,6 @@ class NfcSessionDialog(
     }
 
     private fun onTagConnected(state: SessionViewDelegateState) {
-        Log.i(tag, "onTagConnected")
         if (currentState is SessionViewDelegateState.PinRequested) {
             return
         }
@@ -196,7 +186,6 @@ class NfcSessionDialog(
     }
 
     private fun onWrongCard(state: SessionViewDelegateState) {
-        Log.i(tag, "onWrongCard")
         if (currentState !is SessionViewDelegateState.WrongCard) {
             performHapticFeedback()
             setStateAndShow(state, progressStateWidget, messageWidget)
@@ -209,6 +198,7 @@ class NfcSessionDialog(
     }
 
     private fun howToTap(state: SessionViewDelegateState) {
+        Log.view { "Showing how to tap" }
         enableBottomSheetAnimation()
         behavior.state = BottomSheetBehavior.STATE_EXPANDED
         taskContainer.hide()
