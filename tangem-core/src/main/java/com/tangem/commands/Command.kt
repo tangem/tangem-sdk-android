@@ -45,7 +45,10 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
     override val requiresPin2: Boolean = false
 
     override fun run(session: CardSession, callback: (result: CompletionResult<T>) -> Unit) {
-        Log.i("Command", "Initializing ${this::class.java.simpleName}")
+        val commandLog = "Send command: ${this::class.java.simpleName}"
+        Log.command { "=".repeat(commandLog.length) }
+        Log.command { commandLog }
+        Log.command { "=".repeat(commandLog.length) }
         transceive(session, callback)
     }
 
@@ -73,7 +76,9 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
     }
 
     private fun transceiveInternal(session: CardSession, callback: (result: CompletionResult<T>) -> Unit) {
+        Log.apdu { "------ Serialize command -------" }
         val apdu = serialize(session.environment)
+        Log.apdu { "--------------------------------" }
         transceiveApdu(apdu, session) { result ->
             when (result) {
                 is CompletionResult.Failure -> {
@@ -102,7 +107,9 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                 }
                 is CompletionResult.Success -> {
                     try {
+                        Log.apdu { "------- Deserialize response -------" }
                         val response = deserialize(session.environment, result.data)
+                        Log.apdu { "------------------------------------" }
                         callback(CompletionResult.Success(response))
                     } catch (error: TangemSdkError) {
                         callback(CompletionResult.Failure(error))
@@ -113,12 +120,10 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
     }
 
     private fun transceiveApdu(
-            apdu: CommandApdu,
-            session: CardSession,
-            callback: (result: CompletionResult<ResponseApdu>) -> Unit
+        apdu: CommandApdu,
+        session: CardSession,
+        callback: (result: CompletionResult<ResponseApdu>) -> Unit
     ) {
-        Log.i(this::class.simpleName!!, "transieve: ${Instruction.byCode(apdu.ins)}")
-
         session.send(apdu) { result ->
             when (result) {
                 is CompletionResult.Success -> {
@@ -140,23 +145,21 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                                     session.environment.card?.pauseBeforePin2 ?: 0
                                 )
                             }
-                            Log.write(SecurityDelayMessage(remainingTime ?: 0,
-                                session.environment.card?.pauseBeforePin2 ?: 0))
                             transceiveApdu(apdu, session, callback)
                         }
                         StatusWord.NeedEncryption -> {
-                            Log.i(this::class.simpleName!!, "Establishing encryption")
                             when (session.environment.encryptionMode) {
                                 EncryptionMode.NONE -> {
+                                    Log.session { "Try change to fast encryption" }
                                     session.environment.encryptionKey = null
                                     session.environment.encryptionMode = EncryptionMode.FAST
                                 }
                                 EncryptionMode.FAST -> {
+                                    Log.session { "Try change to strong encryption" }
                                     session.environment.encryptionKey = null
                                     session.environment.encryptionMode = EncryptionMode.STRONG
                                 }
                                 EncryptionMode.STRONG -> {
-                                    Log.e(this::class.simpleName!!, "Encryption doesn't work")
                                     callback(CompletionResult.Failure(TangemSdkError.NeedEncryption()))
                                     return@send
                                 }
@@ -176,7 +179,6 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                 is CompletionResult.Failure ->
                     if (result.error is TangemSdkError.TagLost) {
                         session.viewDelegate.onTagLost()
-                        Log.e(this::class.java.simpleName, "Tag lost")
                     } else {
                         callback(CompletionResult.Failure(result.error))
                     }
@@ -190,7 +192,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
      * @return Remaining security delay in milliseconds.
      */
     private fun deserializeSecurityDelay(
-            responseApdu: ResponseApdu
+        responseApdu: ResponseApdu
     ): Int? {
         val tlv = responseApdu.getTlvData()
         return tlv?.find { it.tag == TlvTag.Pause }?.value?.toInt()
@@ -204,6 +206,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
             PinType.Pin1 -> session.environment.pin1 = null
             PinType.Pin2 -> session.environment.pin2 = null
         }
+        Log.session { "Request pin of type: $pinType" }
         session.viewDelegate.onPinRequested(pinType, isFirstAttempt) { pin ->
             when (pinType) {
                 PinType.Pin1 -> session.environment.pin1 = PinCode(pin)
