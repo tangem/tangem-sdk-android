@@ -2,6 +2,7 @@ package com.tangem.commands
 
 import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.commands.common.card.masks.SigningMethod
+import com.tangem.commands.common.card.masks.WalletSetting
 import com.tangem.commands.common.card.masks.WalletSettingsMask
 import com.tangem.commands.common.card.masks.WalletSettingsMaskBuilder
 
@@ -22,10 +23,10 @@ class WalletConfig(
     fun getSettingsMask(): WalletSettingsMask {
         val builder = WalletSettingsMaskBuilder()
         if (isReusable) {
-            builder.add(WalletSettingsMask.isReusable)
+            builder.add(WalletSetting.IsReusable)
         }
         if (prohibitPurgeWallet) {
-            builder.add(WalletSettingsMask.prohibitPurgeWallet)
+            builder.add(WalletSetting.ProhibitPurgeWallet)
         }
         return builder.build()
     }
