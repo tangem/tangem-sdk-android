@@ -145,7 +145,6 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                                     session.environment.card?.pauseBeforePin2 ?: 0
                                 )
                             }
-//                            Log.write(SecurityDelayMessage(remainingTime ?: 0, session.environment.card?.pauseBeforePin2 ?: 0))
                             transceiveApdu(apdu, session, callback)
                         }
                         StatusWord.NeedEncryption -> {
@@ -161,7 +160,6 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                                     session.environment.encryptionMode = EncryptionMode.STRONG
                                 }
                                 EncryptionMode.STRONG -> {
-//                                    Log.e(this::class.simpleName!!, "Encryption doesn't work")
                                     callback(CompletionResult.Failure(TangemSdkError.NeedEncryption()))
                                     return@send
                                 }
@@ -181,7 +179,6 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                 is CompletionResult.Failure ->
                     if (result.error is TangemSdkError.TagLost) {
                         session.viewDelegate.onTagLost()
-//                        Log.e(this::class.java.simpleName, "Tag lost")
                     } else {
                         callback(CompletionResult.Failure(result.error))
                     }
