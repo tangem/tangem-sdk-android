@@ -3,6 +3,7 @@ package com.tangem.common.apdu
 import com.tangem.EncryptionMode
 import com.tangem.common.extensions.calculateCrc16
 import com.tangem.common.extensions.toByteArray
+import com.tangem.common.extensions.toHexString
 import com.tangem.crypto.encrypt
 import java.io.ByteArrayOutputStream
 
@@ -47,7 +48,7 @@ class CommandApdu(
 
 
     private fun toBytes(): ByteArray {
-        val data =  tlvs
+        val data = tlvs
 
         val byteStream = ByteArrayOutputStream()
         byteStream.write(cla)
@@ -81,6 +82,12 @@ class CommandApdu(
         val encryptedData = dataToEncrypt.encrypt(encryptionKey)
 
         return CommandApdu(ins, encryptedData, encryptionMode.code, p2, le, cla)
+    }
+
+    override fun toString(): String {
+        val instruction = Instruction.byCode(ins)
+        val lc = apduData.size.toByte()
+        return "SEND --> $instruction [${apduData.size + 4}  bytes]: $cla $ins $p1 $p2 $lc ${apduData.toHexString()}"
     }
 
     companion object {
