@@ -1,6 +1,7 @@
 package com.tangem.commands
 
 import com.tangem.CardSession
+import com.tangem.Log
 import com.tangem.SessionEnvironment
 import com.tangem.TangemSdkError
 import com.tangem.common.CompletionResult
@@ -46,9 +47,8 @@ class CheckPinCommand : Command<CheckPinResponse>() {
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): CheckPinResponse {
         val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-        return CheckPinResponse(
-                isPin2Default = environment.pin2?.isDefault == true
-        )
+        Log.apdu { "Nothing to deserialize" }
+        return CheckPinResponse(isPin2Default = environment.pin2?.isDefault == true)
     }
 
 }

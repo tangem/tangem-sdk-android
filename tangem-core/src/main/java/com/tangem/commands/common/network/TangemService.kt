@@ -14,9 +14,7 @@ class TangemService {
             cardPublicKey: String
     ): Result<CardVerifyAndGetInfo.Response> {
         val requestsBody = CardVerifyAndGetInfo.Request()
-        requestsBody.requests =
-                listOf(CardVerifyAndGetInfo.Request.Item(cardId, cardPublicKey))
-
+        requestsBody.requests = listOf(CardVerifyAndGetInfo.Request.Item(cardId, cardPublicKey))
         return performRequest { tangemApi.getCardVerifyAndGetInfo(requestsBody) }
     }
 
