@@ -61,7 +61,7 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener {
     }
 
     override fun onTagDiscovered(tag: Tag?) {
-        Log.i(this::class.simpleName!!, "NFC tag is discovered")
+        Log.nfc { "NFC tag is discovered" }
         onTagDiscoveredListeners.forEach { it.invoke() }
         if (readingIsActive) reader.onTagDiscovered(tag) else ignoreTag(tag)
     }
@@ -105,7 +105,7 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener {
     }
 
     private fun ignoreTag(tag: Tag?) {
-        Log.i(this::class.simpleName!!, "NFC tag is ignored")
+        Log.nfc { "NFC tag is ignored" }
         if (Build.VERSION.SDK_INT >= 24) {
             nfcAdapter?.ignore(tag, 1500, null, null)
         }
