@@ -184,7 +184,7 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
     /**
      * This error is returned when the [Command] requires a different firmware version than that of the card.
      */
-    class FirmwareNotSupported : TangemSdkError(50007)
+    class FirmwareNotSupported : TangemSdkError(50008)
 
 }
 
