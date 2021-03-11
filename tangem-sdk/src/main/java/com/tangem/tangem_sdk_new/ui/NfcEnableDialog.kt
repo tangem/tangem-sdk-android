@@ -1,6 +1,7 @@
 package com.tangem.tangem_sdk_new.ui
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.provider.Settings
 import androidx.appcompat.app.AlertDialog
@@ -13,12 +14,18 @@ class NfcEnableDialog {
     fun show(activity: Activity) {
         val builder = AlertDialog.Builder(activity)
         builder.setCancelable(false)
-                .setIcon(R.drawable.ic_action_nfc_gray)
-                .setTitle(R.string.dialog_nfc_enable_title)
-                .setMessage(R.string.dialog_nfc_enable_text)
-                .setPositiveButton(R.string.common_ok)
-                { _, _ -> activity.startActivity(Intent(Settings.ACTION_NFC_SETTINGS)) }
-                .setNegativeButton(R.string.common_cancel) { dialog, _ -> dialog.cancel() }
+            .setIcon(R.drawable.ic_action_nfc_gray)
+            .setTitle(R.string.dialog_nfc_enable_title)
+            .setMessage(R.string.dialog_nfc_enable_text)
+            .setPositiveButton(R.string.common_ok)
+            { _, _ ->
+                try {
+                    activity.startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
+                } catch (ex: ActivityNotFoundException) {
+                    print(ex.toString())
+                }
+            }
+            .setNegativeButton(R.string.common_cancel) { dialog, _ -> dialog.cancel() }
         dialog = builder.create()
         dialog?.show()
     }
