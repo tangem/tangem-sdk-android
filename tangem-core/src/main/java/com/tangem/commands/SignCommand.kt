@@ -46,12 +46,14 @@ class SignCommand(
     private val hashesChunked = hashes.asList().chunked(CHUNK_SIZE)
     private var currentChunk = 0
     private val responses = mutableListOf<SignResponse>()
+    private var environment: SessionEnvironment? = null
 
     override fun run(session: CardSession, callback: (result: CompletionResult<SignResponse>) -> Unit) {
         sign(session, callback)
     }
 
     private fun sign(session: CardSession, callback: (result: CompletionResult<SignResponse>) -> Unit) {
+        environment = session.environment
         transceive(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
@@ -84,6 +86,9 @@ class SignCommand(
         if (card.firmwareVersion < FirmwareConstraints.DeprecationVersions.walletRemainingSignatures &&
             card.walletRemainingSignatures == 0) {
             return TangemSdkError.NoRemainingSignatures()
+        }
+        if (card.firmwareVersion < FirmwareConstraints.AvailabilityVersions.pauseBeforePin2) {
+            environment?.enableMissingSecurityDelay = true
         }
         if (card.signingMethods?.contains(SigningMethod.SignHash) != true) {
             return TangemSdkError.SignHashesNotAvailable()
