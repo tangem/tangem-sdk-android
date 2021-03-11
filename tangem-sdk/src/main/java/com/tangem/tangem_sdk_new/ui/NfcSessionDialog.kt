@@ -305,7 +305,3 @@ class NfcSessionDialog(
         super.dismiss()
     }
 }
-
-//class TrickyTimer(val timer: Timer) {
-//
-//}
