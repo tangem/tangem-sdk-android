@@ -188,7 +188,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
         }
     }
 
-    @Deprecated("Used only for card with firmware version lower than 1.21")
+    @Deprecated("Used to fix lack of security delay on cards with firmware version below 1.21")
     private fun showMissingSecurityDelay(session: CardSession) {
         if (!session.environment.enableMissingSecurityDelay) return
 
