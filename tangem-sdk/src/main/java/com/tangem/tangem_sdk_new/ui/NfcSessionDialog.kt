@@ -233,7 +233,7 @@ class NfcSessionDialog(
     }
 
     private fun setStateAndShow(state: SessionViewDelegateState, vararg views: StateWidget<SessionViewDelegateState>) {
-        handleTrickySecurityDelayTimer(state)
+        handleStateForTrickySecurityDelay(state)
         views.forEach { it.setState(state) }
 
         val toHide = stateWidgets.filter { !views.contains(it) && it.isVisible() }
@@ -257,22 +257,22 @@ class NfcSessionDialog(
     }
 
     @Deprecated("Used to fix lack of security delay on cards with firmware version below 1.21")
-    private fun handleTrickySecurityDelayTimer(state: SessionViewDelegateState) {
-        if (trickySecurityDelayTimer != null) {
-            when (state) {
-                SessionViewDelegateState.TagConnected -> {
-                    trickySecurityDelayTimer?.period?.let { activateTrickySecurityDelay(it) }
-                }
-                SessionViewDelegateState.TagLost -> {
-                    trickySecurityDelayTimer?.cancel()
-                }
-                is SessionViewDelegateState.SecurityDelay -> {
-                    // do nothing for saving the securityDelay timer logic
-                }
-                else -> {
-                    trickySecurityDelayTimer?.cancel()
-                    trickySecurityDelayTimer = null
-                }
+    private fun handleStateForTrickySecurityDelay(state: SessionViewDelegateState) {
+        if (trickySecurityDelayTimer == null) return
+
+        when (state) {
+            SessionViewDelegateState.TagConnected -> {
+                trickySecurityDelayTimer?.period?.let { activateTrickySecurityDelay(it) }
+            }
+            SessionViewDelegateState.TagLost -> {
+                trickySecurityDelayTimer?.cancel()
+            }
+            is SessionViewDelegateState.SecurityDelay -> {
+                // do nothing for saving the securityDelay timer logic
+            }
+            else -> {
+                trickySecurityDelayTimer?.cancel()
+                trickySecurityDelayTimer = null
             }
         }
     }
