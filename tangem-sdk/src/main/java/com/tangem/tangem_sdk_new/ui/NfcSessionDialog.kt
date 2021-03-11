@@ -10,6 +10,8 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.tangem.Log
 import com.tangem.Message
+import com.tangem.SessionEnvironment
+import com.tangem.common.Timer
 import com.tangem.tangem_sdk_new.R
 import com.tangem.tangem_sdk_new.SessionViewDelegateState
 import com.tangem.tangem_sdk_new.extensions.hide
@@ -21,6 +23,7 @@ import com.tangem.tangem_sdk_new.ui.widget.*
 import com.tangem.tangem_sdk_new.ui.widget.howTo.HowToTapWidget
 import com.tangem.tangem_sdk_new.ui.widget.progressBar.ProgressbarStateWidget
 import kotlinx.android.synthetic.main.bottom_sheet_layout.*
+import kotlinx.coroutines.Dispatchers
 
 class NfcSessionDialog(
     context: Context,
@@ -42,6 +45,9 @@ class NfcSessionDialog(
     private val stateWidgets = mutableListOf<StateWidget<*>>()
 
     private var currentState: SessionViewDelegateState? = null
+
+    @Deprecated("Used to fix lack of security delay on cards with firmware version below 1.21")
+    private var trickySecurityDelayTimer: Timer? = null
 
     init {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_layout, null)
@@ -121,6 +127,10 @@ class NfcSessionDialog(
     }
 
     private fun onSecurityDelay(state: SessionViewDelegateState.SecurityDelay) {
+        if (state.ms == SessionEnvironment.missingSecurityDelayCode) {
+            activateTrickySecurityDelay(state.totalDurationSeconds.toLong())
+            return
+        }
         setStateAndShow(state, progressStateWidget, messageWidget)
         performHapticFeedback()
     }
@@ -223,6 +233,7 @@ class NfcSessionDialog(
     }
 
     private fun setStateAndShow(state: SessionViewDelegateState, vararg views: StateWidget<SessionViewDelegateState>) {
+        handleTrickySecurityDelayTimer(state)
         views.forEach { it.setState(state) }
 
         val toHide = stateWidgets.filter { !views.contains(it) && it.isVisible() }
@@ -230,6 +241,40 @@ class NfcSessionDialog(
 
         toHide.forEach { it.showWidget(false) }
         toShow.forEach { it.showWidget(true) }
+    }
+
+    @Deprecated("Used to fix lack of security delay on cards with firmware version below 1.21")
+    private fun activateTrickySecurityDelay(totalDuration: Long) {
+        val timer = Timer(totalDuration, 100L, 1000L, dispatcher = Dispatchers.IO)
+        timer.onComplete = {
+            postUI { onSecurityDelay(SessionViewDelegateState.SecurityDelay(0, 0)) }
+        }
+        timer.onTick = {
+            postUI { onSecurityDelay(SessionViewDelegateState.SecurityDelay((totalDuration - it).toInt(), 0)) }
+        }
+        timer.start()
+        trickySecurityDelayTimer = timer
+    }
+
+    @Deprecated("Used to fix lack of security delay on cards with firmware version below 1.21")
+    private fun handleTrickySecurityDelayTimer(state: SessionViewDelegateState) {
+        if (trickySecurityDelayTimer != null) {
+            when (state) {
+                SessionViewDelegateState.TagConnected -> {
+                    trickySecurityDelayTimer?.period?.let { activateTrickySecurityDelay(it) }
+                }
+                SessionViewDelegateState.TagLost -> {
+                    trickySecurityDelayTimer?.cancel()
+                }
+                is SessionViewDelegateState.SecurityDelay -> {
+                    // do nothing for saving the securityDelay timer logic
+                }
+                else -> {
+                    trickySecurityDelayTimer?.cancel()
+                    trickySecurityDelayTimer = null
+                }
+            }
+        }
     }
 
     private fun performHapticFeedback() {
@@ -260,3 +305,7 @@ class NfcSessionDialog(
         super.dismiss()
     }
 }
+
+//class TrickyTimer(val timer: Timer) {
+//
+//}
