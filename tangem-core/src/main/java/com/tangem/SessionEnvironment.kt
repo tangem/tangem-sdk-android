@@ -41,7 +41,15 @@ class SessionEnvironment(
         var codeVerification: VerificationState = VerificationState.NotVerified,
 
         var card: Card? = null
-)
+) {
+    @Deprecated("Used to fix lack of security delay on cards with firmware version below 1.21")
+    var enableMissingSecurityDelay: Boolean = false
+
+    companion object {
+        @Deprecated("Used to fix lack of security delay on cards with firmware version below 1.21")
+        val missingSecurityDelayCode = -100100
+    }
+}
 
 /**
  * All possible encryption modes.
