@@ -47,7 +47,7 @@ class NfcSessionDialog(
     private var currentState: SessionViewDelegateState? = null
 
     @Deprecated("Used to fix lack of security delay on cards with firmware version below 1.21")
-    private var trickySecurityDelayTimer: Timer? = null
+    private var emulateSecurityDelayTimer: Timer? = null
 
     init {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_layout, null)
@@ -253,26 +253,26 @@ class NfcSessionDialog(
             postUI { onSecurityDelay(SessionViewDelegateState.SecurityDelay((totalDuration - it).toInt(), 0)) }
         }
         timer.start()
-        trickySecurityDelayTimer = timer
+        emulateSecurityDelayTimer = timer
     }
 
     @Deprecated("Used to fix lack of security delay on cards with firmware version below 1.21")
     private fun handleStateForTrickySecurityDelay(state: SessionViewDelegateState) {
-        if (trickySecurityDelayTimer == null) return
+        if (emulateSecurityDelayTimer == null) return
 
         when (state) {
             SessionViewDelegateState.TagConnected -> {
-                trickySecurityDelayTimer?.period?.let { activateTrickySecurityDelay(it) }
+                emulateSecurityDelayTimer?.period?.let { activateTrickySecurityDelay(it) }
             }
             SessionViewDelegateState.TagLost -> {
-                trickySecurityDelayTimer?.cancel()
+                emulateSecurityDelayTimer?.cancel()
             }
             is SessionViewDelegateState.SecurityDelay -> {
                 // do nothing for saving the securityDelay timer logic
             }
             else -> {
-                trickySecurityDelayTimer?.cancel()
-                trickySecurityDelayTimer = null
+                emulateSecurityDelayTimer?.cancel()
+                emulateSecurityDelayTimer = null
             }
         }
     }
