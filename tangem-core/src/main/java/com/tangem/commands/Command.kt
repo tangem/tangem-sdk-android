@@ -7,6 +7,7 @@ import com.tangem.common.PinCode
 import com.tangem.common.apdu.*
 import com.tangem.common.extensions.toInt
 import com.tangem.common.tlv.TlvTag
+import java.util.*
 
 
 interface ApduSerializable<T : CommandResponse> {
@@ -79,6 +80,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
         Log.apdu { "------ Serialize command -------" }
         val apdu = serialize(session.environment)
         Log.apdu { "--------------------------------" }
+        showMissingSecurityDelay(session)
         transceiveApdu(apdu, session) { result ->
             when (result) {
                 is CompletionResult.Failure -> {
@@ -184,6 +186,15 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                     }
             }
         }
+    }
+
+    @Deprecated("Used to fix lack of security delay on cards with firmware version below 1.21")
+    private fun showMissingSecurityDelay(session: CardSession) {
+        if (!session.environment.enableMissingSecurityDelay) return
+
+        var totalDuration = session.environment.card?.pauseBeforePin2 ?: 0
+        totalDuration = if (totalDuration == 0) 0 else totalDuration + (totalDuration / 3)
+        session.viewDelegate.onSecurityDelay(SessionEnvironment.missingSecurityDelayCode, totalDuration)
     }
 
     /**
