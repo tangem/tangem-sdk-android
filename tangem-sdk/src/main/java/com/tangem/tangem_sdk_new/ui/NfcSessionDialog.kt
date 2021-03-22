@@ -154,7 +154,7 @@ class NfcSessionDialog(
             headerWidget.isFullScreenMode = false
 
             setStateAndShow(getEmptyOnReadyEvent(), headerWidget, touchCardWidget, messageWidget)
-            postUI(200) { state.callback(it) }
+            postUI(200) { state.callback(it.trim()) }
         }
 
         setStateAndShow(state, headerWidget, pinCodeRequestWidget)
@@ -171,7 +171,7 @@ class NfcSessionDialog(
             pinCodeSetChangeWidget.onSave = null
 
             setStateAndShow(getEmptyOnReadyEvent(), headerWidget, touchCardWidget, messageWidget)
-            postUI(200) { state.callback(it) }
+            postUI(200) { state.callback(it.trim()) }
         }
 
         setStateAndShow(state, headerWidget, pinCodeSetChangeWidget)
