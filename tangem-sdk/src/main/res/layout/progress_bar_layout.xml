@@ -18,9 +18,9 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:pb_color="@color/progress_bar_color"
+            app:pb_color="@color/sdk_progress_bar_primary"
             app:pb_round_border="true"
-            app:pb_secondary_color="@color/progress_bar_secondary_color"
+            app:pb_secondary_color="@color/sdk_progress_bar_secondary"
             app:pb_secondary_thickness="6dp"
             app:pb_thickness="6dp" />
 
@@ -34,7 +34,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_success_anim"
-            app:tint="@color/drawable_icon_blue"/>
+            app:tint="@color/sdk_drawable_icon_blue"/>
 
     <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/imvExclamation"
@@ -52,7 +52,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingBottom="5dp"
-            android:textColor="@color/drawable_icon_blue"
+            android:textColor="@color/sdk_drawable_icon_blue"
             android:textSize="@dimen/progress_bar_state_text_size"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
