@@ -1,25 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#027aff</color>
-    <color name="colorPrimaryDark">#027AFF</color>
-    <color name="colorAccent">#027AFF</color>
 
     <color name="card_sdk_primary">#0029FF</color>
     <color name="card_sdk_primary_dark">#0029FF</color>
     <color name="card_sdk_accent">#0029FF</color>
-    <color name="card_sdk_ripple">#2c5ac4</color>
-    <color name="card_sdk_text_color_primary">#2C2C2E</color>
-    <color name="card_sdk_text_color_secondary">#1C1C1E</color>
-
     <color name="card_sdk_bg_color">#F2F2F7</color>
 
     <color name="progress_bar_color">#0029FF</color>
-    <color name="progress_bar_secondary_color">#3BD4D5DC</color>
     <color name="progress_bar_state_success_color">#0029FF</color>
     <color name="progress_bar_state_error_color">#C4291C</color>
     <color name="progress_bar_state_warning_color">#EFC313</color>
+    <color name="progress_bar_secondary_color">#3BD4D5DC</color>
+    <color name="card_sdk_ripple">#2c5ac4</color>
+
+    <color name="card_sdk_text_color_primary">#2C2C2E</color>
+    <color name="card_sdk_text_color_secondary">#1C1C1E</color>
     <color name="card_sdk_text_error_color">#C4291C</color>
-    <color name="nfc_badge_back">#F8F8FB</color>
-    <color name="nfc_badge_front">#1B1C20</color>
+
+    <color name="drawable_icon">#000000</color>
+    <color name="drawable_icon_blue">#0029FF</color>
 
 </resources>
