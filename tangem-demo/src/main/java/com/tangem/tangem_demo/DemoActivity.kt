@@ -8,6 +8,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import com.tangem.tangem_demo.ui.separtedCommands.CommandListFragment
+import com.tangem.tangem_demo.ui.settings.SettingsFragment
 import com.tangem.tangem_demo.ui.tasksLogger.SdkTaskSpinnerFragment
 import kotlinx.android.synthetic.main.activity_demo.*
 
@@ -29,6 +30,7 @@ class DemoActivity : AppCompatActivity() {
             tab.text = when (position) {
                 0 -> "Command list"
                 1 -> "Command tester"
+                2 -> "Settings"
                 else -> ""
             }
         }.attach()
@@ -44,12 +46,13 @@ class DemoActivity : AppCompatActivity() {
     }
 
     class ViewPagerAdapter(fgActivity: FragmentActivity) : FragmentStateAdapter(fgActivity) {
-        override fun getItemCount(): Int = 2
+        override fun getItemCount(): Int = 3
 
         override fun createFragment(position: Int): Fragment {
             return when (position) {
                 0 -> CommandListFragment()
                 1 -> SdkTaskSpinnerFragment()
+                2 -> SettingsFragment()
                 else -> EmptyFragment()
             }
         }
