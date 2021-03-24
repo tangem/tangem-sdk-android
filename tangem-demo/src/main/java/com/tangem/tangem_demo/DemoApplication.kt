@@ -17,12 +17,15 @@ class DemoApplication : Application() {
         super.onCreate()
 
         prefManager = PreferenceManager.getDefaultSharedPreferences(this)
-        if (isNightModeActive()) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        }
+        switchToNighMode(isNightModeActive())
     }
 
     fun isNightModeActive(): Boolean {
         return prefManager.getBoolean(SettingsFragment.nightMode, false)
+    }
+
+    fun switchToNighMode(switch: Boolean) {
+        if (switch) AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        else AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
     }
 }
