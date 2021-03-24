@@ -3,14 +3,10 @@
 
     <style name="CardSdkTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/card_sdk_primary</item>
-        <item name="colorPrimaryDark">@color/card_sdk_primary_dark</item>
-        <item name="colorAccent">@color/card_sdk_accent</item>
-        <item name="materialButtonStyle">@style/SdkButtonStyle</item>
+        <item name="colorOnPrimary">@color/card_sdk_on_primary</item>
+        <item name="colorSecondary">@color/card_sdk_secondary</item>
+        <item name="colorOnSecondary">@color/card_sdk_on_secondary</item>
         <item name="bottomSheetDialogTheme">@style/SdkBottomSheetDialogStyle</item>
-    </style>
-
-    <style name="SdkButtonStyle" parent="Widget.MaterialComponents.Button">
-        <item name="android:textColor">@color/button_text_color</item>
     </style>
 
     <style name="SdkTextButtonStyle" parent="Widget.MaterialComponents.Button.TextButton">
