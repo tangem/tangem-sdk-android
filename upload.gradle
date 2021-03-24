@@ -33,6 +33,7 @@ task uploadSnapshot(type: Upload) {
             repository(url: "https://nexus.tangem.com/repository/maven-snapshots/") {
                 authentication(userName: "developer", password: "smartcash987")
             }
+            pom.groupId = "com.tangem"
             pom.version = "$prefix-SNAPSHOT"
 
             pom.whenConfigured {
