@@ -9,10 +9,6 @@
         <item name="bottomSheetDialogTheme">@style/SdkBottomSheetDialogStyle</item>
     </style>
 
-    <style name="SdkTextButtonStyle" parent="Widget.MaterialComponents.Button.TextButton">
-        <item name="android:textColor">@color/button_text_text_color</item>
-    </style>
-
     <style name="SdkBottomSheetDialogStyle" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
         <item name="android:windowIsFloating">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
