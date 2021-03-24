@@ -2,8 +2,9 @@
 <resources>
 
     <color name="card_sdk_primary">#0029FF</color>
-    <color name="card_sdk_primary_dark">#0029FF</color>
-    <color name="card_sdk_accent">#0029FF</color>
+    <color name="card_sdk_on_primary">#FFFFFF</color>
+    <color name="card_sdk_secondary">#0029FF</color>
+    <color name="card_sdk_on_secondary">#FFFFFF</color>
     <color name="card_sdk_bg_color">#F2F2F7</color>
 
     <color name="progress_bar_color">#0029FF</color>
