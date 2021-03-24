@@ -147,7 +147,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSwitchMode"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/SdkTextButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:insetTop="0dp"
@@ -159,7 +159,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnShowAgain"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/SdkTextButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:insetTop="0dp"
