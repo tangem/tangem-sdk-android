@@ -58,14 +58,13 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnHowTo"
-        style="@style/SdkTextButtonStyle"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:text="@string/how_to_button"
         app:icon="@drawable/ic_how_to_play"
-        app:iconTint="@color/sdk_drawable_icon_blue"
         app:iconGravity="textEnd" />
 
 </LinearLayout>
