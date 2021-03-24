@@ -51,6 +51,10 @@ class RvConsoleAdapter : RecyclerView.Adapter<ConsoleVH>(), TangemSdkLogger {
     override fun log(message: () -> String, level: Log.Level) {
         addItem(ConsoleMessage(message, level))
     }
+
+    fun onDestroy() {
+        onItemCountChanged = null
+    }
 }
 
 data class ConsoleMessage(val message: () -> String, val level: Log.Level)
