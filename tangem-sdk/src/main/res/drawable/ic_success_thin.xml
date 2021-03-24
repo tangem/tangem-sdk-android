@@ -7,7 +7,7 @@
         android:name="check"
         android:pathData="M4,24 L27.5,49, L70.3,3.5"
         android:strokeWidth="3"
-        android:strokeColor="#1C1C1E"
+        android:strokeColor="#000000"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 </vector>
