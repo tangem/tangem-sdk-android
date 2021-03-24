@@ -2,10 +2,10 @@
 <resources>
 
     <style name="CardSdkTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/card_sdk_primary</item>
-        <item name="colorOnPrimary">@color/card_sdk_on_primary</item>
-        <item name="colorSecondary">@color/card_sdk_secondary</item>
-        <item name="colorOnSecondary">@color/card_sdk_on_secondary</item>
+        <item name="colorPrimary">@color/sdk_primary</item>
+        <item name="colorOnPrimary">@color/sdk_on_primary</item>
+        <item name="colorSecondary">@color/sdk_secondary</item>
+        <item name="colorOnSecondary">@color/sdk_on_secondary</item>
         <item name="bottomSheetDialogTheme">@style/SdkBottomSheetDialogStyle</item>
     </style>
 
