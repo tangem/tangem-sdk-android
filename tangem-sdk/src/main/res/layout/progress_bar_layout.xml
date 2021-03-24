@@ -20,6 +20,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:pb_color="@color/progress_bar_color"
             app:pb_round_border="true"
+            app:pb_secondary_color="@color/progress_bar_secondary_color"
             app:pb_secondary_thickness="6dp"
             app:pb_thickness="6dp" />
 
