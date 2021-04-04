@@ -1,18 +1,22 @@
-package com.tangem.commands
+package com.tangem.commands.wallet
 
 import com.tangem.FirmwareConstraints
 import com.tangem.SessionEnvironment
 import com.tangem.TangemError
 import com.tangem.TangemSdkError
+import com.tangem.commands.Command
+import com.tangem.commands.CommandResponse
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.common.card.FirmwareVersion
+import com.tangem.commands.wallet.*
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
+import com.tangem.tasks.PreflightReadSettings
 
 class CreateWalletResponse(
     /**
@@ -27,7 +31,7 @@ class CreateWalletResponse(
      * Wallet index on card.
      * Note: Available only for cards with COS v.4.0 and higher
      */
-    val walletIndex: Int?,
+    val walletIndex: Int,
     /**
 
      */
@@ -47,44 +51,44 @@ class CreateWalletResponse(
  */
 class CreateWalletCommand(
     private val walletConfig: WalletConfig? = null,
-    private val walletIndexValue: Int? = null
-) : Command<CreateWalletResponse>(), WalletSelectable {
+    private val walletIndexValue: Int = 0
+) : Command<CreateWalletResponse>() {
+
+    private val walletIndex: WalletIndex = WalletIndex.Index(walletIndexValue)
 
     override val requiresPin2 = true
 
-    override var walletIndex: WalletIndex? = null
-        get() = if (walletIndexValue == null) null else WalletIndex.Index(walletIndexValue)
+    override fun preflightReadSettings(): PreflightReadSettings = PreflightReadSettings.ReadWallet(walletIndex)
 
     override fun performPreCheck(card: Card): TangemSdkError? {
+        if (card.status == CardStatus.NotPersonalized) {
+            return TangemSdkError.NotPersonalized()
+        }
         if (card.isActivated) {
             return TangemSdkError.NotActivated()
         }
 
-        fun getStatusError(status: CardStatus?): TangemSdkError? {
+        val wallet = card.wallet(walletIndex) ?: return TangemSdkError.WalletIndexNotCorrect()
+
+        fun getStatusError(status: WalletStatus): TangemSdkError? {
             return when (status) {
-                CardStatus.Empty -> null
-                CardStatus.NotPersonalized -> TangemSdkError.NotPersonalized()
-                CardStatus.Loaded -> TangemSdkError.AlreadyCreated()
-                CardStatus.Purged -> TangemSdkError.CardIsPurged()
-                null -> TangemSdkError.CardError()
+                WalletStatus.Empty -> null
+                WalletStatus.Loaded -> TangemSdkError.AlreadyCreated()
+                WalletStatus.Purged -> TangemSdkError.CardIsPurged()
             }
         }
 
         val isWalletDataAvailable = card.firmwareVersion >= FirmwareConstraints.AvailabilityVersions.walletData
 
-        card.status?.let { status ->
-            getStatusError(status)?.let { error ->
-                if (isWalletDataAvailable) {
-                    if (walletIndexValue == card.walletIndex) return error
-                } else {
-                    return error
-                }
+        getStatusError(wallet.status)?.let { error ->
+            if (isWalletDataAvailable) {
+                if (walletIndexValue == card.walletIndex) return error
+            } else {
+                return error
             }
         }
-        walletIndexValue?.let { walletIndex ->
-            if (isWalletDataAvailable && walletIndex >= card.walletsCount ?: 1) {
-                return TangemSdkError.WalletIndexExceedsMaxValue()
-            }
+        if (isWalletDataAvailable && walletIndexValue >= card.walletsCount ?: 1) {
+            return TangemSdkError.WalletIndexExceedsMaxValue()
         }
 
         return null
@@ -95,9 +99,7 @@ class CreateWalletCommand(
             val card = card ?: return TangemSdkError.Pin2OrCvcRequired()
 
             card.walletsCount?.let { walletsCount ->
-                walletIndexValue?.let { walletIndex ->
-                    if (walletIndex >= walletsCount) return TangemSdkError.WalletIndexExceedsMaxValue()
-                }
+                if (walletIndexValue >= walletsCount) return TangemSdkError.WalletIndexExceedsMaxValue()
             }
 
             if (card.firmwareVersion >= FirmwareConstraints.AvailabilityVersions.pin2IsDefault && card.isPin2Default == true) {
@@ -111,35 +113,19 @@ class CreateWalletCommand(
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         val tlvBuilder = TlvBuilder()
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Pin2, environment.pin2?.value)
+        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Cvc, environment.cvc)
-        walletIndex?.addTlvData(tlvBuilder)
+        walletIndex.addTlvData(tlvBuilder)
 
         val firmwareVersion = environment.card?.firmwareVersion ?: FirmwareVersion.zero
         if (firmwareVersion >= FirmwareConstraints.AvailabilityVersions.walletData) {
             walletConfig?.let { config ->
-                serializeWalletData(walletConfig.walletData)?.let { serializedWalletData ->
-                    tlvBuilder.append(TlvTag.SettingsMask, config.getSettingsMask())
-                    tlvBuilder.append(TlvTag.CurveId, config.curveId)
-                    tlvBuilder.append(TlvTag.WalletData, serializedWalletData)
-                }
+                tlvBuilder.append(TlvTag.SettingsMask, config.getSettingsMask())
+                tlvBuilder.append(TlvTag.CurveId, config.curveId)
             }
         }
         return CommandApdu(Instruction.CreateWallet, tlvBuilder.serialize())
-    }
-
-    private fun serializeWalletData(walletData: WalletData): ByteArray? {
-        val walletDataItemList = listOf<Any?>(walletData.blockchainName, walletData.tokenSymbol,
-            walletData.tokenContractAddress, walletData.tokenDecimal)
-        if (walletDataItemList.filterNotNull().size != walletDataItemList.size) return null
-
-        val tlvBuilder = TlvBuilder()
-        tlvBuilder.append(TlvTag.BlockchainId, walletData.blockchainName)
-        tlvBuilder.append(TlvTag.TokenSymbol, walletData.tokenSymbol)
-        tlvBuilder.append(TlvTag.TokenContractAddress, walletData.tokenContractAddress)
-        tlvBuilder.append(TlvTag.TokenDecimal, walletData.tokenDecimal)
-        return tlvBuilder.serialize()
     }
 
     override fun deserialize(
@@ -154,7 +140,7 @@ class CreateWalletCommand(
             cardId = decoder.decode(TlvTag.CardId),
             status = decoder.decode(TlvTag.Status),
             walletPublicKey = decoder.decode(TlvTag.WalletPublicKey),
-            walletIndex = decoder.decodeOptional(TlvTag.WalletsIndex)
+            walletIndex = decoder.decodeOptional(TlvTag.WalletsIndex) ?: 0
         )
     }
 }

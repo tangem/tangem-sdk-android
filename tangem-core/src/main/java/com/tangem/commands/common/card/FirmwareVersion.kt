@@ -17,7 +17,7 @@ typealias CardType = FirmwareType
  * Holds information about card firmware version included version saved on card `version`,
  * splitted to `major`, `minor` and `hotFix` and `FirmwareType`
  */
-class FirmwareVersion: Comparable<FirmwareVersion> {
+class FirmwareVersion : Comparable<FirmwareVersion> {
     var major: Int = 0
         private set
 
@@ -75,5 +75,3 @@ class FirmwareVersion: Comparable<FirmwareVersion> {
         val max = FirmwareVersion(Int.MAX_VALUE, 0)
     }
 }
-
-fun FirmwareVersion?.compareTo(other: FirmwareVersion) = -1
