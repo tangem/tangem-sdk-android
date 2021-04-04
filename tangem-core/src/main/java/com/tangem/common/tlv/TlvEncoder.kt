@@ -11,6 +11,8 @@ import com.tangem.commands.common.card.masks.SigningMethodMask
 import com.tangem.commands.common.card.masks.WalletSettingsMask
 import com.tangem.commands.file.FileDataMode
 import com.tangem.commands.file.FileSettings
+import com.tangem.commands.read.ReadMode
+import com.tangem.commands.wallet.WalletStatus
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
@@ -101,17 +103,29 @@ class TlvEncoder {
                     rawValue.toByteArray(determineByteArraySize(rawValue))
                 }
             }
-            TlvValueType.CardStatus -> {
-                typeCheck<T, CardStatus>(tag)
-                (value as CardStatus).code.toByteArray()
+            TlvValueType.Status -> {
+                try {
+                    typeCheck<T, CardStatus>(tag)
+                    (value as CardStatus).code.toByteArray()
+                } catch (ex: Exception) {
+                    Log.warning { "Status is not CardStatus type. Trying to check WalletStatus" }
+                    typeCheck<T, WalletStatus>(tag)
+                    (value as WalletStatus).code.toByteArray()
+                }
             }
             TlvValueType.SigningMethod -> {
                 typeCheck<T, SigningMethodMask>(tag)
                 byteArrayOf((value as SigningMethodMask).rawValue.toByte())
             }
-            TlvValueType.IssuerDataMode -> {
-                typeCheck<T, IssuerDataMode>(tag)
-                byteArrayOf((value as IssuerDataMode).code)
+            TlvValueType.InteractionMode -> {
+                try {
+                    typeCheck<T, IssuerDataMode>(tag)
+                    byteArrayOf((value as IssuerDataMode).code)
+                } catch (ex: Exception) {
+                    Log.warning { "InteractionMode is not IssuerDataMode type. Trying to check ReadMode" }
+                    typeCheck<T, ReadMode>(tag)
+                    byteArrayOf((value as ReadMode).rawValue.toByte())
+                }
             }
             TlvValueType.FileDataMode -> {
                 typeCheck<T, FileDataMode>(tag)
@@ -132,7 +146,7 @@ class TlvEncoder {
     inline fun <reified T, reified ExpectedT> typeCheck(tag: TlvTag) {
         if (T::class != ExpectedT::class) {
             val error = TangemSdkError.EncodingFailedTypeMismatch(
-                    "Mapping error. Type for tag: $tag must be ${tag.valueType()}. It is ${T::class}"
+                "Encoder: Mapping error. Type for tag: $tag must be ${tag.valueType()}. It is ${T::class}"
             )
             Log.error { error.customMessage }
             throw error

@@ -1,4 +1,4 @@
-package com.tangem.commands.verifycard
+package com.tangem.commands.verification
 
 import com.tangem.CardSession
 import com.tangem.Log
