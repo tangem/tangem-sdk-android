@@ -31,17 +31,14 @@ class HowToController(
         stateWidget.setState(HowToState.Init)
         stateWidget.setState(HowToState.Animate)
         stateWidget.onAnimationEnd = { start() }
-        initTagDiscoveredCallback()
+        nfcManager.removeTagDiscoveredListener(tagDiscoveredListener)
+        nfcManager.addTagDiscoveredListener(tagDiscoveredListener)
     }
 
     fun stop() {
         nfcManager.removeTagDiscoveredListener(tagDiscoveredListener)
         nfcManager.readingIsActive = true
         stateWidget.setState(HowToState.Cancel)
-    }
-
-    private fun initTagDiscoveredCallback() {
-        nfcManager.addTagDiscoveredListener(tagDiscoveredListener)
     }
 
     private val tagDiscoveredListener = {
