@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string name="lorem_ipsum" translatable="false">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem</string>
     <string name="error_no_space_for_new_wallet" translatable="false">Max number of wallets already created</string>
     <string name="error_wallet_index_exceeds_max_value" translatable="false">Wallet index exceeds max value</string>
     <string name="error_wallet_not_found" translatable="false">Max number of wallets already created</string>
