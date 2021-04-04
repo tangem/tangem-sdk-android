@@ -1,7 +1,7 @@
 package com.tangem
 
-import com.tangem.commands.ReadCommand
 import com.tangem.commands.common.card.Card
+import com.tangem.commands.read.ReadCommand
 import com.tangem.common.apdu.StatusWord
 import com.tangem.tasks.ScanTask
 
@@ -87,11 +87,13 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
     //Read Errors
     class Pin1Required : TangemSdkError(40401)
     class CardReadWrongWallet : TangemSdkError(40402)
+    class CardWithMaxZeroWallets: TangemSdkError(40404)
 
     //CreateWallet Errors
     class AlreadyCreated : TangemSdkError(40501)
     class WalletIndexExceedsMaxValue : TangemSdkError(40502)
     class MaxNumberOfWalletsCreated : TangemSdkError(40503)
+    class WalletIndexNotCorrect : TangemSdkError(40504)
 
     //PurgeWallet Errors
     class PurgeWalletProhibited : TangemSdkError(40601)
@@ -185,6 +187,11 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
      * This error is returned when the [Command] requires a different firmware version than that of the card.
      */
     class FirmwareNotSupported : TangemSdkError(50008)
+
+    /**
+     * This error is returned when the scanned wallet doesn't have some essential fields.
+     */
+    class WalletError : TangemSdkError(50009)
 
 }
 
