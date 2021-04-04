@@ -89,7 +89,7 @@ class WriteIssuerDataCommand(
         val tlvBuilder = TlvBuilder()
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
-        tlvBuilder.append(TlvTag.Mode, IssuerDataMode.WriteData)
+        tlvBuilder.append(TlvTag.InteractionMode, IssuerDataMode.WriteData)
         tlvBuilder.append(TlvTag.IssuerData, issuerData)
         tlvBuilder.append(TlvTag.IssuerDataSignature, issuerDataSignature)
         tlvBuilder.append(TlvTag.IssuerDataCounter, issuerDataCounter)

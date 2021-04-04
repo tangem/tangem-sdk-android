@@ -9,15 +9,20 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.tangem.TangemSdk
-import com.tangem.commands.*
+import com.tangem.commands.PinType
+import com.tangem.commands.SetPinCommand
+import com.tangem.commands.WriteIssuerExtraDataCommand
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.commands.common.card.masks.SigningMethod
 import com.tangem.commands.file.FileData
 import com.tangem.commands.file.FileDataSignature
 import com.tangem.commands.file.FileSettingsChange
+import com.tangem.commands.wallet.WalletConfig
+import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.calculateSha256
+import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
 import com.tangem.common.files.FileHashHelper
@@ -35,7 +40,14 @@ abstract class BaseFragment : Fragment() {
     protected lateinit var sdk: TangemSdk
 
     protected var card: Card? = null
-    protected var walletIndex: WalletIndex? = null
+
+    protected var intWalletIndex = 0
+    protected var walletIndex: WalletIndex = WalletIndex.Index(intWalletIndex)
+        get() = WalletIndex.Index(intWalletIndex)
+    protected var walletPublicKey: ByteArray? = null
+        private set
+        get() = card?.wallet(walletIndex)?.publicKey
+
     protected var bshDlg: BottomSheetDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,16 +64,23 @@ abstract class BaseFragment : Fragment() {
     }
 
     protected fun sign(hashes: Array<ByteArray>) {
-        sdk.sign(hashes, walletIndex, card?.cardId) { handleResult(it) }
+        val publicKey = walletPublicKey.guard {
+            showToast("Scan a card before trying to use the sign method")
+            return
+        }
+        sdk.sign(hashes, publicKey, card?.cardId) { handleResult(it) }
     }
 
     protected fun createWallet() {
-        val index = (walletIndex as? WalletIndex.Index)?.index ?: 0
-        sdk.createWallet(prepareWalletConfig(), index, card?.cardId) { handleResult(it) }
+        sdk.createWallet(prepareWalletConfig(), card?.cardId) { handleResult(it) }
     }
 
     protected fun purgeWallet() {
-        sdk.purgeWallet(walletIndex, card?.cardId) { handleResult(it) }
+        val index = walletIndex.guard {
+            showToast("Select a wallet")
+            return
+        }
+        sdk.purgeWallet(index, card?.cardId) { handleResult(it) }
     }
 
     protected fun readIssuerData() {
@@ -217,13 +236,11 @@ abstract class BaseFragment : Fragment() {
     }
 
     protected fun prepareWalletConfig(): WalletConfig {
-        val walletData = WalletData("BCH")
         return WalletConfig(
             true,
             false,
             EllipticCurve.Secp256k1,
             SigningMethod.SignHash,
-            walletData
         )
     }
 

@@ -17,7 +17,7 @@ data class DepersonalizeResponse(val success: Boolean) : CommandResponse
  */
 class DepersonalizeCommand : Command<DepersonalizeResponse>() {
 
-    override val performPreflightRead = false
+    override fun needPreflightRead(): Boolean = false
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         return CommandApdu(
