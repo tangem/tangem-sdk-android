@@ -61,6 +61,9 @@ fun TangemSdkError.localizedDescription(context: Context): String {
         is TangemSdkError.WalletNotFound -> R.string.error_wallet_not_found
         is TangemSdkError.WrongPin1 -> R.string.error_wrong_pin1
         is TangemSdkError.WrongPin2 -> R.string.error_wrong_pin2
+        is TangemSdkError.CardWithMaxZeroWallets -> R.string.error_card_with_max_zero_wallets
+        is TangemSdkError.WalletError -> R.string.error_wallet_error
+        is TangemSdkError.WalletIndexNotCorrect -> R.string.error_wallet_index_not_correct
     }
     return if (resId != null) {
         context.getString(resId)
