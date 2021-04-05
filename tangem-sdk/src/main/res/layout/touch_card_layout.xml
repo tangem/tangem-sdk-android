@@ -58,6 +58,6 @@
         app:layout_constraintHorizontal_bias="0.65"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/phone" />
+        app:srcCompat="@drawable/phone_mid" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
