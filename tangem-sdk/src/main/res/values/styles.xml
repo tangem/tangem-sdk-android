@@ -6,6 +6,7 @@
         <item name="colorOnPrimary">@color/sdk_on_primary</item>
         <item name="colorSecondary">@color/sdk_secondary</item>
         <item name="colorOnSecondary">@color/sdk_on_secondary</item>
+        <item name="android:windowBackground">@color/sdk_window_background</item>
         <item name="bottomSheetDialogTheme">@style/SdkBottomSheetDialogStyle</item>
     </style>
 
@@ -13,5 +14,6 @@
         <item name="android:windowIsFloating">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowSoftInputMode">adjustResize</item>
+        <item name="android:backgroundTint">@color/sdk_window_background</item>
     </style>
 </resources>
