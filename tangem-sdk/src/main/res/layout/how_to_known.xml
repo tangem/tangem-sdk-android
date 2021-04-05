@@ -5,7 +5,7 @@
     android:id="@+id/clHowToKnown"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/sdk_background">
+    android:background="@color/sdk_how_to_background">
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"

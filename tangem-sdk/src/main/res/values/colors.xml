@@ -5,7 +5,9 @@
     <color name="sdk_on_primary">#FFFFFF</color>
     <color name="sdk_secondary">#0029FF</color>
     <color name="sdk_on_secondary">#FFFFFF</color>
-    <color name="sdk_background">#F2F2F7</color>
+    <color name="sdk_window_background">#FFFFFF</color>
+    <color name="sdk_header_background">#F2F2F7</color>
+    <color name="sdk_how_to_background">#F2F2F7</color>
 
     <color name="sdk_text_primary">#2C2C2E</color>
     <color name="sdk_text_secondary">#1C1C1E</color>
@@ -18,7 +20,12 @@
     <color name="sdk_progress_bar_warning">#EFC313</color>
     <color name="sdk_ripple_background">#2c5ac4</color>
 
+    <color name="sdk_drawable_card">#ffffff</color>
     <color name="sdk_drawable_icon">#000000</color>
     <color name="sdk_drawable_icon_blue">#0029FF</color>
+
+    <color name="sdk_drawable_fill">#ffffff</color>
+    <color name="sdk_drawable_stroke">#1B1C20</color>
+    <color name="sdk_drawable_stroke_alternative">#1B1C20</color>
 
 </resources>
