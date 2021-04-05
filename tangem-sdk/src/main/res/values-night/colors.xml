@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <color name="sdk_background">#3A3A3C</color>
+    <color name="sdk_primary">#42A5F5</color>
+    <color name="sdk_on_primary">#121212</color>
+    <color name="sdk_window_background">#1C1C1E</color>
+    <color name="sdk_header_background">#2B2B2D</color>
+    <color name="sdk_how_to_background">#1C1C1E</color>
 
     <color name="sdk_text_primary">#ffffff</color>
     <color name="sdk_text_secondary">#ffffff</color>
@@ -10,7 +14,12 @@
     <color name="sdk_progress_bar_success">#ffffff</color>
     <color name="sdk_progress_bar_secondary">#7C7C7C</color>
 
+    <color name="sdk_drawable_card">#C7C7CC</color>
     <color name="sdk_drawable_icon">#ffffff</color>
     <color name="sdk_drawable_icon_blue">#ffffff</color>
+
+    <color name="sdk_drawable_fill">#1C1C1E</color>
+    <color name="sdk_drawable_stroke">#C7C7CC</color>
+    <color name="sdk_drawable_stroke_alternative">#1C1C1E</color>
 
 </resources>
