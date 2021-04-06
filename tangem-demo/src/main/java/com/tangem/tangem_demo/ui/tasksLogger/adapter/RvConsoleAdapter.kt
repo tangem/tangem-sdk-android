@@ -51,6 +51,10 @@ class RvConsoleAdapter : RecyclerView.Adapter<ConsoleVH>(), TangemSdkLogger {
     override fun log(message: () -> String, level: Log.Level) {
         addItem(ConsoleMessage(message, level))
     }
+
+    fun onDestroy() {
+        onItemCountChanged = null
+    }
 }
 
 data class ConsoleMessage(val message: () -> String, val level: Log.Level)
@@ -70,11 +74,11 @@ class ConsoleVH(view: View) : RecyclerView.ViewHolder(view) {
 
     private fun getColorResource(level: Log.Level): Int {
         return when (level) {
-            Log.Level.Debug -> R.color.grey
-            Log.Level.Warning -> R.color.orange
-            Log.Level.Error -> R.color.red
-            Log.Level.Tlv -> R.color.blue
-            else -> R.color.black
+            Log.Level.Debug -> R.color.log_debug
+            Log.Level.Warning -> R.color.log_warning
+            Log.Level.Error -> R.color.log_error
+            Log.Level.Tlv -> R.color.log_tlv
+            else -> R.color.log
         }
     }
 }
