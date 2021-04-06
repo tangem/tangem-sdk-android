@@ -25,11 +25,9 @@ class CreateWalletTask(
     private val config: WalletConfig? = null
 ) : CardSessionRunnable<CreateWalletResponse>, PreflightReadCapable {
 
-    override val requiresPin2 = false
+    override val requiresPin2 = true
 
-    override fun preflightReadSettings(): PreflightReadSettings = PreflightReadSettings.FullCard
-
-    private val walletIndex: WalletIndex? = null
+    override fun preflightReadSettings(): PreflightReadSettings = PreflightReadSettings.FullCardRead
 
     override fun run(session: CardSession, callback: (result: CompletionResult<CreateWalletResponse>) -> Unit) {
         val card = session.environment.card.guard {
