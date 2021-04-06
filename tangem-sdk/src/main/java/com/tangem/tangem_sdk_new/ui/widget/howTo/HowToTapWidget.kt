@@ -46,6 +46,7 @@ class HowToTapWidget constructor(
     override fun setState(params: SessionViewDelegateState) {
         when (params) {
             SessionViewDelegateState.HowToTap -> {
+                controller?.stop()
                 controller = HowToController(createWidget(currentMode), vibrator, nfcManager)
                 controller?.onClose = onCloseListener
                 viewContainer.removeAllViews()
@@ -58,6 +59,10 @@ class HowToTapWidget constructor(
                 viewContainer.removeAllViews()
             }
         }
+    }
+
+    override fun onBottomSheetDismiss() {
+        controller?.stop()
     }
 
     private fun createWidget(mode: HowToMode): NfcHowToWidget {
