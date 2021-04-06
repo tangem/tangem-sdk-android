@@ -9,8 +9,11 @@ import com.tangem.Log
 import com.tangem.TangemSdk
 import com.tangem.commands.common.ResponseConverter
 import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.commands.common.card.masks.SigningMethod
 import com.tangem.commands.file.FileSettings
 import com.tangem.commands.file.FileSettingsChange
+import com.tangem.commands.wallet.WalletConfig
 import com.tangem.common.CompletionResult
 import com.tangem.tangem_demo.DemoActivity
 import com.tangem.tangem_demo.R
@@ -45,10 +48,21 @@ class CommandListFragment : BaseFragment() {
             if (it == 0) Log.addLogger(logger)
             else Log.removeLogger(logger)
         }
-        btnScanCard.setOnClickListener { scanCard() }
+        btnScanCard.setOnClickListener { scanCard(null) }
         btnSign.setOnClickListener { sign(prepareHashesToSign()) }
 
-        btnCreateWallet.setOnClickListener { createWallet() }
+        btnCreateWalletSecpK1.setOnClickListener {
+            val config = WalletConfig(true, false, EllipticCurve.Secp256k1, SigningMethod.SignHash)
+            createWallet(config)
+        }
+        btnCreateWalletEdwards.setOnClickListener {
+            val config = WalletConfig(true, false, EllipticCurve.Ed25519, SigningMethod.SignHash)
+            createWallet(config)
+        }
+        btnReadWallet.setOnClickListener {
+            val publicKey = selectedWalletPubKey ?: return@setOnClickListener
+            scanCard(publicKey)
+        }
         btnPurgeWallet.setOnClickListener { purgeWallet() }
 
         btnReadIssuerData.setOnClickListener { readIssuerData() }
@@ -86,19 +100,12 @@ class CommandListFragment : BaseFragment() {
     }
 
     private fun updateWalletsSlider() {
-        val touchListener = object : Slider.OnSliderTouchListener {
-            override fun onStartTrackingTouch(slider: Slider) {
-            }
-
-            override fun onStopTrackingTouch(slider: Slider) {
-                intWalletIndex = slider.value.toInt()
-                tvWalletIndex.text = "$intWalletIndex"
-            }
-        }
         sliderWallet.post {
+            sliderWallet.removeOnSliderTouchListener(touchListener)
             if (card?.walletsCount == null) {
                 walletIndexesContainer.visibility = View.GONE
                 sliderWallet.removeOnSliderTouchListener(touchListener)
+                intWalletIndex = 0
             } else {
                 val walletsCount = card?.walletsCount?.toFloat() ?: 1f
                 if (walletsCount > 1) {
@@ -106,12 +113,24 @@ class CommandListFragment : BaseFragment() {
                     sliderWallet.stepSize = 1f
                     sliderWallet.valueFrom = 0f
                     sliderWallet.valueTo = walletsCount - 1f
-                    sliderWallet.value = sliderWallet.valueFrom
+
+                    if (intWalletIndex == -1) intWalletIndex = 0
+                    sliderWallet.value = intWalletIndex.toFloat()
+                    tvWalletIndex.text = "$intWalletIndex"
                     sliderWallet.addOnSliderTouchListener(touchListener)
-                    tvWalletIndex.text = "0"
                 }
 
             }
+        }
+    }
+
+    private val touchListener = object : Slider.OnSliderTouchListener {
+        override fun onStartTrackingTouch(slider: Slider) {
+        }
+
+        override fun onStopTrackingTouch(slider: Slider) {
+            intWalletIndex = slider.value.toInt()
+            tvWalletIndex.text = "$intWalletIndex"
         }
     }
 }
