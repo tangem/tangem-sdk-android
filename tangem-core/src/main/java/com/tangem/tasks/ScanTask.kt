@@ -68,6 +68,7 @@ class ScanTask(
     ) {
         if (card.cardData?.productMask?.contains(Product.Tag) != false) {
             callback(CompletionResult.Success(card))
+            return
         }
 
         val index = if (card.firmwareVersion < FirmwareConstraints.AvailabilityVersions.walletData) {
