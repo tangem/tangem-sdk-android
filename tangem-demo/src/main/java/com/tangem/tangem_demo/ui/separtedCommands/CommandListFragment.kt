@@ -11,7 +11,6 @@ import com.tangem.commands.common.ResponseConverter
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.file.FileSettings
 import com.tangem.commands.file.FileSettingsChange
-import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.CompletionResult
 import com.tangem.tangem_demo.DemoActivity
 import com.tangem.tangem_demo.R
@@ -92,9 +91,8 @@ class CommandListFragment : BaseFragment() {
             }
 
             override fun onStopTrackingTouch(slider: Slider) {
-                val value = slider.value.toInt()
-                walletIndex = WalletIndex.Index(value)
-                tvWalletIndex.text = "$value"
+                intWalletIndex = slider.value.toInt()
+                tvWalletIndex.text = "$intWalletIndex"
             }
         }
         sliderWallet.post {

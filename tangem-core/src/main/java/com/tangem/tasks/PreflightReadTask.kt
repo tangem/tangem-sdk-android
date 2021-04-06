@@ -30,7 +30,7 @@ sealed class PreflightReadSettings {
         override fun toString(): String = walletIndex.toString()
     }
 
-    object FullCard : PreflightReadSettings() {
+    object FullCardRead : PreflightReadSettings() {
         override fun toString(): String = this::class.java.simpleName
     }
 }
@@ -73,7 +73,7 @@ class PreflightReadTask(
                     }
                 }
             }
-            PreflightReadSettings.FullCard -> {
+            PreflightReadSettings.FullCardRead -> {
                 ReadWalletListCommand().run(session) {
                     when (it) {
                         is CompletionResult.Success -> handleSuccess(card, it.data.wallets, callback)

@@ -31,7 +31,7 @@ class PurgeWalletResponse(
     /**
      * Index of purged wallet
      */
-    val walletIndex: WalletIndex
+    val walletIndex: Int
 ) : CommandResponse
 
 /**
@@ -59,7 +59,7 @@ class PurgeWalletCommand(
                     }
 
                     card.status = CardStatus.Empty
-                    val wallet = card.wallet(result.data.walletIndex)
+                    val wallet = card.wallet(WalletIndex.Index(result.data.walletIndex))
                     if (wallet == null) {
                         callback(CompletionResult.Failure(TangemSdkError.WalletIndexNotCorrect()))
                     } else {
@@ -85,8 +85,8 @@ class PurgeWalletCommand(
 
         val wallet = card.wallet(walletIndex) ?: return TangemSdkError.WalletNotFound()
         when (wallet.status) {
-            WalletStatus.Empty -> return TangemSdkError.CardIsEmpty()
-            WalletStatus.Purged -> return TangemSdkError.CardIsPurged()
+            WalletStatus.Empty -> return TangemSdkError.WalletIsNotCreated()
+            WalletStatus.Purged -> return TangemSdkError.WalletIsPurged()
         }
 
         if (card.settingsMask?.contains(Settings.ProhibitPurgeWallet) == true) {
@@ -106,6 +106,7 @@ class PurgeWalletCommand(
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         val tlvBuilder = TlvBuilder()
+        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Pin2, environment.pin2?.value)
