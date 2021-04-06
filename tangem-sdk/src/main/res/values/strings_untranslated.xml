@@ -8,10 +8,10 @@
     <string name="error_old_firmware" translatable="false">The command requires a card with a different firmware version</string>
     <string name="error_wrong_pin1" translatable="false">Wrong access code</string>
     <string name="error_wrong_pin2" translatable="false">Wrong passcode</string>
-    <string name="error_card_is_empty" translatable="false">The operation can’t be completed. There is no wallet on the card.</string>
+    <string name="error_wallet_is_not_created" translatable="false">The operation can\'t be completed. Wallet is not created.</string>
+    <string name="error_wallet_is_purged" translatable="false">The operation can\'t be completed. Wallet is purged and can\'t be created again.</string>
     <string name="error_card_with_max_zero_wallets" translatable="false">Card with max zero wallets</string>
     <string name="error_wallet_error" translatable="false">Wallet rrror</string>
     <string name="error_wallet_index_not_correct" translatable="false">Wallet index not correct</string>
-
 
 </resources>

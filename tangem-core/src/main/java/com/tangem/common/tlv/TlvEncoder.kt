@@ -100,7 +100,7 @@ class TlvEncoder {
                     Log.warning { "Settings mask type is not Card settings mask. Trying to check WalletSettingsMask" }
                     typeCheck<T, WalletSettingsMask>(tag)
                     val rawValue = (value as WalletSettingsMask).rawValue
-                    rawValue.toByteArray(determineByteArraySize(rawValue))
+                    rawValue.toByteArray(4)
                 }
             }
             TlvValueType.Status -> {
