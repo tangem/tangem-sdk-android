@@ -53,7 +53,6 @@ class TlvDecoder(val tlvList: List<Tlv>) {
      */
     inline fun <reified T> decode(tag: TlvTag, logError: Boolean = true): T {
         val tlv = tlvList.find { it.tag == tag }
-        val tlvValue: ByteArray = tlv?.value
             ?: if (tag.valueType() == TlvValueType.BoolValue && T::class == Boolean::class) {
                 logTlv(Tlv(tag, "00".toByteArray()), false)
                 return false as T
@@ -65,7 +64,22 @@ class TlvDecoder(val tlvList: List<Tlv>) {
                 }
                 throw TangemSdkError.DecodingFailedMissingTag("TLV $tag not found")
             }
-        val decodedValue = when (tag.valueType()) {
+
+        val decodedValue: T = decodeTlv(tlv)
+        logTlv(tlv, decodedValue)
+        return decodedValue
+    }
+
+    inline fun <reified T> decodeArray(tag: TlvTag): List<T> {
+        val list = tlvList.filter { it.tag == tag }
+        return list.map { decodeTlv(it) }
+    }
+
+    inline fun <reified T> decodeTlv(tlv: Tlv): T {
+        val tag = tlv.tag
+        val tlvValue: ByteArray = tlv.value
+
+        return when (tag.valueType()) {
             TlvValueType.HexString, TlvValueType.HexStringToHash -> {
                 typeCheck<T, String>(tag)
                 tlvValue.toHexString() as T
@@ -175,13 +189,6 @@ class TlvDecoder(val tlvList: List<Tlv>) {
                 }
             }
         }
-        logTlv(tlv, decodedValue)
-        return decodedValue
-    }
-
-    inline fun <reified T> decodeArray(tag: TlvTag): List<T> {
-        val list = tlvList.filter { it.tag == tag }
-        return list.map { decode(it.tag) }
     }
 
     fun <T> logTlv(tlv: Tlv, value: T) {
