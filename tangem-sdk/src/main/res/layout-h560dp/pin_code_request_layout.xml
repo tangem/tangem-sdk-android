@@ -32,6 +32,7 @@
                 android:id="@+id/etPinCode"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="@android:color/transparent"
                 android:paddingStart="0dp"
                 android:paddingEnd="0dp" />
 
@@ -52,8 +53,8 @@
         android:layout_marginStart="46dp"
         android:layout_marginTop="19dp"
         android:layout_marginEnd="46dp"
-        android:insetTop="0dp"
         android:layout_marginBottom="40dp"
+        android:insetTop="0dp"
         android:insetBottom="0dp"
         android:text="@string/common_continue" />
 
