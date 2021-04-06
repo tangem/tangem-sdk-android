@@ -1,3 +1,5 @@
+include ':tangem-demo-desktop'
+include ':tangem-sdk-desktop'
 include ':tangem-demo'
 include ':tangem-sdk'
 include ':tangem-core'
