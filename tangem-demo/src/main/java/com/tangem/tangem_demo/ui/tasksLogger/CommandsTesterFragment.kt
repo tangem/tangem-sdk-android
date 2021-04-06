@@ -95,7 +95,9 @@ class SdkTaskSpinnerFragment : BaseFragment() {
                 (requireActivity() as? DemoActivity)?.enableSwipe(newState == RecyclerView.SCROLL_STATE_IDLE)
             }
         })
-        rvConsoleAdapter.onItemCountChanged = { rvConsole.smoothScrollToPosition(it) }
+        rvConsoleAdapter.onItemCountChanged = {
+            rvConsole.smoothScrollToPosition(it)
+        }
     }
 
     private fun handleCommandSelection(type: CommandType) {
@@ -154,6 +156,7 @@ class SdkTaskSpinnerFragment : BaseFragment() {
 
     override fun onDestroy() {
         nfcManager.removeTagDiscoveredListener(tagDiscoveredListener)
+        rvConsoleAdapter.onDestroy()
         super.onDestroy()
     }
 
