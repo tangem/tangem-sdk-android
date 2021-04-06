@@ -74,7 +74,7 @@ class CreateWalletCommand(
             return when (status) {
                 WalletStatus.Empty -> null
                 WalletStatus.Loaded -> TangemSdkError.AlreadyCreated()
-                WalletStatus.Purged -> TangemSdkError.CardIsPurged()
+                WalletStatus.Purged -> TangemSdkError.WalletIsPurged()
             }
         }
 
@@ -112,9 +112,9 @@ class CreateWalletCommand(
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         val tlvBuilder = TlvBuilder()
+        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
         tlvBuilder.append(TlvTag.Pin2, environment.pin2?.value)
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Cvc, environment.cvc)
         walletIndex.addTlvData(tlvBuilder)
 
