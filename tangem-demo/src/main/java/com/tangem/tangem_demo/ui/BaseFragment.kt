@@ -13,11 +13,11 @@ import com.tangem.commands.PinType
 import com.tangem.commands.SetPinCommand
 import com.tangem.commands.WriteIssuerExtraDataCommand
 import com.tangem.commands.common.card.Card
-import com.tangem.commands.common.card.EllipticCurve
-import com.tangem.commands.common.card.masks.SigningMethod
 import com.tangem.commands.file.FileData
 import com.tangem.commands.file.FileDataSignature
 import com.tangem.commands.file.FileSettingsChange
+import com.tangem.commands.wallet.CreateWalletResponse
+import com.tangem.commands.wallet.PurgeWalletResponse
 import com.tangem.commands.wallet.WalletConfig
 import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.CompletionResult
@@ -43,14 +43,19 @@ abstract class BaseFragment : Fragment() {
 
     protected var intWalletIndex = -1
 
-    protected var walletIndex: WalletIndex? = null
-        get() = if (intWalletIndex == -1) null
-        else WalletIndex.Index(intWalletIndex)
-
-    protected var walletPublicKey: ByteArray? = null
+    protected var selectedWalletPubKey: ByteArray? = null
         private set
-        get() = if (walletIndex == null) null
-        else card?.wallet(walletIndex!!)?.publicKey
+        get() {
+            return if (intWalletIndex == -1) {
+                showToast("Scan the card before trying to use the method")
+                null
+            } else {
+                card?.wallet(WalletIndex.Index(intWalletIndex))?.publicKey.guard {
+                    showToast("PublicKey with the selected index: $intWalletIndex not found")
+                    return null
+                }
+            }
+        }
 
     protected var bshDlg: BottomSheetDialog? = null
 
@@ -63,28 +68,25 @@ abstract class BaseFragment : Fragment() {
         return inflater.inflate(getLayoutId(), container, false)
     }
 
-    protected fun scanCard() {
-        sdk.scanCard(walletIndex) { handleResult(it) }
+    protected fun scanCard(publicKey: ByteArray?, updateOnlyCard: Boolean = false) {
+        val index = if (publicKey == null) null else WalletIndex.PublicKey(publicKey)
+        sdk.scanCard(index) {
+            if (updateOnlyCard) setCard(it) else handleResult(it)
+        }
     }
 
     protected fun sign(hashes: Array<ByteArray>) {
-        val publicKey = walletPublicKey.guard {
-            showToast("Scan a card before trying to use the sign method")
-            return
-        }
+        val publicKey = selectedWalletPubKey ?: return
         sdk.sign(hashes, publicKey, card?.cardId) { handleResult(it) }
     }
 
-    protected fun createWallet() {
-        sdk.createWallet(prepareWalletConfig(), card?.cardId) { handleResult(it) }
+    protected fun createWallet(walletConfig: WalletConfig) {
+        sdk.createWallet(walletConfig, card?.cardId) { handleResult(it) }
     }
 
     protected fun purgeWallet() {
-        val index = walletIndex.guard {
-            showToast("Select a wallet")
-            return
-        }
-        sdk.purgeWallet(index, card?.cardId) { handleResult(it) }
+        val publicKey = selectedWalletPubKey ?: return
+        sdk.purgeWallet(WalletIndex.PublicKey(publicKey), card?.cardId) { handleResult(it) }
     }
 
     protected fun readIssuerData() {
@@ -198,7 +200,12 @@ abstract class BaseFragment : Fragment() {
     private fun setCard(completionResult: CompletionResult<*>) {
         when (completionResult) {
             is CompletionResult.Success -> {
-                if (completionResult.data is Card) card = completionResult.data as Card
+                when (completionResult.data) {
+                    is Card -> card = completionResult.data as Card
+                    is CreateWalletResponse, is PurgeWalletResponse -> {
+                       scanCard(null, true)
+                    }
+                }
             }
             is CompletionResult.Failure -> {
             }
@@ -236,15 +243,6 @@ abstract class BaseFragment : Fragment() {
             issuerData, counter,
             FileDataSignature(signatures.startingSignature!!, signatures.finalizingSignature!!),
             Utils.issuer().dataKeyPair.publicKey
-        )
-    }
-
-    protected fun prepareWalletConfig(): WalletConfig {
-        return WalletConfig(
-            true,
-            false,
-            EllipticCurve.Secp256k1,
-            SigningMethod.SignHash,
         )
     }
 
