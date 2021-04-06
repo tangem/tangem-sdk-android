@@ -1,0 +1,42 @@
+buildscript {
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
+    }
+}
+
+
+plugins {
+    id 'java-library'
+    id 'kotlin'
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+
+sourceCompatibility = 1.8
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
+
+    implementation project(':tangem-core')
+    implementation project(':tangem-sdk-desktop')
+    
+    implementation group: 'commons-cli', name: 'commons-cli', version: '1.4'
+}
+
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'AppKt'
+        )
+    }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
