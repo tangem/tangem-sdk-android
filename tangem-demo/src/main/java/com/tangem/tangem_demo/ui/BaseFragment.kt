@@ -41,12 +41,16 @@ abstract class BaseFragment : Fragment() {
 
     protected var card: Card? = null
 
-    protected var intWalletIndex = 0
-    protected var walletIndex: WalletIndex = WalletIndex.Index(intWalletIndex)
-        get() = WalletIndex.Index(intWalletIndex)
+    protected var intWalletIndex = -1
+
+    protected var walletIndex: WalletIndex? = null
+        get() = if (intWalletIndex == -1) null
+        else WalletIndex.Index(intWalletIndex)
+
     protected var walletPublicKey: ByteArray? = null
         private set
-        get() = card?.wallet(walletIndex)?.publicKey
+        get() = if (walletIndex == null) null
+        else card?.wallet(walletIndex!!)?.publicKey
 
     protected var bshDlg: BottomSheetDialog? = null
 

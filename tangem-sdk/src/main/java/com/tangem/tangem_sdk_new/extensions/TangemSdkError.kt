@@ -32,7 +32,8 @@ fun TangemSdkError.localizedDescription(context: Context): String {
         is TangemSdkError.NoRemainingSignatures -> R.string.error_no_remaining_signatures
         is TangemSdkError.EmptyHashes -> R.string.error_empty_hashes
         is TangemSdkError.HashSizeMustBeEqual -> R.string.error_cannot_be_signed
-        is TangemSdkError.CardIsEmpty, is TangemSdkError.CardIsPurged -> R.string.error_card_is_empty
+        is TangemSdkError.WalletIsNotCreated -> R.string.error_wallet_is_not_created
+        is TangemSdkError.WalletIsPurged -> R.string.error_wallet_is_purged
         is TangemSdkError.SignHashesNotAvailable -> R.string.error_cannot_be_signed
         is TangemSdkError.TooManyHashesInOneTransaction -> R.string.error_cannot_be_signed
         is TangemSdkError.NotPersonalized -> R.string.error_not_personalized
