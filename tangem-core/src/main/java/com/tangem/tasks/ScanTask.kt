@@ -26,7 +26,7 @@ class ScanTask(
     override val requiresPin2 = false
 
     override fun preflightReadSettings(): PreflightReadSettings = when (walletIndex) {
-        null -> PreflightReadSettings.FullCard
+        null -> PreflightReadSettings.FullCardRead
         else -> PreflightReadSettings.ReadWallet(walletIndex!!)
     }
 
