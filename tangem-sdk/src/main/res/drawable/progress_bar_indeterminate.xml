@@ -15,7 +15,7 @@
             android:fillColor="#00000000"
             android:pathData="M0, 0 m 0, -18 a 18,18 0 1,1 0,36 a 18,18 0 1,1 0,-36"
             android:strokeWidth="2"
-            android:strokeColor="#0029FF"
+            android:strokeColor="#000000"
             android:strokeLineCap="square"
             android:strokeLineJoin="miter"
             android:trimPathStart="0"

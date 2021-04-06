@@ -194,7 +194,7 @@ abstract class BaseFragment : Fragment() {
     }
 
     protected fun showToast(message: String) {
-        Toast.makeText(requireActivity(), message, Toast.LENGTH_LONG).show()
+        activity?.let { Toast.makeText(it, message, Toast.LENGTH_LONG).show() }
     }
 
     protected fun prepareHashesToSign(): Array<ByteArray> {
