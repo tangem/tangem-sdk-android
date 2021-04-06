@@ -19,7 +19,6 @@
             android:id="@+id/tvScreenTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#000000"
             android:textSize="20sp"
             android:textStyle="bold"
             tools:text="@string/pin_set_code_format" />
@@ -32,13 +31,14 @@
             android:gravity="bottom"
             app:boxBackgroundColor="@android:color/transparent"
             app:errorIconDrawable="@null"
-            app:errorTextColor="@color/card_sdk_text_error_color"
+            app:errorTextColor="@color/sdk_text_error"
             app:passwordToggleEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPinCode"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="@android:color/transparent"
                 android:inputType="textPassword"
                 android:paddingStart="0dp"
                 android:paddingEnd="0dp" />
@@ -51,13 +51,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             app:boxBackgroundColor="@android:color/transparent"
-            app:errorTextColor="@color/card_sdk_text_error_color"
+            app:errorTextColor="@color/sdk_text_error"
             tools:hint="@string/pin_change_new_code_format">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etNewPinCode"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="@android:color/transparent"
                 android:inputType="textPassword"
                 android:paddingStart="0dp"
                 android:paddingEnd="0dp" />
@@ -70,13 +71,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             app:boxBackgroundColor="@android:color/transparent"
-            app:errorTextColor="@color/card_sdk_text_error_color"
+            app:errorTextColor="@color/sdk_text_error"
             tools:hint="@string/pin_set_code_confirm_format">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPinCodeConfirm"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="@android:color/transparent"
                 android:inputType="textPassword"
                 android:paddingStart="0dp"
                 android:paddingEnd="0dp" />

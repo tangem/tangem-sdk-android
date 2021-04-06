@@ -1,24 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="CardSdkTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="colorPrimary">@color/card_sdk_primary</item>
-        <item name="colorPrimaryDark">@color/card_sdk_primary_dark</item>
-        <item name="colorAccent">@color/card_sdk_accent</item>
+    <style name="CardSdkTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/sdk_primary</item>
+        <item name="colorOnPrimary">@color/sdk_on_primary</item>
+        <item name="colorSecondary">@color/sdk_secondary</item>
+        <item name="colorOnSecondary">@color/sdk_on_secondary</item>
+        <item name="android:windowBackground">@color/sdk_window_background</item>
         <item name="bottomSheetDialogTheme">@style/SdkBottomSheetDialogStyle</item>
     </style>
 
-    <style name="SdkTextView" parent="Widget.MaterialComponents.TextView">
-        <item name="android:textColor">@color/card_sdk_text_color_primary</item>
-    </style>
-
-    <style name="SdkTextView.Medium">
-        <item name="fontFamily">sans-serif-medium</item>
-    </style>
-
-    <style name="SdkBottomSheetDialogStyle" parent="Theme.MaterialComponents.Light.BottomSheetDialog">
+    <style name="SdkBottomSheetDialogStyle" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
         <item name="android:windowIsFloating">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowSoftInputMode">adjustResize</item>
+        <item name="android:backgroundTint">@color/sdk_window_background</item>
     </style>
 </resources>
