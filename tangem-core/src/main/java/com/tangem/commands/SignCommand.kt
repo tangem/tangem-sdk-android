@@ -96,8 +96,8 @@ class SignCommand(
         val wallet = card.wallet(walletIndex) ?: return TangemSdkError.WalletNotFound()
 
         when (wallet.status) {
-            WalletStatus.Empty -> return TangemSdkError.CardIsEmpty()
-            WalletStatus.Purged -> return TangemSdkError.CardIsPurged()
+            WalletStatus.Empty -> return TangemSdkError.WalletIsNotCreated()
+            WalletStatus.Purged -> return TangemSdkError.WalletIsPurged()
         }
 
         if (card.firmwareVersion < FirmwareConstraints.DeprecationVersions.walletRemainingSignatures &&
