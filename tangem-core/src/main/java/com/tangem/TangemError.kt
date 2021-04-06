@@ -115,7 +115,7 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
      * receives hashes of different lengths for signature.
      */
     class HashSizeMustBeEqual : TangemSdkError(40903)
-    class CardIsEmpty : TangemSdkError(40904)
+    class WalletIsNotCreated : TangemSdkError(40904)
     class SignHashesNotAvailable : TangemSdkError(40905)
     /**
      * Tangem cards can sign currently up to 10 hashes during one [com.tangem.commands.SignCommand].
@@ -129,7 +129,7 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
     //General Errors
     class NotPersonalized() : TangemSdkError(40001)
     class NotActivated : TangemSdkError(40002)
-    class CardIsPurged : TangemSdkError(40003)
+    class WalletIsPurged : TangemSdkError(40003)
     class Pin2OrCvcRequired : TangemSdkError(40004)
     /**
      * This error is returned when a [Task] checks unsuccessfully either
