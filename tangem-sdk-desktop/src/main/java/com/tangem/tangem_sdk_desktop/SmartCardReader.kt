@@ -9,6 +9,7 @@ import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.IOException
 import javax.smartcardio.*
@@ -21,12 +22,17 @@ class SmartCardReader(private var terminal: CardTerminal?) : CardReader {
     override var scope: CoroutineScope? = null
     override val tag = ConflatedBroadcastChannel<TagType?>()
 
+    private var connectedTag: TagType? = null
+        set(value) {
+            field = value
+            scope?.launch { tag.send(value) }
+        }
+
     override fun stopSession(cancelled: Boolean) {
         if (card != null) {
             try {
                 channel = null
                 try {
-                    card!!.endExclusive()
                     card!!.disconnect(false)
                 } catch (e: CardException) {
                     e.message?.let { Log.nfc { it } }
@@ -62,9 +68,9 @@ class SmartCardReader(private var terminal: CardTerminal?) : CardReader {
 
         if (terminal.waitForCardPresent(30000)) {
             card = terminal.connect("*")
-            card?.beginExclusive()
             channel = card?.basicChannel
             getUID()?.let { Log.nfc { "UID: " + it.toHexString() } }
+            connectedTag = TagType.Nfc
         } else {
             throw CardException("Timeout waiting card present!")
         }
