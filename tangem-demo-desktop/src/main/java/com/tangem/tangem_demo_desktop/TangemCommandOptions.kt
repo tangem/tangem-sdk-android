@@ -7,11 +7,9 @@ enum class TangemCommandOptions(val option: Option) {
     TerminalNumber(Option("t", "terminal", false, "terminal number")),
     Hashes(Option("hashes", true, "hashes to sign")),
     CardId(Option("cid", "cardid", true, "card id")),
-    Data(Option("data", true, "data in hex format that will be written on a card")),
-    Signature(Option("sig", "signature", true, "signature of issuer data")),
-    StartingSignature(Option("startsig", true, "starting signature of issuer extra data")),
-    FinalizingSignature(Option("finsig", true, "finalizing signature of issuer extra data")),
-    Counter(Option("counter", true, "data counter"));
+    FileIndices(Option("indices", true, "indices of files")),
+    ReadPrivateFiles(Option("privatefiles", false, "should the command read private files")),
+    Files(Option("files", true, "files as array of bytes"));
 
     val opt = option.opt
 }
@@ -27,25 +25,20 @@ fun Command.generateOptions(): Options {
             options.addOption(TangemCommandOptions.Hashes.option)
             options.addOption(TangemCommandOptions.CardId.option)
         }
-        Command.ReadIssuerData -> {
+        Command.ReadFiles -> {
             options.addOption(TangemCommandOptions.CardId.option)
+            options.addOption(TangemCommandOptions.FileIndices.option)
+            options.addOption(TangemCommandOptions.ReadPrivateFiles.option)
         }
-        Command.ReadIssuerExtraData -> {
+        Command.WriteFiles -> {
             options.addOption(TangemCommandOptions.CardId.option)
+            options.addOption(TangemCommandOptions.Files.option)
         }
-        Command.WriteIssuerData -> {
+        Command.DeleteFiles -> {
             options.addOption(TangemCommandOptions.CardId.option)
-            options.addOption(TangemCommandOptions.Data.option)
-            options.addOption(TangemCommandOptions.Counter.option)
-            options.addOption(TangemCommandOptions.Signature.option)
+            options.addOption(TangemCommandOptions.FileIndices.option)
         }
-        Command.WriteIssuerExtraData -> {
-            options.addOption(TangemCommandOptions.CardId.option)
-            options.addOption(TangemCommandOptions.Data.option)
-            options.addOption(TangemCommandOptions.Counter.option)
-            options.addOption(TangemCommandOptions.StartingSignature.option)
-            options.addOption(TangemCommandOptions.FinalizingSignature.option)
-        }
+
         Command.CreateWallet -> {
             options.addOption(TangemCommandOptions.CardId.option)
         }

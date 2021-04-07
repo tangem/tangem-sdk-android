@@ -2,6 +2,8 @@ import org.apache.commons.cli.*
 
 
 fun main(args: Array<String>) {
+    System.setProperty("sun.security.smartcardio.library", "/System/Library/Frameworks/PCSC.framework/Versions/Current/PCSC")
+
     val command = Command.byValue(args.first())
     if (command == null) {
         if (args.contains("-h") || args.contains("--help")) {
@@ -24,6 +26,7 @@ fun main(args: Array<String>) {
     val indexOfTerminal = cmd.getOptionValue(TangemCommandOptions.TerminalNumber.opt)?.toIntOrNull()
 
     val tangemSdkDesktop = TangemSdkCli(verbose, indexOfTerminal, cmd)
+
     tangemSdkDesktop.execute(command)
 }
 
