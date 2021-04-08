@@ -104,7 +104,13 @@ class SmartCardReader(private var terminal: CardTerminal?) : CardReader {
             rspAPDU.bytes
         } catch (e: Exception) {
             callback.invoke(CompletionResult.Failure(TangemSdkError.TagLost()))
-            stopSession()
+            if (terminal?.waitForCardAbsent(30000) == true) {
+                connectedTag = null
+                startSession()
+            } else {
+                Log.error { e.localizedMessage }
+                stopSession()
+            }
             return
         }
 
