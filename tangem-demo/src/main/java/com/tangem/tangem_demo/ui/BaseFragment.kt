@@ -203,7 +203,7 @@ abstract class BaseFragment : Fragment() {
                 when (completionResult.data) {
                     is Card -> card = completionResult.data as Card
                     is CreateWalletResponse, is PurgeWalletResponse -> {
-                       scanCard(null, true)
+                        scanCard(null, true)
                     }
                 }
             }
