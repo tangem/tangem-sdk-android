@@ -55,6 +55,10 @@ class CommandListFragment : BaseFragment() {
             val config = WalletConfig(true, false, EllipticCurve.Secp256k1, SigningMethod.SignHash)
             createWallet(config)
         }
+        btnCreateWalletSecpR1.setOnClickListener {
+            val config = WalletConfig(true, false, EllipticCurve.Secp256r1, SigningMethod.SignHash)
+            createWallet(config)
+        }
         btnCreateWalletEdwards.setOnClickListener {
             val config = WalletConfig(true, false, EllipticCurve.Ed25519, SigningMethod.SignHash)
             createWallet(config)
