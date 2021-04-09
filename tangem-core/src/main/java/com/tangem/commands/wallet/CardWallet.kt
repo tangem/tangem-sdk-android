@@ -20,7 +20,7 @@ import com.tangem.common.tlv.TlvTag
  * @property remainingSignatures Remaining number of `SignCommand` operations before the wallet will stop signing
  * transactions. Note: This counter were deprecated for cards with COS 4.0 and higher
  */
-class CardWallet constructor(
+data class CardWallet constructor(
     val index: Int,
     val status: WalletStatus,
     val curve: EllipticCurve? = null,
