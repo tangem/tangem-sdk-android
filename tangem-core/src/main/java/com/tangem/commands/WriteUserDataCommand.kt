@@ -13,10 +13,10 @@ import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 
 class WriteUserDataResponse(
-        /**
-         * CID, Unique Tangem card ID number.
-         */
-        val cardId: String
+    /**
+     * CID, Unique Tangem card ID number.
+     */
+    val cardId: String
 ) : CommandResponse
 
 /**
@@ -31,9 +31,12 @@ class WriteUserDataResponse(
  * Writing of User_Counter and User_Data protected only by PIN1.
  * User_ProtectedCounter and User_ProtectedData additionaly need PIN2 to confirmation.
  */
-class WriteUserDataCommand(private val userData: ByteArray? = null, private val userProtectedData: ByteArray? = null,
-                           private val userCounter: Int? = null,
-                           private val userProtectedCounter: Int? = null) : Command<WriteUserDataResponse>() {
+class WriteUserDataCommand(
+    private val userData: ByteArray? = null,
+    private val userProtectedData: ByteArray? = null,
+    private val userCounter: Int? = null,
+    private val userProtectedCounter: Int? = null
+) : Command<WriteUserDataResponse>() {
 
     override val requiresPin2 = true
 
@@ -78,7 +81,7 @@ class WriteUserDataCommand(private val userData: ByteArray? = null, private val 
         return WriteUserDataResponse(TlvDecoder(tlvData).decode(TlvTag.CardId))
     }
 
-    companion object{
+    companion object {
         const val MAX_SIZE = 512
     }
 }
