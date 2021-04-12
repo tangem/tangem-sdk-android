@@ -165,16 +165,16 @@ class TlvDecoderTest {
 
     @Test
     fun `map Int returns correct value`() {
-        val signedHashes: Int = tlvMapper.decode(TlvTag.SignedHashes)
+        val signedHashes: Int = tlvMapper.decode(TlvTag.WalletSignedHashes)
         assertThat(signedHashes)
                 .isEqualTo(13)
     }
 
     @Test
     fun `map Int with wrong value throws ConversionException`() {
-        val localMapper = TlvDecoder(listOf(Tlv(TlvTag.SignedHashes, byteArrayOf(1, 2, 3, 4, 5))))
+        val localMapper = TlvDecoder(listOf(Tlv(TlvTag.WalletSignedHashes, byteArrayOf(1, 2, 3, 4, 5))))
         assertThrows<TangemSdkError.DecodingFailed> {
-            localMapper.decode<Int>(TlvTag.SignedHashes)
+            localMapper.decode<Int>(TlvTag.WalletSignedHashes)
         }
     }
 
