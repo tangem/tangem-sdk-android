@@ -1,4 +1,4 @@
-package com.tangem.commands.verifycard
+package com.tangem.commands.verification
 
 import com.squareup.moshi.JsonClass
 import java.text.SimpleDateFormat
