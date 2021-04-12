@@ -3,7 +3,7 @@ package com.tangem.commands.common.network
 
 import com.tangem.commands.common.network.ApiTangem.Companion.ARTWORK
 import com.tangem.commands.common.network.ApiTangem.Companion.VERIFY_AND_GET_INFO
-import com.tangem.commands.verifycard.CardVerifyAndGetInfo
+import com.tangem.commands.verification.CardVerifyAndGetInfo
 import okhttp3.ResponseBody
 import retrofit2.http.*
 

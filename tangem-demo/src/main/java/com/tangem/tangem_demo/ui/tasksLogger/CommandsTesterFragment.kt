@@ -8,8 +8,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import com.tangem.*
 import com.tangem.commands.PinType
+import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.commands.common.card.masks.SigningMethod
 import com.tangem.commands.file.FileSettings
 import com.tangem.commands.file.FileSettingsChange
+import com.tangem.commands.wallet.WalletConfig
 import com.tangem.common.CardValuesDbStorage
 import com.tangem.common.CompletionResult
 import com.tangem.tangem_demo.*
@@ -110,9 +113,9 @@ class SdkTaskSpinnerFragment : BaseFragment() {
         // if don't use the workerThread then fragments is stuck during first initialization
         postWorker {
             when (type) {
-                CommandType.Scan -> scanCard()
+                CommandType.Scan -> scanCard(null)
                 CommandType.Sign -> sign(prepareHashesToSign())
-                CommandType.WalletCreate -> createWallet()
+                CommandType.WalletCreate -> createWallet(WalletConfig(true, false, EllipticCurve.Secp256k1, SigningMethod.SignHash))
                 CommandType.WalletPurge -> purgeWallet()
                 CommandType.IssuerDataRead -> readIssuerData()
                 CommandType.IssuerDataWrite -> writeIssuerData()
