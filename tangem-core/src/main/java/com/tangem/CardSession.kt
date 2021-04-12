@@ -1,6 +1,7 @@
 package com.tangem
 
 import com.tangem.commands.*
+import com.tangem.commands.read.ReadCommand
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.ResponseApdu
@@ -8,6 +9,9 @@ import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.getType
 import com.tangem.crypto.EncryptionHelper
 import com.tangem.crypto.pbkdf2Hash
+import com.tangem.tasks.PreflightReadCapable
+import com.tangem.tasks.PreflightReadSettings
+import com.tangem.tasks.PreflightReadTask
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.PrintWriter
@@ -61,35 +65,31 @@ class CardSession(
     private val reader: CardReader,
     val viewDelegate: SessionViewDelegate,
     private var cardId: String? = null,
-    private val initialMessage: Message? = null
+    private var initialMessage: Message? = null
 ) {
 
     var connectedTag: TagType? = null
+
+    val environment = environmentService.createEnvironment(cardId)
+    val scope = CoroutineScope(Dispatchers.IO) + CoroutineExceptionHandler { _, ex ->
+        val sw = StringWriter()
+        ex.printStackTrace(PrintWriter(sw))
+        Log.error { sw.toString() }
+    }
 
     /**
      * True if some operation is still in progress.
      */
     private var state = CardSessionState.Inactive
-
-    val scope = CoroutineScope(Dispatchers.IO) + CoroutineExceptionHandler { _, ex ->
-        handleError(ex)
-    }
+    private var needPreflightRead = true
+    private var pin2Required = false
+    private var preflightReadingSettings: PreflightReadSettings = PreflightReadSettings.ReadCardOnly
 
     private val tag = this.javaClass.simpleName
 
-    private var performPreflightRead = true
-    private var pin2Required = false
-
-    val environment = environmentService.createEnvironment(cardId)
-
     fun setInitialMessage(message: Message?) {
+        initialMessage = message
         viewDelegate.setMessage(message)
-    }
-
-    private fun handleError(throwable: Throwable) {
-        val sw = StringWriter()
-        throwable.printStackTrace(PrintWriter(sw))
-        Log.error { sw.toString() }
     }
 
     /**
@@ -132,15 +132,14 @@ class CardSession(
         }
     }
 
-    private var walletIndexForInteraction: WalletIndex? = null
     private fun <T : CardSessionRunnable<*>> prepareSession(
         runnable: T, callback: (result: CompletionResult<Unit>) -> Unit
     ) {
         Log.session { "Prepare card session" }
-        walletIndexForInteraction = (runnable as? WalletSelectable)?.walletIndex
-        if ((runnable as? Command<*>)?.performPreflightRead == false) performPreflightRead = false
-        pin2Required = runnable.requiresPin2
-
+        (runnable as? PreflightReadCapable)?.let {
+            needPreflightRead = it.needPreflightRead()
+            preflightReadingSettings = it.preflightReadSettings()
+        }
         if (runnable is CardSessionPreparable) {
             runnable.prepare(this, callback)
         } else {
@@ -165,7 +164,7 @@ class CardSession(
                 .filterNotNull()
                 .take(1)
                 .collect { tagType ->
-                    if (tagType == TagType.Nfc && performPreflightRead) {
+                    if (tagType == TagType.Nfc && needPreflightRead) {
                         preflightCheck(callback)
                     } else {
                         callback(this@CardSession, null)
@@ -205,8 +204,7 @@ class CardSession(
 
     private fun preflightCheck(callback: (session: CardSession, error: TangemError?) -> Unit) {
         Log.session { "Start preflight check" }
-        val readCommand = ReadCommand(walletIndexForInteraction)
-        readCommand.run(this) { result ->
+        PreflightReadTask(preflightReadingSettings).run(this) { result ->
             when (result) {
                 is CompletionResult.Failure -> {
                     stopWithError(result.error)
@@ -264,10 +262,10 @@ class CardSession(
     private fun stopSession() {
         Log.session { "Stop session" }
         state = CardSessionState.Inactive
+        preflightReadingSettings = PreflightReadSettings.ReadCardOnly
         environmentService.saveEnvironmentValues(environment, cardId)
         reader.stopSession()
         scope.cancel()
-        walletIndexForInteraction = null
     }
 
     fun send(apdu: CommandApdu, callback: (result: CompletionResult<ResponseApdu>) -> Unit) {

@@ -1,11 +1,13 @@
 package com.tangem.commands.common.card
 
 import com.tangem.commands.CommandResponse
-import com.tangem.commands.ReadCommand
 import com.tangem.commands.SignCommand
 import com.tangem.commands.common.card.masks.ProductMask
 import com.tangem.commands.common.card.masks.SettingsMask
 import com.tangem.commands.common.card.masks.SigningMethodMask
+import com.tangem.commands.read.ReadCommand
+import com.tangem.commands.wallet.CardWallet
+import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.tlv.TlvTag
 import java.util.*
 
@@ -27,7 +29,7 @@ data class Card(
     /**
      * Current status of the card.
      */
-    val status: CardStatus?,
+    var status: CardStatus?,
 
     /**
      * Version of Tangem COS.
@@ -40,6 +42,8 @@ data class Card(
      */
     val cardPublicKey: ByteArray?,
 
+    internal val defaultCurve: EllipticCurve?,
+
     /**
      * Card settings defined by personalization (bit mask: 0 – Enabled, 1 – Disabled).
      */
@@ -49,17 +53,6 @@ data class Card(
      * Public key that is used by the card issuer to sign IssuerData field.
      */
     val issuerPublicKey: ByteArray?,
-
-    /**
-     * Explicit text name of the elliptic curve used for all wallet key operations.
-     * Supported curves: ‘secp256k1’ and ‘ed25519’.
-     */
-    val curve: EllipticCurve?,
-
-    /**
-     * Total number of signatures allowed for the wallet when the card was personalized.
-     */
-    val maxSignatures: Int?,
 
     /**
      * Defines what data should be submitted to SIGN command.
@@ -80,23 +73,6 @@ data class Card(
      * Index of corresponding wallet
      */
     val walletIndex: Int?,
-
-    /**
-     * Public key of the blockchain wallet.
-     */
-    val walletPublicKey: ByteArray?,
-
-    /**
-     * Remaining number of [SignCommand] operations before the wallet will stop signing transactions.
-     */
-    val walletRemainingSignatures: Int?,
-
-    /**
-     * Total number of signed single hashes returned by the card in
-     * [SignCommand] responses since card personalization.
-     * Sums up array elements within all [SignCommand].
-     */
-    val walletSignedHashes: Int?,
 
     /**
      * Any non-zero value indicates that the card experiences some hardware problems.
@@ -156,7 +132,31 @@ data class Card(
 
     var isPin2Default: Boolean? = null
 
-) : CommandResponse
+) : CommandResponse {
+    private val wallets = mutableListOf<CardWallet>()
+
+    fun setWallets(newWallets: List<CardWallet>) {
+        wallets.clear()
+        wallets.addAll(newWallets)
+        wallets.sortBy { it.index }
+    }
+
+    fun wallet(index: WalletIndex): CardWallet? {
+        return when (index) {
+            is WalletIndex.Index -> wallets.firstOrNull { it.index == index.index }
+            is WalletIndex.PublicKey -> wallets.firstOrNull { it.publicKey?.contentEquals(index.data) == true }
+        }
+    }
+
+    fun updateWallet(wallet: CardWallet) {
+        val foundedIndex = wallets.indexOfFirst { it.index == wallet.index }
+        if (foundedIndex != -1) {
+            wallets[foundedIndex] = wallet
+        }
+    }
+
+    fun getWallets(): List<CardWallet> = wallets.toList()
+}
 
 /**
  * Detailed information about card contents.
