@@ -1,6 +1,6 @@
 package com.tangem.commands.common.network
 
-import com.tangem.commands.verifycard.CardVerifyAndGetInfo
+import com.tangem.commands.verification.CardVerifyAndGetInfo
 import okhttp3.ResponseBody
 
 class TangemService {

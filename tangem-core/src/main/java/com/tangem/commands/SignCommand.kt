@@ -4,6 +4,9 @@ import com.tangem.*
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.common.card.masks.SigningMethod
+import com.tangem.commands.wallet.WalletIndex
+import com.tangem.commands.wallet.WalletStatus
+import com.tangem.commands.wallet.addTlvData
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
@@ -12,6 +15,7 @@ import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.sign
+import com.tangem.tasks.PreflightReadSettings
 
 /**
  * @param cardId CID, Unique Tangem card ID number
@@ -37,10 +41,12 @@ class SignResponse(
  */
 class SignCommand(
     private val hashes: Array<ByteArray>,
-    override var walletIndex: WalletIndex? = null
-) : Command<SignResponse>(), WalletSelectable {
+    private val walletIndex: WalletIndex
+) : Command<SignResponse>() {
 
     override val requiresPin2 = true
+
+    override fun preflightReadSettings(): PreflightReadSettings = PreflightReadSettings.ReadWallet(walletIndex)
 
     private val hashSizes = if (hashes.isNotEmpty()) hashes.first().size else 0
     private val hashesChunked = hashes.asList().chunked(CHUNK_SIZE)
@@ -61,12 +67,12 @@ class SignCommand(
                     if (currentChunk == hashesChunked.lastIndex) {
                         val lastResponse = responses.last()
                         val finalResponse = SignResponse(
-                                cardId = lastResponse.cardId,
-                                signature = responses.fold(byteArrayOf()) { signatures, response ->
-                                    signatures + response.signature
-                                },
-                                walletSignedHashes = lastResponse.walletSignedHashes,
-                                walletRemainingSignatures = lastResponse.walletRemainingSignatures
+                            cardId = lastResponse.cardId,
+                            signature = responses.fold(byteArrayOf()) { signatures, response ->
+                                signatures + response.signature
+                            },
+                            walletSignedHashes = lastResponse.walletSignedHashes,
+                            walletRemainingSignatures = lastResponse.walletRemainingSignatures
                         )
                         callback(CompletionResult.Success(finalResponse))
                     } else {
@@ -80,11 +86,22 @@ class SignCommand(
     }
 
     override fun performPreCheck(card: Card): TangemSdkError? {
+        if (card.status == CardStatus.NotPersonalized) {
+            return TangemSdkError.NotPersonalized()
+        }
         if (card.isActivated) {
             return TangemSdkError.NotActivated()
         }
+
+        val wallet = card.wallet(walletIndex) ?: return TangemSdkError.WalletNotFound()
+
+        when (wallet.status) {
+            WalletStatus.Empty -> return TangemSdkError.WalletIsNotCreated()
+            WalletStatus.Purged -> return TangemSdkError.WalletIsPurged()
+        }
+
         if (card.firmwareVersion < FirmwareConstraints.DeprecationVersions.walletRemainingSignatures &&
-            card.walletRemainingSignatures == 0) {
+            wallet.remainingSignatures == 0) {
             return TangemSdkError.NoRemainingSignatures()
         }
         if (card.firmwareVersion < FirmwareConstraints.AvailabilityVersions.pauseBeforePin2) {
@@ -100,13 +117,7 @@ class SignCommand(
             return TangemSdkError.HashSizeMustBeEqual()
         }
 
-        return when (card.status) {
-            CardStatus.Loaded -> null
-            CardStatus.Empty -> TangemSdkError.CardIsEmpty()
-            CardStatus.NotPersonalized -> TangemSdkError.NotPersonalized()
-            CardStatus.Purged -> TangemSdkError.CardIsPurged()
-            null -> TangemSdkError.CardError()
-        }
+        return null
     }
 
     override fun mapError(card: Card?, error: TangemError): TangemError {
@@ -160,8 +171,9 @@ class SignCommand(
         return SignResponse(
             cardId = decoder.decode(TlvTag.CardId),
             signature = decoder.decode(TlvTag.Signature),
-            walletRemainingSignatures = decoder.decodeOptional(TlvTag.RemainingSignatures) ?:99999, // In COS v.4.0 remaining signatures was removed
-            walletSignedHashes = decoder.decodeOptional(TlvTag.SignedHashes)
+            walletRemainingSignatures = decoder.decodeOptional(TlvTag.RemainingSignatures)
+                ?: 99999, // In COS v.4.0 remaining signatures was removed
+            walletSignedHashes = decoder.decodeOptional(TlvTag.WalletSignedHashes)
         )
     }
 
