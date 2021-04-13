@@ -27,7 +27,7 @@ sealed class WalletIndex {
 
 fun WalletIndex.addTlvData(tlvBuilder: TlvBuilder) {
     when (this) {
-        is WalletIndex.Index -> index.let { tlvBuilder.append(TlvTag.WalletsIndex, it) }
+        is WalletIndex.Index -> index.let { tlvBuilder.append(TlvTag.WalletIndex, it) }
         is WalletIndex.PublicKey -> data.let { tlvBuilder.append(TlvTag.WalletPublicKey, it) }
     }
 }
