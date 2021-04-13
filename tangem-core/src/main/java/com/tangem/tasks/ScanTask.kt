@@ -7,11 +7,10 @@ import com.tangem.commands.common.card.CardDeserializer
 import com.tangem.commands.common.card.FirmwareVersion
 import com.tangem.commands.common.card.masks.Product
 import com.tangem.commands.common.card.masks.Settings
+import com.tangem.commands.verification.VerifyCardCommand
 import com.tangem.commands.wallet.CheckWalletCommand
-import com.tangem.commands.wallet.WalletIndex
 import com.tangem.commands.wallet.WalletStatus
 import com.tangem.common.CompletionResult
-import com.tangem.common.TangemSdkConstants
 import com.tangem.common.extensions.guard
 
 /**
@@ -20,15 +19,12 @@ import com.tangem.common.extensions.guard
  * It performs two commands, [ReadCommand] and [CheckWalletCommand], subsequently.
  */
 class ScanTask(
-    private var walletIndex: WalletIndex? = null
+    private val cardVerification: Boolean = true
 ) : CardSessionRunnable<Card>, PreflightReadCapable {
 
     override val requiresPin2 = false
 
-    override fun preflightReadSettings(): PreflightReadSettings = when (walletIndex) {
-        null -> PreflightReadSettings.FullCardRead
-        else -> PreflightReadSettings.ReadWallet(walletIndex!!)
-    }
+    override fun preflightReadSettings(): PreflightReadSettings = PreflightReadSettings.FullCardRead
 
     override fun run(session: CardSession, callback: (result: CompletionResult<Card>) -> Unit) {
         if (session.connectedTag == TagType.Slix) {
@@ -51,14 +47,28 @@ class ScanTask(
                     is CompletionResult.Success -> {
                         card.isPin2Default = result.data.isPin2Default
                         session.environment.card = card
-                        runCheckWalletIfNeeded(card, session, callback)
+                        runVerificationIfNeeded(card, session, callback)
                     }
                     is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
                 }
             }
         } else {
             session.environment.card = card
+            runVerificationIfNeeded(card, session, callback)
+        }
+    }
+
+    private fun runVerificationIfNeeded(card: Card, session: CardSession, callback: (result: CompletionResult<Card>) -> Unit) {
+        if (!cardVerification) {
             runCheckWalletIfNeeded(card, session, callback)
+            return
+        }
+
+        VerifyCardCommand(true).run(session) {
+            when (it) {
+                is CompletionResult.Success -> runCheckWalletIfNeeded(card, session, callback)
+                is CompletionResult.Failure -> callback(CompletionResult.Failure(it.error))
+            }
         }
     }
 
@@ -71,18 +81,12 @@ class ScanTask(
             return
         }
 
-        val index = if (card.firmwareVersion < FirmwareConstraints.AvailabilityVersions.walletData) {
-            WalletIndex.Index(TangemSdkConstants.oldCardDefaultWalletIndex)
-        } else {
-            if (walletIndex == null) {
-                callback(CompletionResult.Success(card))
-                return
-            } else {
-                walletIndex!!
-            }
+        if (card.firmwareVersion < FirmwareConstraints.AvailabilityVersions.walletData) {
+            callback(CompletionResult.Success(card))
+            return
         }
 
-        val wallet = card.wallet(index).guard {
+        val wallet = card.getWallets().firstOrNull().guard {
             callback(CompletionResult.Failure(TangemSdkError.WalletNotFound()))
             return
         }
