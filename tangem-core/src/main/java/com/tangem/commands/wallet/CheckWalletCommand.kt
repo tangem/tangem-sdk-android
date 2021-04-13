@@ -100,7 +100,7 @@ class CheckWalletCommand(
         return CheckWalletResponse(
             cardId = decoder.decode(TlvTag.CardId),
             salt = decoder.decode(TlvTag.Salt),
-            walletSignature = decoder.decode(TlvTag.Signature)
+            walletSignature = decoder.decode(TlvTag.WalletSignature)
         )
     }
 }
