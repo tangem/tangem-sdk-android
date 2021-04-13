@@ -7,18 +7,20 @@ import com.tangem.commands.common.card.masks.WalletSettingsMask
 import com.tangem.commands.common.card.masks.WalletSettingsMaskBuilder
 
 class WalletConfig(
-    val isReusable: Boolean,
-    val prohibitPurgeWallet: Boolean,
-    val curveId: EllipticCurve,
-    val signingMethods: SigningMethod,
+    val isReusable: Boolean?,
+    val prohibitPurgeWallet: Boolean?,
+    val curveId: EllipticCurve?,
+    val signingMethods: SigningMethod?,
 ) {
 
-    fun getSettingsMask(): WalletSettingsMask {
+    fun getSettingsMask(): WalletSettingsMask? {
+        if (isReusable == null && prohibitPurgeWallet == null) return null
+
         val builder = WalletSettingsMaskBuilder()
-        if (isReusable) {
+        if (isReusable == true) {
             builder.add(WalletSetting.IsReusable)
         }
-        if (prohibitPurgeWallet) {
+        if (prohibitPurgeWallet == true) {
             builder.add(WalletSetting.ProhibitPurgeWallet)
         }
         return builder.build()
