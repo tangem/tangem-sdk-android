@@ -121,7 +121,7 @@ class PurgeWalletCommand(
         return PurgeWalletResponse(
             cardId = decoder.decode(TlvTag.CardId),
             status = decoder.decode(TlvTag.Status),
-            walletIndex = decoder.decode(TlvTag.WalletsIndex)
+            walletIndex = decoder.decode(TlvTag.WalletIndex)
         )
     }
 }
