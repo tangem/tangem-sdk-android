@@ -83,9 +83,10 @@ class TangemSdk(
      * @param hash: Transaction hash for sign by card.
      * @param walletPublicKey: Public key of wallet that should sign hash.
      * @param cardId: CID, Unique Tangem card ID number
-     * @param initialMessage: A custom description that shows at the beginning of the NFC session. If nil, default message will be used
-     * @param callback: is triggered on the completion of the [SignCommand] and provides card response
-     * in the form of [ByteArray] if the task was performed successfully
+     * @param initialMessage: A custom description that shows at the beginning of the NFC session.
+     * default message will be used
+     * @param callback: is triggered on the completion of the [SignCommand] and provides response
+     * in the form of single signed hash [ByteArray] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
     fun sign(
@@ -97,7 +98,7 @@ class TangemSdk(
     ) {
         sign(arrayOf(hash), walletPublicKey, cardId, initialMessage) { result ->
             when (result) {
-                is CompletionResult.Success -> callback(CompletionResult.Success(result.data.signatures[0]))
+                is CompletionResult.Success -> callback(CompletionResult.Success(result.data[0]))
                 is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
             }
         }
@@ -122,8 +123,8 @@ class TangemSdk(
      * @param cardId: CID, Unique Tangem card ID number
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback: is triggered on the completion of the [SignCommand] and provides card response
-     * in the form of [SignResponse] if the task was performed successfully
+     * @param callback: is triggered on the completion of the [SignCommand] and provides response
+     * in the form of list of signed hashes [List<ByteArray>] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
     fun sign(
@@ -131,10 +132,15 @@ class TangemSdk(
         walletPublicKey: ByteArray,
         cardId: String? = null,
         initialMessage: Message? = null,
-        callback: (result: CompletionResult<SignResponse>) -> Unit
+        callback: (result: CompletionResult<List<ByteArray>>) -> Unit
     ) {
         val walletIndex = WalletIndex.PublicKey(walletPublicKey)
-        startSessionWithRunnable(SignCommand(hashes, walletIndex), cardId, initialMessage, callback)
+        startSessionWithRunnable(SignCommand(hashes, walletIndex), cardId, initialMessage) { result ->
+            when (result) {
+                is CompletionResult.Success -> callback(CompletionResult.Success(result.data.signatures))
+                is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+            }
+        }
     }
 
     /**
@@ -731,4 +737,6 @@ class TangemSdk(
         val cardSession = CardSession(environmentService, reader, viewDelegate, cardId, initialMessage)
         Thread().run { cardSession.start(callback = callback) }
     }
+
+    companion object
 }
