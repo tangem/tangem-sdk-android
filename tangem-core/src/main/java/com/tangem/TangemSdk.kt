@@ -68,11 +68,40 @@ class TangemSdk(
      * in the form of [Card] if the task was performed successfully or [TangemSdkError] in case of an error.
      */
     fun scanCard(
-        walletIndex: WalletIndex? = null,
         initialMessage: Message? = null,
         callback: (result: CompletionResult<Card>) -> Unit
     ) {
-        startSessionWithRunnable(ScanTask(walletIndex), null, initialMessage, callback)
+        startSessionWithRunnable(ScanTask(), null, initialMessage, callback)
+    }
+
+    /**
+     * This method allows you to sign one hash and will return a corresponding signature.
+     * Please note that Tangem cards usually protect the signing with a security delay
+     * that may last up to 45 seconds, depending on a card.
+     * It is for `SessionViewDelegate` to notify users of security delay.
+     *
+     * @param hash: Transaction hash for sign by card.
+     * @param walletPublicKey: Public key of wallet that should sign hash.
+     * @param cardId: CID, Unique Tangem card ID number
+     * @param initialMessage: A custom description that shows at the beginning of the NFC session.
+     * default message will be used
+     * @param callback: is triggered on the completion of the [SignCommand] and provides response
+     * in the form of single signed hash [ByteArray] if the task was performed successfully
+     * or [TangemSdkError] in case of an error.
+     */
+    fun sign(
+        hash: ByteArray,
+        walletPublicKey: ByteArray,
+        cardId: String? = null,
+        initialMessage: Message? = null,
+        callback: (result: CompletionResult<ByteArray>) -> Unit
+    ) {
+        sign(arrayOf(hash), walletPublicKey, cardId, initialMessage) { result ->
+            when (result) {
+                is CompletionResult.Success -> callback(CompletionResult.Success(result.data[0]))
+                is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+            }
+        }
     }
 
     /**
@@ -88,14 +117,14 @@ class TangemSdk(
      * It is for [SessionViewDelegate] to notify users of security delay.
      *
      * Note: `WalletIndex` available for cards with COS v.4.0 or higher.
-     * @param hashes Array of transaction hashes. It can be from one or up to ten hashes of the same length.
+     * @param hashes: Array of transaction hashes. It can be from one or up to ten hashes of the same length.
      * @param walletPublicKey: Public key of the wallet that should sign hashes.
      * If not specified - wallet at default index will sign hashes. See `WalletIndex` for more info.
-     * @param cardId CID, Unique Tangem card ID number
+     * @param cardId: CID, Unique Tangem card ID number
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [SignCommand] and provides card response
-     * in the form of [SignResponse] if the task was performed successfully
+     * @param callback: is triggered on the completion of the [SignCommand] and provides response
+     * in the form of list of signed hashes [List<ByteArray>] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
     fun sign(
@@ -103,24 +132,29 @@ class TangemSdk(
         walletPublicKey: ByteArray,
         cardId: String? = null,
         initialMessage: Message? = null,
-        callback: (result: CompletionResult<SignResponse>) -> Unit
+        callback: (result: CompletionResult<List<ByteArray>>) -> Unit
     ) {
         val walletIndex = WalletIndex.PublicKey(walletPublicKey)
-        startSessionWithRunnable(SignCommand(hashes, walletIndex), cardId, initialMessage, callback)
+        startSessionWithRunnable(SignCommand(hashes, walletIndex), cardId, initialMessage) { result ->
+            when (result) {
+                is CompletionResult.Success -> callback(CompletionResult.Success(result.data.signatures))
+                is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+            }
+        }
     }
 
     /**
      * This method launches a [ReadIssuerDataCommand] on a new thread.
-
+     *
      * This command returns 512-byte Issuer Data field and its issuer’s signature.
      * Issuer Data is never changed or parsed from within the Tangem COS. The issuer defines purpose of use,
      * format and payload of Issuer Data. For example, this field may contain information about
      * wallet balance signed by the issuer or additional issuer’s attestation data.
      *
-     * @param cardId CID, Unique Tangem card ID number.
+     * @param cardId: CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [ReadIssuerDataCommand] and provides
+     * @param callback: is triggered on the completion of the [ReadIssuerDataCommand] and provides
      * card response in the form of [ReadIssuerDataResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
@@ -140,13 +174,13 @@ class TangemSdk(
      * format and payload of Issuer Data. For example, this field may contain information about
      * wallet balance signed by the issuer or additional issuer’s attestation data.
      *
-     * @param cardId CID, Unique Tangem card ID number.
-     * @param issuerData Data provided by issuer.
-     * @param issuerDataSignature Issuer’s signature of [issuerData] with Issuer Data Private Key.
-     * @param issuerDataCounter An optional counter that protect issuer data against replay attack.
+     * @param cardId: CID, Unique Tangem card ID number.
+     * @param issuerData: Data provided by issuer.
+     * @param issuerDataSignature: Issuer’s signature of [issuerData] with Issuer Data Private Key.
+     * @param issuerDataCounter: An optional counter that protect issuer data against replay attack.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [WriteIssuerDataCommand] and provides
+     * @param callback: is triggered on the completion of the [WriteIssuerDataCommand] and provides
      * card response in the form of [WriteIssuerDataResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
@@ -176,10 +210,10 @@ class TangemSdk(
      * biometric information for ID card product. Because of the large size of Issuer_Extra_Data,
      * a series of these commands have to be executed to read the entire Issuer_Extra_Data.
      *
-     * @param cardId CID, Unique Tangem card ID number.
+     * @param cardId: CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [ReadIssuerExtraDataCommand] and provides
+     * @param callback: is triggered on the completion of the [ReadIssuerExtraDataCommand] and provides
      * card response in the form of [ReadIssuerExtraDataResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
@@ -204,18 +238,18 @@ class TangemSdk(
      * Because of the large size of IssuerExtraData, a series of these commands have to be executed
      * to write entire IssuerExtraData.
      *
-     * @param cardId CID, Unique Tangem card ID number.
-     * @param issuerData Data provided by issuer.
-     * @param startingSignature Issuer’s signature with Issuer Data Private Key of [cardId],
+     * @param cardId: CID, Unique Tangem card ID number.
+     * @param issuerData: Data provided by issuer.
+     * @param startingSignature: Issuer’s signature with Issuer Data Private Key of [cardId],
      * [issuerDataCounter] (if flags Protect_Issuer_Data_Against_Replay and
      * Restrict_Overwrite_Issuer_Extra_Data are set in [SettingsMask]) and size of [issuerData].
-     * @param finalizingSignature Issuer’s signature with Issuer Data Private Key of [cardId],
+     * @param finalizingSignature: Issuer’s signature with Issuer Data Private Key of [cardId],
      * [issuerData] and [issuerDataCounter] (the latter one only if flags Protect_Issuer_Data_Against_Replay
      * andRestrict_Overwrite_Issuer_Extra_Data are set in [SettingsMask]).
-     * @param issuerDataCounter An optional counter that protect issuer data against replay attack.
+     * @param issuerDataCounter: An optional counter that protect issuer data against replay attack.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [WriteIssuerExtraDataCommand] and provides
+     * @param callback: is triggered on the completion of the [WriteIssuerExtraDataCommand] and provides
      * card response in the form of [WriteIssuerDataResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
@@ -246,18 +280,19 @@ class TangemSdk(
      * (specified on card during personalization) - [FileData.DataProtectedBySignature] or
      * files can be written using PIN2 (Passcode) - [FileData.DataProtectedByPasscode].
      *
-     * @param files files to be written.
-     * @param cardId CID, Unique Tangem card ID number.
+     * @param files: files to be written.
+     * @param cardId: CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [WriteFilesTask] and provides
+     * @param callback: is triggered on the completion of the [WriteFilesTask] and provides
      * card response in the form of [WriteFileDataResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
     fun writeFiles(
         files: List<FileData>,
-        cardId: String? = null, initialMessage: Message? = null,
-        callback: (result: CompletionResult<WriteFileDataResponse>) -> Unit
+        cardId: String? = null,
+        initialMessage: Message? = null,
+        callback: (result: CompletionResult<WriteFilesResponse>) -> Unit
     ) {
         startSessionWithRunnable(WriteFilesTask(files), cardId, initialMessage, callback)
     }
@@ -268,20 +303,22 @@ class TangemSdk(
      * This task allows to read multiple files from a card. If the files are private,
      * then Passcode (PIN2) is required to read the files.
      *
-     * @param readPrivateFiles if set to true, then the task will read private files,
+     * @param readPrivateFiles: if set to true, then the task will read private files,
      * for which it requires PIN2. Otherwise only public files can be read.
-     * @param indices indices of files to be read. If not provided, the task will read and return
+     * @param indices: indices of files to be read. If not provided, the task will read and return
      * all files from a card that satisfy the access level condition (either only public or private and public).
-     * @param cardId CID, Unique Tangem card ID number.
+     * @param cardId: CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [ReadFilesTask] and provides
+     * @param callback: is triggered on the completion of the [ReadFilesTask] and provides
      * card response in the form of [ReadFilesResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
     fun readFiles(
-        readPrivateFiles: Boolean = false, indices: List<Int>? = null,
-        cardId: String? = null, initialMessage: Message? = null,
+        readPrivateFiles: Boolean = false,
+        indices: List<Int>? = null,
+        cardId: String? = null,
+        initialMessage: Message? = null,
         callback: (result: CompletionResult<ReadFilesResponse>) -> Unit
     ) {
         val task = ReadFilesTask(readPrivateFiles, indices)
@@ -296,12 +333,12 @@ class TangemSdk(
      * [FileSettings] change access level to a file - it can be [FileSettings.Private],
      * accessible only with PIN2, or [FileSettings.Public], accessible without PIN2
      *
-     * @param changes contains list of [FileSettingsChange] -
+     * @param changes: contains list of [FileSettingsChange] -
      * indices of files that are to be changed and desired settings.
-     * @param cardId CID, Unique Tangem card ID number.
+     * @param cardId: CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [ChangeFilesSettingsTask] and provides
+     * @param callback: is triggered on the completion of the [ChangeFilesSettingsTask] and provides
      * card response in the form of [ChangeFileSettingsResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
@@ -321,12 +358,12 @@ class TangemSdk(
      * This task allows to delete multiple or all files written to the card with [WriteFileDataCommand].
      * Passcode (PIN2) is required to delete the files.
      *
-     * @param indices indices of files to be deleted. If [indices] are not provided,
+     * @param indices: indices of files to be deleted. If [indices] are not provided,
      * then all files will be deleted.
-     * @param cardId CID, Unique Tangem card ID number.
+     * @param cardId: CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [DeleteFilesTask] and provides
+     * @param callback: is triggered on the completion of the [DeleteFilesTask] and provides
      * card response in the form of [DeleteFileResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
@@ -369,10 +406,10 @@ class TangemSdk(
      * of new transaction (on SIGN command that calculate new signatures). The App defines purpose of use.
      * For example, this fields may contain blockchain nonce value.
      *
-     * @param cardId CID, Unique Tangem card ID number.
+     * @param cardId: CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [ReadUserDataCommand] and provides
+     * @param callback: is triggered on the completion of the [ReadUserDataCommand] and provides
      * card response in the form of [ReadUserDataResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
@@ -396,7 +433,7 @@ class TangemSdk(
      *
      * Writing of UserCounter and UserData is protected only by PIN1.
      *
-     * @param cardId CID, Unique Tangem card ID number.
+     * @param cardId: CID, Unique Tangem card ID number.
      * @param userData: A data for which an SDK's user can define its purpose of use,
      * format and it's payload. For example, this field may contain cashed information from blockchain
      * to accelerate preparing new transaction.
@@ -405,7 +442,7 @@ class TangemSdk(
      * An SDK's user defines purpose of its use. If null, the current counter value will not be overwritten.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [WriteUserDataCommand] and provides
+     * @param callback: is triggered on the completion of the [WriteUserDataCommand] and provides
      * card response in the form of [WriteUserDataResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
@@ -433,7 +470,7 @@ class TangemSdk(
      *
      * UserProtectedCounter and UserProtectedData require PIN2 for confirmation.
      *
-     * @param cardId CID, Unique Tangem card ID number.
+     * @param cardId: CID, Unique Tangem card ID number.
      * @param userProtectedData: A data for which an SDK's user can define its purpose of use,
      * format and it's payload. For example, this field may contain cashed information from blockchain
      * to accelerate preparing new transaction.
@@ -443,7 +480,7 @@ class TangemSdk(
      * For example, this fields may contain blockchain nonce value.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [WriteUserDataCommand] and provides
+     * @param callback: is triggered on the completion of the [WriteUserDataCommand] and provides
      * card response in the form of [WriteUserDataResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
@@ -479,7 +516,7 @@ class TangemSdk(
      * @param cardId CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [CreateWalletTask] and provides
+     * @param callback: is triggered on the completion of the [CreateWalletTask] and provides
      * card response in the form of [CreateWalletResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
@@ -504,10 +541,10 @@ class TangemSdk(
      * Note: 'WalletIndex' available for cards with COS v.4.0 or higher
      * @param walletIndex: Pointer to wallet that should be purged.
      * If not specified - wallet at default index will be purged. See `WalletIndex` for more info
-     * @param cardId CID, Unique Tangem card ID number.
+     * @param cardId: CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [PurgeWalletCommand] and provides
+     * @param callback: is triggered on the completion of the [PurgeWalletCommand] and provides
      * card response in the form of [PurgeWalletResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
@@ -530,17 +567,17 @@ class TangemSdk(
      * The online part of the verification is unavailable for DevKit cards.
      *
      *
-     * @param cardId CID, Unique Tangem card ID number.
-     * @param online flag that allows disable online verification
+     * @param cardId: CID, Unique Tangem card ID number.
+     * @param online: flag that allows disable online verification
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [VerifyCardCommand] and provides
+     * @param callback: is triggered on the completion of the [VerifyCardCommand] and provides
      * card response in the form of [VerifyCardResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
     fun verify(
-        cardId: String? = null,
         online: Boolean = true,
+        cardId: String? = null,
         initialMessage: Message? = null,
         callback: (result: CompletionResult<VerifyCardResponse>) -> Unit
     ) {
@@ -555,15 +592,15 @@ class TangemSdk(
      * Personalization is an initialization procedure, required before starting using a card.
      * During this procedure a card setting is set up.
      * During this procedure all data exchange is encrypted.
-     * @param config is a configuration file with all the card settings that are written on the card
+     * @param config: is a configuration file with all the card settings that are written on the card
      * during personalization.
-     * @param issuer Issuer is a third-party team or company wishing to use Tangem cards.
-     * @param manufacturer Tangem Card Manufacturer.
-     * @param acquirer Acquirer is a trusted third-party company that operates proprietary
+     * @param issuer: Issuer is a third-party team or company wishing to use Tangem cards.
+     * @param manufacturer: Tangem Card Manufacturer.
+     * @param acquirer: Acquirer is a trusted third-party company that operates proprietary
      * (non-EMV) POS terminal infrastructure and transaction processing back-end.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [PersonalizeCommand] and provides
+     * @param callback: is triggered on the completion of the [PersonalizeCommand] and provides
      * card response in the form of [Card] if the command was performed successfully
      * or [TangemSdkError] in case of an error.
      */
@@ -589,7 +626,7 @@ class TangemSdk(
      *
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [DepersonalizeCommand] and provides
+     * @param callback: is triggered on the completion of the [DepersonalizeCommand] and provides
      * card response in the form of [DepersonalizeResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      * */
@@ -607,12 +644,12 @@ class TangemSdk(
      * This command allows to change PIN1. This 32-byte code restricts access to the whole card.
      * App must submit the correct value of PIN1 in each command
      *
-     * @param cardId CID, Unique Tangem card ID number.
+     * @param cardId: CID, Unique Tangem card ID number.
      * @param pin: PIN1 value to be set. If null, the command will trigger [SessionViewDelegate] method
      * that prompts user to enter new PIN.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [DepersonalizeCommand] and provides
+     * @param callback: is triggered on the completion of the [DepersonalizeCommand] and provides
      * card response in the form of [DepersonalizeResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      * */
@@ -635,12 +672,12 @@ class TangemSdk(
      * or to perform other commands entailing a change of the card state. App should ask the user
      * to enter PIN2 before sending such commands to the card.
      *
-     * @param cardId CID, Unique Tangem card ID number.
+     * @param cardId: CID, Unique Tangem card ID number.
      * @param pin: PIN2 value to be set. If null, the command will trigger [SessionViewDelegate] method
      * that prompts user to enter new PIN.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param callback is triggered on the completion of the [DepersonalizeCommand] and provides
+     * @param callback: is triggered on the completion of the [DepersonalizeCommand] and provides
      * card response in the form of [DepersonalizeResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      * */
@@ -660,13 +697,13 @@ class TangemSdk(
      * invoke [CardSessionRunnable.run] and close the session.
      * You can find the current card in the [CardSession.environment].
 
-     * @runnable: A custom task, adopting [CardSessionRunnable] protocol
-     * @cardId: CID, Unique Tangem card ID number. If not null, the SDK will check that you the card
+     * @param runnable: A custom task, adopting [CardSessionRunnable] protocol
+     * @param cardId: CID, Unique Tangem card ID number. If not null, the SDK will check that you the card
      * with which you tapped a phone has this [cardId] and SDK will return
      * the [TangemSdkError.WrongCardNumber] otherwise.
-     * @initialMessage: A custom description that shows at the beginning of the NFC session.
+     * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     *  @callback: Standard [TangemSdk] callback.
+     * @param callback: Standard [TangemSdk] callback.
      */
     fun <T : CommandResponse> startSessionWithRunnable(
         runnable: CardSessionRunnable<T>,
@@ -683,12 +720,12 @@ class TangemSdk(
      * Allows running  a custom bunch of commands in one [CardSession] with lightweight closure syntax.
      * Tangem SDK will start a card session and perform preflight [ReadCommand].
 
-     * @cardId: CID, Unique Tangem card ID number. If not null, the SDK will check that you the card
+     * @param cardId: CID, Unique Tangem card ID number. If not null, the SDK will check that you the card
      * with which you tapped a phone has this [cardId] and SDK will return
      * the [TangemSdkError.WrongCardNumber] otherwise.
-     * @initialMessage: A custom description that shows at the beginning of the NFC session.
+     * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @callback: At first, you should check that the [TangemSdkError] is not null,
+     * @param callback: At first, you should check that the [TangemSdkError] is not null,
      * then you can use the [CardSession] to interact with a card.
      */
     fun startSession(
@@ -701,8 +738,5 @@ class TangemSdk(
         Thread().run { cardSession.start(callback = callback) }
     }
 
-    companion object {
-//        var pin1: PinCode? = null
-//        val pin2: MutableMap<String, PinCode?> = mutableMapOf()
-    }
+    companion object
 }
