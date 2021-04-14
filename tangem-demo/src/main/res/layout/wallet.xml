@@ -124,17 +124,6 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/btnReadWallet"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Read" />
-
-            <View
-                android:layout_width="10dp"
-                android:layout_height="1dp" />
-
-            <Button
                 android:id="@+id/btnPurgeWallet"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
