@@ -31,7 +31,7 @@ class CardDeserializer() {
                 signingMethods = decoder.decodeOptional(TlvTag.SigningMethod),
                 pauseBeforePin2 = decoder.decodeOptional(TlvTag.PauseBeforePin2),
                 walletsCount = decoder.decodeOptional(TlvTag.WalletsCount),
-                walletIndex = decoder.decodeOptional(TlvTag.WalletsIndex),
+                walletIndex = decoder.decodeOptional(TlvTag.WalletIndex),
                 health = decoder.decodeOptional(TlvTag.Health),
                 isActivated = decoder.decode(TlvTag.IsActivated),
                 activationSeed = decoder.decodeOptional(TlvTag.ActivationSeed),
@@ -49,7 +49,8 @@ class CardDeserializer() {
                     card.defaultCurve,
                     card.settingsMask,
                     decoder.decodeOptional(TlvTag.WalletPublicKey),
-                    decoder.decodeOptional(TlvTag.WalletSignedHashes)
+                    decoder.decodeOptional(TlvTag.WalletSignedHashes),
+                    decoder.decodeOptional(TlvTag.WalletRemainingSignatures)
                 )
                 card.setWallets(listOf(wallet))
             }
