@@ -123,6 +123,7 @@ class CreateWalletCommand(
             walletConfig?.let { config ->
                 tlvBuilder.append(TlvTag.SettingsMask, config.getSettingsMask())
                 tlvBuilder.append(TlvTag.CurveId, config.curveId)
+                tlvBuilder.append(TlvTag.SigningMethod, config.signingMethods)
             }
         }
         return CommandApdu(Instruction.CreateWallet, tlvBuilder.serialize())
@@ -140,7 +141,7 @@ class CreateWalletCommand(
             cardId = decoder.decode(TlvTag.CardId),
             status = decoder.decode(TlvTag.Status),
             walletPublicKey = decoder.decode(TlvTag.WalletPublicKey),
-            walletIndex = decoder.decodeOptional(TlvTag.WalletsIndex) ?: 0
+            walletIndex = decoder.decodeOptional(TlvTag.WalletIndex) ?: 0
         )
     }
 }
