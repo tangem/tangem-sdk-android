@@ -68,11 +68,8 @@ abstract class BaseFragment : Fragment() {
         return inflater.inflate(getLayoutId(), container, false)
     }
 
-    protected fun scanCard(publicKey: ByteArray?, updateOnlyCard: Boolean = false) {
-        val index = if (publicKey == null) null else WalletIndex.PublicKey(publicKey)
-        sdk.scanCard(index) {
-            if (updateOnlyCard) setCard(it) else handleResult(it)
-        }
+    protected fun scanCard(updateOnlyCard: Boolean = false) {
+        sdk.scanCard { if (updateOnlyCard) setCard(it) else handleResult(it) }
     }
 
     protected fun sign(hashes: Array<ByteArray>) {
@@ -135,7 +132,7 @@ abstract class BaseFragment : Fragment() {
     }
 
     protected fun verify() {
-        sdk.verify(card?.cardId) { handleResult(it) }
+        sdk.verify(false) { handleResult(it) }
     }
 
     protected fun readUserData() {
@@ -203,7 +200,7 @@ abstract class BaseFragment : Fragment() {
                 when (completionResult.data) {
                     is Card -> card = completionResult.data as Card
                     is CreateWalletResponse, is PurgeWalletResponse -> {
-                        scanCard(null, true)
+                        scanCard(true)
                     }
                 }
             }
