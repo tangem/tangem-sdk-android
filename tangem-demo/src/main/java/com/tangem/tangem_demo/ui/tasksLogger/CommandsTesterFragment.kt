@@ -113,7 +113,7 @@ class SdkTaskSpinnerFragment : BaseFragment() {
         // if don't use the workerThread then fragments is stuck during first initialization
         postWorker {
             when (type) {
-                CommandType.Scan -> scanCard(null)
+                CommandType.Scan -> scanCard()
                 CommandType.Sign -> sign(prepareHashesToSign())
                 CommandType.WalletCreate -> createWallet(WalletConfig(true, false, EllipticCurve.Secp256k1, SigningMethod.SignHash))
                 CommandType.WalletPurge -> purgeWallet()
