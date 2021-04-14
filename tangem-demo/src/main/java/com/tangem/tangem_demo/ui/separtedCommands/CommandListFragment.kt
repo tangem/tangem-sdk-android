@@ -48,7 +48,7 @@ class CommandListFragment : BaseFragment() {
             if (it == 0) Log.addLogger(logger)
             else Log.removeLogger(logger)
         }
-        btnScanCard.setOnClickListener { scanCard(null) }
+        btnScanCard.setOnClickListener { scanCard() }
         btnSign.setOnClickListener { sign(prepareHashesToSign()) }
 
         btnCreateWalletSecpK1.setOnClickListener {
@@ -62,10 +62,6 @@ class CommandListFragment : BaseFragment() {
         btnCreateWalletEdwards.setOnClickListener {
             val config = WalletConfig(true, false, EllipticCurve.Ed25519, SigningMethod.SignHash)
             createWallet(config)
-        }
-        btnReadWallet.setOnClickListener {
-            val publicKey = selectedWalletPubKey ?: return@setOnClickListener
-            scanCard(publicKey)
         }
         btnPurgeWallet.setOnClickListener { purgeWallet() }
 

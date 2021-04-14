@@ -47,7 +47,7 @@ data class CardWallet constructor(
 
     companion object {
         fun deserialize(decoder: TlvDecoder): CardWallet = CardWallet(
-            decoder.decode(TlvTag.WalletsIndex),
+            decoder.decode(TlvTag.WalletIndex),
             decoder.decode(TlvTag.Status),
             decoder.decodeOptional(TlvTag.CurveId),
             decoder.decodeOptional(TlvTag.SettingsMask),
