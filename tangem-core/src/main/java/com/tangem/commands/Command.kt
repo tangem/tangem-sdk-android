@@ -7,6 +7,7 @@ import com.tangem.common.PinCode
 import com.tangem.common.apdu.*
 import com.tangem.common.extensions.toInt
 import com.tangem.common.tlv.TlvTag
+import okhttp3.internal.toHexString
 import java.util.*
 
 
@@ -167,6 +168,9 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                                 }
                             }
                             transceiveApdu(apdu, session, callback)
+                        }
+                        StatusWord.Unknown -> {
+                            callback(CompletionResult.Failure(TangemSdkError.UnknownStatus(responseApdu.sw.toHexString())))
                         }
                         else -> {
                             val error = responseApdu.statusWord.toTangemSdkError()
