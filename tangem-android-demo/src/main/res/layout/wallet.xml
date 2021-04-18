@@ -17,10 +17,10 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@android:color/background_light"
+        android:background="?android:windowBackground"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
-        android:text="Wallet"
+        android:text="Wallet (v4)"
         android:translationX="10dp"
         android:translationY="-10dp" />
 
@@ -29,33 +29,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="10dp"
-        android:orientation="vertical">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btnCreateWallet"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Create" />
-
-            <View
-                android:layout_width="10dp"
-                android:layout_height="1dp" />
-
-            <Button
-                android:id="@+id/btnPurgeWallet"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Purge" />
-
-        </LinearLayout>
+        android:orientation="vertical"
+        android:visibility="visible">
 
         <LinearLayout
             android:id="@+id/walletIndexesContainer"
@@ -75,9 +50,85 @@
                 android:id="@+id/tvWalletIndex"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
                 android:layout_gravity="center"
+                android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp" />
+
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/rounded_corner" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/background_light"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:text="Create with curve"
+                android:translationX="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:padding="10dp">
+
+                <Button
+                    android:id="@+id/btnCreateWalletSecpK1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Secp_K1" />
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="1dp" />
+
+                <Button
+                    android:id="@+id/btnCreateWalletEdwards"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Ed" />
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="1dp" />
+
+                <Button
+                    android:id="@+id/btnCreateWalletSecpR1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Secp_R1" />
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnPurgeWallet"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Purge" />
 
         </LinearLayout>
 

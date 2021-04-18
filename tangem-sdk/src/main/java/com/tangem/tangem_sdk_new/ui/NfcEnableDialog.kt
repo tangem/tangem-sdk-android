@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.provider.Settings
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.tangem.tangem_sdk_new.R
 
 class NfcEnableDialog {
@@ -12,7 +13,7 @@ class NfcEnableDialog {
     private var dialog: AlertDialog? = null
 
     fun show(activity: Activity) {
-        val builder = AlertDialog.Builder(activity)
+        val builder = MaterialAlertDialogBuilder(activity)
         builder.setCancelable(false)
             .setIcon(R.drawable.ic_action_nfc_gray)
             .setTitle(R.string.dialog_nfc_enable_title)
