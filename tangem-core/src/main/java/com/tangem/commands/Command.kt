@@ -7,6 +7,7 @@ import com.tangem.common.PinCode
 import com.tangem.common.apdu.*
 import com.tangem.common.extensions.toInt
 import com.tangem.common.tlv.TlvTag
+import com.tangem.tasks.PreflightReadCapable
 import okhttp3.internal.toHexString
 import java.util.*
 
@@ -41,9 +42,8 @@ data class SimpleResponse(val cardId: String) : CommandResponse
 /**
  * Basic class for Tangem card commands
  */
-abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRunnable<T> {
+abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRunnable<T>, PreflightReadCapable {
 
-    open val performPreflightRead: Boolean = true
     override val requiresPin2: Boolean = false
 
     override fun run(session: CardSession, callback: (result: CompletionResult<T>) -> Unit) {
@@ -60,7 +60,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
 
     fun transceive(session: CardSession, callback: (result: CompletionResult<T>) -> Unit) {
         val card = session.environment.card
-        if (card == null && performPreflightRead) {
+        if (card == null && needPreflightRead()) {
             callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
             return
         }
