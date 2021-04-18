@@ -4,18 +4,18 @@
     android:viewportWidth="91"
     android:viewportHeight="181">
     <path
-        android:fillColor="#1B1C20"
+        android:fillColor="@color/sdk_drawable_stroke"
         android:pathData="M72.877,1.636H17.966C8.868,1.636 1.492,9.583 1.492,19.385V161.379C1.492,171.182 8.868,179.128 17.966,179.128H72.877C81.975,179.128 89.351,171.182 89.351,161.379V19.385C89.351,9.583 81.975,1.636 72.877,1.636Z"
         android:strokeWidth="2.8869"
         android:strokeColor="#1C1C1E"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
     <path
-        android:fillColor="#ffffff"
+        android:fillColor="@color/sdk_drawable_fill"
         android:pathData="M18.416,11.398L72.426,11.398A14.262,14.262 0,0 1,86.688 25.66L86.688,160.43A14.262,14.262 0,0 1,72.426 174.691L18.416,174.691A14.262,14.262 0,0 1,4.155 160.43L4.155,25.66A14.262,14.262 0,0 1,18.416 11.398z" />
     <path
         android:fillAlpha="0.3"
-        android:fillColor="#ffffff"
+        android:fillColor="@color/sdk_drawable_fill"
         android:pathData="M41.102,154.875L50.458,154.875A3.415,3.415 0,0 1,53.873 158.29L53.873,158.29A3.415,3.415 0,0 1,50.458 161.705L41.102,161.705A3.415,3.415 0,0 1,37.688 158.29L37.688,158.29A3.415,3.415 0,0 1,41.102 154.875z" />
     <path
         android:fillColor="#4F4F4F"

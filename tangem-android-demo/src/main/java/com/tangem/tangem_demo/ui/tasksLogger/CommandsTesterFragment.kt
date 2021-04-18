@@ -8,8 +8,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import com.tangem.*
 import com.tangem.commands.PinType
+import com.tangem.commands.common.card.EllipticCurve
+import com.tangem.commands.common.card.masks.SigningMethod
 import com.tangem.commands.file.FileSettings
 import com.tangem.commands.file.FileSettingsChange
+import com.tangem.commands.wallet.WalletConfig
 import com.tangem.common.CardValuesDbStorage
 import com.tangem.common.CompletionResult
 import com.tangem.tangem_demo.*
@@ -95,7 +98,9 @@ class SdkTaskSpinnerFragment : BaseFragment() {
                 (requireActivity() as? DemoActivity)?.enableSwipe(newState == RecyclerView.SCROLL_STATE_IDLE)
             }
         })
-        rvConsoleAdapter.onItemCountChanged = { rvConsole.smoothScrollToPosition(it) }
+        rvConsoleAdapter.onItemCountChanged = {
+            rvConsole.smoothScrollToPosition(it)
+        }
     }
 
     private fun handleCommandSelection(type: CommandType) {
@@ -110,7 +115,7 @@ class SdkTaskSpinnerFragment : BaseFragment() {
             when (type) {
                 CommandType.Scan -> scanCard()
                 CommandType.Sign -> sign(prepareHashesToSign())
-                CommandType.WalletCreate -> createWallet()
+                CommandType.WalletCreate -> createWallet(WalletConfig(true, false, EllipticCurve.Secp256k1, SigningMethod.SignHash))
                 CommandType.WalletPurge -> purgeWallet()
                 CommandType.IssuerDataRead -> readIssuerData()
                 CommandType.IssuerDataWrite -> writeIssuerData()
@@ -154,6 +159,7 @@ class SdkTaskSpinnerFragment : BaseFragment() {
 
     override fun onDestroy() {
         nfcManager.removeTagDiscoveredListener(tagDiscoveredListener)
+        rvConsoleAdapter.onDestroy()
         super.onDestroy()
     }
 
