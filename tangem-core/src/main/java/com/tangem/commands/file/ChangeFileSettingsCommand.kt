@@ -17,11 +17,10 @@ import com.tangem.common.tlv.TlvTag
 
 enum class FileSettings(val rawValue: Int) {
     Public(0x0001),
-    Private(0x0000),
-    ;
+    Private(0x0000);
 
     companion object {
-        private val values = FileSettings.values()
+        private val values = values()
         fun byRawValue(rawValue: Int): FileSettings? = values.find { it.rawValue == rawValue }
     }
 }
