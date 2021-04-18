@@ -150,7 +150,7 @@ class WriteIssuerExtraDataCommand(
 
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
-        tlvBuilder.append(TlvTag.Mode, mode)
+        tlvBuilder.append(TlvTag.InteractionMode, mode)
 
         when (mode) {
             IssuerDataMode.InitializeWritingExtraData -> {

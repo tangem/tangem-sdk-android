@@ -1,8 +1,10 @@
-package com.tangem.commands
+package com.tangem.commands.wallet
 
 import com.tangem.CardSession
 import com.tangem.SessionEnvironment
 import com.tangem.TangemSdkError
+import com.tangem.commands.Command
+import com.tangem.commands.CommandResponse
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.common.card.EllipticCurve
@@ -23,17 +25,17 @@ import com.tangem.crypto.CryptoUtils
  * @property walletSignature Challenge and salt signed with the wallet private key.
  */
 class CheckWalletResponse(
-        val cardId: String,
-        val salt: ByteArray,
-        val walletSignature: ByteArray
+    val cardId: String,
+    val salt: ByteArray,
+    val walletSignature: ByteArray
 ) : CommandResponse {
 
     fun verify(curve: EllipticCurve, publicKey: ByteArray, challenge: ByteArray): Boolean {
         return CryptoUtils.verify(
-                publicKey,
-                challenge + salt,
-                walletSignature,
-                curve)
+            publicKey,
+            challenge + salt,
+            walletSignature,
+            curve)
     }
 }
 
@@ -48,8 +50,9 @@ class CheckWalletResponse(
 class CheckWalletCommand(
     private val curve: EllipticCurve,
     private val publicKey: ByteArray,
-    override var walletIndex: WalletIndex? = null
-) : Command<CheckWalletResponse>(), WalletSelectable {
+) : Command<CheckWalletResponse>() {
+
+    private val walletIndex: WalletIndex = WalletIndex.PublicKey(publicKey)
 
     private val challenge = CryptoUtils.generateRandomBytes(16)
 
@@ -60,11 +63,7 @@ class CheckWalletCommand(
                     callback(CompletionResult.Failure(result.error))
                 }
                 is CompletionResult.Success -> {
-                    val verified = result.data.verify(
-                            curve,
-                            publicKey,
-                            challenge
-                    )
+                    val verified = result.data.verify(curve, publicKey, challenge)
                     if (verified) {
                         callback(CompletionResult.Success(result.data))
                     } else {
@@ -90,7 +89,7 @@ class CheckWalletCommand(
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Challenge, challenge)
-        walletIndex?.addTlvData(tlvBuilder)
+        walletIndex.addTlvData(tlvBuilder)
         return CommandApdu(Instruction.CheckWallet, tlvBuilder.serialize())
     }
 
@@ -99,9 +98,9 @@ class CheckWalletCommand(
 
         val decoder = TlvDecoder(tlvData)
         return CheckWalletResponse(
-                cardId = decoder.decode(TlvTag.CardId),
-                salt = decoder.decode(TlvTag.Salt),
-                walletSignature = decoder.decode(TlvTag.Signature)
+            cardId = decoder.decode(TlvTag.CardId),
+            salt = decoder.decode(TlvTag.Salt),
+            walletSignature = decoder.decode(TlvTag.WalletSignature)
         )
     }
 }
