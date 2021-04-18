@@ -16,9 +16,9 @@ enum class TlvValueType {
     DateTime,
     ProductMask,
     SettingsMask,
-    CardStatus,
+    Status,
     SigningMethod,
-    IssuerDataMode,
+    InteractionMode,
     FileDataMode,
     FileSettings
 }
@@ -74,7 +74,7 @@ enum class TlvTag(val code: Int) {
     AcquirerPublicKey(0x37),
 
     Size(0x25),
-    Mode(0x23),
+    InteractionMode(0x23),
     Offset(0x24),
 
     IsActivated(0x3A),
@@ -90,15 +90,14 @@ enum class TlvTag(val code: Int) {
     TransactionOutRaw(0x52),
     Pin2IsDefault(0x59),
 
-    WalletsIndex(0x65),
+    WalletPublicKey(0x60),
+    WalletSignature(0x61),
+    WalletRemainingSignatures(0x62),
+    WalletSignedHashes(0x63),
+    WalletIndex(0x65),
     WalletsCount(0x66),
     WalletData(0x67),
-    WalletInfo(0x68),
-    WalletPublicKey(0x60),
-
-    Signature(0x61),
-    RemainingSignatures(0x62),
-    SignedHashes(0x63),
+    CardWallet(0x68),
 
     Firmware(0x80),
     Batch(0x81),
@@ -145,17 +144,17 @@ enum class TlvTag(val code: Int) {
             ManufactureId, Firmware, IssuerId, BlockchainId, TokenSymbol, TokenContractAddress,
             FileName -> TlvValueType.Utf8String
             CurveId -> TlvValueType.EllipticCurve
-            PauseBeforePin2, RemainingSignatures, SignedHashes, Health, TokenDecimal,
+            PauseBeforePin2, WalletRemainingSignatures, WalletSignedHashes, Health, TokenDecimal,
             Offset, Size -> TlvValueType.Uint16
-            FileIndex, WalletsIndex, WalletsCount -> TlvValueType.Uint8
+            FileIndex, WalletIndex, WalletsCount -> TlvValueType.Uint8
             MaxSignatures, UserCounter, UserProtectedCounter, IssuerDataCounter -> TlvValueType.Uint32
             IsActivated, TerminalIsLinked, CreateWalletAtPersonalize -> TlvValueType.BoolValue
             ManufactureDateTime -> TlvValueType.DateTime
             ProductMask -> TlvValueType.ProductMask
             SettingsMask -> TlvValueType.SettingsMask
-            Status -> TlvValueType.CardStatus
+            Status -> TlvValueType.Status
             SigningMethod -> TlvValueType.SigningMethod
-            Mode -> TlvValueType.IssuerDataMode
+            InteractionMode -> TlvValueType.InteractionMode
             WriteFileMode -> TlvValueType.FileDataMode
             FileSettings -> TlvValueType.FileSettings
             else -> TlvValueType.ByteArray

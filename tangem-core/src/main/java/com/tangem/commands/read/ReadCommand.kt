@@ -1,11 +1,13 @@
-package com.tangem.commands
+package com.tangem.commands.read
 
-import com.tangem.FirmwareConstraints
+import com.tangem.CardSession
 import com.tangem.SessionEnvironment
 import com.tangem.TangemError
 import com.tangem.TangemSdkError
+import com.tangem.commands.Command
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardDeserializer
+import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
@@ -16,11 +18,21 @@ import com.tangem.common.tlv.TlvTag
  * This command receives from the Tangem Card all the data about the card and the wallet,
  * including unique card number (CID or cardId) that has to be submitted while calling all other commands.
  */
-class ReadCommand(
-    private var walletIndex: WalletIndex? = null
-) : Command<Card>() {
+class ReadCommand : Command<Card>() {
 
-    override val performPreflightRead = false
+    override fun needPreflightRead(): Boolean = false
+
+    override fun run(session: CardSession, callback: (result: CompletionResult<Card>) -> Unit) {
+        super.run(session) {
+            when (it) {
+                is CompletionResult.Success -> {
+                    session.environment.card = it.data
+                    callback(it)
+                }
+                is CompletionResult.Failure -> callback(CompletionResult.Failure(it.error))
+            }
+        }
+    }
 
     override fun mapError(card: Card?, error: TangemError): TangemError {
         if (error is TangemSdkError.InvalidParams) {
@@ -38,27 +50,13 @@ class ReadCommand(
          *  The card will not respond if wrong pin 1 has been submitted.
          */
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
+        tlvBuilder.append(TlvTag.InteractionMode, ReadMode.ReadCard)
         tlvBuilder.append(TlvTag.TerminalPublicKey, environment.terminalKeys?.publicKey)
-        walletIndex?.addTlvData(tlvBuilder)
+
         return CommandApdu(Instruction.Read, tlvBuilder.serialize())
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): Card {
-        val response = CardDeserializer.deserialize(apdu)
-        if (response.firmwareVersion >= FirmwareConstraints.AvailabilityVersions.walletData) {
-            when (walletIndex) {
-                is WalletIndex.Index -> {
-                    if ((walletIndex as WalletIndex.Index).index != response.walletIndex) {
-                        throw TangemSdkError.CardReadWrongWallet()
-                    }
-                }
-                is WalletIndex.PublicKey -> {
-                    if(!(walletIndex as WalletIndex.PublicKey).data.contentEquals(response.cardPublicKey)) {
-                        throw TangemSdkError.CardReadWrongWallet()
-                    }
-                }
-            }
-        }
-        return response
+        return CardDeserializer.deserialize(apdu)
     }
 }

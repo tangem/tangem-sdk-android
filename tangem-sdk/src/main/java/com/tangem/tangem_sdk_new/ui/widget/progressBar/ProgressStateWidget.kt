@@ -93,7 +93,7 @@ class NoneState(mainView: View) : BaseProgressState(mainView) {
     override fun setState(params: SessionViewDelegateState) {
         hideViews(progressBar, tvProgressValue, doneView, exclamationView)
 
-        changeProgressColor(R.color.progress_bar_secondary_color, false)
+        changeProgressColor(R.color.sdk_progress_bar_secondary, false)
         setProgress(0f, false)
     }
 }
@@ -103,7 +103,7 @@ class SuccessState(mainView: View) : BaseProgressState(mainView) {
         hideViews(tvProgressValue, progressBar, exclamationView)
         showViews(progressBar)
 
-        changeProgressColor(R.color.progress_bar_state_success_color)
+        changeProgressColor(R.color.sdk_progress_bar_success)
         setMaxProgress()
         showAndAnimateDrawable(doneView)
     }
@@ -115,7 +115,7 @@ class ErrorState(mainView: View) : BaseProgressState(mainView) {
         hideViews(tvProgressValue, doneView)
         showViews(progressBar)
 
-        val color = R.color.progress_bar_state_error_color
+        val color = R.color.sdk_progress_bar_error
         changeProgressColor(color)
         setMaxProgress()
         changeExclamationColor(color)
@@ -128,7 +128,7 @@ class WarningState(mainView: View) : BaseProgressState(mainView) {
         hideViews(tvProgressValue, doneView)
         showViews(progressBar)
 
-        val color = R.color.progress_bar_state_warning_color
+        val color = R.color.sdk_progress_bar_warning
         changeProgressColor(color)
         setMaxProgress()
         changeExclamationColor(color)
@@ -138,7 +138,7 @@ class WarningState(mainView: View) : BaseProgressState(mainView) {
 
 class IndeterminateProgressState(mainView: View) : BaseProgressState(mainView) {
     override fun setState(params: SessionViewDelegateState) {
-        changeProgressColor(R.color.progress_bar_color, false)
+        changeProgressColor(R.color.sdk_progress_bar_primary, false)
 
         hideViews(tvProgressValue, doneView, exclamationView)
         showViews(progressBar)
@@ -152,7 +152,7 @@ class SecurityDelayState(mainView: View) : BaseProgressState(mainView) {
     override fun setState(params: SessionViewDelegateState) {
         val delay = params as? SessionViewDelegateState.SecurityDelay ?: return
 
-        changeProgressColor(R.color.progress_bar_color, false)
+        changeProgressColor(R.color.sdk_progress_bar_primary, false)
         hideViews(doneView, exclamationView)
         showViews(progressBar, tvProgressValue)
 
@@ -213,7 +213,7 @@ class SecurityDelayState(mainView: View) : BaseProgressState(mainView) {
 
 class DelayState(mainView: View) : BaseProgressState(mainView) {
     override fun setState(params: SessionViewDelegateState) {
-        changeProgressColor(R.color.progress_bar_color, false)
+        changeProgressColor(R.color.sdk_progress_bar_primary, false)
 
         hideViews(tvProgressValue, doneView, exclamationView)
         showViews(progressBar)
