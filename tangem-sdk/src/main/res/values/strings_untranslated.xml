@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string name="lorem_ipsum" translatable="false">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem</string>
     <string name="error_no_space_for_new_wallet" translatable="false">Max number of wallets already created</string>
     <string name="error_wallet_index_exceeds_max_value" translatable="false">Wallet index exceeds max value</string>
-    <string name="error_wallet_not_found" translatable="false">Max number of wallets already created</string>
+    <string name="error_wallet_not_found" translatable="false">The operation can\'t be completed. There is no wallet on the card.</string>
     <string name="error_card_read_wrong_wallet" translatable="false">Card read wrong wallet</string>
     <string name="error_old_firmware" translatable="false">The command requires a card with a different firmware version</string>
     <string name="error_wrong_pin1" translatable="false">Wrong access code</string>
     <string name="error_wrong_pin2" translatable="false">Wrong passcode</string>
-    <string name="error_card_is_empty" translatable="false">The operation can’t be completed. There is no wallet on the card.</string>
-
+    <string name="error_wallet_is_not_created" translatable="false">The operation can\'t be completed. Wallet is not created.</string>
+    <string name="error_wallet_is_purged" translatable="false">The operation can\'t be completed. Wallet is purged and can\'t be created again.</string>
+    <string name="error_card_with_max_zero_wallets" translatable="false">Card with max zero wallets</string>
+    <string name="error_wallet_error" translatable="false">Wallet error</string>
+    <string name="error_wallet_index_not_correct" translatable="false">Wallet index not correct</string>
 
 </resources>
