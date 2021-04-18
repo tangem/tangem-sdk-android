@@ -100,7 +100,7 @@ class ReadIssuerDataCommand(
         val tlvBuilder = TlvBuilder()
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
-        tlvBuilder.append(TlvTag.Mode, IssuerDataMode.ReadData)
+        tlvBuilder.append(TlvTag.InteractionMode, IssuerDataMode.ReadData)
         return CommandApdu(Instruction.ReadIssuerData, tlvBuilder.serialize())
     }
 
