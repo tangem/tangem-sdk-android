@@ -1,6 +1,5 @@
 [![Release](https://jitpack.io/v/Tangem/tangem-sdk-android.svg)](https://jitpack.io/#tangem/tangem-sdk-android)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CircleCI](https://circleci.com/gh/Tangem/tangem-sdk-android.svg?style=shield)](https://circleci.com/gh/Tangem/tangem-sdk-android)
 # Welcome to Tangem
 
 The Tangem card is a self-custodial hardware wallet for blockchain assets. The main functions of Tangem cards are to securely create and store a private key from a blockchain wallet and sign blockchain transactions. The Tangem card does not allow users to import/export, backup/restore private keys, thereby guaranteeing that the wallet is unique and unclonable. 
