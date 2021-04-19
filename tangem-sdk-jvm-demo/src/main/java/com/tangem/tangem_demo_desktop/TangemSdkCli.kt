@@ -2,9 +2,12 @@ import com.tangem.Log
 import com.tangem.TangemError
 import com.tangem.TangemSdk
 import com.tangem.commands.CommandResponse
+import com.tangem.commands.SignCommand
 import com.tangem.commands.SignResponse
 import com.tangem.commands.common.ResponseConverter
+import com.tangem.commands.common.card.Card
 import com.tangem.commands.file.FileData
+import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.hexToBytes
 import kotlinx.coroutines.runBlocking
@@ -16,6 +19,8 @@ class TangemSdkCli(verbose: Boolean = false, indexOfTerminal: Int? = null, priva
 
     private val sdk = TangemSdk.init(verbose, indexOfTerminal)
     private val responseConverter = ResponseConverter()
+
+    private var card: Card? = null
 
     fun execute(command: Command) {
         if (sdk == null) {
@@ -40,19 +45,42 @@ class TangemSdkCli(verbose: Boolean = false, indexOfTerminal: Int? = null, priva
     }
 
     private fun read(sdk: TangemSdk, callback: (result: CompletionResult<out CommandResponse>) -> Unit) {
-        sdk.scanCard(callback = callback)
+        sdk.scanCard {
+            if (it is CompletionResult.Success) card = it.data
+            callback(it)
+        }
     }
 
     private fun sign(sdk: TangemSdk, callback: (result: CompletionResult<SignResponse>) -> Unit) {
+        if (card == null) {
+            println("Scan the card, before trying to use the method")
+            return
+        }
+
         val hashes = cmd.getOptionValue(TangemCommandOptions.Hashes.opt)
+        val index: Int? = cmd.getOptionValue(TangemCommandOptions.WalletIndex.opt)?.toIntOrNull()
         val cid: String? = cmd.getOptionValue(TangemCommandOptions.CardId.opt)
 
-        if (hashes == null) {
+        if (hashes == null || index == null) {
             println("Missing option value")
             return
         }
 
-        sdk.sign(hashes = parseHashes(hashes), cardId = cid, callback = callback)
+        val walletIndex = getWalletIndex(index)
+        if (walletIndex == null) {
+            println("Wallet for the index: $index not found")
+            return
+        }
+
+        val command = SignCommand(parseHashes(hashes), walletIndex)
+        sdk.startSessionWithRunnable(command, cid, null, callback)
+    }
+
+    private fun getWalletIndex(index: Int): WalletIndex.Index? {
+        if (index < 0) return null
+
+        val walletIndex = WalletIndex.Index(index)
+        return card?.wallet(WalletIndex.Index(index))?.let { walletIndex }
     }
 
     private fun parseHashes(hashesArgument: String): Array<ByteArray> {
@@ -69,9 +97,25 @@ class TangemSdkCli(verbose: Boolean = false, indexOfTerminal: Int? = null, priva
     }
 
     private fun purgeWallet(sdk: TangemSdk, callback: (result: CompletionResult<out CommandResponse>) -> Unit) {
-        val cid: String? = cmd.getOptionValue(TangemCommandOptions.CardId.opt)
+        if (card == null) {
+            println("Scan the card, before trying to use the method")
+            return
+        }
 
-        sdk.purgeWallet(cardId = cid, walletIndex = null, callback = callback)
+        val index: Int? = cmd.getOptionValue(TangemCommandOptions.WalletIndex.opt)?.toIntOrNull()
+        val cid: String? = cmd.getOptionValue(TangemCommandOptions.CardId.opt)
+        if (index == null) {
+            println("Missing option value")
+            return
+        }
+
+        val walletIndex = getWalletIndex(index)
+        if (walletIndex == null) {
+            println("Wallet for the index: $index not found")
+            return
+        }
+
+        sdk.purgeWallet(cardId = cid, walletIndex = walletIndex, callback = callback)
     }
 
     private fun readFiles(sdk: TangemSdk, callback: (result: CompletionResult<out CommandResponse>) -> Unit) {
