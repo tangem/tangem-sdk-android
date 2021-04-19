@@ -17,8 +17,8 @@ sourceCompatibility = 1.8
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
 
-    implementation project(':tangem-core')
-    implementation project(':tangem-sdk-desktop')
+    implementation project(':tangem-sdk-core')
+    implementation project(':tangem-sdk-jvm')
 
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.3.9"
