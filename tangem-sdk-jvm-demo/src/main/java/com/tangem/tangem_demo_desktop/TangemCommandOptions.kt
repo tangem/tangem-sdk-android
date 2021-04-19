@@ -7,6 +7,7 @@ enum class TangemCommandOptions(val option: Option) {
     TerminalNumber(Option("t", "terminal", false, "terminal number")),
     Hashes(Option("hashes", true, "hashes to sign")),
     CardId(Option("cid", "cardid", true, "card id")),
+    WalletIndex(Option("wi", "walletIndex", true, "index of the selected wallet")),
     FileIndices(Option("indices", true, "indices of files")),
     ReadPrivateFiles(Option("privatefiles", false, "should the command read private files")),
     Files(Option("files", true, "files as array of bytes"));
@@ -23,6 +24,7 @@ fun Command.generateOptions(): Options {
         Command.Read -> {}
         Command.Sign -> {
             options.addOption(TangemCommandOptions.Hashes.option)
+            options.addOption(TangemCommandOptions.WalletIndex.option)
             options.addOption(TangemCommandOptions.CardId.option)
         }
         Command.ReadFiles -> {
@@ -43,6 +45,7 @@ fun Command.generateOptions(): Options {
             options.addOption(TangemCommandOptions.CardId.option)
         }
         Command.PurgeWallet -> {
+            options.addOption(TangemCommandOptions.WalletIndex.option)
             options.addOption(TangemCommandOptions.CardId.option)
         }
     }
