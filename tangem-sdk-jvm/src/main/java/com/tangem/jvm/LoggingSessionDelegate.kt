@@ -1,4 +1,4 @@
-package com.tangem.tangem_sdk_jvm
+package com.tangem.jvm
 
 import com.tangem.*
 import com.tangem.commands.PinType

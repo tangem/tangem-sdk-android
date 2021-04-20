@@ -1,3 +1,5 @@
+package com.tangem.jvm.demo
+
 import com.tangem.Log
 import com.tangem.TangemError
 import com.tangem.TangemSdk
@@ -10,6 +12,7 @@ import com.tangem.commands.file.FileData
 import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.hexToBytes
+import com.tangem.jvm.init
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.cli.CommandLine
 import kotlin.coroutines.resume
