@@ -1,3 +1,5 @@
+package com.tangem.jvm.demo
+
 const val GENERAL_HELP = """
 Tangem CLI
     -t,--terminal         Number of connected terminal, if you have more then one
