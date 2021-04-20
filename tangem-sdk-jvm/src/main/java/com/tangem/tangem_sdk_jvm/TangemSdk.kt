@@ -1,3 +1,5 @@
+package com.tangem.tangem_sdk_jvm
+
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import com.tangem.Config
 import com.tangem.Log
