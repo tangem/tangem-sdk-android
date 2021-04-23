@@ -46,7 +46,7 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
     /**
      * This error is returned when unknown [StatusWord] is received from a card.
      */
-    class UnknownStatus : TangemSdkError(30001)
+    class UnknownStatus(val statusWord: String) : TangemSdkError(30001)
     /**
      * This error is returned when a card's reply is [StatusWord.ErrorProcessingCommand].
      * The card sends this status in case of internal card error.
