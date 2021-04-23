@@ -1,0 +1,104 @@
+{
+  "setup": {
+    "description": "This is test",
+    "iterations": 1,
+    "minimalFirmware": "3.29",
+    "platform": "IOS/ANDROID/ANY",
+    "cardConfig": {},
+    "sdkConfig": {},
+    "sessionConfig": {}
+  },
+  "steps": [
+    {
+      "name": "scanCard-1",
+      "iterations": 1,
+      "actionType": "NFC_SESSION_RUNNABLE",
+      "action": "SIGN_COMMAND",
+      "parameters": {},
+      "expectedResult": {
+        "card": {
+          "cardId": "..."
+        }
+      },
+      "asserts": [
+        {
+          "action": "EQUALS",
+          "fields": [
+            "{#parent.expectedResult.card.cardId}",
+            "{#parent.result.card.cardId}"
+          ]
+        }
+      ],
+      "robotActions1": {
+        "actionType": "ROBOT",
+        "action": "TIMER",
+        "parameters": {
+          "timers": [
+            {
+              "time": 300,
+              "action": "OUT/IN"
+            }
+          ]
+        }
+      },
+      "robotActions2": [
+        {
+          "type": "FIDGET"
+        }
+      ]
+    },
+    {
+      "name": "createWalletTask-1",
+      "actionType": "NFC_SESSION_RUNNABLE",
+      "action": "CREATE_WALLET_TASK",
+      "parameters": {
+        "walletConfig": {
+          "isReusable": "true",
+          "prohibitPurgeWallet": "false",
+          "curveId": "{#1.result.card.defaultCurve}",
+          "signingMethods": null
+        }
+      },
+      "expectedResult": {},
+      "asserts": null,
+      "robotTimers": null
+    },
+    {
+      "name": "RunApdu-1",
+      "actionType": "NFC_SESSION_RUNNABLE",
+      "action": "RAW_APDU",
+      "parameters": {
+        "commandApdu": {
+          "instruction": "0x56",
+          "data": [
+            {
+              "tag": "0x20",
+              "value": "54414E47454D00"
+            },
+            {
+              "tag": "0x24",
+              "value": "342E3030642053444B00"
+            }
+          ]
+        }
+      },
+      "expectedResult": {
+        "responseAPDU": {
+          "statusWord": "9000",
+          "data": [
+            {
+              "tag": "0x20",
+              "value": "54414E47454D00"
+            },
+            {
+              "tag": "0x24",
+              "value": "342E3030642053444B00"
+            }
+          ]
+        }
+      },
+      "asserts": null,
+      "robotTimers": null
+    }
+  ]
+}
