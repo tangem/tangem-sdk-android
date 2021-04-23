@@ -1,0 +1,44 @@
+{
+  "setup": {
+    "description": "This is test",
+    "iterations": 1,
+    "minimalFirmware": "3.29",
+    "platform": "ANDROID",
+    "cardConfig": {},
+    "sdkConfig": {},
+    "sessionConfig": {}
+  },
+  "steps": [
+    {
+      "name": "scanCard-1",
+      "iterations": 1,
+      "actionType": "NFC_SESSION_RUNNABLE",
+      "action": "SCAN_TASK_COMMAND",
+      "parameters": {},
+      "expectedResult": {
+        "cardId": "..."
+      },
+      "asserts": [
+        {
+          "action": "EQUALS",
+          "fields": [
+            "{#parent.expectedResult.cardId}",
+            "{#parent.result.cardId}"
+          ]
+        }
+      ],
+      "robotActions": {
+        "actionType": "ROBOT",
+        "action": "TIMER",
+        "parameters": {
+          "timers": [
+            {
+              "time": 300,
+              "action": "OUT/IN"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

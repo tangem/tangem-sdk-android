@@ -1,0 +1,19 @@
+plugins {
+    id 'java-library'
+    id 'kotlin'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    implementation project(':tangem-sdk-core')
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
+
+    implementation 'org.json:json:20180813'
+    implementation 'com.google.code.gson:gson:2.8.6'
+
+}
