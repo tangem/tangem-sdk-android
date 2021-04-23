@@ -41,7 +41,7 @@ android {
 
 dependencies {
     // internal
-    implementation project(':tangem-core')
+    implementation project(':tangem-sdk-core')
 
     // kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$versions.kotlin"
