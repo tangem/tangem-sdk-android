@@ -7,8 +7,11 @@ import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.getType
+import com.tangem.common.extensions.guard
 import com.tangem.crypto.EncryptionHelper
 import com.tangem.crypto.pbkdf2Hash
+import com.tangem.json.JsonAdaptersFactory
+import com.tangem.json.JsonRunnableAdapter
 import com.tangem.tasks.PreflightReadCapable
 import com.tangem.tasks.PreflightReadSettings
 import com.tangem.tasks.PreflightReadTask
@@ -65,7 +68,8 @@ class CardSession(
     private val reader: CardReader,
     val viewDelegate: SessionViewDelegate,
     private var cardId: String? = null,
-    private var initialMessage: Message? = null
+    private var initialMessage: Message? = null,
+    private val jsonRunnableFactory: JsonAdaptersFactory
 ) {
 
     var connectedTag: TagType? = null
@@ -117,7 +121,7 @@ class CardSession(
                         }
                         Log.session { "Start runnable" }
                         runnable.run(this) { result ->
-                            Log.session{ "Runnable completed" }
+                            Log.session { "Runnable completed" }
                             when (result) {
                                 is CompletionResult.Success -> stop()
                                 is CompletionResult.Failure -> stopWithError(result.error)
@@ -228,6 +232,33 @@ class CardSession(
                     cardId = receivedCardId
                     callback(this, null)
                 }
+            }
+        }
+    }
+
+    fun startWithJson(
+        json: Map<String, Any>,
+        callback: (result: CompletionResult<Map<String, Any>>) -> Unit
+    ) {
+        val builder = (jsonRunnableFactory.get(json) as? JsonRunnableAdapter<CommandResponse>).guard {
+            callback(CompletionResult.Failure(TangemSdkError.CardError()))
+            return
+        }
+
+        when (val result = builder.buildRunnable(json)) {
+            is CompletionResult.Success -> {
+                startWithRunnable(result.data) {
+                    when (it) {
+                        is CompletionResult.Success -> {
+                            val jsonResponse = builder.convertResponse(it.data)
+                            callback(CompletionResult.Success(jsonResponse))
+                        }
+                        is CompletionResult.Failure -> callback(CompletionResult.Failure(it.error))
+                    }
+                }
+            }
+            is CompletionResult.Failure -> {
+                callback(CompletionResult.Failure(result.error))
             }
         }
     }
