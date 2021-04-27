@@ -1,6 +1,8 @@
 package com.tangem.commands
 
+import com.google.gson.reflect.TypeToken
 import com.tangem.*
+import com.tangem.commands.common.ResponseConverter
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.common.card.masks.SigningMethod
@@ -11,10 +13,13 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
+import com.tangem.common.extensions.guard
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.sign
+import com.tangem.json.JsonError
+import com.tangem.json.JsonRunnableAdapter
 import com.tangem.tasks.PreflightReadSettings
 
 /**
@@ -199,5 +204,37 @@ class SignCommand(
 
     companion object {
         const val CHUNK_SIZE = 10
+        const val METHOD = "SIGN_COMMAND"
+    }
+
+    class SignJsonAdapter(
+        private val responseConverter: ResponseConverter
+    ) : JsonRunnableAdapter<SignResponse> {
+
+        override fun buildRunnable(json: Map<String, Any>): CompletionResult<CardSessionRunnable<SignResponse>> {
+            val missedFields = checkNonOptionalFields(json, "hashes", "walletIndex")
+            if (missedFields != null) return CompletionResult.Failure(JsonError.NoSuchParametersError(missedFields))
+
+            val rawHashes = (json["hashes"] as? List<String>).guard {
+                return CompletionResult.Failure(JsonError.ParameterCastError("hashes"))
+            }
+            val walletIndex = (json["walletIndex"] as? Int).guard {
+                return CompletionResult.Failure(JsonError.ParameterCastError("walletIndex"))
+            }
+            val hashes = rawHashes.map { it.toByteArray() }.toTypedArray()
+            return CompletionResult.Success(SignCommand(hashes, WalletIndex.Index(walletIndex)))
+
+        }
+
+        override fun convertResponse(response: SignResponse): Map<String, Any> {
+            val typeToken = object : TypeToken<Map<String, Any>>() {}.type
+            val convertedResponse = responseConverter.convertResponse(response)
+            return responseConverter.gson.fromJson(convertedResponse, typeToken)
+        }
+
+        private fun checkNonOptionalFields(json: Map<String, Any>, vararg fieldNames: String): String? {
+            val missingFields = fieldNames.filter { !json.containsKey(it) }.map { it }
+            return if (missingFields.isEmpty()) null else missingFields.joinToString(", ")
+        }
     }
 }
