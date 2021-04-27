@@ -1,6 +1,7 @@
 package com.tangem
 
 import com.tangem.commands.*
+import com.tangem.commands.common.ResponseConverter
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.file.*
 import com.tangem.commands.personalization.DepersonalizeCommand
@@ -19,6 +20,8 @@ import com.tangem.common.TerminalKeysService
 import com.tangem.common.files.FileHashData
 import com.tangem.common.files.FileHashHelper
 import com.tangem.crypto.CryptoUtils
+import com.tangem.json.DefaultRunnableFactory
+import com.tangem.json.JsonAdaptersFactory
 import com.tangem.tasks.CreateWalletTask
 import com.tangem.tasks.ScanTask
 import com.tangem.tasks.file.*
@@ -40,7 +43,8 @@ class TangemSdk(
     private val viewDelegate: SessionViewDelegate,
     var config: Config = Config(),
     cardValuesStorage: CardValuesStorage,
-    terminalKeysService: TerminalKeysService? = null
+    terminalKeysService: TerminalKeysService? = null,
+    val runnableFactory: JsonAdaptersFactory = DefaultRunnableFactory(ResponseConverter())
 ) {
 
     private val environmentService = SessionEnvironmentService(
@@ -712,8 +716,17 @@ class TangemSdk(
         callback: (result: CompletionResult<T>) -> Unit
     ) {
         viewDelegate.setConfig(config)
-        val cardSession = CardSession(environmentService, reader, viewDelegate, cardId, initialMessage)
+        val cardSession = CardSession(environmentService, reader, viewDelegate, cardId,
+            initialMessage, runnableFactory)
         Thread().run { cardSession.startWithRunnable(runnable, callback) }
+    }
+
+    fun startSessionWithJson(
+        json: Map<String, Any>,
+        callback: (result: CompletionResult<Map<String, Any>>) -> Unit
+    ) {
+        val cardSession = CardSession(environmentService, reader, viewDelegate, null, null, runnableFactory)
+        Thread().run { cardSession.startWithJson(json, callback) }
     }
 
     /**
@@ -734,7 +747,8 @@ class TangemSdk(
         callback: (session: CardSession, error: TangemError?) -> Unit
     ) {
         viewDelegate.setConfig(config)
-        val cardSession = CardSession(environmentService, reader, viewDelegate, cardId, initialMessage)
+        val cardSession = CardSession(environmentService, reader, viewDelegate, cardId,
+            initialMessage, runnableFactory)
         Thread().run { cardSession.start(callback = callback) }
     }
 
