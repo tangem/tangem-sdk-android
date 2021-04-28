@@ -15,7 +15,7 @@ interface JsonAdaptersFactory {
     fun get(json: Map<String, Any>): JsonRunnableAdapter?
 }
 
-class DefaultRunnableFactory : JsonAdaptersFactory {
+class DefaultJsonAdaptersFactory : JsonAdaptersFactory {
 
     private val commandAdapters = mutableMapOf<String, () -> JsonRunnableAdapter>()
 
@@ -30,7 +30,7 @@ class DefaultRunnableFactory : JsonAdaptersFactory {
 
     override fun get(json: Map<String, Any>): JsonRunnableAdapter? {
         return try {
-            val methodName = json["name"] ?: return null
+            val methodName = json["action"] ?: return null
             commandAdapters[methodName]?.invoke()?.apply { setJson(json) }
         } catch (ex: Exception) {
             ex.printStackTrace()
