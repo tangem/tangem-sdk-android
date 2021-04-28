@@ -20,8 +20,6 @@ import com.tangem.common.TerminalKeysService
 import com.tangem.common.files.FileHashData
 import com.tangem.common.files.FileHashHelper
 import com.tangem.crypto.CryptoUtils
-import com.tangem.json.DefaultRunnableFactory
-import com.tangem.json.JsonAdaptersFactory
 import com.tangem.tasks.CreateWalletTask
 import com.tangem.tasks.ScanTask
 import com.tangem.tasks.file.*
