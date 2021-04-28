@@ -204,17 +204,12 @@ class SignCommand(
         const val CHUNK_SIZE = 10
     }
 
-    class JsonAdapter : BaseJsonRunnableAdapter<SignParams>() {
+    class JsonAdapter : BaseJsonRunnableAdapter<SignParams, SignResponse>() {
         override fun initParams(): SignParams = convertJsonToParamsModel()
 
-        override fun run(session: CardSession, callback: (result: CompletionResult<CommandResponse>) -> Unit) {
+        override fun createRunnable(): CardSessionRunnable<SignResponse> {
             val hashes = params.hashes.map { it.hexToBytes() }.toTypedArray()
-            SignCommand(hashes, WalletIndex.Index(params.walletIndex)).run(session) {
-                when (it) {
-                    is CompletionResult.Success -> handleSuccess(it.data, callback)
-                    is CompletionResult.Failure -> callback(CompletionResult.Failure(it.error))
-                }
-            }
+            return SignCommand(hashes, WalletIndex.Index(params.walletIndex))
         }
 
         companion object {

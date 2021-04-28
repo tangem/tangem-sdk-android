@@ -132,16 +132,11 @@ class ScanTask(
         }
     }
 
-    class JsonAdapter : BaseJsonRunnableAdapter<ScanTaskParams>() {
+    class JsonAdapter : BaseJsonRunnableAdapter<ScanTaskParams, Card>() {
         override fun initParams(): ScanTaskParams = convertJsonToParamsModel()
 
-        override fun run(session: CardSession, callback: (result: CompletionResult<CommandResponse>) -> Unit) {
-            ScanTask(params.cardVerification).run(session) {
-                when (it) {
-                    is CompletionResult.Success -> handleSuccess(it.data, callback)
-                    is CompletionResult.Failure -> callback(CompletionResult.Failure(it.error))
-                }
-            }
+        override fun createRunnable(): CardSessionRunnable<Card> {
+            return ScanTask(params.cardVerification)
         }
 
         companion object {
