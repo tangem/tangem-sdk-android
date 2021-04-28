@@ -43,8 +43,7 @@ class TangemSdk(
     private val viewDelegate: SessionViewDelegate,
     var config: Config = Config(),
     cardValuesStorage: CardValuesStorage,
-    terminalKeysService: TerminalKeysService? = null,
-    val runnableFactory: JsonAdaptersFactory = DefaultRunnableFactory(ResponseConverter())
+    terminalKeysService: TerminalKeysService? = null
 ) {
 
     private val environmentService = SessionEnvironmentService(
@@ -716,17 +715,8 @@ class TangemSdk(
         callback: (result: CompletionResult<T>) -> Unit
     ) {
         viewDelegate.setConfig(config)
-        val cardSession = CardSession(environmentService, reader, viewDelegate, cardId,
-            initialMessage, runnableFactory)
+        val cardSession = CardSession(environmentService, reader, viewDelegate, cardId, initialMessage)
         Thread().run { cardSession.startWithRunnable(runnable, callback) }
-    }
-
-    fun startSessionWithJson(
-        json: Map<String, Any>,
-        callback: (result: CompletionResult<Map<String, Any>>) -> Unit
-    ) {
-        val cardSession = CardSession(environmentService, reader, viewDelegate, null, null, runnableFactory)
-        Thread().run { cardSession.startWithJson(json, callback) }
     }
 
     /**
@@ -747,8 +737,7 @@ class TangemSdk(
         callback: (session: CardSession, error: TangemError?) -> Unit
     ) {
         viewDelegate.setConfig(config)
-        val cardSession = CardSession(environmentService, reader, viewDelegate, cardId,
-            initialMessage, runnableFactory)
+        val cardSession = CardSession(environmentService, reader, viewDelegate, cardId, initialMessage)
         Thread().run { cardSession.start(callback = callback) }
     }
 
