@@ -11,7 +11,7 @@ import java.lang.Exception
 class JsonResponse(val response: Map<String, Any>) : CommandResponse
 
 interface JsonAdaptersFactory {
-    fun register(name: String, creature: () -> JsonRunnableAdapter)
+    fun register(name: String, lazyAdapter: () -> JsonRunnableAdapter)
     fun get(json: Map<String, Any>): JsonRunnableAdapter?
 }
 
