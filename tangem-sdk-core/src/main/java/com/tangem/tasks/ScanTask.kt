@@ -12,6 +12,8 @@ import com.tangem.commands.wallet.CheckWalletCommand
 import com.tangem.commands.wallet.WalletStatus
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.guard
+import com.tangem.json.BaseJsonRunnableAdapter
+import com.tangem.json.CommandParams
 
 /**
  * Task that allows to read Tangem card and verify its private key.
@@ -129,4 +131,23 @@ class ScanTask(
             }
         }
     }
+
+    class JsonAdapter : BaseJsonRunnableAdapter<ScanTaskParams>() {
+        override fun initParams(): ScanTaskParams = convertJsonToParamsModel()
+
+        override fun run(session: CardSession, callback: (result: CompletionResult<CommandResponse>) -> Unit) {
+            ScanTask(params.cardVerification).run(session) {
+                when (it) {
+                    is CompletionResult.Success -> handleSuccess(it.data, callback)
+                    is CompletionResult.Failure -> callback(CompletionResult.Failure(it.error))
+                }
+            }
+        }
+
+        companion object {
+            const val METHOD = "SCAN_COMMAND"
+        }
+    }
+
+    data class ScanTaskParams(val cardVerification: Boolean = true) : CommandParams()
 }
