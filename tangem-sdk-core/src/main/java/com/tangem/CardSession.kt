@@ -68,8 +68,7 @@ class CardSession(
     private val reader: CardReader,
     val viewDelegate: SessionViewDelegate,
     private var cardId: String? = null,
-    private var initialMessage: Message? = null,
-    private val jsonRunnableFactory: JsonAdaptersFactory
+    private var initialMessage: Message? = null
 ) {
 
     var connectedTag: TagType? = null
@@ -232,33 +231,6 @@ class CardSession(
                     cardId = receivedCardId
                     callback(this, null)
                 }
-            }
-        }
-    }
-
-    fun startWithJson(
-        json: Map<String, Any>,
-        callback: (result: CompletionResult<Map<String, Any>>) -> Unit
-    ) {
-        val builder = (jsonRunnableFactory.get(json) as? JsonRunnableAdapter<CommandResponse>).guard {
-            callback(CompletionResult.Failure(TangemSdkError.CardError()))
-            return
-        }
-
-        when (val result = builder.buildRunnable(json)) {
-            is CompletionResult.Success -> {
-                startWithRunnable(result.data) {
-                    when (it) {
-                        is CompletionResult.Success -> {
-                            val jsonResponse = builder.convertResponse(it.data)
-                            callback(CompletionResult.Success(jsonResponse))
-                        }
-                        is CompletionResult.Failure -> callback(CompletionResult.Failure(it.error))
-                    }
-                }
-            }
-            is CompletionResult.Failure -> {
-                callback(CompletionResult.Failure(result.error))
             }
         }
     }
