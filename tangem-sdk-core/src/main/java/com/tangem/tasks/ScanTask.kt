@@ -12,7 +12,7 @@ import com.tangem.commands.wallet.CheckWalletCommand
 import com.tangem.commands.wallet.WalletStatus
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.guard
-import com.tangem.json.BaseJsonRunnableAdapter
+import com.tangem.json.JsonRunnableAdapter
 import com.tangem.json.CommandParams
 
 /**
@@ -132,10 +132,10 @@ class ScanTask(
         }
     }
 
-    class JsonAdapter : BaseJsonRunnableAdapter<ScanTaskParams, Card>() {
-        override fun initParams(): ScanTaskParams = convertJsonToParamsModel()
+    class JsonAdapter : JsonRunnableAdapter<Card>() {
 
         override fun createRunnable(): CardSessionRunnable<Card> {
+            val params: ScanTaskParams = convertJsonToParamsModel()
             return ScanTask(params.cardVerification)
         }
 
