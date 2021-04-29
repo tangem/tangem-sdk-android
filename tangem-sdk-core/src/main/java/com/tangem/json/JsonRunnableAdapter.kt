@@ -10,32 +10,27 @@ import com.tangem.common.CompletionResult
 /**
 [REDACTED_AUTHOR]
  */
-interface JsonRunnableAdapter : CardSessionRunnable<CommandResponse> {
-    fun setJson(json: Map<String, Any>)
-}
-
-abstract class BaseJsonRunnableAdapter<P : CommandParams, R : CommandResponse>(
+abstract class JsonRunnableAdapter<R : CommandResponse>(
     protected val responseConverter: ResponseConverter = ResponseConverter()
-) : JsonRunnableAdapter {
+) : CardSessionRunnable<CommandResponse> {
 
-    override val requiresPin2: Boolean = false
+    override val requiresPin2: Boolean
+        get() = runnable.requiresPin2
 
-    protected val jsonData = mutableMapOf<String, Any>()
-    protected lateinit var params: P
+    protected lateinit var jsonData: Map<String, Any>
 
-    override fun setJson(json: Map<String, Any>) {
-        jsonData.clear()
-        jsonData + json
-        params = initParams()
-    }
+    private lateinit var runnable: CardSessionRunnable<R>
 
-    protected abstract fun initParams(): P
-
-    override fun run(session: CardSession, callback: (result: CompletionResult<CommandResponse>) -> Unit) {
-        createRunnable().run(session) { handleCommandResult(it, callback) }
+    fun initWithJson(json: Map<String, Any>) {
+        jsonData = json
+        runnable = createRunnable()
     }
 
     abstract fun createRunnable(): CardSessionRunnable<R>
+
+    override fun run(session: CardSession, callback: (result: CompletionResult<CommandResponse>) -> Unit) {
+        runnable.run(session) { handleCommandResult(it, callback) }
+    }
 
     private fun handleCommandResult(
         commandResult: CompletionResult<R>,
@@ -56,13 +51,13 @@ abstract class BaseJsonRunnableAdapter<P : CommandParams, R : CommandResponse>(
         return gson.fromJson(parametersJson, T::class.java)
     }
 
-    protected open fun convertResponseToJson(response: CommandResponse): Map<String, Any> {
+    private fun convertResponseToJson(response: CommandResponse): Map<String, Any> {
         val typeToken = object : TypeToken<Map<String, Any>>() {}.type
         val convertedResponse = responseConverter.convertResponse(response)
         return responseConverter.gson.fromJson(convertedResponse, typeToken)
     }
 
-    protected fun handleSuccess(data: CommandResponse, callback: (result: CompletionResult<CommandResponse>) -> Unit) {
+    private fun handleSuccess(data: CommandResponse, callback: (result: CompletionResult<CommandResponse>) -> Unit) {
         val convertedResponse = convertResponseToJson(data)
         callback(CompletionResult.Success(JsonResponse(convertedResponse)))
     }
