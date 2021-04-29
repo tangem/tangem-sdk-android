@@ -10,28 +10,23 @@ import java.lang.Exception
  */
 class JsonResponse(val response: Map<String, Any>) : CommandResponse
 
-interface JsonAdaptersFactory {
-    fun register(name: String, lazyAdapter: () -> JsonRunnableAdapter)
-    fun get(json: Map<String, Any>): JsonRunnableAdapter?
-}
+class JsonAdaptersFactory {
 
-class DefaultJsonAdaptersFactory : JsonAdaptersFactory {
-
-    private val commandAdapters = mutableMapOf<String, () -> JsonRunnableAdapter>()
+    private val commandAdapters = mutableMapOf<String, () -> JsonRunnableAdapter<*>>()
 
     init {
-        register(SignCommand.JsonAdapter.METHOD) { SignCommand.JsonAdapter() }
-        register(ScanTask.JsonAdapter.METHOD) { ScanTask.JsonAdapter() }
+        registerAdapter(SignCommand.JsonAdapter.METHOD) { SignCommand.JsonAdapter() }
+        registerAdapter(ScanTask.JsonAdapter.METHOD) { ScanTask.JsonAdapter() }
     }
 
-    override fun register(name: String, lazyAdapter: () -> JsonRunnableAdapter) {
+    fun registerAdapter(name: String, lazyAdapter: () -> JsonRunnableAdapter<*>) {
         commandAdapters[name] = lazyAdapter
     }
 
-    override fun get(json: Map<String, Any>): JsonRunnableAdapter? {
+    fun createFrom(json: Map<String, Any>): JsonRunnableAdapter<*>? {
         return try {
-            val methodName = json["action"] ?: return null
-            commandAdapters[methodName]?.invoke()?.apply { setJson(json) }
+            val methodName = json["method"] ?: return null
+            commandAdapters[methodName]?.invoke()?.apply { initWithJson(json) }
         } catch (ex: Exception) {
             ex.printStackTrace()
             null
