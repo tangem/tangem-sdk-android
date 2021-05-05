@@ -1,5 +1,6 @@
 package com.tangem.commands.wallet
 
+import com.squareup.moshi.JsonClass
 import com.tangem.CardSession
 import com.tangem.SessionEnvironment
 import com.tangem.TangemError
@@ -19,6 +20,7 @@ import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.tasks.PreflightReadSettings
 
+@JsonClass(generateAdapter = true)
 class PurgeWalletResponse(
     /**
      * CID, Unique Tangem card ID number.

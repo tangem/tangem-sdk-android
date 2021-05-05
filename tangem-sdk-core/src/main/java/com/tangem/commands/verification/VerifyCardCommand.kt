@@ -1,5 +1,6 @@
 package com.tangem.commands.verification
 
+import com.squareup.moshi.JsonClass
 import com.tangem.CardSession
 import com.tangem.Log
 import com.tangem.SessionEnvironment
@@ -23,6 +24,7 @@ import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.CryptoUtils
 import kotlinx.coroutines.launch
 
+@JsonClass(generateAdapter = true)
 class VerifyCardResponse(
         val cardId: String,
         val verificationState: VerifyCardState? = null,
