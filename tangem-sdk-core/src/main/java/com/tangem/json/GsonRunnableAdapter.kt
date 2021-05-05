@@ -10,21 +10,16 @@ import com.tangem.common.CompletionResult
 /**
 [REDACTED_AUTHOR]
  */
-abstract class JsonRunnableAdapter<R : CommandResponse>(
-    protected val responseConverter: ResponseConverter = ResponseConverter()
+abstract class GsonRunnableAdapter<R : CommandResponse>(
+    protected val jsonData: Map<String, Any>
 ) : CardSessionRunnable<CommandResponse> {
 
     override val requiresPin2: Boolean
         get() = runnable.requiresPin2
 
-    protected lateinit var jsonData: Map<String, Any>
+    protected val responseConverter: ResponseConverter = ResponseConverter()
 
-    private lateinit var runnable: CardSessionRunnable<R>
-
-    fun initWithJson(json: Map<String, Any>) {
-        jsonData = json
-        runnable = createRunnable()
-    }
+    private val runnable: CardSessionRunnable<R> = createRunnable()
 
     abstract fun createRunnable(): CardSessionRunnable<R>
 

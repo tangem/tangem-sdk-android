@@ -7,11 +7,8 @@ import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.getType
-import com.tangem.common.extensions.guard
 import com.tangem.crypto.EncryptionHelper
 import com.tangem.crypto.pbkdf2Hash
-import com.tangem.json.JsonAdaptersFactory
-import com.tangem.json.JsonRunnableAdapter
 import com.tangem.tasks.PreflightReadCapable
 import com.tangem.tasks.PreflightReadSettings
 import com.tangem.tasks.PreflightReadTask
