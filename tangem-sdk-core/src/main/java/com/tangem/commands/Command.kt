@@ -1,5 +1,6 @@
 package com.tangem.commands
 
+import com.squareup.moshi.JsonClass
 import com.tangem.*
 import com.tangem.commands.common.card.Card
 import com.tangem.common.CompletionResult
@@ -37,6 +38,7 @@ interface ApduSerializable<T : CommandResponse> {
  */
 interface CommandResponse
 
+@JsonClass(generateAdapter = true)
 data class SimpleResponse(val cardId: String) : CommandResponse
 
 /**

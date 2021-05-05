@@ -4,7 +4,7 @@ import com.tangem.TangemSdk
 import com.tangem.commands.CommandResponse
 import com.tangem.commands.SignCommand
 import com.tangem.commands.SignResponse
-import com.tangem.commands.common.ResponseConverter
+import com.tangem.commands.common.jsonConverter.ResponseConverter
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.file.FileData
 import com.tangem.commands.wallet.WalletIndex
@@ -159,7 +159,7 @@ class TangemSdkCli(verbose: Boolean = false, indexOfTerminal: Int? = null, priva
     private fun handleResult(result: CompletionResult<out CommandResponse>) {
         when (result) {
             is CompletionResult.Success -> {
-                println(responseConverter.convertResponse(result.data))
+                println(responseConverter.toJson(result.data))
             }
             is CompletionResult.Failure -> handleError(result.error)
         }

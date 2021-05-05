@@ -1,5 +1,6 @@
 package com.tangem.commands.wallet
 
+import com.squareup.moshi.JsonClass
 import com.tangem.FirmwareConstraints
 import com.tangem.SessionEnvironment
 import com.tangem.TangemError
@@ -18,6 +19,7 @@ import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.tasks.PreflightReadSettings
 
+@JsonClass(generateAdapter = true)
 class CreateWalletResponse(
     /**
      * CID, Unique Tangem card ID number.
