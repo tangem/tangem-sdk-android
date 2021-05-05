@@ -1,5 +1,6 @@
 package com.tangem.commands
 
+import com.squareup.moshi.JsonClass
 import com.tangem.*
 import com.tangem.commands.common.card.Card
 import com.tangem.common.CompletionResult
@@ -12,6 +13,7 @@ import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 
+@JsonClass(generateAdapter = true)
 class SetPinResponse(
         /**
          * CID, Unique Tangem card ID number.

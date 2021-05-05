@@ -15,4 +15,12 @@
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+    <Button
+            android:text="Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnTest"
+            tools:layout_editor_absoluteY="42dp"
+            tools:layout_editor_absoluteX="23dp" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
