@@ -43,8 +43,4 @@ abstract class JsonRunnableAdapter<R : CommandResponse>(
         val jsonParams = jsonConverter.toJson(jsonData["parameters"] ?: mapOf<String, Any>())
         return jsonConverter.fromJson(jsonParams)!!
     }
-
-    private fun handleSuccess(data: CommandResponse, callback: (result: CompletionResult<CommandResponse>) -> Unit) {
-        callback(CompletionResult.Success(JsonResponse(jsonConverter.toMap(data))))
-    }
 }
