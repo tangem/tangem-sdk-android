@@ -1,7 +1,6 @@
 package com.tangem
 
 import com.tangem.commands.*
-import com.tangem.commands.common.ResponseConverter
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.file.*
 import com.tangem.commands.personalization.DepersonalizeCommand

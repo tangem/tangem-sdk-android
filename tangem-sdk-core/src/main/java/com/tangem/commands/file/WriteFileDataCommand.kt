@@ -1,5 +1,6 @@
 package com.tangem.commands.file
 
+import com.squareup.moshi.JsonClass
 import com.tangem.*
 import com.tangem.commands.Command
 import com.tangem.commands.CommandResponse
@@ -20,6 +21,7 @@ import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 
+@JsonClass(generateAdapter = true)
 class WriteFileDataResponse(
         val cardId: String,
         val fileIndex: Int? = null

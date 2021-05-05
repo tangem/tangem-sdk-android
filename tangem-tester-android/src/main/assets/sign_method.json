@@ -1,0 +1,24 @@
+{
+  "name": "scanCard-1",
+  "iterations": 1,
+  "actionType": "NFC_SESSION_RUNNABLE",
+  "method": "SIGN_COMMAND",
+  "parameters": {
+    "hashes": ["123123123", "321321321"],
+    "walletIndex": 1
+  },
+  "expectedResult": {
+    "card": {
+      "cardId": "..."
+    }
+  },
+  "asserts": [
+    {
+      "type": "EQUALS",
+      "fields": [
+        "{#parent.expectedResult.card.cardId}",
+        "{#parent.result.card.cardId}"
+      ]
+    }
+  ]
+}
