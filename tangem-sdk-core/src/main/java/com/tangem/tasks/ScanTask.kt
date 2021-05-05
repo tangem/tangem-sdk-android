@@ -1,7 +1,9 @@
 package com.tangem.tasks
 
+import com.squareup.moshi.JsonClass
 import com.tangem.*
 import com.tangem.commands.*
+import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardDeserializer
 import com.tangem.commands.common.card.FirmwareVersion
@@ -13,7 +15,7 @@ import com.tangem.commands.wallet.WalletStatus
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.guard
 import com.tangem.json.CommandParams
-import com.tangem.json.GsonRunnableAdapter
+import com.tangem.json.JsonRunnableAdapter
 
 /**
  * Task that allows to read Tangem card and verify its private key.
@@ -132,7 +134,10 @@ class ScanTask(
         }
     }
 
-    class JsonAdapter(jsonData: Map<String, Any>) : GsonRunnableAdapter<Card>(jsonData) {
+    class JsonAdapter(
+        jsonConverter: MoshiJsonConverter,
+        jsonData: Map<String, Any>
+    ) : JsonRunnableAdapter<Card>(jsonConverter, jsonData) {
 
         override fun createRunnable(): CardSessionRunnable<Card> {
             val params: ScanTaskParams = convertJsonToParamsModel()
@@ -140,5 +145,6 @@ class ScanTask(
         }
     }
 
+    @JsonClass(generateAdapter = true)
     data class ScanTaskParams(val cardVerification: Boolean = true) : CommandParams()
 }

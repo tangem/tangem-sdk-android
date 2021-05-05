@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
+    id 'kotlin-android-extensions'
 }
 
 android {
@@ -53,4 +54,5 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-common-java8:2.3.1"
 
     implementation "com.squareup.sqldelight:android-driver:1.4.0"
+    implementation 'com.google.code.gson:gson:2.8.6'
 }

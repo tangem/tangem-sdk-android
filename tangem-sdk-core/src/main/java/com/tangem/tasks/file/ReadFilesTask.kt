@@ -1,5 +1,6 @@
 package com.tangem.tasks.file
 
+import com.squareup.moshi.JsonClass
 import com.tangem.CardSession
 import com.tangem.CardSessionRunnable
 import com.tangem.Log
@@ -10,10 +11,12 @@ import com.tangem.commands.file.ReadFileDataCommand
 import com.tangem.commands.file.WriteFileDataCommand
 import com.tangem.common.CompletionResult
 
+@JsonClass(generateAdapter = true)
 class ReadFilesResponse(
         val files: List<File>
 ) : CommandResponse
 
+@JsonClass(generateAdapter = true)
 data class File(
         val fileIndex: Int,
         val fileSettings: FileSettings?,

@@ -1,5 +1,6 @@
 package com.tangem.commands.read
 
+import com.squareup.moshi.JsonClass
 import com.tangem.Log
 import com.tangem.SessionEnvironment
 import com.tangem.TangemSdkError
@@ -18,6 +19,7 @@ import com.tangem.common.tlv.TlvTag
 /**
 [REDACTED_AUTHOR]
  */
+@JsonClass(generateAdapter = true)
 class WalletResponse(
     val cid: String,
     val wallet: CardWallet
