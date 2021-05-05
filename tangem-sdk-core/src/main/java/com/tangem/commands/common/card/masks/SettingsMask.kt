@@ -1,5 +1,7 @@
 package com.tangem.commands.common.card.masks
 
+import com.tangem.common.MASK_DELIMITER
+
 /**
  * Stores and maps Tangem card settings.
  *
@@ -10,7 +12,21 @@ data class SettingsMask(val rawValue: Int) {
     fun contains(settings: Settings): Boolean = (rawValue and settings.code) != 0
 
     override fun toString(): String {
-        return Settings.values().filter { contains(it) }.joinToString(", ")
+        return Settings.values().filter { contains(it) }.joinToString(MASK_DELIMITER)
+    }
+
+    companion object {
+        fun fromString(strMask: String): SettingsMask {
+            return SettingsMaskBuilder().apply {
+                strMask.split(MASK_DELIMITER).forEach {
+                    try {
+                        add(Settings.valueOf(it))
+                    } catch (ex: IllegalArgumentException) {
+                        ex.printStackTrace()
+                    }
+                }
+            }.build()
+        }
     }
 }
 

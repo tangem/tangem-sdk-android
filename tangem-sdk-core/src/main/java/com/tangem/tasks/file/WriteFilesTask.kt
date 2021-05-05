@@ -1,5 +1,6 @@
 package com.tangem.tasks.file
 
+import com.squareup.moshi.JsonClass
 import com.tangem.CardSession
 import com.tangem.CardSessionRunnable
 import com.tangem.TangemSdkError
@@ -19,6 +20,7 @@ import com.tangem.common.extensions.guard
  *
  * @property data files to be written.
  */
+@JsonClass(generateAdapter = true)
 class WriteFilesResponse(
     val cardId: String,
     val fileIndices: List<Int>

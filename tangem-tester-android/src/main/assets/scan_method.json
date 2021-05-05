@@ -1,0 +1,21 @@
+{
+  "name": "scanCard-1",
+  "iterations": 1,
+  "actionType": "NFC_SESSION_RUNNABLE",
+  "method": "SCAN_TASK",
+  "parameters": {},
+  "expectedResult": {
+    "card": {
+      "cardId": "..."
+    }
+  },
+  "asserts": [
+    {
+      "type": "EQUALS",
+      "fields": [
+        "{#parent.expectedResult.card.cardId}",
+        "{#parent.result.card.cardId}"
+      ]
+    }
+  ]
+}

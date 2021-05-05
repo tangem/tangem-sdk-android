@@ -2,6 +2,7 @@ package com.tangem.json
 
 import com.tangem.commands.CommandResponse
 import com.tangem.commands.SignCommand
+import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
 import com.tangem.extentions.toSnakeCase
 import com.tangem.tasks.ScanTask
 import kotlin.reflect.KClass
@@ -14,6 +15,7 @@ class JsonResponse(val response: Map<String, Any>) : CommandResponse
 class JsonAdaptersFactory {
 
     private val commandAdapters = mutableMapOf<String, KClass<*>>()
+    private val jsonConverter = MoshiJsonConverter.tangemSdkJsonConverter()
 
     init {
         registerAdapter(SignCommand::class)
@@ -26,15 +28,16 @@ class JsonAdaptersFactory {
         commandAdapters[adapterName] = adapterClass
     }
 
-    fun createFrom(json: Map<String, Any>): GsonRunnableAdapter<*>? {
+    fun createFrom(json: Map<String, Any>): JsonRunnableAdapter<*>? {
         return try {
+            if (!checkForStandard(json)) return null
             val methodName = json["method"] ?: return null
 
             commandAdapters[methodName]?.nestedClasses?.forEach {
                 if (it.simpleName == "JsonAdapter") {
-                    val constructor = it.constructors.filter { it.parameters.size == 1 }
+                    val constructor = it.constructors.filter { it.parameters.size == 2 }
                     val appropriateConstructor = constructor.firstOrNull()
-                    return appropriateConstructor?.call(json) as? GsonRunnableAdapter<*>
+                    return appropriateConstructor?.call(jsonConverter, json) as? JsonRunnableAdapter<*>
                 }
             }
             null
@@ -42,5 +45,9 @@ class JsonAdaptersFactory {
             ex.printStackTrace()
             null
         }
+    }
+
+    private fun checkForStandard(json: Map<String, Any>): Boolean {
+        return json.containsKey("method") && json.containsKey("parameters")
     }
 }
