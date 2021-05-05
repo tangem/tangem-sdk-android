@@ -16,8 +16,8 @@ import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.sign
-import com.tangem.json.JsonRunnableAdapter
 import com.tangem.json.CommandParams
+import com.tangem.json.GsonRunnableAdapter
 import com.tangem.tasks.PreflightReadSettings
 
 /**
@@ -204,16 +204,12 @@ class SignCommand(
         const val CHUNK_SIZE = 10
     }
 
-    class JsonAdapter : JsonRunnableAdapter<SignResponse>() {
+    class JsonAdapter(jsonData: Map<String, Any>) : GsonRunnableAdapter<SignResponse>(jsonData) {
 
         override fun createRunnable(): CardSessionRunnable<SignResponse> {
             val params: SignParams = convertJsonToParamsModel()
             val hashes = params.hashes.map { it.hexToBytes() }.toTypedArray()
             return SignCommand(hashes, WalletIndex.Index(params.walletIndex))
-        }
-
-        companion object {
-            const val METHOD = "SIGN_COMMAND"
         }
     }
 
