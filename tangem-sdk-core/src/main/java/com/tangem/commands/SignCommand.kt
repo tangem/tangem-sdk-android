@@ -1,6 +1,8 @@
 package com.tangem.commands
 
+import com.squareup.moshi.JsonClass
 import com.tangem.*
+import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.common.card.masks.SigningMethod
@@ -17,7 +19,7 @@ import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.sign
 import com.tangem.json.CommandParams
-import com.tangem.json.GsonRunnableAdapter
+import com.tangem.json.JsonRunnableAdapter
 import com.tangem.tasks.PreflightReadSettings
 
 /**
@@ -27,6 +29,7 @@ import com.tangem.tasks.PreflightReadSettings
  * @param walletSignedHashes Total number of signed single hashes returned by the card in sign command responses.
  * Sums up array elements within all SIGN commands
  */
+@JsonClass(generateAdapter = true)
 class SignResponse(
     val cardId: String,
     val signatures: List<ByteArray>,
@@ -204,7 +207,10 @@ class SignCommand(
         const val CHUNK_SIZE = 10
     }
 
-    class JsonAdapter(jsonData: Map<String, Any>) : GsonRunnableAdapter<SignResponse>(jsonData) {
+    class JsonAdapter(
+        jsonConverter: MoshiJsonConverter,
+        jsonData: Map<String, Any>
+    ) : JsonRunnableAdapter<SignResponse>(jsonConverter, jsonData) {
 
         override fun createRunnable(): CardSessionRunnable<SignResponse> {
             val params: SignParams = convertJsonToParamsModel()
@@ -213,6 +219,7 @@ class SignCommand(
         }
     }
 
+    @JsonClass(generateAdapter = true)
     data class SignParams(val hashes: List<String>, val walletIndex: Int) : CommandParams()
 
 }

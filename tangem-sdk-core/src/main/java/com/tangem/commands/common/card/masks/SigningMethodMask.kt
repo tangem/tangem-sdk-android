@@ -1,5 +1,7 @@
 package com.tangem.commands.common.card.masks
 
+import com.tangem.common.MASK_DELIMITER
+
 /**
  * Determines which type of data is required for signing.
  */
@@ -14,7 +16,21 @@ data class SigningMethodMask(val rawValue: Int) {
     }
 
     override fun toString(): String {
-        return SigningMethod.values().filter { contains(it) }.joinToString(", ")
+        return SigningMethod.values().filter { contains(it) }.joinToString(MASK_DELIMITER)
+    }
+
+    companion object {
+        fun fromString(strMask: String): SigningMethodMask {
+            return SigningMethodMaskBuilder().apply {
+                strMask.split(MASK_DELIMITER).forEach {
+                    try {
+                        add(SigningMethod.valueOf(it))
+                    } catch (ex: IllegalArgumentException) {
+                        ex.printStackTrace()
+                    }
+                }
+            }.build()
+        }
     }
 }
 
