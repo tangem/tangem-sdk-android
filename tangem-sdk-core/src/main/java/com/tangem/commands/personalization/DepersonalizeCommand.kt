@@ -1,5 +1,6 @@
 package com.tangem.commands.personalization
 
+import com.squareup.moshi.JsonClass
 import com.tangem.SessionEnvironment
 import com.tangem.commands.Command
 import com.tangem.commands.CommandResponse
@@ -7,6 +8,7 @@ import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 
+@JsonClass(generateAdapter = true)
 data class DepersonalizeResponse(val success: Boolean) : CommandResponse
 
 /**

@@ -1,5 +1,6 @@
 package com.tangem.commands.file
 
+import com.squareup.moshi.JsonClass
 import com.tangem.FirmwareConstraints
 import com.tangem.SessionEnvironment
 import com.tangem.TangemError
@@ -15,6 +16,7 @@ import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 
+@JsonClass(generateAdapter = true)
 class ReadFileHashResponse(
         val cardId: String,
         val fileHash: ByteArray,
