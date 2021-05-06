@@ -1,7 +1,5 @@
 package com.tangem.tester.executable.steps
 
-import com.tangem.CardSessionRunnable
-import com.tangem.commands.SignCommand
 import com.tangem.commands.SignResponse
 import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.extensions.toHexString
@@ -19,30 +17,27 @@ class SignStep : BaseStep<SignResponse>("SIGN_COMMAND") {
         private val keySignatures = "signatures"
     }
 
-    private lateinit var hashes: Array<ByteArray>
-    private lateinit var walletIndex: WalletIndex
-
-    override fun fetchVariables(name: String): ExecutableError.InitError? {
+    override fun fetchVariables(name: String): ExecutableError? {
         return try {
             val rawHashes = VariableService.getValue(name, model.parameters[keyHashes]) as List<String>
-            hashes = rawHashes.map { it.toByteArray() }.toTypedArray()
+            val hashes = rawHashes.map { it.toByteArray() }.toTypedArray()
 
             val rawIndex = VariableService.getValue(name, model.parameters[keyWalletIndex]) as String
             val intIndex = rawIndex.toIntOrNull()
-            walletIndex = if (intIndex == null) {
+            val walletIndex = if (intIndex == null) {
                 WalletIndex.PublicKey(rawIndex.toByteArray())
             } else {
                 WalletIndex.Index(intIndex)
             }
+            model.parameters[keyHashes] = hashes
+            model.parameters[keyWalletIndex] = walletIndex
             null
         } catch (ex: Exception) {
-            ExecutableError.InitError(ex.toString())
+            ExecutableError.FetchVariableError(ex.toString())
         }
     }
 
-    override fun getRunnable(): CardSessionRunnable<SignResponse> = SignCommand(hashes, walletIndex)
-
-    override fun checkForExpectedResult(result: SignResponse): ExecutableError.ExpectedResultError? {
+    override fun checkForExpectedResult(result: SignResponse): ExecutableError? {
         val resultStringSignatures = result.signatures.joinToString { it.toHexString() }
         if (model.expectedResult[keySignatures] != resultStringSignatures)
             return ExecutableError.ExpectedResultError(listOf("Signatures doesn't match"))
