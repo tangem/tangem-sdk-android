@@ -14,8 +14,9 @@ class JsonResponse(val response: Map<String, Any>) : CommandResponse
 
 class JsonAdaptersFactory {
 
+    val jsonConverter = MoshiJsonConverter.tangemSdkJsonConverter()
+
     private val commandAdapters = mutableMapOf<String, KClass<*>>()
-    private val jsonConverter = MoshiJsonConverter.tangemSdkJsonConverter()
 
     init {
         registerAdapter(SignCommand::class)
