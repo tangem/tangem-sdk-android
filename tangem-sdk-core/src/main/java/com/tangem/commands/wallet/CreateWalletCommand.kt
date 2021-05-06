@@ -9,6 +9,7 @@ import com.tangem.commands.CommandResponse
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.common.card.FirmwareVersion
+import com.tangem.commands.common.card.masks.SigningMethodMaskBuilder
 import com.tangem.commands.wallet.*
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
@@ -123,7 +124,10 @@ class CreateWalletCommand(
             walletConfig?.let { config ->
                 tlvBuilder.append(TlvTag.SettingsMask, config.getSettingsMask())
                 tlvBuilder.append(TlvTag.CurveId, config.curveId)
-                tlvBuilder.append(TlvTag.SigningMethod, config.signingMethods)
+                config.signingMethods?.let {
+                    val mask = SigningMethodMaskBuilder().apply { add(it) }.build()
+                    tlvBuilder.append(TlvTag.SigningMethod, mask)
+                }
             }
         }
         return CommandApdu(Instruction.CreateWallet, tlvBuilder.serialize())
