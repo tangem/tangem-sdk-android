@@ -1,35 +1,30 @@
 package com.tangem.tester.executable.steps
 
-import com.tangem.CardSessionRunnable
 import com.tangem.commands.common.card.Card
 import com.tangem.common.extensions.toHexString
-import com.tangem.tasks.ScanTask
 import com.tangem.tester.common.ExecutableError
 import com.tangem.tester.services.VariableService
 
 /**
 [REDACTED_AUTHOR]
  */
-class ScanStep : BaseStep<Card>("SCAN_COMMAND") {
+class ScanStep : BaseStep<Card>("SCAN_TASK") {
 
     companion object {
         val keyCardVerification = "cardVerification"
     }
 
-    private var cardVerification: Boolean = false
-
-    override fun fetchVariables(name: String): ExecutableError.InitError? {
+    override fun fetchVariables(name: String): ExecutableError? {
         return try {
-            cardVerification = VariableService.getValue(name, model.parameters[keyCardVerification]) as Boolean
+            val cardVerification = VariableService.getValue(name, model.rawParameters[keyCardVerification]) as Boolean
+            model.parameters[keyCardVerification] = cardVerification
             null
         } catch (ex: Exception) {
-            ExecutableError.InitError(ex.toString())
+            ExecutableError.FetchVariableError(ex.toString())
         }
     }
 
-    override fun getRunnable(): CardSessionRunnable<Card> = ScanTask(cardVerification)
-
-    override fun checkForExpectedResult(result: Card): ExecutableError.ExpectedResultError? {
+    override fun checkForExpectedResult(result: Card): ExecutableError? {
         val errorsList = checkResultFields(
             CheckPair("cardId", result.cardId),
             CheckPair("isActivated", result.isActivated),
