@@ -1,6 +1,6 @@
 package com.tangem.tester.executable.asserts
 
-import com.tangem.tester.common.Executable
+import com.tangem.tester.executable.Executable
 import com.tangem.tester.jsonModels.AssertModel
 
 /**

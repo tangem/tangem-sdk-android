@@ -240,7 +240,7 @@ class CardSession(
      * Stops the current session with the text message.
      * @param message If null, the default message will be shown.
      */
-    private fun stop(message: Message? = null) {
+    fun stop(message: Message? = null) {
         stopSession()
         viewDelegate.onSessionStopped(message)
     }
@@ -249,7 +249,7 @@ class CardSession(
      * Stops the current session on error.
      * @param error An error that will be shown.
      */
-    private fun stopWithError(error: TangemError) {
+    fun stopWithError(error: TangemError) {
         stopSession()
         if (error !is TangemSdkError.UserCancelled) {
             Log.error { "Finishing with error: ${error.code}" }

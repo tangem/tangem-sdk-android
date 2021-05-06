@@ -13,14 +13,14 @@
       "name": "scanCard-1",
       "iterations": 1,
       "actionType": "NFC_SESSION_RUNNABLE",
-      "action": "SCAN_TASK_COMMAND",
+      "method": "SCAN_TASK_COMMAND",
       "parameters": {},
       "expectedResult": {
         "cardId": "..."
       },
       "asserts": [
         {
-          "action": "EQUALS",
+          "method": "EQUALS",
           "fields": [
             "{#parent.expectedResult.cardId}",
             "{#parent.result.cardId}"
@@ -29,12 +29,12 @@
       ],
       "robotActions": {
         "actionType": "ROBOT",
-        "action": "TIMER",
+        "method": "TIMER",
         "parameters": {
           "timers": [
             {
               "time": 300,
-              "action": "OUT/IN"
+              "method": "OUT/IN"
             }
           ]
         }
