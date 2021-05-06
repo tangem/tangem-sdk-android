@@ -1,7 +1,7 @@
 package com.tangem.tester.services
 
 import com.tangem.commands.CommandResponse
-import com.tangem.commands.common.ResponseConverter
+import com.tangem.commands.common.jsonConverter.ResponseConverter
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -14,7 +14,7 @@ object VariableService {
     private val converter = ResponseConverter()
 
     fun registerResult(name: String, result: CommandResponse) {
-        stepResults[name] = JSONObject(converter.convertResponse(result)).toMap()
+        stepResults[name] = JSONObject(converter.toJson(result)).toMap()
     }
 
     fun getValue(name: String, pointer: Any?): Any? {
