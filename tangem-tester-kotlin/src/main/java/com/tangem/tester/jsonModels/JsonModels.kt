@@ -1,51 +1,47 @@
 package com.tangem.tester.jsonModels
 
-import com.tangem.Config
-import com.tangem.commands.common.card.FirmwareVersion
-import com.tangem.commands.personalization.entities.CardConfig
+import com.squareup.moshi.JsonClass
+import com.tangem.json.JsonRpcIn
+
 
 /**
 [REDACTED_AUTHOR]
  */
-data class TestModel(
-    val setupModel: SetupModel,
-    val stepModelList: List<StepModel>
-)
-
-data class SetupModel(
+@JsonClass(generateAdapter = true)
+data class TestEnvironment(
     val description: String,
     val iterations: Int,
-    val minimalFirmware: FirmwareVersion,
+    val minimalFirmware: String,
     val platform: PlatformType,
-    val cardConfig: CardConfig,
-    val sdkConfig: Config,
-    val sessionConfig: SessionConfigModel
 )
 
 enum class PlatformType {
     IOS, ANDROID, ANY
 }
 
-data class SessionConfigModel(
-    val any: Any
-)
-
-data class StepModel(
-    val actionType: String,
-    val action: String,
-    val name: String,
-    val parameters: Map<String, Any?> = mapOf(),
-    val expectedResult: Map<String, Any?>,
+@JsonClass(generateAdapter = true)
+class StepModel(
+    val name: String = "UNKNOWN",
+    val actionType: String = "UNKNOWN",
+    val iterations: Int = 0,
+    val method: String = "UNKNOWN",
+    val parameters: MutableMap<String, Any?> = mutableMapOf(),
+    val expectedResult: Map<String, Any?> = mapOf(),
     val asserts: List<AssertModel> = listOf(),
     val robotActions: List<RobotActionModel> = listOf(),
-    val iterations: Int = 1
-)
+) {
+    val rawParameters : Map<String, Any?> = parameters.toMap()
 
+    fun toJsonRpcIn(): JsonRpcIn = JsonRpcIn(method, parameters)
+}
+
+@JsonClass(generateAdapter = true)
 data class AssertModel(
-    val action: String,
+    val type: String,
     val fields: List<String>
 )
 
+@JsonClass(generateAdapter = true)
 data class RobotActionModel(
     val type: String,
     val parameters: Map<String, Any>? = null
