@@ -13,7 +13,7 @@
       "name": "scanCard-1",
       "iterations": 1,
       "actionType": "NFC_SESSION_RUNNABLE",
-      "action": "SIGN_COMMAND",
+      "method": "SIGN_COMMAND",
       "parameters": {},
       "expectedResult": {
         "card": {
@@ -22,7 +22,7 @@
       },
       "asserts": [
         {
-          "action": "EQUALS",
+          "method": "EQUALS",
           "fields": [
             "{#parent.expectedResult.card.cardId}",
             "{#parent.result.card.cardId}"
@@ -31,12 +31,12 @@
       ],
       "robotActions1": {
         "actionType": "ROBOT",
-        "action": "TIMER",
+        "method": "TIMER",
         "parameters": {
           "timers": [
             {
               "time": 300,
-              "action": "OUT/IN"
+              "method": "OUT/IN"
             }
           ]
         }
@@ -50,7 +50,7 @@
     {
       "name": "createWalletTask-1",
       "actionType": "NFC_SESSION_RUNNABLE",
-      "action": "CREATE_WALLET_TASK",
+      "method": "CREATE_WALLET_TASK",
       "parameters": {
         "walletConfig": {
           "isReusable": "true",
@@ -66,7 +66,7 @@
     {
       "name": "RunApdu-1",
       "actionType": "NFC_SESSION_RUNNABLE",
-      "action": "RAW_APDU",
+      "method": "RAW_APDU",
       "parameters": {
         "commandApdu": {
           "instruction": "0x56",
