@@ -9,39 +9,48 @@ import com.tangem.commands.common.card.masks.SigningMethodMask
 import com.tangem.commands.common.card.masks.WalletSettingsMask
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
+import java.lang.reflect.ParameterizedType
 import java.text.DateFormat
 import java.util.*
+import kotlin.reflect.KClass
 
 /**
 [REDACTED_AUTHOR]
  */
-class MoshiJsonConverter(adapters: List<Any>) {
+class MoshiJsonConverter(adapters: List<Any> = listOf()) {
 
     val moshi: Moshi = Moshi.Builder().apply { adapters.forEach { this.add(it) } }.build()
-    val mapAdapter: JsonAdapter<Map<String, Any>>
-    val anyAdapter: JsonAdapter<Any>
-
-    init {
-        val mapType = Types.newParameterizedType(MutableMap::class.java, String::class.java, Any::class.java)
-        mapAdapter = moshi.adapter(mapType)
-        anyAdapter = moshi.adapter(Any::class.java)
-    }
 
     inline fun <reified T> fromJson(json: String): T? {
         return moshi.adapter(T::class.java).fromJson(json)
+    }
+
+    fun <T> fromJson(json: String, type: ParameterizedType): T? {
+        return moshi.adapter<T>(type).fromJson(json)
     }
 
     fun toJson(any: Any?, indent: String = "   "): String {
         return when (any) {
             null -> ""
             is CommandResponse -> moshi.adapter<CommandResponse>(any::class.java).indent(indent).toJson(any)
-            else -> anyAdapter.toJson(any)
+            else -> moshi.adapter(Any::class.java).toJson(any)
         }
     }
 
     fun toMap(any: Any?): Map<String, Any> {
-        val any = any ?: return mapOf()
-        return mapAdapter.fromJson(toJson(any)) ?: mapOf()
+        return when (any) {
+            null -> null
+            is String -> fromJson(any, typedMap())
+            else -> fromJson(toJson(any), typedMap())
+        } ?: mapOf()
+    }
+
+    fun typedList(clazz: Class<*>): ParameterizedType {
+        return Types.newParameterizedType(List::class.java, clazz)
+    }
+
+    fun typedMap(key: KClass<*> = String::class, value: KClass<*> = Any::class): ParameterizedType {
+        return Types.newParameterizedType(Map::class.java, key.javaObjectType, value.javaObjectType)
     }
 
     companion object {
