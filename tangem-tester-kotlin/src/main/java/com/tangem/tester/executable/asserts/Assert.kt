@@ -8,7 +8,7 @@ import com.tangem.tester.jsonModels.AssertModel
 [REDACTED_AUTHOR]
  */
 interface Assert : Executable {
-    fun init(model: AssertModel): Assert
+    fun init(model: AssertModel)
     fun run(callback: (TestResult) -> Unit)
 }
 
@@ -19,8 +19,7 @@ abstract class BaseAssert(
 
     override fun getName(): String = assertName
 
-    override fun init(model: AssertModel): Assert {
+    override fun init(model: AssertModel) {
         this.model = model
-        return this
     }
 }
