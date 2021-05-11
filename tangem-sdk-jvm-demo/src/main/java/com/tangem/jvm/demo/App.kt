@@ -1,3 +1,5 @@
+package com.tangem.jvm.demo
+
 import org.apache.commons.cli.*
 
 

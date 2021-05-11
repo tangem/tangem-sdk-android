@@ -1,3 +1,5 @@
+package com.tangem.jvm
+
 import com.tangem.CardReader
 import com.tangem.Log
 import com.tangem.TagType
