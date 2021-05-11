@@ -1,5 +1,6 @@
 package com.tangem.commands.wallet
 
+import com.squareup.moshi.JsonClass
 import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.commands.common.card.masks.SettingsMask
 import com.tangem.common.tlv.TlvDecoder
@@ -20,6 +21,7 @@ import com.tangem.common.tlv.TlvTag
  * @property remainingSignatures Remaining number of `SignCommand` operations before the wallet will stop signing
  * transactions. Note: This counter were deprecated for cards with COS 4.0 and higher
  */
+@JsonClass(generateAdapter = true)
 data class CardWallet constructor(
     val index: Int,
     val status: WalletStatus,
