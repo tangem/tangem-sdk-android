@@ -1,5 +1,6 @@
 package com.tangem.tester.executable.asserts
 
+import com.tangem.tester.common.TestResult
 import com.tangem.tester.executable.Executable
 import com.tangem.tester.jsonModels.AssertModel
 
@@ -7,7 +8,8 @@ import com.tangem.tester.jsonModels.AssertModel
 [REDACTED_AUTHOR]
  */
 interface Assert : Executable {
-    fun setup(model: AssertModel): Assert
+    fun init(model: AssertModel): Assert
+    fun run(callback: (TestResult) -> Unit)
 }
 
 abstract class BaseAssert(
@@ -17,7 +19,7 @@ abstract class BaseAssert(
 
     override fun getName(): String = assertName
 
-    override fun setup(model: AssertModel): Assert {
+    override fun init(model: AssertModel): Assert {
         this.model = model
         return this
     }
