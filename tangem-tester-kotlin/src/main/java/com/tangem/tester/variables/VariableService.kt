@@ -1,7 +1,7 @@
 package com.tangem.tester.variables
 
 import com.tangem.json.JsonResponse
-import com.tangem.tester.SourceMap
+import com.tangem.tester.common.SourceMap
 import com.tangem.tester.common.isNumber
 import com.tangem.tester.common.safeSplit
 import java.util.regex.Pattern
