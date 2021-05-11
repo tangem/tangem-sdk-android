@@ -2,7 +2,6 @@ package com.tangem.tester.variables
 
 import com.tangem.commands.CommandResponse
 import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
-import com.tangem.tester.common.interpreter.helpers.ListHelper
 import com.tangem.tester.common.isNumber
 import com.tangem.tester.common.safeSplit
 import java.util.regex.Pattern
@@ -37,10 +36,11 @@ object VariableService {
             containsStepPointer(pointer) -> {
                 val stepPointer = extractStepPointer(pointer) ?: return null
                 val stepName = extractStepName(stepPointer)
+                val pathValue = removeBrackets(pointer).replace("$stepPointer.", "")
                 if (stepPointer == PARENT) {
-                    getValueByPointer(pointer, stepResults[name])
+                    getValueByPointer(pathValue, stepResults[name])
                 } else {
-                    getValueByPointer(pointer, stepResults[stepName])
+                    getValueByPointer(pathValue, stepResults[stepName])
                 }
             }
             else -> {
@@ -54,7 +54,8 @@ object VariableService {
     private fun extractStepPointer(pointer: String): String? = getPrefix(removeBrackets(pointer))
 
     private fun getValueByPointer(pointer: String, target: Any?): Any? {
-        return getValueByPointer(pointer.safeSplit(), 0, target)
+        if (target == null) return null
+        return getValueByPointer(removeBrackets(pointer).safeSplit("\\."), 0, target)
     }
 
     private fun getValueByPointer(pointer: List<String>?, position: Int, result: Any?): Any? {
@@ -96,24 +97,6 @@ object VariableService {
         if (pointer == null) return false
 
         return pointer.indexOf(STEP_POINTER) == 1
-    }
-
-    private fun containsVariable(obj: Any?): Boolean {
-        if (obj is String) {
-            return containsVariable(obj as String?)
-        }
-        var collection: Collection<*>? = null
-        if (obj is Map<*, *>) {
-            collection = obj.values
-        } else if (ListHelper.canIterable(obj)) {
-            collection = ListHelper.getList(obj)
-        }
-        if (collection != null) {
-            for (value in collection) {
-                if (containsVariable(value)) return true
-            }
-        }
-        return false
     }
 
     private fun removeBrackets(text: String): String {
