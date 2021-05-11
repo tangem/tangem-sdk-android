@@ -33,9 +33,9 @@ sealed class TestError(override val errorMessage: String) : TestFrameworkError {
 }
 
 sealed class ExecutableError(override val errorMessage: String) : TestFrameworkError {
-    class StepIsNotInitializedProperly(name: String) : ExecutableError("Step $name not initialized")
-    class ExecutableNotFoundError(name: String) : ExecutableError("Executable not found for name: $name")
-    class MissingJsonAdapterError(name: String) : ExecutableError("Missing json runnable adapter for $name")
+    class ExecutableNotInitialized(name: String) : ExecutableError("Executable $name is not initialized")
+    class ExecutableNotFoundError(name: String) : ExecutableError("Executable is not found for the name: $name")
+    class MissingJsonAdapterError(name: String) : ExecutableError("Missing json runnable adapter for the $name")
     class FetchVariableError(paramName: Any?, path: String, exception: Throwable) : ExecutableError(
         "Fetching variable failed. Name: $paramName, path: $path, ex: ${exception.message.toString()}"
     )
