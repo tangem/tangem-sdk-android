@@ -44,9 +44,14 @@ open class TestStep(
     }
 
     override fun run(session: CardSession, callback: (TestResult) -> Unit) {
+        if (isInitialized()) {
+            callback(TestResult.Failure(ExecutableError.StepIsNotInitializedProperly(stepName)))
+            return
+        }
+
         val jsonRpc = runnableFactory.jsonConverter.toMap(model.toJsonRpcIn())
         val jsonRunnableAdapter = runnableFactory.createFrom(jsonRpc).guard {
-            callback(TestResult.Failure(TestError.MissingJsonAdapterError(model.method)))
+            callback(TestResult.Failure(ExecutableError.MissingJsonAdapterError(model.method)))
             return
         }
 
@@ -69,6 +74,9 @@ open class TestStep(
             }
         }
     }
+
+    private fun isInitialized(): Boolean = !this::runnableFactory.isInitialized
+        || !this::assertsHolder.isInitialized || !this::model.isInitialized
 
     override fun fetchVariables(name: String): ExecutableError? {
         model.parameters.clear()
