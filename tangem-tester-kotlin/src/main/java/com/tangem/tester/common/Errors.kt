@@ -29,12 +29,13 @@ sealed class TestError(override val errorMessage: String) : TestFrameworkError {
     class EnvironmentInitError : TestError("Test environment initialization failed")
     class TestIsEmptyError : TestError("Test doesn't contains any data to proceed")
     class StepsIsEmptyError : TestError("Test doesn't contains any steps")
-    class MissingJsonAdapterError(name: String) : TestError("Missing json runnable adapter for $name")
     class SessionSdkInitError(error: TangemError) : TestError("Session initialization failed. Code: ${error.code}, message: ${error.customMessage}")
-    class ExecutableNotFoundError(name: String) : TestError("Executable not found for name: $name")
 }
 
 sealed class ExecutableError(override val errorMessage: String) : TestFrameworkError {
+    class StepIsNotInitializedProperly(name: String) : ExecutableError("Step $name not initialized")
+    class ExecutableNotFoundError(name: String) : ExecutableError("Executable not found for name: $name")
+    class MissingJsonAdapterError(name: String) : ExecutableError("Missing json runnable adapter for $name")
     class FetchVariableError(paramName: Any?, path: String, exception: Throwable) : ExecutableError(
         "Fetching variable failed. Name: $paramName, path: $path, ex: ${exception.message.toString()}"
     )
