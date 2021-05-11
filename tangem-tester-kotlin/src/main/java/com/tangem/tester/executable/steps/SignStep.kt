@@ -4,7 +4,7 @@ import com.tangem.commands.SignResponse
 import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.extensions.toHexString
 import com.tangem.tester.common.ExecutableError
-import com.tangem.tester.services.VariableService
+import com.tangem.tester.variables.VariableService
 
 /**
 [REDACTED_AUTHOR]
