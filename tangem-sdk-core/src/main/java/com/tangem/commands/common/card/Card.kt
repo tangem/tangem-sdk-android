@@ -135,14 +135,12 @@ data class Card(
     var isPin2Default: Boolean? = null
 
 ) : CommandResponse {
-    @Transient
-    private val wallets = mutableListOf<CardWallet>()
 
-    fun setWallets(newWallets: List<CardWallet>) {
-        wallets.clear()
-        wallets.addAll(newWallets)
-        wallets.sortBy { it.index }
-    }
+    var wallets: MutableList<CardWallet> = mutableListOf()
+        set(value) {
+            field.clear()
+            field = value.sortedBy { it.index }.toMutableList()
+        }
 
     fun wallet(index: WalletIndex): CardWallet? {
         return when (index) {
@@ -157,8 +155,6 @@ data class Card(
             wallets[foundedIndex] = wallet
         }
     }
-
-    fun getWallets(): List<CardWallet> = wallets.toList()
 }
 
 /**
