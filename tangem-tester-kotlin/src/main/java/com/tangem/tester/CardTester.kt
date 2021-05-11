@@ -46,6 +46,7 @@ class CardTester(
     }
 
     private fun runTest(sourceMap: SourceMap) {
+        VariableService.reset()
         stepQueue = createStepQueue(sourceMap)
         if (stepQueue.isEmpty()) {
             onTestComplete?.invoke(TestResult.Failure(TestError.StepsIsEmptyError()))

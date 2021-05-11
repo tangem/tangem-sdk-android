@@ -21,6 +21,10 @@ object VariableService {
 
     private val stepsValues = mutableMapOf<String, MutableMap<String, Any?>>()
 
+    fun reset() {
+        stepsValues.clear()
+    }
+
     fun registerResult(name: String, result: JsonResponse) {
         val stepMap: MutableMap<String, Any?> = stepsValues[name] ?: return
 
@@ -64,7 +68,6 @@ object VariableService {
         if (result == null) return null
         if (pointer == null || position >= pointer.size) return result
 
-
         val key = pointer[position]
         if (result is Map<*, *>) {
             return getValueByPointer(pointer, position + 1, result[key])
@@ -72,10 +75,12 @@ object VariableService {
 
         return if (result is List<*>) {
             if (key.isNumber()) {
-                val numKey = key.toIntOrNull() ?: 0
+                val numKey = key.toIntOrNull() ?: Int.MIN_VALUE
                 var nextPosition = position
-                if (numKey >= result.size) null else {
-                    getValueByPointer(pointer, ++nextPosition, result[key.toInt()])
+                if (numKey == Int.MIN_VALUE || numKey >= result.size) {
+                    null
+                } else {
+                    getValueByPointer(pointer, ++nextPosition, result[numKey])
                 }
             } else {
                 val listOfResults = mutableListOf<Any?>(result.size)
@@ -85,28 +90,24 @@ object VariableService {
                 }
                 if (listOfResults.isEmpty()) null else listOfResults
             }
-        } else result
+        } else {
+            result
+        }
     }
 
     private fun containsVariable(pointer: String?): Boolean {
-        if (pointer == null || !pointer.contains(BRACKET_LEFT)) return false
-
-        val matcher = variablePattern.matcher(pointer)
-        return matcher.find()
+        return if (pointer == null || !pointer.contains(BRACKET_LEFT)) false
+        else variablePattern.matcher(pointer).find()
     }
 
     private fun containsStepPointer(pointer: String?): Boolean {
-        if (pointer == null) return false
-
-        return pointer.indexOf(STEP_POINTER) == 1
+        return if (pointer == null) false
+        else pointer.indexOf(STEP_POINTER) == 1
     }
 
     private fun removeBrackets(text: String): String {
-        return if (text.startsWith(BRACKET_LEFT) && text.endsWith(BRACKET_RIGHT)) {
-            text.substring(1, text.length - 1)
-        } else {
-            text
-        }
+        return if (text.startsWith(BRACKET_LEFT) && text.endsWith(BRACKET_RIGHT)) text.substring(1, text.length - 1)
+        else text
     }
 
     private fun getPrefix(value: String): String? {
