@@ -8,21 +8,34 @@
   "steps": [
     {
       "name": "scanCard-1",
-      "iterations": 1,
+      "iterations": 2,
       "actionType": "NFC_SESSION_RUNNABLE",
-      "method": "SIGN_COMMAND",
-      "parameters": {},
-      "expectedResult": {
-        "card": {
-          "cardId": "..."
+      "method": "SCAN_TASK",
+      "parameters": {
+        "cardVerification": false,
+        "initialMessage": {
+          "header": "Test scan",
+          "body": "first scan from test framework"
         }
+      },
+      "expectedResult": {
+          "cardId": "BB03000000000004",
+          "manufacturerName": "TANGEM",
+          "isActivated": false
       },
       "asserts": [
         {
           "type": "EQUALS",
           "fields": [
-            "{#parent.expectedResult.card.cardId}",
-            "{#parent.result.card.cardId}"
+            "{#parent.expectedResult.cardId}",
+            "{#parent.result.cardId}"
+          ]
+        },
+        {
+          "type": "EQUALS",
+          "fields": [
+            "{#parent.expectedResult.cardId}",
+            "{#parent.result.cardId}"
           ]
         }
       ]

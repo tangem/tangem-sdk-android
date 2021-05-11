@@ -1,7 +1,7 @@
 package com.tangem.tester.variables
 
-import com.tangem.commands.CommandResponse
-import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
+import com.tangem.json.JsonResponse
+import com.tangem.tester.SourceMap
 import com.tangem.tester.common.isNumber
 import com.tangem.tester.common.safeSplit
 import java.util.regex.Pattern
@@ -17,15 +17,18 @@ object VariableService {
     private const val STEP_POINTER = "#"
 
     private const val PARENT = "#parent"
+    private const val RESULT = "result"
 
-    private val stepResults = mutableMapOf<String, Map<String, Any?>>()
-    private val converter = MoshiJsonConverter()
+    private val stepsValues = mutableMapOf<String, MutableMap<String, Any?>>()
 
-    fun registerResult(name: String, result: CommandResponse) {
-        val mapResult = converter.toMap(result)
-        if (mapResult.isEmpty()) return
+    fun registerResult(name: String, result: JsonResponse) {
+        val stepMap: MutableMap<String, Any?> = stepsValues[name] ?: return
 
-        stepResults[name] = mapResult
+        stepMap[RESULT] = result.response
+    }
+
+    fun registerStep(name: String, source: SourceMap) {
+        stepsValues[name] = source.toMutableMap()
     }
 
     fun getValue(name: String, pointer: Any?): Any? {
@@ -35,16 +38,15 @@ object VariableService {
             !containsVariable(pointer) -> pointer
             containsStepPointer(pointer) -> {
                 val stepPointer = extractStepPointer(pointer) ?: return null
-                val stepName = extractStepName(stepPointer)
+
+                val stepName = if (stepPointer == PARENT) name else extractStepName(stepPointer)
                 val pathValue = removeBrackets(pointer).replace("$stepPointer.", "")
-                if (stepPointer == PARENT) {
-                    getValueByPointer(pathValue, stepResults[name])
-                } else {
-                    getValueByPointer(pathValue, stepResults[stepName])
-                }
+                val step = stepsValues[stepName] ?: return null
+
+                getValueByPointer(pathValue, step)
             }
             else -> {
-                getValueByPointer(pointer, stepResults[name])
+                getValueByPointer(pointer, stepsValues[name])
             }
         }
     }

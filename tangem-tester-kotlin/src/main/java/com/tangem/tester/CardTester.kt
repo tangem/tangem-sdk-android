@@ -6,24 +6,24 @@ import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
 import com.tangem.common.extensions.guard
 import com.tangem.json.JsonAdaptersFactory
 import com.tangem.tester.common.*
-import com.tangem.tester.executable.DefaultExecutableFactory
 import com.tangem.tester.executable.ExecutableFactory
 import com.tangem.tester.jsonModels.StepModel
 import com.tangem.tester.jsonModels.TestEnvironment
+import com.tangem.tester.variables.VariableService
 import java.util.*
 
 /**
 [REDACTED_AUTHOR]
  */
-typealias SourceMap = Map<String, Any>
+typealias SourceMap = Map<String, Any?>
 typealias OnTestSequenceComplete = (TestFrameworkError?) -> Unit
-typealias OnStepSequenceComplete = (CardSession, StepResult) -> Unit
+typealias OnStepSequenceComplete = (CardSession, TestResult) -> Unit
 typealias OnTestComplete = (TestResult) -> Unit
 
 class CardTester(
     private val sdkFactory: TangemSdkFactory,
-    private val runnableFactory: JsonAdaptersFactory = JsonAdaptersFactory(),
-    private val stepFactory: ExecutableFactory = DefaultExecutableFactory()
+    private val stepFactory: ExecutableFactory,
+    private val jsonRunnableFactory: JsonAdaptersFactory = JsonAdaptersFactory()
 ) {
     var onTestComplete: OnTestComplete? = null
 
@@ -60,19 +60,25 @@ class CardTester(
 
     private fun runStep(session: CardSession, stepModel: StepModel) {
         val step = stepFactory.getStep(stepModel.method).guard {
-            val error = StepResult.Failure(TestError.StepNotFoundError(stepModel.method))
+            val error = TestResult.Failure(TestError.ExecutableNotFoundError(stepModel.method))
             onStepSequenceComplete(session, error)
             return
         }
 
-        step.setup(runnableFactory, stepFactory, stepModel).run(session) { stepResult ->
+        step.init(jsonRunnableFactory, stepFactory, stepModel)
+        step.fetchVariables(step.getName())?.let {
+            onStepSequenceComplete(session, TestResult.Failure(it))
+            return
+        }
+
+        step.run(session) { stepResult ->
             onStepSequenceComplete(session, stepResult)
         }
     }
 
     private val onStepSequenceComplete: OnStepSequenceComplete = { session, result ->
         when (result) {
-            is StepResult.Success -> {
+            is TestResult.Success -> {
                 if (stepQueue.isEmpty()) {
                     session.stop()
                     onTestSequenceComplete(null)
@@ -80,7 +86,7 @@ class CardTester(
                     runStep(session, stepQueue.poll())
                 }
             }
-            is StepResult.Failure -> {
+            is TestResult.Failure -> {
                 session.stopWithError(result.error.toTangemError())
                 onTestSequenceComplete(result.error)
             }
@@ -116,8 +122,9 @@ class CardTester(
 
     private fun createStepQueue(jsonMap: SourceMap): Queue<StepModel> = LinkedList<StepModel>().apply {
         (jsonMap["steps"] as? Collection<SourceMap>)?.forEach { modelMap ->
-            jsonConverter.fromJson<StepModel>(jsonConverter.toJson(modelMap))?.let { model ->
-                offer(model)
+            jsonConverter.fromJson<StepModel>(jsonConverter.toJson(modelMap))?.let {
+                VariableService.registerStep(it.name, modelMap)
+                offer(it)
             }
         }
     }
