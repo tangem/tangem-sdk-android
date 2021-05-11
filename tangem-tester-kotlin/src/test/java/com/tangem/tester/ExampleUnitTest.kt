@@ -1,5 +1,6 @@
 package com.tangem.tester
 
+import com.tangem.tester.variables.VariableService
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -9,6 +10,6 @@ import org.junit.Test
 class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+        VariableService.getValue("someName", "{#resultName.params.value}")
     }
 }
