@@ -9,7 +9,7 @@ import com.tangem.tester.common.*
 import com.tangem.tester.executable.AssertHolder
 import com.tangem.tester.executable.Executable
 import com.tangem.tester.jsonModels.StepModel
-import com.tangem.tester.services.VariableService
+import com.tangem.tester.variables.VariableService
 
 /**
 [REDACTED_AUTHOR]
