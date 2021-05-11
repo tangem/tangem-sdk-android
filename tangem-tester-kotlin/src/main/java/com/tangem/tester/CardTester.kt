@@ -6,7 +6,8 @@ import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
 import com.tangem.common.extensions.guard
 import com.tangem.json.JsonAdaptersFactory
 import com.tangem.tester.common.*
-import com.tangem.tester.executable.ExecutableFactory
+import com.tangem.tester.executable.AssertsFactory
+import com.tangem.tester.executable.steps.TestStep
 import com.tangem.tester.jsonModels.StepModel
 import com.tangem.tester.jsonModels.TestEnvironment
 import com.tangem.tester.variables.VariableService
@@ -15,17 +16,12 @@ import java.util.*
 /**
 [REDACTED_AUTHOR]
  */
-typealias SourceMap = Map<String, Any?>
-typealias OnTestSequenceComplete = (TestFrameworkError?) -> Unit
-typealias OnStepSequenceComplete = (CardSession, TestResult) -> Unit
-typealias OnTestComplete = (TestResult) -> Unit
-
 class CardTester(
     private val sdkFactory: TangemSdkFactory,
-    private val stepFactory: ExecutableFactory,
+    private val assertsFactory: AssertsFactory,
     private val jsonRunnableFactory: JsonAdaptersFactory = JsonAdaptersFactory()
 ) {
-    var onTestComplete: OnTestComplete? = null
+    var onTestComplete: OnComplete? = null
 
     private var testQueue: Queue<SourceMap> = LinkedList()
     private var stepQueue: Queue<StepModel> = LinkedList()
@@ -59,20 +55,9 @@ class CardTester(
     }
 
     private fun runStep(session: CardSession, stepModel: StepModel) {
-        val step = stepFactory.getStep(stepModel.method).guard {
-            val error = TestResult.Failure(ExecutableError.ExecutableNotFoundError(stepModel.method))
-            onStepSequenceComplete(session, error)
-            return
-        }
-
-        step.init(jsonRunnableFactory, stepFactory, stepModel)
-        step.fetchVariables(step.getName())?.let {
-            onStepSequenceComplete(session, TestResult.Failure(it))
-            return
-        }
-
-        step.run(session) { stepResult ->
-            onStepSequenceComplete(session, stepResult)
+        TestStep(stepModel).apply {
+            init(session, jsonRunnableFactory, assertsFactory)
+            run { stepResult -> onStepSequenceComplete(session, stepResult) }
         }
     }
 
