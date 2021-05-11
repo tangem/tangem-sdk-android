@@ -44,7 +44,7 @@ class CreateWalletTask(
             config?.curveId?.let { curve = it }
         }
 
-        val emptyWallet = card.getWallets().firstOrNull { it.status == WalletStatus.Empty }.guard {
+        val emptyWallet = card.wallets.firstOrNull { it.status == WalletStatus.Empty }.guard {
             callback(CompletionResult.Failure(TangemSdkError.MaxNumberOfWalletsCreated()))
             return
         }
