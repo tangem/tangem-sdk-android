@@ -1,7 +1,7 @@
 package com.tangem.tester.executable.asserts
 
 import com.tangem.common.extensions.guard
-import com.tangem.tester.common.TestError
+import com.tangem.tester.common.ExecutableError
 import com.tangem.tester.common.TestResult
 import com.tangem.tester.executable.AssertHolder
 import com.tangem.tester.jsonModels.AssertModel
@@ -42,7 +42,7 @@ class AssertsLauncher(
 
     private fun executeAssert(assertModel: AssertModel) {
         val assert = assertHolder.getAssert(assertModel.type).guard {
-            onAssertComplete(TestResult.Failure(TestError.ExecutableNotFoundError(assertModel.type)))
+            onAssertComplete(TestResult.Failure(ExecutableError.ExecutableNotFoundError(assertModel.type)))
             return
         }
 
