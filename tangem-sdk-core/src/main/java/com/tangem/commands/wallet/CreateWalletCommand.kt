@@ -124,9 +124,10 @@ class CreateWalletCommand(
             walletConfig?.let { config ->
                 tlvBuilder.append(TlvTag.SettingsMask, config.getSettingsMask())
                 tlvBuilder.append(TlvTag.CurveId, config.curveId)
-                config.signingMethods?.let {
-                    val mask = SigningMethodMaskBuilder().apply { add(it) }.build()
-                    tlvBuilder.append(TlvTag.SigningMethod, mask)
+                if (config.signingMethods != null) {
+                    val mask = SigningMethodMaskBuilder()
+                    mask.add(config.signingMethods)
+                    tlvBuilder.append(TlvTag.SigningMethod, mask.build())
                 }
             }
         }
