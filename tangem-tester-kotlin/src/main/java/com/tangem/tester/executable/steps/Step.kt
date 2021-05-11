@@ -21,7 +21,7 @@ import java.util.*
 interface Step : Executable {
     fun getIterationCount(): Int
     fun getActionType(): String = "NFC_SESSION_RUNNABLE"
-    fun init(runnableFactory: JsonAdaptersFactory, assertHolder: AssertHolder, model: StepModel): Step
+    fun init(runnableFactory: JsonAdaptersFactory, assertHolder: AssertHolder, model: StepModel)
     fun run(session: CardSession, callback: (TestResult) -> Unit)
 }
 
@@ -37,20 +37,24 @@ open class TestStep(
 
     override fun getIterationCount(): Int = model.iterations
 
-    override fun init(runnableFactory: JsonAdaptersFactory, assertHolder: AssertHolder, model: StepModel): Step {
+    override fun init(runnableFactory: JsonAdaptersFactory, assertHolder: AssertHolder, model: StepModel) {
         this.runnableFactory = runnableFactory
         this.assertsHolder = assertHolder
         this.model = model
-        return this
     }
 
     override fun run(session: CardSession, callback: (TestResult) -> Unit) {
         val jsonRpc = runnableFactory.jsonConverter.toMap(model.toJsonRpcIn())
-        runnableFactory.createFrom(jsonRpc)?.run(session) { result ->
+        val jsonRunnableAdapter = runnableFactory.createFrom(jsonRpc).guard {
+            callback(TestResult.Failure(TestError.MissingJsonAdapterError(model.method)))
+            return
+        }
+
+        jsonRunnableAdapter.run(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
                     val jsonResponse = (result.data as? JsonResponse).guard {
-                        callback(TestResult.Failure(ExecutableError.UnexpectedResponse(result.data)))
+                        callback(TestResult.Failure(ExecutableError.UnexpectedResponseError(result.data)))
                         return@run
                     }
                     checkForExpectedResult(jsonResponse)?.let {
@@ -75,13 +79,13 @@ open class TestStep(
     }
 
     protected open fun checkForExpectedResult(result: JsonResponse): ExecutableError? {
-        val errorsList = model.expectedResult.mapNotNull { expect ->
-            val value = result.response[expect.key]
-            if (expect.value != null && value == null) {
-                "Result doesn't contains value for: ${expect.key}"
+        val errorsList = model.expectedResult.mapNotNull { expected ->
+            val value = result.response[expected.key]
+            if (expected.value != null && value == null) {
+                "Result doesn't contains value for: ${expected.key}"
             } else {
-                if (expect.value != value) {
-                    "Result value doesn't match. Expected value: ${expect.value}, result value: $value"
+                if (expected.value != value) {
+                    "Result value doesn't match. Expected value: ${expected.value}, result value: $value"
                 } else {
                     null
                 }
