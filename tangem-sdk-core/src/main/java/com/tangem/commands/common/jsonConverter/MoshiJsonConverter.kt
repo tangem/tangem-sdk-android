@@ -1,7 +1,9 @@
 package com.tangem.commands.common.jsonConverter
 
-import com.squareup.moshi.*
-import com.tangem.commands.CommandResponse
+import com.squareup.moshi.FromJson
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.ToJson
+import com.squareup.moshi.Types
 import com.tangem.commands.common.card.FirmwareVersion
 import com.tangem.commands.common.card.masks.ProductMask
 import com.tangem.commands.common.card.masks.SettingsMask
@@ -31,18 +33,18 @@ class MoshiJsonConverter(adapters: List<Any> = listOf()) {
 
     fun toJson(any: Any?, indent: String = "   "): String {
         return when (any) {
-            null -> ""
-            is CommandResponse -> moshi.adapter<CommandResponse>(any::class.java).indent(indent).toJson(any)
-            else -> moshi.adapter(Any::class.java).toJson(any)
+            null -> "{}"
+            else -> moshi.adapter(Any::class.java).indent(indent).toJson(any)
         }
     }
 
     fun toMap(any: Any?): Map<String, Any> {
-        return when (any) {
+        val result: Map<String, Any>? = when (any) {
             null -> null
             is String -> fromJson(any, typedMap())
             else -> fromJson(toJson(any), typedMap())
-        } ?: mapOf()
+        }
+        return result ?: mapOf()
     }
 
     fun typedList(clazz: Class<*>): ParameterizedType {
