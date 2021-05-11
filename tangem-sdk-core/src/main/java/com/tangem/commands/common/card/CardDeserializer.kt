@@ -52,7 +52,7 @@ class CardDeserializer() {
                     decoder.decodeOptional(TlvTag.WalletSignedHashes),
                     decoder.decodeOptional(TlvTag.WalletRemainingSignatures)
                 )
-                card.setWallets(listOf(wallet))
+                card.wallets = mutableListOf(wallet)
             }
             return card
         }
