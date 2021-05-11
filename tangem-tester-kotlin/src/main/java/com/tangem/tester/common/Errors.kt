@@ -30,11 +30,19 @@ sealed class TestError(override val errorMessage: String) : TestFrameworkError {
     class TestIsEmptyError : TestError("Test doesn't contains any data to proceed")
     class StepsIsEmptyError : TestError("Test doesn't contains any steps")
     class SessionSdkInitError(error: TangemError) : TestError("Session initialization failed. Code: ${error.code}, message: ${error.customMessage}")
-    class StepNotFoundError(method: String) : TestError("Step not found for method: $method")
+    class ExecutableNotFoundError(name: String) : TestError("Executable not found for name: $name")
 }
 
 sealed class ExecutableError(override val errorMessage: String) : TestFrameworkError {
-    class FetchVariableError(errorMessage: String) : ExecutableError(errorMessage)
+    class FetchVariableError(paramName: Any?, path: String, exception: Throwable) : ExecutableError(
+        "Fetching variable failed. Name: $paramName, path: $path, ex: ${exception.message.toString()}"
+    )
+
+    class UnexpectedResponse(response: Any) : ExecutableError("Waiting for JsonResponse, but current is ${response::class.java.simpleName}")
     class ExpectedResultError(errorMessages: List<String>) : ExecutableError(errorMessages.joinToString("\n"))
-    class AssertError(errorMessage: String) : ExecutableError(errorMessage)
+}
+
+sealed class AssertError(override val errorMessage: String) : TestFrameworkError {
+    class EqualsError(firstValue: Any?, secondValue: Any?) : AssertError("Fields doesn't match. f1: $firstValue, f2: $secondValue")
+
 }
