@@ -3,7 +3,7 @@ package com.tangem.tester.executable.asserts
 import com.tangem.CardSession
 import com.tangem.tester.common.ExecutableError
 import com.tangem.tester.common.StepResult
-import com.tangem.tester.services.VariableService
+import com.tangem.tester.variables.VariableService
 
 class EqualsAssert : BaseAssert("EQUALS") {
 
