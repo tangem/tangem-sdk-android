@@ -60,7 +60,7 @@ class PreflightReadTask(
 
         fun handleSuccess(card: Card, wallets: List<CardWallet>, callback: (result: CompletionResult<Card>) -> Unit) {
             session.environment.card = card
-            card.setWallets(wallets)
+            card.wallets = wallets.toMutableList()
             callback(CompletionResult.Success(card))
         }
 
