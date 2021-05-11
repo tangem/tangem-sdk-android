@@ -1,8 +1,8 @@
 package com.tangem.tester.executable.asserts
 
-import com.tangem.CardSession
+import com.tangem.tester.common.AssertError
 import com.tangem.tester.common.ExecutableError
-import com.tangem.tester.common.StepResult
+import com.tangem.tester.common.TestResult
 import com.tangem.tester.variables.VariableService
 
 class EqualsAssert : BaseAssert("EQUALS") {
@@ -16,12 +16,12 @@ class EqualsAssert : BaseAssert("EQUALS") {
         return null
     }
 
-    override fun run(session: CardSession, callback: (StepResult) -> Unit) {
+    override fun run(callback: (TestResult) -> Unit) {
         if (firstValue == secondValue) {
-            callback(StepResult.Success(model.type))
+            callback(TestResult.Success(model.type))
         } else {
-            val error = ExecutableError.AssertError("Fields doesn't match. f1: $firstValue, f2: $secondValue")
-            callback(StepResult.Failure(error))
+            val error = AssertError.EqualsError(firstValue, secondValue)
+            callback(TestResult.Failure(error))
         }
     }
 }
