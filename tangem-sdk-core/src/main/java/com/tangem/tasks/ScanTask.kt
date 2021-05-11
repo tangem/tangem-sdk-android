@@ -90,7 +90,7 @@ class ScanTask(
             return
         }
 
-        val wallet = card.getWallets().firstOrNull().guard {
+        val wallet = card.wallets.firstOrNull().guard {
             callback(CompletionResult.Failure(TangemSdkError.WalletNotFound()))
             return
         }
