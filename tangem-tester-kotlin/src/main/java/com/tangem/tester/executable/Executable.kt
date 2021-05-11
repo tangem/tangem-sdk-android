@@ -1,11 +1,11 @@
 package com.tangem.tester.executable
 
-import com.tangem.tester.common.ExecutableError
+import com.tangem.tester.common.OnComplete
 
 /**
 [REDACTED_AUTHOR]
  */
 interface Executable {
-    fun getName(): String
-    fun fetchVariables(name: String): ExecutableError?
+    fun getMethod(): String
+    fun run(callback: OnComplete)
 }

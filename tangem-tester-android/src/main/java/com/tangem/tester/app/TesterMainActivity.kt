@@ -11,7 +11,7 @@ import com.tangem.tangem_sdk_new.extensions.init
 import com.tangem.tester.CardTester
 import com.tangem.tester.app.common.DefaultTangemSdkFactory
 import com.tangem.tester.common.TestResult
-import com.tangem.tester.executable.DefaultExecutableFactory
+import com.tangem.tester.executable.AssertsFactory
 import kotlinx.android.synthetic.main.activity_main.*
 
 class TesterMainActivity : AppCompatActivity() {
@@ -55,8 +55,8 @@ class TesterMainActivity : AppCompatActivity() {
     private fun executeTest() {
         val json = loadJsonFile("scan_test") ?: return
 
-        val testFactory = DefaultExecutableFactory.init()
-        val tester = CardTester(DefaultTangemSdkFactory(this, Config()), testFactory)
+        val assertsFactory = AssertsFactory.default()
+        val tester = CardTester(DefaultTangemSdkFactory(this, Config()), assertsFactory)
         tester.runFromJson(json)
         tester.onTestComplete = {
             when(it) {
