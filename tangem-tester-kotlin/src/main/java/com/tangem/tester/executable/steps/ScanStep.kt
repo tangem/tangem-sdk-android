@@ -3,7 +3,7 @@ package com.tangem.tester.executable.steps
 import com.tangem.commands.common.card.Card
 import com.tangem.common.extensions.toHexString
 import com.tangem.tester.common.ExecutableError
-import com.tangem.tester.services.VariableService
+import com.tangem.tester.variables.VariableService
 
 /**
 [REDACTED_AUTHOR]

@@ -13,7 +13,7 @@ import java.util.*
 [REDACTED_AUTHOR]
  */
 @Deprecated(
-    "It's bean deleted later",
+    "This will be removed later",
     ReplaceWith("com.tangem.coommands.common.jsonConverter.MoshiConverter")
 )
 class ResponseConverter {
