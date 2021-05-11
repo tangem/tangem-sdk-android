@@ -60,7 +60,7 @@ class CardTester(
 
     private fun runStep(session: CardSession, stepModel: StepModel) {
         val step = stepFactory.getStep(stepModel.method).guard {
-            val error = TestResult.Failure(TestError.ExecutableNotFoundError(stepModel.method))
+            val error = TestResult.Failure(ExecutableError.ExecutableNotFoundError(stepModel.method))
             onStepSequenceComplete(session, error)
             return
         }
