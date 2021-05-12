@@ -3,6 +3,8 @@ plugins {
     id 'kotlin'
     id 'kotlin-kapt'
 }
+apply from: '../upload.gradle'
+apply from: '../artifactConfig.gradle'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
