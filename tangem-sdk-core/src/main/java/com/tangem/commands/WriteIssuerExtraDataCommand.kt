@@ -188,7 +188,7 @@ class WriteIssuerExtraDataCommand(
     }
 
     companion object {
-        const val SINGLE_WRITE_SIZE = 958
+        const val SINGLE_WRITE_SIZE = 900
         const val MAX_SIZE = 32 * 1024
     }
 }
