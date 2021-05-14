@@ -31,7 +31,7 @@ class PurgeWalletResponse(
     /**
      * Index of purged wallet
      */
-    val walletIndex: Int
+    val walletIndex: WalletIndex
 ) : CommandResponse
 
 /**
@@ -59,7 +59,7 @@ class PurgeWalletCommand(
                     }
 
                     card.status = CardStatus.Empty
-                    val wallet = card.wallet(WalletIndex.Index(result.data.walletIndex))
+                    val wallet = card.wallet(result.data.walletIndex)
                     if (wallet == null) {
                         callback(CompletionResult.Failure(TangemSdkError.WalletIndexNotCorrect()))
                     } else {
@@ -89,7 +89,7 @@ class PurgeWalletCommand(
             WalletStatus.Purged -> return TangemSdkError.WalletIsPurged()
         }
 
-        if (card.settingsMask?.contains(Settings.ProhibitPurgeWallet) == true) {
+        if (wallet.settingsMask?.contains(Settings.ProhibitPurgeWallet) == true) {
             return TangemSdkError.PurgeWalletProhibited()
         }
 
@@ -108,7 +108,6 @@ class PurgeWalletCommand(
         val tlvBuilder = TlvBuilder()
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Pin, environment.pin1?.value)
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Pin2, environment.pin2?.value)
         walletIndex.addTlvData(tlvBuilder)
         return CommandApdu(Instruction.PurgeWallet, tlvBuilder.serialize())
@@ -118,10 +117,13 @@ class PurgeWalletCommand(
         val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
 
         val decoder = TlvDecoder(tlvData)
+        var index = walletIndex
+        decoder.decodeOptional<Int?>(TlvTag.WalletIndex)?.let { index = WalletIndex.Index(it) }
+
         return PurgeWalletResponse(
             cardId = decoder.decode(TlvTag.CardId),
             status = decoder.decode(TlvTag.Status),
-            walletIndex = decoder.decode(TlvTag.WalletIndex)
+            walletIndex = index
         )
     }
 }
