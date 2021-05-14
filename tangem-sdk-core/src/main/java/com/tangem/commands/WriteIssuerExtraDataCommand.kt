@@ -94,7 +94,6 @@ class WriteIssuerExtraDataCommand(
         card?.settingsMask?.contains(Settings.ProtectIssuerDataAgainstReplay) == true
 
     private fun verifySignatures(publicKey: ByteArray, cardId: String): Boolean {
-
         val firstData = IssuerDataToVerify(cardId, null, issuerDataCounter, issuerData.size)
         val secondData = IssuerDataToVerify(cardId, issuerData, issuerDataCounter)
 
@@ -189,7 +188,7 @@ class WriteIssuerExtraDataCommand(
     }
 
     companion object {
-        const val SINGLE_WRITE_SIZE = 1524
+        const val SINGLE_WRITE_SIZE = 958
         const val MAX_SIZE = 32 * 1024
     }
 }
