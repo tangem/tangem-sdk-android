@@ -89,7 +89,7 @@ class PurgeWalletCommand(
             WalletStatus.Purged -> return TangemSdkError.WalletIsPurged()
         }
 
-        if (card.settingsMask?.contains(Settings.ProhibitPurgeWallet) == true) {
+        if (wallet.settingsMask?.contains(Settings.ProhibitPurgeWallet) == true) {
             return TangemSdkError.PurgeWalletProhibited()
         }
 
