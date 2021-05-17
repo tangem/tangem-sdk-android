@@ -9,30 +9,28 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import com.tangem.tangem_demo.ui.separtedCommands.CommandListFragment
 import com.tangem.tangem_demo.ui.settings.SettingsFragment
-import com.tangem.tangem_demo.ui.tasksLogger.SdkTaskSpinnerFragment
 import kotlinx.android.synthetic.main.activity_demo.*
 
 class DemoActivity : AppCompatActivity() {
 
     private val pageChangeListeners = mutableListOf<(Int) -> Unit>()
+    private val fragmentPages = listOf(
+        CommandListFragment::class.java,
+        SettingsFragment::class.java
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_demo)
 
-        viewPager.adapter = ViewPagerAdapter(this)
+        viewPager.adapter = ViewPagerAdapter(fragmentPages,this)
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 pageChangeListeners.forEach { it.invoke(position) }
             }
         })
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            tab.text = when (position) {
-                0 -> "Command list"
-                1 -> "Command tester"
-                2 -> "Settings"
-                else -> ""
-            }
+            tab.text = fragmentPages[position].simpleName.replace("Fragment", "")
         }.attach()
 
     }
@@ -45,18 +43,13 @@ class DemoActivity : AppCompatActivity() {
         viewPager.isUserInputEnabled = enable
     }
 
-    class ViewPagerAdapter(fgActivity: FragmentActivity) : FragmentStateAdapter(fgActivity) {
-        override fun getItemCount(): Int = 3
+    class ViewPagerAdapter(
+        private val fgList: List<Class<out Fragment>>,
+        fgActivity: FragmentActivity
+    ) : FragmentStateAdapter(fgActivity) {
 
-        override fun createFragment(position: Int): Fragment {
-            return when (position) {
-                0 -> CommandListFragment()
-                1 -> SdkTaskSpinnerFragment()
-                2 -> SettingsFragment()
-                else -> EmptyFragment()
-            }
-        }
+        override fun getItemCount(): Int = fgList.size
 
-        class EmptyFragment : Fragment()
+        override fun createFragment(position: Int): Fragment = fgList[position].newInstance()
     }
 }
