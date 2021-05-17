@@ -51,18 +51,9 @@ class CommandListFragment : BaseFragment() {
         btnScanCard.setOnClickListener { scanCard() }
         btnSign.setOnClickListener { sign(prepareHashesToSign()) }
 
-        btnCreateWalletSecpK1.setOnClickListener {
-            val config = WalletConfig(true, false, EllipticCurve.Secp256k1, SigningMethod.SignHash)
-            createWallet(config)
-        }
-        btnCreateWalletSecpR1.setOnClickListener {
-            val config = WalletConfig(true, false, EllipticCurve.Secp256r1, SigningMethod.SignHash)
-            createWallet(config)
-        }
-        btnCreateWalletEdwards.setOnClickListener {
-            val config = WalletConfig(true, false, EllipticCurve.Ed25519, SigningMethod.SignHash)
-            createWallet(config)
-        }
+        btnCreateWalletSecpK1.setOnClickListener { createWallet(createWalletConfig(EllipticCurve.Secp256k1)) }
+        btnCreateWalletSecpR1.setOnClickListener { createWallet(createWalletConfig(EllipticCurve.Secp256r1)) }
+        btnCreateWalletEdwards.setOnClickListener { createWallet(createWalletConfig(EllipticCurve.Ed25519)) }
         btnPurgeWallet.setOnClickListener { purgeWallet() }
 
         btnReadIssuerData.setOnClickListener { readIssuerData() }
@@ -86,6 +77,10 @@ class CommandListFragment : BaseFragment() {
         btnDeleteFirst.setOnClickListener { deleteFiles(listOf(0)) }
         btnMakeFilePublic.setOnClickListener { changeFilesSettings(FileSettingsChange(0, FileSettings.Public)) }
         btnMakeFilePrivate.setOnClickListener { changeFilesSettings(FileSettingsChange(0, FileSettings.Private)) }
+    }
+
+    private fun createWalletConfig(curve: EllipticCurve): WalletConfig {
+        return WalletConfig(swIsReusable.isChecked, swIsProhibitPurgeWallet.isChecked, curve, SigningMethod.SignHash)
     }
 
     override fun handleCommandResult(result: CompletionResult<*>) {
