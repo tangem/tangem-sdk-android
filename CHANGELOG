@@ -1,0 +1,106 @@
+* 8adfdf2 - (HEAD -> release/3.0.0, origin/develop, develop) Merge pull request #23 from tangem/master
+* 052e652 - (tag: develop-21) Merge pull request #22 from tangem/master
+*   96ae1a5 - (tag: develop-20) Merge pull request #21 from tangem/CSK-152_fix_merge_conflict
+|\  
+| *   302f51b - Merge branch 'develop' into CSK-152_fix_merge_conflict
+| |\  
+| |/  
+|/|   
+* |   c4db66c - (tag: develop-19) Merge pull request #20 from tangem/CSK-160_AZ-dark_mode-change_checkMark_color
+|\ \  
+| * \   11f902b - Merge branch 'develop' into CSK-160_AZ-dark_mode-change_checkMark_color
+| |\ \  
+| |/ /  
+|/| |   
+* | | 867bd98 - (tag: develop-18) Update neutral-build.yml
+* | | 82bd6f7 - (tag: develop-17) Update neutral-build.yml
+| * | 08375e6 - CSK-160 fixed background color of the tvCreate view in the dark mode
+| * | b4c3c8e - CSK-160 fixed color of the success icon in the dark mode
+|/ /  
+| *   132cb81 - Merge remote-tracking branch 'origin/develop' into develop
+| |\  
+| |/  
+|/|   
+* |   719125d - (tag: develop-15) Merge pull request #19 from tangem/CSK-156_write-issuerExData-error
+|\ \  
+| * \   fae782b - Merge branch 'develop' into CSK-156_write-issuerExData-error
+| |\ \  
+| |/ /  
+|/| |   
+* | |   43cbe0b - (tag: develop-14) Merge pull request #17 from tangem/CSK-155_walletIndex_not_found_v3_purge
+|\ \ \  
+| * | | 8612912 - Update tests.yml
+| * | | 175bb70 - Update tests.yml
+| * | |   08eb13b - Merge branch 'develop' into CSK-155_walletIndex_not_found_v3_purge
+| |\ \ \  
+| * | | | 7f5af2d - CSK-153 fixed deleting wallet logic if the prohibitPurge set is true
+| * | | | 478d773 - CSK-155 fixed purging wallets on versions lower than v4
+* | | | | 2867739 - (tag: develop-13) Update tests.yml
+| |/ / /  
+|/| | |   
+| | * | 816d7ad - CSK-157 fixed size of a sending data chunk to a card
+| | * | 340ddbb - CSK-156 fixed writing issuerExtraData for 3.06 versions and later
+| |/ /  
+|/| |   
+* | | 59815a0 - (tag: develop-12) Update tests.yml
+|/ /  
+* |   c7c58fd - (tag: develop-11) Merge pull request #16 from tangem/CSK-154_add_option_switchers_for_createWallet_command
+|\ \  
+| * | 0716da7 - CSK-152 added switchers for configure walletConfig
+|/ /  
+| * 23db476 - Merge branch 'master' of https://github.com/tangem/tangem-sdk-android into develop
+|/  
+*   9015f1d - (tag: develop-10) Merge pull request #14 from tangem/CSK-150_fix_create_wallet
+|\  
+| * 0d4de5e - CSK-150 simplified code recognition
+| * efa7cf7 - CSK-150 - fixed wallet creating - fixed tlv.toString
+|/  
+* 7db1e64 - (tag: develop-9) Merge pull request #11 from tangem/master
+* 2067b4e - (tag: develop-8) Merge pull request #10 from tangem/master
+*   cb58848 - (tag: develop-7) Merge pull request #9 from tangem/CSK-137_add_ability_to_deploy_jvm_arifacts
+|\  
+| * 2f5da00 - CSK-130 - created a tester main module - created an empty android module for the tester application
+|/  
+* afa9fb9 - (tag: develop-6) Update neutral-build.yml
+* 1d58997 - (tag: develop-5) Update neutral-build.yml
+* b379fcf - (tag: develop-4) Update neutral-build.yml
+*   8c56131 - (tag: develop-3) Merge pull request #7 from tangem/CSK-133_resolv_conflicts_master_to_dev
+|\  
+| * defbbdf - CSK-133: remove JVM modules from the test lane
+| * 0e3f83a - CSK-113 - fixed jvm-demo module: added missing packages - changed packages name for jvm, jvm-demo
+| *   02c882b - Merge remote-tracking branch 'origin/CSK-133_resolv_conflicts_master_to_dev' into CSK-133_resolv_conflicts_master_to_dev
+| |\  
+| | * 2f869d1 - Merge pull request #8 from tangem/master
+| * | 27a2d70 - CSK-113 - fixed jvm module: added missing packages
+| |/  
+| * 03b32c2 - CSK-113 - fixed jvm module
+| * 6483bb9 - CSK-113 - renamed packages
+| * 4dd8816 - Merge branch 'master' into CSK-133_resolv_conflicts_master_to_dev
+|/  
+*   e0a8ecc - Merged in CSK-127_AZ-sign-return_array_of_hashes (pull request #100)
+|\  
+| * b2c9be4 - CSK-127 - fixed build crashes
+| * 0f6a658 - CSK-127 - fixes after review comments
+| * 5fdacc8 - CSK-127 - cardWallet contains WalletRemainingSignatures - all of the WalletConfig.kt properties is optional - added signingMethods to the apdu in the CreateWalletCommand - the SignCommand returns an array of signed hashes - the WriteFilesTask before write can delete all files if it needed - the ScanTask uses online verification by default - added a sign method for a single hash
+|/  
+*   27a81a1 - Merged in CSK-123-AZ-support_v4_firmware (pull request #96)
+|\  
+| * 24e24a4 - CSK-123 - added the Secp256r1 curve
+| * ca39b20 - CSK-123 - updated the CardData to data class
+| * dc7dac5 - CSK-123 - support v4 by the CommandListFragment
+| * 6389028 - CSK-123 - fixed the ScanTask, error description
+| * 9d27941 - CSK-123 - fixed ReadWalletListCommand, CreateWalletCommand, PurgeWalletCommand - fixed array decoding - fixed array size for the WalletSettingsMask - changed errors for the walletStatus: Empty, Purged
+| * 4ee2b51 - CSK-123 - supports v4 firmware version (not tested)
+*   80c691b - Merged in CSK-119-AZ-add_day_night_custom_themes (pull request #99)
+|\  
+| * dae4951 - CSK-119 - updated dark theme colours
+| * bd5eb9a - CSK-119 - demo project supports night theme v2
+| * a5696cb - CSK-119 - demo project supports night theme
+| * 5521242 - CSK-119 - fix background color for the TextInputLayout
+| * 9e25ca3 - CSK-119 - set default style to the Button.Text
+| * 4258032 - CSK-119 - renamed colors resources
+| * 7921be9 - CSK-119 - fix brogress bar color
+| * c170c0d - CSK-119 - added base support for day\night themes
+* 0511b26 - Merged in CSK-121-AZ-fix_vibro_after_closing_how_to (pull request #97)
+* 6732a5f - CSK-121 - remove tagListener after restarting animation
+* d75fec5 - CSK-121 - disabled activation of vibro if tap a card to a nfc antenna location after closing the howTo window
