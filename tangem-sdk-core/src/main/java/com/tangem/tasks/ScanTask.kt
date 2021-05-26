@@ -1,34 +1,27 @@
 package com.tangem.tasks
 
-import com.squareup.moshi.JsonClass
 import com.tangem.*
 import com.tangem.commands.*
-import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardDeserializer
 import com.tangem.commands.common.card.FirmwareVersion
 import com.tangem.commands.common.card.masks.Product
 import com.tangem.commands.common.card.masks.Settings
+import com.tangem.commands.common.jsonRpc.JSONRPCConvertible
 import com.tangem.commands.verification.VerifyCardCommand
 import com.tangem.commands.wallet.CheckWalletCommand
 import com.tangem.commands.wallet.WalletStatus
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.guard
-import com.tangem.json.CommandParams
-import com.tangem.json.JsonRunnableAdapter
 
 /**
  * Task that allows to read Tangem card and verify its private key.
  *
  * It performs two commands, [ReadCommand] and [CheckWalletCommand], subsequently.
  */
-class ScanTask(
-    private val cardVerification: Boolean = true
-) : CardSessionRunnable<Card>, PreflightReadCapable {
+class ScanTask(private var cardVerification: Boolean = true) : CardSessionRunnable<Card> {
 
-    override val requiresPin2 = false
-
-    override fun preflightReadSettings(): PreflightReadSettings = PreflightReadSettings.FullCardRead
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardRead
 
     override fun run(session: CardSession, callback: (result: CompletionResult<Card>) -> Unit) {
         if (session.connectedTag == TagType.Slix) {
@@ -134,17 +127,13 @@ class ScanTask(
         }
     }
 
-    class JsonAdapter(
-        jsonConverter: MoshiJsonConverter,
-        jsonData: Map<String, Any>
-    ) : JsonRunnableAdapter<Card>(jsonConverter, jsonData) {
-
-        override fun createRunnable(): CardSessionRunnable<Card> {
-            val params: ScanTaskParams = convertJsonToParamsModel()
-            return ScanTask(params.cardVerification)
+    companion object {
+        fun asJSONRPCConvertible(): JSONRPCConvertible<Card> {
+            return object : JSONRPCConvertible<Card> {
+                override fun makeRunnable(params: Map<String, Any?>): CardSessionRunnable<Card> {
+                    return ScanTask()
+                }
+            }
         }
     }
-
-    @JsonClass(generateAdapter = true)
-    data class ScanTaskParams(val cardVerification: Boolean = true) : CommandParams()
 }
