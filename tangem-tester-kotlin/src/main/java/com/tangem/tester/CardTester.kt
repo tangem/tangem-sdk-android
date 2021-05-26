@@ -3,8 +3,8 @@ package com.tangem.tester
 import com.tangem.CardSession
 import com.tangem.Config
 import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
+import com.tangem.commands.common.jsonRpc.JSONRPCConverter
 import com.tangem.common.extensions.guard
-import com.tangem.json.JsonAdaptersFactory
 import com.tangem.tester.common.*
 import com.tangem.tester.executable.AssertsFactory
 import com.tangem.tester.executable.steps.TestStep
@@ -19,7 +19,7 @@ import java.util.*
 class CardTester(
     private val sdkFactory: TangemSdkFactory,
     private val assertsFactory: AssertsFactory,
-    private val jsonRunnableFactory: JsonAdaptersFactory = JsonAdaptersFactory()
+    private val jsonRpcConverter: JSONRPCConverter = JSONRPCConverter()
 ) {
     var onTestComplete: OnComplete? = null
 
@@ -57,7 +57,7 @@ class CardTester(
 
     private fun runStep(session: CardSession, stepModel: StepModel) {
         TestStep(stepModel).apply {
-            init(session, jsonRunnableFactory, assertsFactory)
+            init(session, jsonRpcConverter, assertsFactory)
             run { stepResult -> onStepSequenceComplete(session, stepResult) }
         }
     }

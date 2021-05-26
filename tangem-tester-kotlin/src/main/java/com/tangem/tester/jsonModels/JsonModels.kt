@@ -1,7 +1,7 @@
 package com.tangem.tester.jsonModels
 
 import com.squareup.moshi.JsonClass
-import com.tangem.json.JsonRpcIn
+import com.tangem.commands.common.jsonRpc.JSONRPCRequest
 
 
 /**
@@ -32,7 +32,7 @@ class StepModel(
 ) {
     val rawParameters : Map<String, Any?> = parameters.toMap()
 
-    fun toJsonRpcIn(): JsonRpcIn = JsonRpcIn(method, parameters)
+    fun toJSONRPCRequest(): JSONRPCRequest = JSONRPCRequest(method, parameters, null)
 }
 
 @JsonClass(generateAdapter = true)
