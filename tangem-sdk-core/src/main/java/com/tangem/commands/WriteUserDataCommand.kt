@@ -2,7 +2,6 @@ package com.tangem.commands
 
 import com.squareup.moshi.JsonClass
 import com.tangem.SessionEnvironment
-import com.tangem.TangemError
 import com.tangem.TangemSdkError
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardStatus
@@ -31,7 +30,7 @@ class WriteUserDataResponse(
  * For example, this fields may contain blockchain nonce value.
  *
  * Writing of User_Counter and User_Data protected only by PIN1.
- * User_ProtectedCounter and User_ProtectedData additionaly need PIN2 to confirmation.
+ * User_ProtectedCounter and User_ProtectedData additionally need PIN2 to confirmation.
  */
 class WriteUserDataCommand(
     private val userData: ByteArray? = null,
@@ -40,7 +39,7 @@ class WriteUserDataCommand(
     private val userProtectedCounter: Int? = null
 ) : Command<WriteUserDataResponse>() {
 
-    override val requiresPin2 = true
+    override fun requiresPin2(): Boolean = true
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.status == CardStatus.NotPersonalized) {
@@ -53,13 +52,6 @@ class WriteUserDataCommand(
             return TangemSdkError.DataSizeTooLarge()
         }
         return null
-    }
-
-    override fun mapError(card: Card?, error: TangemError): TangemError {
-        if (error is TangemSdkError.InvalidParams) {
-            return TangemSdkError.Pin2OrCvcRequired()
-        }
-        return error
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
