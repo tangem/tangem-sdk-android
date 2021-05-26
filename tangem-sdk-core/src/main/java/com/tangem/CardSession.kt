@@ -1,6 +1,11 @@
 package com.tangem
 
 import com.tangem.commands.*
+import com.tangem.commands.common.json.*
+import com.tangem.commands.common.jsonRpc.JSONRPCConverter
+import com.tangem.commands.common.jsonRpc.JSONRPCException
+import com.tangem.commands.common.jsonRpc.JSONRPCRequest
+import com.tangem.commands.common.jsonRpc.toJSONRPCResponse
 import com.tangem.commands.read.ReadCommand
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
@@ -65,7 +70,8 @@ class CardSession(
     private val reader: CardReader,
     val viewDelegate: SessionViewDelegate,
     private var cardId: String? = null,
-    private var initialMessage: Message? = null
+    private var initialMessage: Message? = null,
+    private val jsonRpcConverter: JSONRPCConverter
 ) {
 
     var connectedTag: TagType? = null
@@ -199,6 +205,23 @@ class CardSession(
                         connectedTag = it
                     }
                 }
+        }
+    }
+
+    fun run(jsonRequest: String, callback: (String) -> Unit) {
+        val request: JSONRPCRequest = try {
+            JSONRPCRequest(jsonRequest)
+        } catch (ex: JSONRPCException) {
+            callback(ex.toJSONRPCResponse(null).toJson())
+            return
+        }
+        try {
+            val runnable = jsonRpcConverter.convert(request)
+            runnable.run(this) {
+                callback(it.toJSONRPCResponse(request.id).toJson())
+            }
+        } catch (ex: JSONRPCException) {
+            callback(ex.toJSONRPCResponse(request.id).toJson())
         }
     }
 
