@@ -6,7 +6,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.tangem.Config
 import com.tangem.TangemSdk
 import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
-import com.tangem.json.JsonAdaptersFactory
+import com.tangem.commands.common.jsonRpc.JSONRPCConverter
+import com.tangem.commands.common.jsonRpc.JSONRPCRequest
 import com.tangem.tangem_sdk_new.extensions.init
 import com.tangem.tester.CardTester
 import com.tangem.tester.app.common.DefaultTangemSdkFactory
@@ -17,7 +18,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 class TesterMainActivity : AppCompatActivity() {
 
     private lateinit var sdk: TangemSdk
-    private lateinit var jsonAdaptersFactory: JsonAdaptersFactory
+    private lateinit var jsonRpcConverter: JSONRPCConverter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,25 +30,25 @@ class TesterMainActivity : AppCompatActivity() {
 
     private fun init() {
         sdk = TangemSdk.init(this)
-        jsonAdaptersFactory = JsonAdaptersFactory()
+        jsonRpcConverter = JSONRPCConverter()
     }
 
     private fun initButton() {
         btnTest.setOnClickListener {
-//            executeScan()
-            executeTest()
+            executeScan()
+//            executeTest()
         }
     }
 
     private fun executeScan(){
         val jsonConverter = MoshiJsonConverter.tangemSdkJsonConverter()
         val json = loadJsonFile("scan_method") ?: return
-        val mapJson: Map<String, Any> = jsonConverter.toMap(jsonConverter.fromJson(json))
 
-        val adaptersFactory = JsonAdaptersFactory()
-        val sdkAdapter = adaptersFactory.createFrom(mapJson) ?: return
+        val jsonRpcRequest = JSONRPCRequest(json)
+        val adaptersFactory = JSONRPCConverter.shared()
+        val runnable = adaptersFactory.convert(jsonRpcRequest)
 
-        sdk.startSessionWithRunnable(sdkAdapter) {
+        sdk.startSessionWithRunnable(runnable) {
             //done
         }
     }
