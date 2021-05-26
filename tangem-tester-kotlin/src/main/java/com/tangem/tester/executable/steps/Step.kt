@@ -1,11 +1,11 @@
 package com.tangem.tester.executable.steps
 
 import com.tangem.CardSession
+import com.tangem.CardSessionRunnable
+import com.tangem.commands.common.jsonRpc.JSONRPCConverter
+import com.tangem.commands.common.jsonRpc.JSONRPCResponse
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.guard
-import com.tangem.json.JsonAdaptersFactory
-import com.tangem.json.JsonResponse
-import com.tangem.json.JsonRunnableAdapter
 import com.tangem.tester.*
 import com.tangem.tester.common.*
 import com.tangem.tester.executable.AssertsFactory
@@ -22,7 +22,7 @@ import java.util.*
 interface Step : Executable {
     fun getIterationCount(): Int
     fun getActionType(): String = "NFC_SESSION_RUNNABLE"
-    fun init(session: CardSession, runnableFactory: JsonAdaptersFactory, assertsFactory: AssertsFactory)
+    fun init(session: CardSession, jsonRpcConverter: JSONRPCConverter, assertsFactory: AssertsFactory)
 }
 
 open class TestStep(
@@ -30,16 +30,16 @@ open class TestStep(
 ) : Step {
 
     protected lateinit var session: CardSession
-    protected lateinit var runnableFactory: JsonAdaptersFactory
+    protected lateinit var jsonRpcConverter: JSONRPCConverter
     protected lateinit var assertsFactory: AssertsFactory
 
     override fun getMethod(): String = model.method
 
     override fun getIterationCount(): Int = model.iterations
 
-    override fun init(session: CardSession, runnableFactory: JsonAdaptersFactory, assertsFactory: AssertsFactory) {
+    override fun init(session: CardSession, jsonRpcConverter: JSONRPCConverter, assertsFactory: AssertsFactory) {
         this.session = session
-        this.runnableFactory = runnableFactory
+        this.jsonRpcConverter = jsonRpcConverter
         this.assertsFactory = assertsFactory
     }
 
@@ -50,25 +50,20 @@ open class TestStep(
         }
 
         fetchVariables()
-        val jsonRpc = runnableFactory.jsonConverter.toMap(model.toJsonRpcIn())
-        val jsonRunnableAdapter = runnableFactory.createFrom(jsonRpc).guard {
+        val runnable = jsonRpcConverter.convert(model.toJSONRPCRequest()).guard {
             callback(TestResult.Failure(ExecutableError.MissingJsonAdapterError(model.method)))
             return
         }
 
-        runInternal(jsonRunnableAdapter, callback)
+        runInternal(runnable, callback)
     }
 
-    protected open fun runInternal(jsonRunnableAdapter: JsonRunnableAdapter<*>, callback: OnComplete) {
-        jsonRunnableAdapter.run(session) { result ->
+    protected open fun runInternal(runnable: CardSessionRunnable<*>, callback: OnComplete) {
+        runnable.run(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
-                    val jsonResponse = (result.data as? JsonResponse).guard {
+                    val jsonResponse = (result.data as? JSONRPCResponse).guard {
                         callback(TestResult.Failure(ExecutableError.UnexpectedResponseError(result.data)))
-                        return@run
-                    }
-                    checkForExpectedResult(jsonResponse)?.let {
-                        callback(TestResult.Failure(it))
                         return@run
                     }
 
@@ -80,7 +75,7 @@ open class TestStep(
         }
     }
 
-    private fun isInitialized(): Boolean = !this::session.isInitialized || !this::runnableFactory.isInitialized
+    private fun isInitialized(): Boolean = !this::session.isInitialized || !this::jsonRpcConverter.isInitialized
         || !this::assertsFactory.isInitialized
 
     private fun fetchVariables() {
@@ -104,21 +99,5 @@ open class TestStep(
             assertsQueue.offer(assert)
         }
         AssertsLauncher(assertsQueue).run(callback)
-    }
-
-    protected open fun checkForExpectedResult(result: JsonResponse): ExecutableError? {
-        val errorsList = model.expectedResult.mapNotNull { expected ->
-            val value = result.response[expected.key]
-            if (expected.value != null && value == null) {
-                "Result doesn't contains value for: ${expected.key}"
-            } else {
-                if (expected.value != value) {
-                    "Result value doesn't match. Expected value: ${expected.value}, result value: $value"
-                } else {
-                    null
-                }
-            }
-        }
-        return if (errorsList.isEmpty()) null else ExecutableError.ExpectedResultError(errorsList)
     }
 }
