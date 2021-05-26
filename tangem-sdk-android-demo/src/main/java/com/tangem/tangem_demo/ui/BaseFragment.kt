@@ -13,7 +13,7 @@ import com.tangem.commands.PinType
 import com.tangem.commands.SetPinCommand
 import com.tangem.commands.WriteIssuerExtraDataCommand
 import com.tangem.commands.common.card.Card
-import com.tangem.commands.file.FileData
+import com.tangem.commands.file.DataToWrite
 import com.tangem.commands.file.FileDataSignature
 import com.tangem.commands.file.FileSettingsChange
 import com.tangem.commands.wallet.CreateWalletResponse
@@ -177,7 +177,7 @@ abstract class BaseFragment : Fragment() {
 
     protected fun writeFilesWithPassCode() {
         val issuerData = CryptoUtils.generateRandomBytes(WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE * 5)
-        val files = listOf(FileData.DataProtectedByPasscode(issuerData), FileData.DataProtectedByPasscode(issuerData))
+        val files = listOf(DataToWrite.DataProtectedByPasscode(issuerData), DataToWrite.DataProtectedByPasscode(issuerData))
         sdk.writeFiles(files) { handleResult(it) }
     }
 
@@ -230,13 +230,13 @@ abstract class BaseFragment : Fragment() {
         return listOfHashes.toTypedArray()
     }
 
-    protected fun prepareSignedData(cardId: String): FileData.DataProtectedBySignature {
+    protected fun prepareSignedData(cardId: String): DataToWrite.DataProtectedBySignature {
         val counter = 1
         val issuerData = CryptoUtils.generateRandomBytes(WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE * 5)
         val signatures = FileHashHelper.prepareHashes(
             cardId, issuerData, counter, Utils.issuer().dataKeyPair.privateKey
         )
-        return FileData.DataProtectedBySignature(
+        return DataToWrite.DataProtectedBySignature(
             issuerData, counter,
             FileDataSignature(signatures.startingSignature!!, signatures.finalizingSignature!!),
             Utils.issuer().dataKeyPair.publicKey

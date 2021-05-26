@@ -6,9 +6,9 @@ import com.tangem.TangemSdk
 import com.tangem.commands.CommandResponse
 import com.tangem.commands.SignCommand
 import com.tangem.commands.SignResponse
-import com.tangem.commands.common.jsonConverter.ResponseConverter
 import com.tangem.commands.common.card.Card
-import com.tangem.commands.file.FileData
+import com.tangem.commands.common.jsonConverter.ResponseConverter
+import com.tangem.commands.file.DataToWrite
 import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.hexToBytes
@@ -136,10 +136,10 @@ class TangemSdkCli(verbose: Boolean = false, indexOfTerminal: Int? = null, priva
 
     private fun writeFiles(sdk: TangemSdk, callback: (result: CompletionResult<out CommandResponse>) -> Unit) {
         val cid: String? = cmd.getOptionValue(TangemCommandOptions.CardId.opt)
-        val files: List<FileData>? = cmd.getOptionValue(TangemCommandOptions.Files.opt)
+        val files: List<DataToWrite>? = cmd.getOptionValue(TangemCommandOptions.Files.opt)
                 ?.split(",")
                 ?.map { it.trim().hexToBytes() }
-                ?.map { FileData.DataProtectedByPasscode(it) }
+                ?.map { DataToWrite.DataProtectedByPasscode(it) }
 
         if (files == null) {
             println("Missing option value")
