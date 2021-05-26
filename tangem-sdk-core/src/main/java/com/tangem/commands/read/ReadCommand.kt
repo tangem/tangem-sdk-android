@@ -20,8 +20,6 @@ import com.tangem.common.tlv.TlvTag
  */
 class ReadCommand : Command<Card>() {
 
-    override fun needPreflightRead(): Boolean = false
-
     override fun run(session: CardSession, callback: (result: CompletionResult<Card>) -> Unit) {
         super.run(session) {
             when (it) {

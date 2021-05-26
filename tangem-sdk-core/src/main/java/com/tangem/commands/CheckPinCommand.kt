@@ -19,7 +19,7 @@ class CheckPinResponse(
 
 class CheckPinCommand : Command<CheckPinResponse>() {
 
-    override val requiresPin2 = true
+    override fun requiresPin2(): Boolean = true
 
     override fun run(session: CardSession, callback: (result: CompletionResult<CheckPinResponse>) -> Unit) {
         super.run(session) { result ->

@@ -15,6 +15,7 @@ import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
+import com.tangem.tasks.PreflightReadMode
 
 /**
 [REDACTED_AUTHOR]
@@ -29,7 +30,7 @@ class ReadWalletCommand(
     private val walletIndex: WalletIndex
 ) : Command<WalletResponse>() {
 
-    override fun needPreflightRead(): Boolean = false
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         val tlvBuilder = TlvBuilder()
