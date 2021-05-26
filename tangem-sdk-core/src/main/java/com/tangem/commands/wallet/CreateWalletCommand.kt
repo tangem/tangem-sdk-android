@@ -18,7 +18,7 @@ import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
-import com.tangem.tasks.PreflightReadSettings
+import com.tangem.tasks.PreflightReadMode
 
 @JsonClass(generateAdapter = true)
 class CreateWalletResponse(
@@ -59,9 +59,9 @@ class CreateWalletCommand(
 
     private val walletIndex: WalletIndex = WalletIndex.Index(walletIndexValue)
 
-    override val requiresPin2 = true
+    override fun requiresPin2(): Boolean = true
 
-    override fun preflightReadSettings(): PreflightReadSettings = PreflightReadSettings.ReadWallet(walletIndex)
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.ReadWallet(walletIndex)
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.status == CardStatus.NotPersonalized) {
@@ -99,7 +99,7 @@ class CreateWalletCommand(
 
     override fun mapError(card: Card?, error: TangemError): TangemError {
         if (error is TangemSdkError.InvalidParams) {
-            val card = card ?: return TangemSdkError.Pin2OrCvcRequired()
+            val card = card ?: return error
 
             card.walletsCount?.let { walletsCount ->
                 if (walletIndexValue >= walletsCount) return TangemSdkError.WalletIndexExceedsMaxValue()
@@ -108,7 +108,6 @@ class CreateWalletCommand(
             if (card.firmwareVersion >= FirmwareConstraints.AvailabilityVersions.pin2IsDefault && card.isPin2Default == true) {
                 return TangemSdkError.AlreadyCreated()
             }
-            return TangemSdkError.Pin2OrCvcRequired()
         }
         return error
     }
