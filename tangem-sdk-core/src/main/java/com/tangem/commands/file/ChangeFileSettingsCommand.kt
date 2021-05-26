@@ -2,7 +2,6 @@ package com.tangem.commands.file
 
 import com.tangem.FirmwareConstraints
 import com.tangem.SessionEnvironment
-import com.tangem.TangemError
 import com.tangem.TangemSdkError
 import com.tangem.commands.Command
 import com.tangem.commands.SimpleResponse
@@ -33,7 +32,7 @@ data class FileSettingsChange(
 )
 
 /**
- * This command allows to change settings of a file written to the card with [WriteFileDataCommand].
+ * This command allows to change settings of a file written to the card with [WriteFileCommand].
  * Passcode (PIN2) is required for this operation.
  * [FileSettings] change access level to a file - it can be [FileSettings.Private],
  * accessible only with PIN2, or [FileSettings.Public], accessible without PIN2
@@ -41,10 +40,10 @@ data class FileSettingsChange(
  * @property data contains index of a file that is to be changed and desired settings.
  */
 class ChangeFileSettingsCommand(
-        private val data: FileSettingsChange
+    private val data: FileSettingsChange
 ) : Command<ChangeFileSettingsResponse>() {
 
-    override val requiresPin2 = true
+    override fun requiresPin2(): Boolean = true
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.status == CardStatus.NotPersonalized) {
@@ -57,13 +56,6 @@ class ChangeFileSettingsCommand(
             return TangemSdkError.FirmwareNotSupported()
         }
         return null
-    }
-
-    override fun mapError(card: Card?, error: TangemError): TangemError {
-        if (error is TangemSdkError.InvalidParams) {
-            return TangemSdkError.Pin2OrCvcRequired()
-        }
-        return error
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {

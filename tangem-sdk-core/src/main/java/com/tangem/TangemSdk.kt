@@ -280,19 +280,19 @@ class TangemSdk(
      * This method launches a [WriteFilesTask] on a new thread.
      *
      * This task allows to write multiple files to a card. Files can be signed by Issuer
-     * (specified on card during personalization) - [FileData.DataProtectedBySignature] or
-     * files can be written using PIN2 (Passcode) - [FileData.DataProtectedByPasscode].
+     * (specified on card during personalization) - [DataToWrite.DataProtectedBySignature] or
+     * files can be written using PIN2 (Passcode) - [DataToWrite.DataProtectedByPasscode].
      *
      * @param files: files to be written.
      * @param cardId: CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
      * @param callback: is triggered on the completion of the [WriteFilesTask] and provides
-     * card response in the form of [WriteFileDataResponse] if the task was performed successfully
+     * card response in the form of [WriteFileResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
     fun writeFiles(
-        files: List<FileData>,
+        files: List<DataToWrite>,
         cardId: String? = null,
         initialMessage: Message? = null,
         callback: (result: CompletionResult<WriteFilesResponse>) -> Unit
@@ -331,7 +331,7 @@ class TangemSdk(
     /**
      * This method launches a [ChangeFilesSettingsTask] on a new thread.
      *
-     * This task allows to change settings of multiple files written to the card with [WriteFileDataCommand].
+     * This task allows to change settings of multiple files written to the card with [WriteFileCommand].
      * Passcode (PIN2) is required for this operation.
      * [FileSettings] change access level to a file - it can be [FileSettings.Private],
      * accessible only with PIN2, or [FileSettings.Public], accessible without PIN2
@@ -358,7 +358,7 @@ class TangemSdk(
     /**
      * This method launches a [DeleteFilesTask] on a new thread.
      *
-     * This task allows to delete multiple or all files written to the card with [WriteFileDataCommand].
+     * This task allows to delete multiple or all files written to the card with [WriteFileCommand].
      * Passcode (PIN2) is required to delete the files.
      *
      * @param indices: indices of files to be deleted. If [indices] are not provided,
@@ -380,7 +380,7 @@ class TangemSdk(
     }
 
     /**
-     * Creates hashes and signatures for [com.tangem.commands.file.FileData.DataProtectedBySignature]
+     * Creates hashes and signatures for [com.tangem.commands.file.DataToWrite.DataProtectedBySignature]
      * @param cardId: CID, Unique Tangem card ID number.
      * @param fileData: File data that will be written on card
      * @param fileCounter: A counter that protects issuer data against replay attack.

@@ -7,8 +7,8 @@ import com.tangem.Log
 import com.tangem.TangemSdkError
 import com.tangem.commands.CommandResponse
 import com.tangem.commands.file.FileSettings
-import com.tangem.commands.file.ReadFileDataCommand
-import com.tangem.commands.file.WriteFileDataCommand
+import com.tangem.commands.file.ReadFileCommand
+import com.tangem.commands.file.WriteFileCommand
 import com.tangem.common.CompletionResult
 
 @JsonClass(generateAdapter = true)
@@ -44,7 +44,7 @@ data class File(
 }
 
 /**
- * This task allows to read multiple files written to the card with [WriteFileDataCommand].
+ * This task allows to read multiple files written to the card with [WriteFileCommand].
  * If the files are private, then Passcode (PIN2) is required to read the files.
  *
  * @property readPrivateFiles if set to true, then the task will read private files,
@@ -57,9 +57,11 @@ class ReadFilesTask(
         private val indices: List<Int>? = null
 ) : CardSessionRunnable<ReadFilesResponse> {
 
-    override val requiresPin2 = readPrivateFiles
     private var index = 0
     private val files = mutableListOf<File>()
+
+    @Deprecated("Missing calls", ReplaceWith("Nothing"))
+    fun requiresPin2(): Boolean = readPrivateFiles
 
     override fun run(session: CardSession, callback: (result: CompletionResult<ReadFilesResponse>) -> Unit) {
         if (indices.isNullOrEmpty()) {
@@ -70,7 +72,7 @@ class ReadFilesTask(
     }
 
     private fun readAllFiles(session: CardSession, callback: (result: CompletionResult<ReadFilesResponse>) -> Unit) {
-        val command = ReadFileDataCommand(index, readPrivateFiles)
+        val command = ReadFileCommand(index, readPrivateFiles)
         command.run(session) { result ->
             when (result) {
                 is CompletionResult.Failure -> {
@@ -97,7 +99,7 @@ class ReadFilesTask(
             indices: List<Int>,
             session: CardSession, callback: (result: CompletionResult<ReadFilesResponse>) -> Unit
     ) {
-        val command = ReadFileDataCommand(indices[index], readPrivateFiles)
+        val command = ReadFileCommand(indices[index], readPrivateFiles)
         command.run(session) { result ->
             when (result) {
                 is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
