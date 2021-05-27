@@ -29,7 +29,7 @@ data class Card(
     /**
      * Current status of the card.
      */
-    var status: CardStatus?,
+    val status: CardStatus?,
 
     /**
      * Version of Tangem COS.
@@ -128,17 +128,16 @@ data class Card(
      */
     val cardData: CardData?,
 
-    var isPin1Default: Boolean? = null,
+    val isPin1Default: Boolean? = null,
 
-    var isPin2Default: Boolean? = null
+    val isPin2Default: Boolean? = null,
 
+    val wallets: List<CardWallet>
 ) : CommandResponse {
-    private val wallets = mutableListOf<CardWallet>()
 
-    fun setWallets(newWallets: List<CardWallet>) {
-        wallets.clear()
-        wallets.addAll(newWallets)
-        wallets.sortBy { it.index }
+    fun setWallets(newWallets: List<CardWallet>): Card {
+        val sortedWallets = newWallets.toMutableList().apply { sortBy { it.index } }
+        return this.copy(wallets = sortedWallets.toList())
     }
 
     fun wallet(index: WalletIndex): CardWallet? {
@@ -148,14 +147,16 @@ data class Card(
         }
     }
 
-    fun updateWallet(wallet: CardWallet) {
-        val foundedIndex = wallets.indexOfFirst { it.index == wallet.index }
-        if (foundedIndex != -1) {
-            wallets[foundedIndex] = wallet
+    fun updateWallet(wallet: CardWallet): Card {
+        val mutableWallets = wallets.toMutableList()
+        val foundIndex = mutableWallets.indexOfFirst { it.index == wallet.index }
+        return if (foundIndex != -1) {
+            mutableWallets[foundIndex] = wallet
+            this.copy(wallets = mutableWallets.toList())
+        } else {
+            this
         }
     }
-
-    fun getWallets(): List<CardWallet> = wallets.toList()
 }
 
 /**
