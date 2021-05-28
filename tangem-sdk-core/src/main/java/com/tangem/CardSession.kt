@@ -1,7 +1,6 @@
 package com.tangem
 
 import com.tangem.commands.*
-import com.tangem.commands.common.json.*
 import com.tangem.commands.common.jsonRpc.JSONRPCConverter
 import com.tangem.commands.common.jsonRpc.JSONRPCException
 import com.tangem.commands.common.jsonRpc.JSONRPCRequest
