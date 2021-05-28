@@ -1,5 +1,3 @@
-include ':tangem-tester-android'
-include ':tangem-tester-kotlin'
 include ':tangem-sdk-jvm-demo'
 include ':tangem-sdk-jvm'
 include ':tangem-sdk-android-demo'
