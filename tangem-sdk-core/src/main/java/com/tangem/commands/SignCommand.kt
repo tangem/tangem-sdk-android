@@ -2,10 +2,10 @@ package com.tangem.commands
 
 import com.squareup.moshi.JsonClass
 import com.tangem.*
-import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.common.card.masks.SigningMethod
+import com.tangem.commands.common.jsonRpc.JSONRPCConvertible
 import com.tangem.commands.wallet.WalletIndex
 import com.tangem.commands.wallet.WalletStatus
 import com.tangem.commands.wallet.addTlvData
@@ -13,14 +13,11 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
-import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.sign
-import com.tangem.json.CommandParams
-import com.tangem.json.JsonRunnableAdapter
-import com.tangem.tasks.PreflightReadSettings
+import com.tangem.tasks.PreflightReadMode
 
 /**
  * @param cardId CID, Unique Tangem card ID number
@@ -50,9 +47,9 @@ class SignCommand(
     private val walletIndex: WalletIndex
 ) : Command<SignResponse>() {
 
-    override val requiresPin2 = true
+    override fun requiresPin2(): Boolean = true
 
-    override fun preflightReadSettings(): PreflightReadSettings = PreflightReadSettings.ReadWallet(walletIndex)
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.ReadWallet(walletIndex)
 
     private val hashSizes = if (hashes.isNotEmpty()) hashes.first().size else 0
     private val hashesChunked = hashes.asList().chunked(CHUNK_SIZE)
@@ -122,13 +119,6 @@ class SignCommand(
         }
 
         return null
-    }
-
-    override fun mapError(card: Card?, error: TangemError): TangemError {
-        if (error is TangemSdkError.InvalidParams) {
-            return TangemSdkError.Pin2OrCvcRequired()
-        }
-        return error
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
@@ -205,21 +195,13 @@ class SignCommand(
 
     companion object {
         const val CHUNK_SIZE = 10
-    }
 
-    class JsonAdapter(
-        jsonConverter: MoshiJsonConverter,
-        jsonData: Map<String, Any>
-    ) : JsonRunnableAdapter<SignResponse>(jsonConverter, jsonData) {
-
-        override fun createRunnable(): CardSessionRunnable<SignResponse> {
-            val params: SignParams = convertJsonToParamsModel()
-            val hashes = params.hashes.map { it.hexToBytes() }.toTypedArray()
-            return SignCommand(hashes, WalletIndex.Index(params.walletIndex))
+        fun asJSONRPCConvertible(): JSONRPCConvertible<SignResponse> {
+            return object : JSONRPCConvertible<SignResponse> {
+                override fun makeRunnable(params: Map<String, Any?>): CardSessionRunnable<SignResponse> {
+                    return SignCommand(arrayOf(), WalletIndex.Index(0))
+                }
+            }
         }
     }
-
-    @JsonClass(generateAdapter = true)
-    data class SignParams(val hashes: List<String>, val walletIndex: Int) : CommandParams()
-
 }
