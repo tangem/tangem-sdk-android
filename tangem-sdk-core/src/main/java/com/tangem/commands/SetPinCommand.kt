@@ -1,8 +1,9 @@
 package com.tangem.commands
 
 import com.squareup.moshi.JsonClass
-import com.tangem.*
-import com.tangem.commands.common.card.Card
+import com.tangem.CardSession
+import com.tangem.SessionEnvironment
+import com.tangem.TangemSdkError
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
@@ -29,9 +30,9 @@ class SetPinCommand(
         private val pinType: PinType,
         private var newPin1: ByteArray? = null,
         private var newPin2: ByteArray? = null
-) : Command<SetPinResponse>(), CardSessionPreparable {
+) : Command<SetPinResponse>() {
 
-    override val requiresPin2 = true
+    override fun requiresPin2(): Boolean = true
 
     override fun prepare(session: CardSession, callback: (result: CompletionResult<Unit>) -> Unit) {
         if ((pinType == PinType.Pin1 && newPin1 == null) ||
@@ -40,13 +41,6 @@ class SetPinCommand(
         } else {
             callback(CompletionResult.Success(Unit))
         }
-    }
-
-    override fun mapError(card: Card?, error: TangemError): TangemError {
-        if (error is TangemSdkError.InvalidParams) {
-            return TangemSdkError.Pin2OrCvcRequired()
-        }
-        return error
     }
 
     override fun run(session: CardSession, callback: (result: CompletionResult<SetPinResponse>) -> Unit) {
