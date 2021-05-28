@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -69,50 +70,76 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@android:color/background_light"
+                android:background="?android:windowBackground"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
-                android:text="Create with curve"
+                android:text="Create"
                 android:translationX="10dp" />
 
-            <LinearLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:padding="10dp">
+                android:padding="10dp"
+                android:layout_marginTop="8dp"
+                android:layout_height="wrap_content">
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:text="Is reusable"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/swIsReusable"
+                    android:checked="true"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintEnd_toStartOf="@+id/swIsProhibitPurgeWallet"
+                    app:layout_constraintHorizontal_chainStyle="spread_inside"
+                    android:layout_marginStart="4dp" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:text="Is prohibit purge wallet"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/swIsProhibitPurgeWallet"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/swIsReusable"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintTop_toTopOf="@+id/swIsReusable" />
 
                 <Button
                     android:id="@+id/btnCreateWalletSecpK1"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Secp_K1" />
-
-                <View
-                    android:layout_width="10dp"
-                    android:layout_height="1dp" />
+                    android:text="Secp_K1"
+                    android:layout_marginEnd="4dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintEnd_toStartOf="@+id/btnCreateWalletEdwards"
+                    app:layout_constraintTop_toBottomOf="@+id/swIsReusable" />
 
                 <Button
                     android:id="@+id/btnCreateWalletEdwards"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Ed" />
-
-                <View
-                    android:layout_width="10dp"
-                    android:layout_height="1dp" />
+                    android:text="Ed"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    app:layout_constraintEnd_toStartOf="@+id/btnCreateWalletSecpR1"
+                    app:layout_constraintStart_toEndOf="@+id/btnCreateWalletSecpK1"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintTop_toBottomOf="@+id/swIsReusable" />
 
                 <Button
                     android:id="@+id/btnCreateWalletSecpR1"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Secp_R1" />
+                    android:layout_marginStart="4dp"
+                    android:text="Secp_R1"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/btnCreateWalletEdwards"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintTop_toTopOf="@+id/btnCreateWalletEdwards" />
 
-            </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
         </FrameLayout>
 
