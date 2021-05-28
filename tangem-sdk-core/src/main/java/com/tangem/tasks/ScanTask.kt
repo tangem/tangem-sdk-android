@@ -32,12 +32,12 @@ class ScanTask(
             return
         }
 
-        val card = session.environment.card
-        if (card == null) {
+        var card = session.environment.card.guard {
             callback(CompletionResult.Failure(TangemSdkError.CardError()))
             return
         }
-        card.isPin1Default = session.environment.pin1?.isDefault == true
+
+        card = card.copy(isPin1Default = session.environment.pin1?.isDefault == true)
 
         val firmwareNumber = card.firmwareVersion
         if (firmwareNumber != FirmwareVersion.zero && firmwareNumber > FirmwareVersion(1, 19) // >1.19 cards without SD on CheckPin
@@ -45,7 +45,7 @@ class ScanTask(
             CheckPinCommand().run(session) { result ->
                 when (result) {
                     is CompletionResult.Success -> {
-                        card.isPin2Default = result.data.isPin2Default
+                        card = card.copy(isPin2Default = result.data.isPin2Default)
                         session.environment.card = card
                         runVerificationIfNeeded(card, session, callback)
                     }
@@ -86,7 +86,7 @@ class ScanTask(
             return
         }
 
-        val wallet = card.getWallets().firstOrNull().guard {
+        val wallet = card.wallets.firstOrNull().guard {
             callback(CompletionResult.Failure(TangemSdkError.WalletNotFound()))
             return
         }
