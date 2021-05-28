@@ -19,7 +19,7 @@ class CardDeserializer() {
             val version: String? = decoder.decodeOptional(TlvTag.Firmware)
             val firmwareVersion = if (version == null) FirmwareVersion.zero else FirmwareVersion(version)
 
-            val card = Card(
+            var card = Card(
                 cardId = decoder.decodeOptional(TlvTag.CardId) ?: "",
                 manufacturerName = decoder.decodeOptional(TlvTag.ManufactureId) ?: "",
                 firmwareVersion = firmwareVersion,
@@ -39,7 +39,8 @@ class CardDeserializer() {
                 userCounter = decoder.decodeOptional(TlvTag.UserCounter),
                 userProtectedCounter = decoder.decodeOptional(TlvTag.UserProtectedCounter),
                 terminalIsLinked = decoder.decode(TlvTag.TerminalIsLinked),
-                cardData = deserializeCardData(tlvData)
+                cardData = deserializeCardData(tlvData),
+                wallets = listOf()
             )
 
             if (firmwareVersion < FirmwareConstraints.AvailabilityVersions.walletData && card.status != null) {
@@ -52,7 +53,7 @@ class CardDeserializer() {
                     decoder.decodeOptional(TlvTag.WalletSignedHashes),
                     decoder.decodeOptional(TlvTag.WalletRemainingSignatures)
                 )
-                card.wallets = mutableListOf(wallet)
+                card = card.setWallets(listOf(wallet))
             }
             return card
         }
