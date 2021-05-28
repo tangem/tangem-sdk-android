@@ -241,7 +241,7 @@ class WriteFileCommand(
     }
 
     companion object {
-        const val SINGLE_WRITE_SIZE = 1524
+        const val SINGLE_WRITE_SIZE = 900
         const val MAX_SIZE = 48 * 1024
     }
 }
