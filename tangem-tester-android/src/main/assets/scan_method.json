@@ -3,7 +3,8 @@
   "iterations": 1,
   "actionType": "NFC_SESSION_RUNNABLE",
   "method": "SCAN_TASK",
-  "parameters": {},
+  "params": {},
+  "jsonrpc": "2.0",
   "expectedResult": {
     "card": {
       "cardId": "..."
