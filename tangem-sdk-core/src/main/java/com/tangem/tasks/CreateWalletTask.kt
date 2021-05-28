@@ -31,7 +31,7 @@ class CreateWalletTask(
     override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardRead
 
     override fun run(session: CardSession, callback: (result: CompletionResult<CreateWalletResponse>) -> Unit) {
-        val card = session.environment.card.guard {
+        var card = session.environment.card.guard {
             callback(CompletionResult.Failure(TangemSdkError.CardError()))
             return
         }
@@ -54,8 +54,8 @@ class CreateWalletTask(
         CreateWalletCommand(config, emptyWallet.index).run(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
-                    card.status = result.data.status
-                    card.settingsMask?.let { card.updateWallet(CardWallet(result.data, curve, it)) }
+                    card = card.copy(status = result.data.status)
+                    card.settingsMask?.let { card = card.updateWallet(CardWallet(result.data, curve, it)) }
                     session.environment.card = card
                     callback(CompletionResult.Success(result.data))
                 }
