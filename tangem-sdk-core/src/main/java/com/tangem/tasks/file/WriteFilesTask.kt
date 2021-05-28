@@ -5,8 +5,8 @@ import com.tangem.CardSession
 import com.tangem.CardSessionRunnable
 import com.tangem.TangemSdkError
 import com.tangem.commands.CommandResponse
-import com.tangem.commands.file.FileData
-import com.tangem.commands.file.WriteFileDataCommand
+import com.tangem.commands.file.DataToWrite
+import com.tangem.commands.file.WriteFileCommand
 import com.tangem.common.CompletionResult
 import com.tangem.common.extensions.guard
 
@@ -14,8 +14,8 @@ import com.tangem.common.extensions.guard
  * This task allows to write multiple files to a card.
  * There are two secure ways to write files.
  * 1) Data can be signed by Issuer (the one specified on card during personalization) -
- * [FileData.DataProtectedBySignature].
- * 2) Data can be protected by Passcode (PIN2). [FileData.DataProtectedByPasscode] In this case,
+ * [DataToWrite.DataProtectedBySignature].
+ * 2) Data can be protected by Passcode (PIN2). [DataToWrite.DataProtectedByPasscode] In this case,
  * Passcode (PIN2) is required for the command.
  *
  * @property data files to be written.
@@ -27,14 +27,15 @@ class WriteFilesResponse(
 ) : CommandResponse
 
 class WriteFilesTask(
-    private val data: List<FileData>,
+    private val data: List<DataToWrite>,
     private val overwriteAllFiles: Boolean = false
 ) : CardSessionRunnable<WriteFilesResponse> {
 
-    override val requiresPin2 = data.any { it is FileData.DataProtectedByPasscode }
-
     private var currentIndex = 0
     private val savedFilesIndices = mutableListOf<Int>()
+
+    @Deprecated("Missing calls", ReplaceWith("Nothing"))
+    fun requiresPin2(): Boolean = data.any { it is DataToWrite.DataProtectedByPasscode }
 
     override fun run(session: CardSession, callback: (result: CompletionResult<WriteFilesResponse>) -> Unit) {
         if (data.isEmpty()) {
@@ -65,7 +66,7 @@ class WriteFilesTask(
         }
 
         val fileData = data[currentIndex]
-        WriteFileDataCommand(fileData).run(session) { result ->
+        WriteFileCommand(fileData).run(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
                     result.data.fileIndex?.let { savedFilesIndices.add(it) }

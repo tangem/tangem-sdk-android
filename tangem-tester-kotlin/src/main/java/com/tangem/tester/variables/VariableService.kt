@@ -1,6 +1,6 @@
 package com.tangem.tester.variables
 
-import com.tangem.json.JsonResponse
+import com.tangem.commands.common.jsonRpc.JSONRPCResponse
 import com.tangem.tester.common.SourceMap
 import com.tangem.tester.common.isNumber
 import com.tangem.tester.common.safeSplit
@@ -25,10 +25,10 @@ object VariableService {
         stepsValues.clear()
     }
 
-    fun registerResult(name: String, result: JsonResponse) {
+    fun registerResult(name: String, response: JSONRPCResponse) {
         val stepMap: MutableMap<String, Any?> = stepsValues[name] ?: return
 
-        stepMap[RESULT] = result.response
+        stepMap[RESULT] = response.result
     }
 
     fun registerStep(name: String, source: SourceMap) {

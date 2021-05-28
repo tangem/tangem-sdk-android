@@ -38,7 +38,7 @@ fun TangemSdkError.localizedDescription(context: Context): String {
         is TangemSdkError.TooManyHashesInOneTransaction -> R.string.error_cannot_be_signed
         is TangemSdkError.NotPersonalized -> R.string.error_not_personalized
         is TangemSdkError.NotActivated -> R.string.error_not_activated
-        is TangemSdkError.Pin2OrCvcRequired -> R.string.error_operation
+        is TangemSdkError.Pin2Required -> R.string.error_operation
         is TangemSdkError.VerificationFailed -> R.string.error_verification_failed
         is TangemSdkError.DataSizeTooLarge -> R.string.error_data_size_too_large
         is TangemSdkError.ExtendedDataSizeTooLarge -> R.string.error_data_size_too_large_extended

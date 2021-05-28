@@ -2,6 +2,7 @@ package com.tangem
 
 import com.tangem.commands.*
 import com.tangem.commands.common.card.Card
+import com.tangem.commands.common.jsonRpc.*
 import com.tangem.commands.file.*
 import com.tangem.commands.personalization.DepersonalizeCommand
 import com.tangem.commands.personalization.DepersonalizeResponse
@@ -22,6 +23,7 @@ import com.tangem.crypto.CryptoUtils
 import com.tangem.tasks.CreateWalletTask
 import com.tangem.tasks.ScanTask
 import com.tangem.tasks.file.*
+import kotlin.reflect.KClass
 
 /**
  * The main interface of Tangem SDK that allows your app to communicate with Tangem cards.
@@ -43,9 +45,10 @@ class TangemSdk(
     terminalKeysService: TerminalKeysService? = null
 ) {
 
-    private val environmentService = SessionEnvironmentService(
-        config, terminalKeysService, cardValuesStorage
-    )
+    private var cardSession: CardSession? = null
+    private val environmentService = SessionEnvironmentService(config, terminalKeysService, cardValuesStorage)
+
+    private val jsonRpcConverter: JSONRPCConverter by lazy { JSONRPCConverter.shared() }
 
     init {
         CryptoUtils.initCrypto()
@@ -277,19 +280,19 @@ class TangemSdk(
      * This method launches a [WriteFilesTask] on a new thread.
      *
      * This task allows to write multiple files to a card. Files can be signed by Issuer
-     * (specified on card during personalization) - [FileData.DataProtectedBySignature] or
-     * files can be written using PIN2 (Passcode) - [FileData.DataProtectedByPasscode].
+     * (specified on card during personalization) - [DataToWrite.DataProtectedBySignature] or
+     * files can be written using PIN2 (Passcode) - [DataToWrite.DataProtectedByPasscode].
      *
      * @param files: files to be written.
      * @param cardId: CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
      * @param callback: is triggered on the completion of the [WriteFilesTask] and provides
-     * card response in the form of [WriteFileDataResponse] if the task was performed successfully
+     * card response in the form of [WriteFileResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
     fun writeFiles(
-        files: List<FileData>,
+        files: List<DataToWrite>,
         cardId: String? = null,
         initialMessage: Message? = null,
         callback: (result: CompletionResult<WriteFilesResponse>) -> Unit
@@ -328,7 +331,7 @@ class TangemSdk(
     /**
      * This method launches a [ChangeFilesSettingsTask] on a new thread.
      *
-     * This task allows to change settings of multiple files written to the card with [WriteFileDataCommand].
+     * This task allows to change settings of multiple files written to the card with [WriteFileCommand].
      * Passcode (PIN2) is required for this operation.
      * [FileSettings] change access level to a file - it can be [FileSettings.Private],
      * accessible only with PIN2, or [FileSettings.Public], accessible without PIN2
@@ -355,7 +358,7 @@ class TangemSdk(
     /**
      * This method launches a [DeleteFilesTask] on a new thread.
      *
-     * This task allows to delete multiple or all files written to the card with [WriteFileDataCommand].
+     * This task allows to delete multiple or all files written to the card with [WriteFileCommand].
      * Passcode (PIN2) is required to delete the files.
      *
      * @param indices: indices of files to be deleted. If [indices] are not provided,
@@ -377,7 +380,7 @@ class TangemSdk(
     }
 
     /**
-     * Creates hashes and signatures for [com.tangem.commands.file.FileData.DataProtectedBySignature]
+     * Creates hashes and signatures for [com.tangem.commands.file.DataToWrite.DataProtectedBySignature]
      * @param cardId: CID, Unique Tangem card ID number.
      * @param fileData: File data that will be written on card
      * @param fileCounter: A counter that protects issuer data against replay attack.
@@ -696,7 +699,7 @@ class TangemSdk(
      * [TangemSdk] will start a card session, perform preflight [ReadCommand],
      * invoke [CardSessionRunnable.run] and close the session.
      * You can find the current card in the [CardSession.environment].
-
+     *
      * @param runnable: A custom task, adopting [CardSessionRunnable] protocol
      * @param cardId: CID, Unique Tangem card ID number. If not null, the SDK will check that you the card
      * with which you tapped a phone has this [cardId] and SDK will return
@@ -711,15 +714,20 @@ class TangemSdk(
         initialMessage: Message? = null,
         callback: (result: CompletionResult<T>) -> Unit
     ) {
-        viewDelegate.setConfig(config)
-        val cardSession = CardSession(environmentService, reader, viewDelegate, cardId, initialMessage)
-        Thread().run { cardSession.startWithRunnable(runnable, callback) }
+        if (checkSession()) {
+            callback(CompletionResult.Failure(TangemSdkError.Busy()))
+            return
+        }
+
+        configure()
+        cardSession = makeSession(cardId, initialMessage)
+        Thread().run { cardSession?.startWithRunnable(runnable, callback) }
     }
 
     /**
      * Allows running  a custom bunch of commands in one [CardSession] with lightweight closure syntax.
      * Tangem SDK will start a card session and perform preflight [ReadCommand].
-
+     *
      * @param cardId: CID, Unique Tangem card ID number. If not null, the SDK will check that you the card
      * with which you tapped a phone has this [cardId] and SDK will return
      * the [TangemSdkError.WrongCardNumber] otherwise.
@@ -733,9 +741,74 @@ class TangemSdk(
         initialMessage: Message? = null,
         callback: (session: CardSession, error: TangemError?) -> Unit
     ) {
+        if (checkSession()) {
+            callback(cardSession!!, TangemSdkError.Busy())
+            return
+        }
+
+        configure()
+        cardSession = makeSession(cardId, initialMessage)
+        Thread().run { cardSession?.start(callback = callback) }
+    }
+
+    /**
+     * Allows running a custom bunch of commands in one NFC Session by creating a custom task. Tangem SDK will start
+     * a card session, perform preflight [ReadCommand], invoke the `run ` method of [CardSessionRunnable] and close
+     * the session. You can find the current card in the `environment` property of the [CardSession]
+     *
+     * @param jsonRequest: a `JSONRPCRequest`, describing specific [CardSessionRunnable]
+     * @param completion: a `JSONRPCResponse` with result of the operation
+     */
+
+    fun startSessionWithJsonRequest(jsonRequest: String, callback: (String) -> Unit) {
+        val request: JSONRPCRequest = try {
+            JSONRPCRequest(jsonRequest)
+        } catch (ex: JSONRPCException) {
+            callback(ex.toJSONRPCResponse(null).toJson())
+            return
+        }
+        try {
+            if (checkSession()) throw TangemSdkError.Busy()
+
+            configure()
+            val jsonInitialMessage = jsonRpcConverter.jsonConverter.toJson(request.params["initialMessage"])
+            val initialMessage = jsonRpcConverter.jsonConverter.fromJson<Message>(jsonInitialMessage)
+            cardSession = makeSession(request.params["cid"] as? String, initialMessage)
+            val runnable = jsonRpcConverter.convert(request)
+            Thread().run {
+                cardSession?.startWithRunnable(runnable) { callback(it.toJSONRPCResponse(request.id).toJson()) }
+            }
+
+        } catch (ex: Throwable) {
+            val jsonStringConvertible = when (ex) {
+                is TangemSdkError -> ex.toJSONRPCError().toJSONRPCResponse(request.id)
+                is JSONRPCException -> ex.toJSONRPCResponse(request.id)
+                else -> JSONRPCError(JSONRPCError.Type.ServerError, ex.localizedMessage).toJSONRPCResponse(request.id)
+            }
+            callback(jsonStringConvertible.toJson())
+        }
+    }
+
+    /**
+     * Register custom task, that supported JSONRPC
+     *
+     * @param clazz, that conforms [JSONRPCConvertible]
+     */
+    fun registerJSONRPCTask(clazz: KClass<*>) {
+        jsonRpcConverter.register(clazz)
+    }
+
+    private fun checkSession(): Boolean {
+        val session = cardSession ?: return false
+        return session.state == CardSessionState.Active
+    }
+
+    private fun makeSession(cardId: String? = null, initialMessage: Message? = null): CardSession {
+        return CardSession(environmentService, reader, viewDelegate, cardId, initialMessage, jsonRpcConverter)
+    }
+
+    private fun configure() {
         viewDelegate.setConfig(config)
-        val cardSession = CardSession(environmentService, reader, viewDelegate, cardId, initialMessage)
-        Thread().run { cardSession.start(callback = callback) }
     }
 
     companion object
