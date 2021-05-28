@@ -53,17 +53,18 @@ class PurgeWalletCommand(
         super.run(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
-                    val card = session.environment.card.guard {
+                    var card = session.environment.card.guard {
                         callback(CompletionResult.Failure(TangemSdkError.CardError()))
                         return@run
                     }
 
-                    card.status = CardStatus.Empty
+                    card = card.copy(status = CardStatus.Empty)
                     val wallet = card.wallet(result.data.walletIndex)
                     if (wallet == null) {
+                        session.environment.card = card
                         callback(CompletionResult.Failure(TangemSdkError.WalletIndexNotCorrect()))
                     } else {
-                        card.updateWallet(CardWallet(wallet.index, WalletStatus.Empty))
+                        card = card.updateWallet(CardWallet(wallet.index, WalletStatus.Empty))
                         session.environment.card = card
                         callback(CompletionResult.Success(result.data))
                     }
