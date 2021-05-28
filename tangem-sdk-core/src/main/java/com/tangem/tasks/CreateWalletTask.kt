@@ -30,7 +30,7 @@ class CreateWalletTask(
     override fun preflightReadSettings(): PreflightReadSettings = PreflightReadSettings.FullCardRead
 
     override fun run(session: CardSession, callback: (result: CompletionResult<CreateWalletResponse>) -> Unit) {
-        val card = session.environment.card.guard {
+        var card = session.environment.card.guard {
             callback(CompletionResult.Failure(TangemSdkError.CardError()))
             return
         }
@@ -44,7 +44,7 @@ class CreateWalletTask(
             config?.curveId?.let { curve = it }
         }
 
-        val emptyWallet = card.getWallets().firstOrNull { it.status == WalletStatus.Empty }.guard {
+        val emptyWallet = card.wallets.firstOrNull { it.status == WalletStatus.Empty }.guard {
             callback(CompletionResult.Failure(TangemSdkError.MaxNumberOfWalletsCreated()))
             return
         }
@@ -53,8 +53,8 @@ class CreateWalletTask(
         CreateWalletCommand(config, emptyWallet.index).run(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
-                    card.status = result.data.status
-                    card.settingsMask?.let { card.updateWallet(CardWallet(result.data, curve, it)) }
+                    card = card.copy(status = result.data.status)
+                    card.settingsMask?.let { card = card.updateWallet(CardWallet(result.data, curve, it)) }
                     session.environment.card = card
                     callback(CompletionResult.Success(result.data))
                 }
