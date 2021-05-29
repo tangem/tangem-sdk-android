@@ -23,7 +23,10 @@ import kotlin.reflect.KClass
  */
 class MoshiJsonConverter(adapters: List<Any> = listOf()) {
 
-    val moshi: Moshi = Moshi.Builder().apply { adapters.forEach { this.add(it) } }.build()
+    val moshi: Moshi = Moshi.Builder().apply {
+        adapters.forEach { this.add(it) }
+        add(KotlinJsonAdapterFactory())
+    }.build()
 
     inline fun <reified T> fromJson(json: String): T? {
         val adapter = moshi.adapter(T::class.java)
@@ -67,7 +70,6 @@ class MoshiJsonConverter(adapters: List<Any> = listOf()) {
 
         fun getTangemSdkAdapters(): List<Any> {
             return listOf(
-                KotlinJsonAdapterFactory(),
                 TangemSdkAdapter.ByteTypeAdapter(),
                 TangemSdkAdapter.SigningMethodTypeAdapter(),
                 TangemSdkAdapter.SettingsMaskTypeAdapter(),
