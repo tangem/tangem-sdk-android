@@ -4,11 +4,13 @@ import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.commands.common.card.FirmwareVersion
 import com.tangem.commands.common.card.masks.ProductMask
 import com.tangem.commands.common.card.masks.SettingsMask
 import com.tangem.commands.common.card.masks.SigningMethodMask
 import com.tangem.commands.common.card.masks.WalletSettingsMask
+import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import java.lang.reflect.ParameterizedType
@@ -24,7 +26,8 @@ class MoshiJsonConverter(adapters: List<Any> = listOf()) {
     val moshi: Moshi = Moshi.Builder().apply { adapters.forEach { this.add(it) } }.build()
 
     inline fun <reified T> fromJson(json: String): T? {
-        return moshi.adapter(T::class.java).fromJson(json)
+        val adapter = moshi.adapter(T::class.java)
+        return adapter.fromJson(json)
     }
 
     fun <T> fromJson(json: String, type: ParameterizedType): T? {
@@ -64,6 +67,7 @@ class MoshiJsonConverter(adapters: List<Any> = listOf()) {
 
         fun getTangemSdkAdapters(): List<Any> {
             return listOf(
+                KotlinJsonAdapterFactory(),
                 TangemSdkAdapter.ByteTypeAdapter(),
                 TangemSdkAdapter.SigningMethodTypeAdapter(),
                 TangemSdkAdapter.SettingsMaskTypeAdapter(),
@@ -71,6 +75,9 @@ class MoshiJsonConverter(adapters: List<Any> = listOf()) {
                 TangemSdkAdapter.WalletSettingsMaskAdapter(),
                 TangemSdkAdapter.DateTypeAdapter(),
                 TangemSdkAdapter.FirmwareVersionAdapter(),
+                TangemSdkAdapter.WalletIntIndexAdapter(),
+                TangemSdkAdapter.WalletPubKeyIndexAdapter(),
+                TangemSdkAdapter.WalletIndexAdapter(),
             )
         }
     }
@@ -135,5 +142,43 @@ class TangemSdkAdapter {
 
         @FromJson
         fun fromJson(json: String): FirmwareVersion = FirmwareVersion(json)
+    }
+
+    class WalletIntIndexAdapter {
+        @ToJson
+        fun toJson(src: WalletIndex.Index): String = src.index.toString()
+
+        @FromJson
+        fun fromJson(json: String): WalletIndex.Index = WalletIndex.Index(json.toInt())
+    }
+
+    class WalletPubKeyIndexAdapter {
+        @ToJson
+        fun toJson(src: WalletIndex.PublicKey): String = src.data.toHexString()
+
+        @FromJson
+        fun fromJson(json: String): WalletIndex.PublicKey {
+            return WalletIndex.PublicKey(json.hexToBytes())
+        }
+    }
+
+    class WalletIndexAdapter {
+        @ToJson
+        fun toJson(src: WalletIndex): String {
+            return when (src) {
+                is WalletIndex.Index -> WalletIntIndexAdapter().toJson(src)
+                is WalletIndex.PublicKey -> WalletPubKeyIndexAdapter().toJson(src)
+            }
+        }
+
+        @FromJson
+        fun fromJson(json: String): WalletIndex {
+            val possibleIntIndex = json.toIntOrNull()
+            return if (possibleIntIndex != null) {
+                WalletIntIndexAdapter().fromJson(json)
+            } else {
+                WalletPubKeyIndexAdapter().fromJson(json)
+            }
+        }
     }
 }
