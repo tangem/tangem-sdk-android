@@ -181,6 +181,7 @@ class CardSession(
             reader.tag.asFlow()
                 .onCompletion {
                     if (it is CancellationException && it.message == TangemSdkError.UserCancelled().customMessage) {
+                        stopWithError(TangemSdkError.UserCancelled())
                         viewDelegate.dismiss()
                         callback(this@CardSession, TangemSdkError.UserCancelled())
                     }
