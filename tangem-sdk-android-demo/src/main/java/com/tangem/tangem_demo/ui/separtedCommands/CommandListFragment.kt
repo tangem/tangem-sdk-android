@@ -6,11 +6,10 @@ import com.google.android.material.slider.Slider
 import com.tangem.Config
 import com.tangem.Log
 import com.tangem.TangemSdk
-import com.tangem.commands.CommandResponse
-import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.commands.common.card.masks.SigningMethod
+import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
 import com.tangem.commands.file.FileSettings
 import com.tangem.commands.file.FileSettingsChange
 import com.tangem.commands.wallet.WalletConfig
@@ -87,7 +86,7 @@ class CommandListFragment : BaseFragment() {
         when (result) {
             is CompletionResult.Success -> {
                 if (result.data is Card) updateWalletsSlider()
-                val json = jsonConverter.toJson(result.data)
+                val json = jsonConverter.prettyPrint(result.data)
                 showDialog(json)
             }
             is CompletionResult.Failure -> showToast(result.error.customMessage)
