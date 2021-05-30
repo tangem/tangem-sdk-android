@@ -6,10 +6,7 @@ import com.squareup.moshi.ToJson
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.commands.common.card.FirmwareVersion
-import com.tangem.commands.common.card.masks.ProductMask
-import com.tangem.commands.common.card.masks.SettingsMask
-import com.tangem.commands.common.card.masks.SigningMethodMask
-import com.tangem.commands.common.card.masks.WalletSettingsMask
+import com.tangem.commands.common.card.masks.*
 import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
@@ -37,10 +34,10 @@ class MoshiJsonConverter(adapters: List<Any> = listOf()) {
         return moshi.adapter<T>(type).fromJson(json)
     }
 
-    fun toJson(any: Any?, indent: String = "   "): String {
+    fun toJson(any: Any?, indent: String? = null): String {
         return when (any) {
             null -> "{}"
-            else -> moshi.adapter(Any::class.java).indent(indent).toJson(any)
+            else -> moshi.adapter(Any::class.java).indent(indent ?: "").toJson(any)
         }
     }
 
@@ -52,6 +49,8 @@ class MoshiJsonConverter(adapters: List<Any> = listOf()) {
         }
         return result ?: mapOf()
     }
+
+    fun prettyPrint(any: Any?, indent: String = "   "): String = toJson(any, indent)
 
     fun typedList(clazz: Class<*>): ParameterizedType {
         return Types.newParameterizedType(List::class.java, clazz)
@@ -96,34 +95,66 @@ class TangemSdkAdapter {
 
     class SettingsMaskTypeAdapter {
         @ToJson
-        fun toJson(src: SettingsMask): String = src.toString()
+        fun toJson(src: SettingsMask): List<String> = src.toList().map { it.name }
 
         @FromJson
-        fun fromJson(json: String): SettingsMask = SettingsMask.fromString(json)
+        fun fromJson(jsonList: List<String>): SettingsMask = SettingsMaskBuilder().apply {
+            jsonList.forEach {
+                try {
+                    add(Settings.valueOf(it))
+                } catch (ex: IllegalArgumentException) {
+                    ex.printStackTrace()
+                }
+            }
+        }.build()
     }
 
     class ProductMaskTypeAdapter {
         @ToJson
-        fun toJson(src: ProductMask): String = src.toString()
+        fun toJson(src: ProductMask): List<String> = src.toList().map { it.name }
 
         @FromJson
-        fun fromJson(json: String): ProductMask = ProductMask.fromString(json)
+        fun fromJson(jsonList: List<String>): ProductMask = ProductMaskBuilder().apply {
+            jsonList.forEach {
+                try {
+                    add(Product.valueOf(it))
+                } catch (ex: IllegalArgumentException) {
+                    ex.printStackTrace()
+                }
+            }
+        }.build()
     }
 
     class SigningMethodTypeAdapter {
         @ToJson
-        fun toJson(src: SigningMethodMask): String = src.toString()
+        fun toJson(src: SigningMethodMask): List<String> = src.toList().map { it.name }
 
         @FromJson
-        fun fromJson(json: String): SigningMethodMask = SigningMethodMask.fromString(json)
+        fun fromJson(jsonList: List<String>): SigningMethodMask = SigningMethodMaskBuilder().apply {
+            jsonList.forEach {
+                try {
+                    add(SigningMethod.valueOf(it))
+                } catch (ex: IllegalArgumentException) {
+                    ex.printStackTrace()
+                }
+            }
+        }.build()
     }
 
     class WalletSettingsMaskAdapter {
         @ToJson
-        fun toJson(src: WalletSettingsMask): String = src.toString()
+        fun toJson(src: WalletSettingsMask): List<String> = src.toList().map { it.name }
 
         @FromJson
-        fun fromJson(json: String): WalletSettingsMask = WalletSettingsMask.fromString(json)
+        fun fromJson(jsonList: List<String>): WalletSettingsMask = WalletSettingsMaskBuilder().apply {
+            jsonList.forEach {
+                try {
+                    add(WalletSetting.valueOf(it))
+                } catch (ex: IllegalArgumentException) {
+                    ex.printStackTrace()
+                }
+            }
+        }.build()
     }
 
     class DateTypeAdapter {
