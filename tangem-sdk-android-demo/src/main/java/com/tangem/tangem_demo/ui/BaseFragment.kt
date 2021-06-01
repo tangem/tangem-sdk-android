@@ -1,5 +1,6 @@
 package com.tangem.tangem_demo.ui
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,9 +9,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.tangem.Message
 import com.tangem.TangemSdk
-import com.tangem.commands.PinType
-import com.tangem.commands.SetPinCommand
 import com.tangem.commands.WriteIssuerExtraDataCommand
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.file.FileData
@@ -21,27 +21,30 @@ import com.tangem.commands.wallet.PurgeWalletResponse
 import com.tangem.commands.wallet.WalletConfig
 import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.CompletionResult
-import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
 import com.tangem.common.files.FileHashHelper
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.sign
+import com.tangem.tangem_demo.DemoApplication
 import com.tangem.tangem_demo.R
 import com.tangem.tangem_demo.Utils
 import com.tangem.tangem_demo.postUi
+import com.tangem.tangem_demo.ui.settings.SettingsFragment
 
 /**
 [REDACTED_AUTHOR]
  */
 abstract class BaseFragment : Fragment() {
 
+    protected lateinit var shPrefs: SharedPreferences
     protected lateinit var sdk: TangemSdk
 
     protected var card: Card? = null
-
     protected var intWalletIndex = -1
+    protected var initialMessage: Message? = null
+        private set
 
     protected var selectedWalletPubKey: ByteArray? = null
         private set
@@ -61,6 +64,7 @@ abstract class BaseFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        shPrefs = (requireContext().applicationContext as DemoApplication).shPrefs
         sdk = initSdk()
     }
 
@@ -68,26 +72,43 @@ abstract class BaseFragment : Fragment() {
         return inflater.inflate(getLayoutId(), container, false)
     }
 
+    override fun onResume() {
+        super.onResume()
+        initInitialMessage()
+    }
+
+    private fun initInitialMessage() {
+        if (!shPrefs.getBoolean(SettingsFragment.initialMessageEnabled, false)) {
+            initialMessage = null
+            return
+        }
+        val header = shPrefs.getString(SettingsFragment.initialMessageHeader, null)
+        val body = shPrefs.getString(SettingsFragment.initialMessageBody, null)
+        if (header == null && body == null) return
+
+        initialMessage = Message(header, body)
+    }
+
     protected fun scanCard(updateOnlyCard: Boolean = false) {
-        sdk.scanCard { if (updateOnlyCard) setCard(it) else handleResult(it) }
+        sdk.scanCard(initialMessage) { if (updateOnlyCard) setCard(it) else handleResult(it) }
     }
 
     protected fun sign(hashes: Array<ByteArray>) {
         val publicKey = selectedWalletPubKey ?: return
-        sdk.sign(hashes, publicKey, card?.cardId) { handleResult(it) }
+        sdk.sign(hashes, publicKey, card?.cardId, initialMessage) { handleResult(it) }
     }
 
     protected fun createWallet(walletConfig: WalletConfig) {
-        sdk.createWallet(walletConfig, card?.cardId) { handleResult(it) }
+        sdk.createWallet(walletConfig, card?.cardId, initialMessage) { handleResult(it) }
     }
 
     protected fun purgeWallet() {
         val publicKey = selectedWalletPubKey ?: return
-        sdk.purgeWallet(WalletIndex.PublicKey(publicKey), card?.cardId) { handleResult(it) }
+        sdk.purgeWallet(WalletIndex.PublicKey(publicKey), card?.cardId, initialMessage) { handleResult(it) }
     }
 
     protected fun readIssuerData() {
-        sdk.readIssuerData(card?.cardId) { handleResult(it) }
+        sdk.readIssuerData(card?.cardId, initialMessage) { handleResult(it) }
     }
 
     protected fun writeIssuerData() {
@@ -102,12 +123,12 @@ abstract class BaseFragment : Fragment() {
         val issuerPrivateKey = Utils.issuer().dataKeyPair.privateKey
         val signedIssuerData = (cardId.hexToBytes() + issuerData + counter.toByteArray(4)).sign(issuerPrivateKey)
 
-        sdk.writeIssuerData(cardId, issuerData, signedIssuerData, counter) { handleResult(it) }
+        sdk.writeIssuerData(cardId, issuerData, signedIssuerData, counter, initialMessage) { handleResult(it) }
     }
 
     @Deprecated("Deprecated in the TangemSdk")
     protected fun readIssuerExtraData() {
-        sdk.readIssuerExtraData(card?.cardId) { handleResult(it) }
+        sdk.readIssuerExtraData(card?.cardId, initialMessage) { handleResult(it) }
     }
 
     @Deprecated("Deprecated in the TangemSdk")
@@ -127,42 +148,40 @@ abstract class BaseFragment : Fragment() {
         sdk.writeIssuerExtraData(
             cardId, issuerData,
             signatures.startingSignature!!, signatures.finalizingSignature!!,
-            counter
+            counter, initialMessage
         ) { handleResult(it) }
     }
 
     protected fun verify() {
-        sdk.verify(false) { handleResult(it) }
+        sdk.verify(false, initialMessage = initialMessage) { handleResult(it) }
     }
 
     protected fun readUserData() {
-        sdk.readUserData(card?.cardId) { handleResult(it) }
+        sdk.readUserData(card?.cardId, initialMessage) { handleResult(it) }
     }
 
     protected fun writeUserData() {
         val userData = "Some of user data ${Utils.randomString(20)}".toByteArray()
         val counter = 1
-        sdk.writeUserData(card?.cardId, userData, counter) { handleResult(it) }
+        sdk.writeUserData(card?.cardId, userData, counter, initialMessage) { handleResult(it) }
     }
 
     protected fun writeUserProtectedData() {
         val userProtectedData = "Some of user protected data ${Utils.randomString(20)}".toByteArray()
         val counter = 1
-        sdk.writeUserProtectedData(card?.cardId, userProtectedData, counter) { handleResult(it) }
+        sdk.writeUserProtectedData(card?.cardId, userProtectedData, counter, initialMessage) { handleResult(it) }
     }
 
     protected fun setPin1() {
-        sdk.startSessionWithRunnable(
-            SetPinCommand(PinType.Pin1, null, sdk.config.defaultPin2.calculateSha256()), card?.cardId) { handleResult(it) }
+        sdk.changePin1(initialMessage = initialMessage) { handleResult(it) }
     }
 
     protected fun setPin2() {
-        sdk.startSessionWithRunnable(
-            SetPinCommand(PinType.Pin2, sdk.config.defaultPin1.calculateSha256(), null), card?.cardId) { handleResult(it) }
+        sdk.changePin2(initialMessage = initialMessage) { handleResult(it) }
     }
 
     protected fun readFiles(readPrivateFiles: Boolean) {
-        sdk.readFiles(readPrivateFiles) { handleResult(it) }
+        sdk.readFiles(readPrivateFiles, initialMessage = initialMessage) { handleResult(it) }
     }
 
     protected fun writeFilesSigned() {
@@ -172,21 +191,21 @@ abstract class BaseFragment : Fragment() {
             return
         }
         val file = prepareSignedData(cardId)
-        sdk.writeFiles(listOf(file)) { handleResult(it) }
+        sdk.writeFiles(listOf(file), initialMessage = initialMessage) { handleResult(it) }
     }
 
     protected fun writeFilesWithPassCode() {
         val issuerData = CryptoUtils.generateRandomBytes(WriteIssuerExtraDataCommand.SINGLE_WRITE_SIZE * 5)
         val files = listOf(FileData.DataProtectedByPasscode(issuerData), FileData.DataProtectedByPasscode(issuerData))
-        sdk.writeFiles(files) { handleResult(it) }
+        sdk.writeFiles(files, initialMessage = initialMessage) { handleResult(it) }
     }
 
     protected fun deleteFiles(indices: List<Int>? = null) {
-        sdk.deleteFiles(indices) { handleResult(it) }
+        sdk.deleteFiles(indices, initialMessage = initialMessage) { handleResult(it) }
     }
 
     protected fun changeFilesSettings(change: FileSettingsChange) {
-        sdk.changeFilesSettings(listOf(change)) { handleResult(it) }
+        sdk.changeFilesSettings(listOf(change), initialMessage = initialMessage) { handleResult(it) }
     }
 
     private fun handleResult(result: CompletionResult<*>) {
