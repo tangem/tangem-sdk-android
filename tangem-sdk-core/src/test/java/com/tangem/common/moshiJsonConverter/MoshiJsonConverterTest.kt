@@ -1,5 +1,6 @@
 package com.tangem.common.moshiJsonConverter
 
+import com.tangem.Message
 import com.tangem.commands.common.card.masks.*
 import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
 import com.tangem.commands.wallet.WalletIndex
@@ -91,6 +92,23 @@ class MoshiJsonConverterTest {
         val jsonList = moshi.toJson(initialMask)
         val resultMask: WalletSettingsMask? = moshi.fromJson(jsonList)
         assert(initialMask.rawValue == resultMask?.rawValue)
+    }
+
+    @Test
+    fun toMap() {
+        val list = listOf("1", "2", "3")
+        var resultMap: Map<String, Any> = moshi.toMap(list)
+        assert(resultMap.isEmpty())
+
+        val initialMessage = Message("header", null)
+        resultMap = moshi.toMap(initialMessage)
+        assert(resultMap.isNotEmpty())
+
+        val resultMessage: Message? = moshi.fromJson(moshi.toJson(resultMap))
+        assert(initialMessage == resultMessage)
+
+        resultMap = moshi.toMap("sdknfdjn")
+        assert(resultMap.isEmpty())
     }
 
 }
