@@ -44,7 +44,11 @@ class MoshiJsonConverter(adapters: List<Any> = listOf()) {
     fun toMap(any: Any?): Map<String, Any> {
         val result: Map<String, Any>? = when (any) {
             null -> null
-            is String -> fromJson(any, typedMap())
+            is List<*> -> null
+            is String -> {
+                if (any.contains("[") || any.contains("{")) fromJson(any, typedMap())
+                else null
+            }
             else -> fromJson(toJson(any), typedMap())
         }
         return result ?: mapOf()
