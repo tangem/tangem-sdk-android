@@ -655,7 +655,7 @@ class TangemSdk(
      * */
     fun changePin1(
         cardId: String? = null,
-        pin: ByteArray? = null,
+        pin: String? = null,
         initialMessage: Message? = null,
         callback: (result: CompletionResult<SetPinResponse>) -> Unit
     ) {
@@ -683,7 +683,7 @@ class TangemSdk(
      * */
     fun changePin2(
         cardId: String? = null,
-        pin: ByteArray? = null,
+        pin: String? = null,
         initialMessage: Message? = null,
         callback: (result: CompletionResult<SetPinResponse>) -> Unit
     ) {
