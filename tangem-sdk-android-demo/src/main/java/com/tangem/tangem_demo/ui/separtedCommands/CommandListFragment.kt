@@ -7,6 +7,7 @@ import com.google.gson.Gson
 import com.tangem.Config
 import com.tangem.Log
 import com.tangem.TangemSdk
+import com.tangem.TangemSdkError
 import com.tangem.commands.common.ResponseConverter
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.EllipticCurve
@@ -90,7 +91,13 @@ class CommandListFragment : BaseFragment() {
                 val json = gson.toJson(result.data)
                 showDialog(json)
             }
-            is CompletionResult.Failure -> showToast(result.error.customMessage)
+            is CompletionResult.Failure -> {
+                if (result.error is TangemSdkError.UserCancelled) {
+                    showToast("${result.error.customMessage}: User was cancelled the operation")
+                } else {
+                    showToast(result.error.customMessage)
+                }
+            }
         }
     }
 
