@@ -31,6 +31,7 @@ class DefaultSessionViewDelegate(
         postUI {
             if (readingDialog == null) createReadingDialog(activity)
             readingDialog?.enableHowTo(enableHowTo)
+            readingDialog?.setMessage(message)
             readingDialog?.show(SessionViewDelegateState.Ready(formatCardId(cardId), message))
         }
     }
