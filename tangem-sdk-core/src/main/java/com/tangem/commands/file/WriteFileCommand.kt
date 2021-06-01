@@ -27,6 +27,7 @@ class WriteFileResponse(
     val fileIndex: Int? = null
 ) : CommandResponse
 
+@JsonClass(generateAdapter = true)
 class FileDataSignature(
     val startingSignature: ByteArray,
     val finalizingSignature: ByteArray,
@@ -38,6 +39,7 @@ interface FirmwareRestrictible {
 }
 
 sealed class DataToWrite(val data: ByteArray) : FirmwareRestrictible {
+    @JsonClass(generateAdapter = true)
     class DataProtectedBySignature(
         data: ByteArray,
         val counter: Int,
@@ -48,6 +50,7 @@ sealed class DataToWrite(val data: ByteArray) : FirmwareRestrictible {
         override val maxFirmwareVersion: FirmwareVersion = FirmwareVersion.max
     }
 
+    @JsonClass(generateAdapter = true)
     class DataProtectedByPasscode(data: ByteArray) : DataToWrite(data) {
         override val minFirmwareVersion: FirmwareVersion = FirmwareVersion(3, 34)
         override val maxFirmwareVersion: FirmwareVersion = FirmwareVersion.max
