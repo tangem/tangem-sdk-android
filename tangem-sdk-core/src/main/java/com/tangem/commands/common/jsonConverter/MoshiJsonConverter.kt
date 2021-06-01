@@ -11,13 +11,10 @@ import com.tangem.commands.wallet.WalletIndex
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import java.lang.reflect.ParameterizedType
-import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.reflect.KClass
 
-/**
-[REDACTED_AUTHOR]
- */
 class MoshiJsonConverter(adapters: List<Any> = listOf()) {
 
     val moshi: Moshi = Moshi.Builder().apply {
@@ -162,7 +159,7 @@ class TangemSdkAdapter {
     }
 
     class DateTypeAdapter {
-        private val dateFormatter = DateFormat.getDateInstance(DateFormat.DEFAULT, Locale("en_US"))
+        private val dateFormatter = SimpleDateFormat("yyyy-MM-dd")
 
         @ToJson
         fun toJson(src: Date): String {
