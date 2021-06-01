@@ -1,5 +1,6 @@
 package com.tangem.commands.common
 
+import com.squareup.moshi.JsonClass
 import com.tangem.common.tlv.TlvEncoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.CryptoUtils
@@ -11,6 +12,7 @@ interface IssuerDataVerifier {
     ): Boolean
 }
 
+@JsonClass(generateAdapter = true)
 class IssuerDataToVerify(
         val cardId: String,
         val issuerData: ByteArray?,
