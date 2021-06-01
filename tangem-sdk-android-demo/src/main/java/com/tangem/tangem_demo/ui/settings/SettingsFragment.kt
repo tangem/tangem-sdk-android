@@ -82,5 +82,5 @@ class InitialMessageGroup {
 }
 
 class EditSummaryPreference(context: Context?) : EditTextPreference(context) {
-    override fun getSummary(): CharSequence = text
+    override fun getSummary(): CharSequence = text ?: ""
 }
