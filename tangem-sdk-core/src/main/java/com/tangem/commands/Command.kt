@@ -62,7 +62,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
 
     fun transceive(session: CardSession, callback: (result: CompletionResult<T>) -> Unit) {
         val card = session.environment.card
-        if (card == null && preflightReadMode() == PreflightReadMode.None) {
+        if (preflightReadMode() != PreflightReadMode.None && card == null) {
             callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
             return
         }
