@@ -9,9 +9,7 @@ data class ProductMask(val rawValue: Int) {
 
     fun contains(product: Product): Boolean = (rawValue and product.code) != 0
 
-    override fun toString(): String {
-        return Product.values().filter { contains(it) }.joinToString(", ")
-    }
+    fun toList(): List<Product> = Product.values().filter { contains(it) }.map { it }
 }
 
 enum class Product(val code: Int) {
