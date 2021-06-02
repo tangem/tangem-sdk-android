@@ -4,9 +4,7 @@ class WalletSettingsMask(var rawValue: Int) {
 
     fun contains(setting: WalletSetting): Boolean = (rawValue and setting.code) != 0
 
-    override fun toString(): String {
-        return WalletSetting.values().filter { it.code == rawValue }.joinToString(", ")
-    }
+    fun toList(): List<WalletSetting> = WalletSetting.values().filter { contains(it) }.map { it }
 }
 
 enum class WalletSetting(val code: Int) {
