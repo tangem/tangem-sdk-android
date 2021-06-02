@@ -23,11 +23,12 @@ import com.tangem.common.extensions.guard
  */
 class CreateWalletTask(
     private val config: WalletConfig? = null
-) : CardSessionRunnable<CreateWalletResponse>, PreflightReadCapable {
+) : CardSessionRunnable<CreateWalletResponse> {
 
-    override val requiresPin2 = true
+    @Deprecated("Missing calls", ReplaceWith("Nothing"))
+    fun requiresPin2(): Boolean = true
 
-    override fun preflightReadSettings(): PreflightReadSettings = PreflightReadSettings.FullCardRead
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardRead
 
     override fun run(session: CardSession, callback: (result: CompletionResult<CreateWalletResponse>) -> Unit) {
         var card = session.environment.card.guard {

@@ -6,7 +6,7 @@ import com.tangem.commands.file.*
 import com.tangem.common.CompletionResult
 
 /**
- * This task allows to change settings of multiple files written to the card with [WriteFileDataCommand].
+ * This task allows to change settings of multiple files written to the card with [WriteFileCommand].
  * Passcode (PIN2) is required for this operation.
  * [FileSettings] change access level to a file - it can be [FileSettings.Private],
  * accessible only with PIN2, or [FileSettings.Public], accessible without PIN2
@@ -17,8 +17,6 @@ import com.tangem.common.CompletionResult
 class ChangeFilesSettingsTask(
         private val changes: List<FileSettingsChange>
 ) : CardSessionRunnable<ChangeFileSettingsResponse> {
-
-    override val requiresPin2 = true
 
     private var currentIndex = 0
 

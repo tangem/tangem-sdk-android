@@ -1,5 +1,6 @@
 package com.tangem.commands.read
 
+import com.squareup.moshi.JsonClass
 import com.tangem.CardSession
 import com.tangem.SessionEnvironment
 import com.tangem.TangemSdkError
@@ -17,10 +18,12 @@ import com.tangem.common.tlv.Tlv
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
+import com.tangem.tasks.PreflightReadMode
 
 /**
 [REDACTED_AUTHOR]
  */
+@JsonClass(generateAdapter = true)
 class WalletListResponse(
     val cid: String,
     val wallets: List<CardWallet>
@@ -31,7 +34,7 @@ class ReadWalletListCommand : Command<WalletListResponse>() {
     private var walletIndex: WalletIndex? = null
     private val tempWalletList = mutableListOf<CardWallet>()
 
-    override fun needPreflightRead(): Boolean = false
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun run(session: CardSession, callback: (result: CompletionResult<WalletListResponse>) -> Unit) {
         val card = session.environment.card.guard {

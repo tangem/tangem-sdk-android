@@ -13,9 +13,7 @@ data class SigningMethodMask(val rawValue: Int) {
         }
     }
 
-    override fun toString(): String {
-        return SigningMethod.values().filter { contains(it) }.joinToString(", ")
-    }
+    fun toList(): List<SigningMethod> = SigningMethod.values().filter { contains(it) }.map { it }
 }
 
 enum class SigningMethod(val code: Int) {
