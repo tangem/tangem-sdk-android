@@ -1,6 +1,10 @@
 package com.tangem
 
 import com.tangem.commands.*
+import com.tangem.commands.common.jsonRpc.JSONRPCConverter
+import com.tangem.commands.common.jsonRpc.JSONRPCException
+import com.tangem.commands.common.jsonRpc.JSONRPCRequest
+import com.tangem.commands.common.jsonRpc.toJSONRPCResponse
 import com.tangem.commands.read.ReadCommand
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
@@ -9,8 +13,7 @@ import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.getType
 import com.tangem.crypto.EncryptionHelper
 import com.tangem.crypto.pbkdf2Hash
-import com.tangem.tasks.PreflightReadCapable
-import com.tangem.tasks.PreflightReadSettings
+import com.tangem.tasks.PreflightReadMode
 import com.tangem.tasks.PreflightReadTask
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -22,8 +25,6 @@ import java.io.StringWriter
  */
 interface CardSessionRunnable<T : CommandResponse> {
 
-    val requiresPin2: Boolean
-
     /**
      * The starting point for custom business logic.
      * Implement this interface and use [TangemSdk.startSessionWithRunnable] to run.
@@ -31,10 +32,12 @@ interface CardSessionRunnable<T : CommandResponse> {
      * @param callback trigger the callback to complete the task.
      */
     fun run(session: CardSession, callback: (result: CompletionResult<T>) -> Unit)
-}
 
-interface CardSessionPreparable {
-    fun prepare(session: CardSession, callback: (result: CompletionResult<Unit>) -> Unit)
+    fun prepare(session: CardSession, callback: (result: CompletionResult<Unit>) -> Unit) {
+        callback(CompletionResult.Success(Unit))
+    }
+
+    fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardRead
 }
 
 enum class CardSessionState {
@@ -65,10 +68,13 @@ class CardSession(
     private val reader: CardReader,
     val viewDelegate: SessionViewDelegate,
     private var cardId: String? = null,
-    private var initialMessage: Message? = null
+    private var initialMessage: Message? = null,
+    private val jsonRpcConverter: JSONRPCConverter
 ) {
 
     var connectedTag: TagType? = null
+    var state = CardSessionState.Inactive
+        private set
 
     val environment = environmentService.createEnvironment(cardId)
     val scope = CoroutineScope(Dispatchers.IO) + CoroutineExceptionHandler { _, ex ->
@@ -80,12 +86,7 @@ class CardSession(
     /**
      * True if some operation is still in progress.
      */
-    private var state = CardSessionState.Inactive
-    private var needPreflightRead = true
-    private var pin2Required = false
-    private var preflightReadingSettings: PreflightReadSettings = PreflightReadSettings.ReadCardOnly
-
-    private val tag = this.javaClass.simpleName
+    private var preflightReadMode: PreflightReadMode = PreflightReadMode.FullCardRead
 
     fun setInitialMessage(message: Message?) {
         initialMessage = message
@@ -117,7 +118,7 @@ class CardSession(
                         }
                         Log.session { "Start runnable" }
                         runnable.run(this) { result ->
-                            Log.session{ "Runnable completed" }
+                            Log.session { "Runnable completed" }
                             when (result) {
                                 is CompletionResult.Success -> stop()
                                 is CompletionResult.Failure -> stopWithError(result.error)
@@ -136,15 +137,8 @@ class CardSession(
         runnable: T, callback: (result: CompletionResult<Unit>) -> Unit
     ) {
         Log.session { "Prepare card session" }
-        (runnable as? PreflightReadCapable)?.let {
-            needPreflightRead = it.needPreflightRead()
-            preflightReadingSettings = it.preflightReadSettings()
-        }
-        if (runnable is CardSessionPreparable) {
-            runnable.prepare(this, callback)
-        } else {
-            callback(CompletionResult.Success(Unit))
-        }
+        preflightReadMode = runnable.preflightReadMode()
+        runnable.prepare(this, callback)
     }
 
     /**
@@ -164,7 +158,7 @@ class CardSession(
                 .filterNotNull()
                 .take(1)
                 .collect { tagType ->
-                    if (tagType == TagType.Nfc && needPreflightRead) {
+                    if (tagType == TagType.Nfc && preflightReadMode != PreflightReadMode.None) {
                         preflightCheck(callback)
                     } else {
                         callback(this@CardSession, null)
@@ -187,6 +181,7 @@ class CardSession(
             reader.tag.asFlow()
                 .onCompletion {
                     if (it is CancellationException && it.message == TangemSdkError.UserCancelled().customMessage) {
+                        stopWithError(TangemSdkError.UserCancelled())
                         viewDelegate.dismiss()
                         callback(this@CardSession, TangemSdkError.UserCancelled())
                     }
@@ -202,9 +197,26 @@ class CardSession(
         }
     }
 
+    fun run(jsonRequest: String, callback: (String) -> Unit) {
+        val request: JSONRPCRequest = try {
+            JSONRPCRequest(jsonRequest)
+        } catch (ex: JSONRPCException) {
+            callback(ex.toJSONRPCResponse(null).toJson())
+            return
+        }
+        try {
+            val runnable = jsonRpcConverter.convert(request)
+            runnable.run(this) {
+                callback(it.toJSONRPCResponse(request.id).toJson())
+            }
+        } catch (ex: JSONRPCException) {
+            callback(ex.toJSONRPCResponse(request.id).toJson())
+        }
+    }
+
     private fun preflightCheck(callback: (session: CardSession, error: TangemError?) -> Unit) {
         Log.session { "Start preflight check" }
-        PreflightReadTask(preflightReadingSettings).run(this) { result ->
+        PreflightReadTask(preflightReadMode).run(this) { result ->
             when (result) {
                 is CompletionResult.Failure -> {
                     stopWithError(result.error)
@@ -240,7 +252,7 @@ class CardSession(
      * Stops the current session with the text message.
      * @param message If null, the default message will be shown.
      */
-    private fun stop(message: Message? = null) {
+    fun stop(message: Message? = null) {
         stopSession()
         viewDelegate.onSessionStopped(message)
     }
@@ -249,7 +261,7 @@ class CardSession(
      * Stops the current session on error.
      * @param error An error that will be shown.
      */
-    private fun stopWithError(error: TangemError) {
+    fun stopWithError(error: TangemError) {
         stopSession()
         if (error !is TangemSdkError.UserCancelled) {
             Log.error { "Finishing with error: ${error.code}" }
@@ -262,7 +274,7 @@ class CardSession(
     private fun stopSession() {
         Log.session { "Stop session" }
         state = CardSessionState.Inactive
-        preflightReadingSettings = PreflightReadSettings.ReadCardOnly
+        preflightReadMode = PreflightReadMode.FullCardRead
         environmentService.saveEnvironmentValues(environment, cardId)
         reader.stopSession()
         scope.cancel()

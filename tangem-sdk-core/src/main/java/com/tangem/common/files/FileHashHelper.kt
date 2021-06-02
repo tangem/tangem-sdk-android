@@ -10,7 +10,7 @@ import com.tangem.crypto.sign
 class FileHashHelper {
     companion object {
         /**
-         * Creates hashes and signatures for [com.tangem.commands.file.FileData.DataProtectedBySignature]
+         * Creates hashes and signatures for [com.tangem.commands.file.DataToWrite.DataProtectedBySignature]
          * @param cardId: CID, Unique Tangem card ID number.
          * @param fileData: File data that will be written on card
          * @param fileCounter: A counter that protects issuer data against replay attack.
