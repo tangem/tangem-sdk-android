@@ -3,15 +3,14 @@ package com.tangem.tangem_demo.ui.separtedCommands
 import android.os.Bundle
 import android.view.View
 import com.google.android.material.slider.Slider
-import com.google.gson.Gson
 import com.tangem.Config
 import com.tangem.Log
 import com.tangem.TangemSdk
 import com.tangem.TangemSdkError
-import com.tangem.commands.common.ResponseConverter
 import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.EllipticCurve
 import com.tangem.commands.common.card.masks.SigningMethod
+import com.tangem.commands.common.jsonConverter.MoshiJsonConverter
 import com.tangem.commands.file.FileSettings
 import com.tangem.commands.file.FileSettingsChange
 import com.tangem.commands.wallet.WalletConfig
@@ -35,7 +34,7 @@ import kotlinx.android.synthetic.main.wallet.*
  */
 class CommandListFragment : BaseFragment() {
 
-    private val gson: Gson = ResponseConverter().gson
+    private val jsonConverter: MoshiJsonConverter = MoshiJsonConverter.tangemSdkJsonConverter()
     private val logger = DefaultSessionViewDelegate.createLogger()
 
     override fun initSdk(): TangemSdk = TangemSdk.init(this.requireActivity(), Config())
@@ -88,7 +87,7 @@ class CommandListFragment : BaseFragment() {
         when (result) {
             is CompletionResult.Success -> {
                 if (result.data is Card) updateWalletsSlider()
-                val json = gson.toJson(result.data)
+                val json = jsonConverter.prettyPrint(result.data)
                 showDialog(json)
             }
             is CompletionResult.Failure -> {

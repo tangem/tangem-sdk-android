@@ -1,5 +1,6 @@
 package com.tangem.commands
 
+import com.squareup.moshi.JsonClass
 import com.tangem.CardSession
 import com.tangem.Log
 import com.tangem.SessionEnvironment
@@ -11,13 +12,14 @@ import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvTag
 
+@JsonClass(generateAdapter = true)
 class CheckPinResponse(
         val isPin2Default: Boolean
 ) : CommandResponse
 
 class CheckPinCommand : Command<CheckPinResponse>() {
 
-    override val requiresPin2 = true
+    override fun requiresPin2(): Boolean = true
 
     override fun run(session: CardSession, callback: (result: CompletionResult<CheckPinResponse>) -> Unit) {
         super.run(session) { result ->
