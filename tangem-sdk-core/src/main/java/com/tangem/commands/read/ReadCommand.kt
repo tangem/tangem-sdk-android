@@ -13,6 +13,7 @@ import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvTag
+import com.tangem.tasks.PreflightReadMode
 
 /**
  * This command receives from the Tangem Card all the data about the card and the wallet,
@@ -20,7 +21,7 @@ import com.tangem.common.tlv.TlvTag
  */
 class ReadCommand : Command<Card>() {
 
-    override fun needPreflightRead(): Boolean = false
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun run(session: CardSession, callback: (result: CompletionResult<Card>) -> Unit) {
         super.run(session) {
