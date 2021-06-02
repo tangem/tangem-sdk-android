@@ -7,6 +7,7 @@ import com.tangem.commands.common.card.CardDeserializer
 import com.tangem.commands.common.card.FirmwareVersion
 import com.tangem.commands.common.card.masks.Product
 import com.tangem.commands.common.card.masks.Settings
+import com.tangem.commands.common.jsonRpc.JSONRPCConvertible
 import com.tangem.commands.verification.VerifyCardCommand
 import com.tangem.commands.wallet.CheckWalletCommand
 import com.tangem.commands.wallet.WalletStatus
@@ -18,13 +19,9 @@ import com.tangem.common.extensions.guard
  *
  * It performs two commands, [ReadCommand] and [CheckWalletCommand], subsequently.
  */
-class ScanTask(
-    private val cardVerification: Boolean = true
-) : CardSessionRunnable<Card>, PreflightReadCapable {
+class ScanTask(private var cardVerification: Boolean = true) : CardSessionRunnable<Card> {
 
-    override val requiresPin2 = false
-
-    override fun preflightReadSettings(): PreflightReadSettings = PreflightReadSettings.FullCardRead
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardRead
 
     override fun run(session: CardSession, callback: (result: CompletionResult<Card>) -> Unit) {
         if (session.connectedTag == TagType.Slix) {
@@ -125,6 +122,16 @@ class ScanTask(
                 }
                 is CompletionResult.Failure -> {
                     callback(CompletionResult.Failure(result.error))
+                }
+            }
+        }
+    }
+
+    companion object {
+        fun asJSONRPCConvertible(): JSONRPCConvertible<Card> {
+            return object : JSONRPCConvertible<Card> {
+                override fun makeRunnable(params: Map<String, Any?>): CardSessionRunnable<Card> {
+                    return ScanTask()
                 }
             }
         }

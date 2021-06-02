@@ -130,7 +130,7 @@ sealed class TangemSdkError(final override val code: Int) : Exception(code.toStr
     class NotPersonalized() : TangemSdkError(40001)
     class NotActivated : TangemSdkError(40002)
     class WalletIsPurged : TangemSdkError(40003)
-    class Pin2OrCvcRequired : TangemSdkError(40004)
+    class Pin2Required : TangemSdkError(40004)
     /**
      * This error is returned when a [Task] checks unsuccessfully either
      * a card's ability to sign with its private key, or the validity of issuer data.
