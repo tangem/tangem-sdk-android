@@ -1,5 +1,6 @@
 package com.tangem.commands.file
 
+import com.squareup.moshi.JsonClass
 import com.tangem.*
 import com.tangem.commands.Command
 import com.tangem.commands.CommandResponse
@@ -10,7 +11,7 @@ import com.tangem.commands.common.card.Card
 import com.tangem.commands.common.card.CardStatus
 import com.tangem.commands.common.card.FirmwareVersion
 import com.tangem.commands.common.card.masks.Settings
-import com.tangem.commands.file.WriteFileDataCommand.Companion.MAX_SIZE
+import com.tangem.commands.file.WriteFileCommand.Companion.MAX_SIZE
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
@@ -20,14 +21,15 @@ import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 
-class WriteFileDataResponse(
-        val cardId: String,
-        val fileIndex: Int? = null
+@JsonClass(generateAdapter = true)
+class WriteFileResponse(
+    val cardId: String,
+    val fileIndex: Int? = null
 ) : CommandResponse
 
 class FileDataSignature(
-        val startingSignature: ByteArray,
-        val finalizingSignature: ByteArray,
+    val startingSignature: ByteArray,
+    val finalizingSignature: ByteArray,
 )
 
 interface FirmwareRestrictible {
@@ -35,18 +37,18 @@ interface FirmwareRestrictible {
     val maxFirmwareVersion: FirmwareVersion
 }
 
-sealed class FileData(val data: ByteArray) : FirmwareRestrictible {
+sealed class DataToWrite(val data: ByteArray) : FirmwareRestrictible {
     class DataProtectedBySignature(
-            data: ByteArray,
-            val counter: Int,
-            val signature: FileDataSignature,
-            val issuerPublicKey: ByteArray? = null
-    ) : FileData(data) {
+        data: ByteArray,
+        val counter: Int,
+        val signature: FileDataSignature,
+        val issuerPublicKey: ByteArray? = null
+    ) : DataToWrite(data) {
         override val minFirmwareVersion: FirmwareVersion = FirmwareVersion(3, 29)
         override val maxFirmwareVersion: FirmwareVersion = FirmwareVersion.max
     }
 
-    class DataProtectedByPasscode(data: ByteArray) : FileData(data) {
+    class DataProtectedByPasscode(data: ByteArray) : DataToWrite(data) {
         override val minFirmwareVersion: FirmwareVersion = FirmwareVersion(3, 34)
         override val maxFirmwareVersion: FirmwareVersion = FirmwareVersion.max
     }
@@ -56,46 +58,46 @@ sealed class FileData(val data: ByteArray) : FirmwareRestrictible {
  * This command allows to write data up to [MAX_SIZE] to a card.
  * There are two secure ways to write files.
  * 1) Data can be signed by Issuer (the one specified on card during personalization) -
- * [FileData.DataProtectedBySignature].
- * 2) Data can be protected by Passcode (PIN2). [FileData.DataProtectedByPasscode] In this case,
+ * [DataToWrite.DataProtectedBySignature].
+ * 2) Data can be protected by Passcode (PIN2). [DataToWrite.DataProtectedByPasscode] In this case,
  * Passcode (PIN2) is required for the command.
  *
- * @property fileData data to be written.
+ * @property dataToWrite data to be written.
  */
-class WriteFileDataCommand(
-        private val fileData: FileData,
-        verifier: IssuerDataVerifier = DefaultIssuerDataVerifier()
-) : Command<WriteFileDataResponse>(), IssuerDataVerifier by verifier {
-
-    override val requiresPin2: Boolean = fileData is FileData.DataProtectedByPasscode
+class WriteFileCommand(
+    private val dataToWrite: DataToWrite,
+    verifier: IssuerDataVerifier = DefaultIssuerDataVerifier()
+) : Command<WriteFileResponse>(), IssuerDataVerifier by verifier {
 
     private var mode: FileDataMode = FileDataMode.InitiateWritingFile
     private var offset: Int = 0
     private var fileIndex: Int = 0
 
+    override fun requiresPin2(): Boolean = dataToWrite is DataToWrite.DataProtectedByPasscode
+
     override fun run(
-            session: CardSession,
-            callback: (result: CompletionResult<WriteFileDataResponse>) -> Unit
+        session: CardSession,
+        callback: (result: CompletionResult<WriteFileResponse>) -> Unit
     ) {
         writeFileData(session, callback)
     }
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.firmwareVersion < FirmwareConstraints.AvailabilityVersions.files ||
-            card.firmwareVersion < fileData.minFirmwareVersion)
+            card.firmwareVersion < dataToWrite.minFirmwareVersion)
             return TangemSdkError.FirmwareNotSupported()
 
-        if (fileData is FileData.DataProtectedBySignature) {
-            val publicKey = fileData.issuerPublicKey ?: card.issuerPublicKey
+        if (dataToWrite is DataToWrite.DataProtectedBySignature) {
+            val publicKey = dataToWrite.issuerPublicKey ?: card.issuerPublicKey
             ?: return TangemSdkError.MissingIssuerPubicKey()
-            if (!isCounterValid(fileData.counter, card)) {
+            if (!isCounterValid(dataToWrite.counter, card)) {
                 return TangemSdkError.MissingCounter()
             }
-            if (!verifySignatures(fileData, publicKey, card.cardId)) {
+            if (!verifySignatures(dataToWrite, publicKey, card.cardId)) {
                 return TangemSdkError.VerificationFailed()
             }
         }
-        if (fileData.data.size > MAX_SIZE) {
+        if (dataToWrite.data.size > MAX_SIZE) {
             return TangemSdkError.DataSizeTooLarge()
         }
         if (card.status == CardStatus.NotPersonalized) {
@@ -113,39 +115,36 @@ class WriteFileDataCommand(
             return TangemSdkError.DataCannotBeWritten()
         }
         if (error is TangemSdkError.InvalidState &&
-                card?.settingsMask?.contains(Settings.ProtectIssuerDataAgainstReplay) == true) {
+            card?.settingsMask?.contains(Settings.ProtectIssuerDataAgainstReplay) == true) {
             return TangemSdkError.OverwritingDataIsProhibited()
-        }
-        if (error is TangemSdkError.InvalidParams) {
-            return TangemSdkError.Pin2OrCvcRequired()
         }
         return error
     }
 
     private fun isCounterValid(issuerDataCounter: Int?, card: Card): Boolean =
-            if (isCounterRequired(card)) issuerDataCounter != null else true
+        if (isCounterRequired(card)) issuerDataCounter != null else true
 
     private fun isCounterRequired(card: Card?): Boolean {
-        if (fileData is FileData.DataProtectedByPasscode) return false
+        if (dataToWrite is DataToWrite.DataProtectedByPasscode) return false
         return card?.settingsMask?.contains(Settings.ProtectIssuerDataAgainstReplay) == true
     }
 
     private fun verifySignatures(
-            fileData: FileData.DataProtectedBySignature, publicKey: ByteArray, cardId: String
+        dataToWrite: DataToWrite.DataProtectedBySignature, publicKey: ByteArray, cardId: String
     ): Boolean {
-        val firstData = IssuerDataToVerify(cardId, null, fileData.counter, fileData.data.size)
-        val secondData = IssuerDataToVerify(cardId, fileData.data, fileData.counter)
+        val firstData = IssuerDataToVerify(cardId, null, dataToWrite.counter, dataToWrite.data.size)
+        val secondData = IssuerDataToVerify(cardId, dataToWrite.data, dataToWrite.counter)
 
-        return verify(publicKey, fileData.signature.startingSignature, firstData) &&
-                verify(publicKey, fileData.signature.finalizingSignature, secondData)
+        return verify(publicKey, dataToWrite.signature.startingSignature, firstData) &&
+            verify(publicKey, dataToWrite.signature.finalizingSignature, secondData)
     }
 
     private fun writeFileData(
-            session: CardSession,
-            callback: (result: CompletionResult<WriteFileDataResponse>) -> Unit
+        session: CardSession,
+        callback: (result: CompletionResult<WriteFileResponse>) -> Unit
     ) {
         if (mode == FileDataMode.WriteFile) {
-            session.viewDelegate.onDelay(fileData.data.size, offset, SINGLE_WRITE_SIZE)
+            session.viewDelegate.onDelay(dataToWrite.data.size, offset, SINGLE_WRITE_SIZE)
         }
         transceive(session) { result ->
             when (result) {
@@ -159,7 +158,7 @@ class WriteFileDataCommand(
                         }
                         FileDataMode.WriteFile -> {
                             offset += SINGLE_WRITE_SIZE
-                            if (offset >= fileData.data.size) {
+                            if (offset >= dataToWrite.data.size) {
                                 mode = FileDataMode.ConfirmWritingFile
                             }
                             writeFileData(session, callback)
@@ -167,7 +166,7 @@ class WriteFileDataCommand(
                         }
                         FileDataMode.ConfirmWritingFile -> {
                             callback(CompletionResult.Success(
-                                    WriteFileDataResponse(result.data.cardId, fileIndex)
+                                WriteFileResponse(result.data.cardId, fileIndex)
                             ))
                         }
                     }
@@ -194,10 +193,10 @@ class WriteFileDataCommand(
 
         when (mode) {
             FileDataMode.InitiateWritingFile -> {
-                tlvBuilder.append(TlvTag.Size, fileData.data.size)
-                if (fileData is FileData.DataProtectedBySignature) {
-                    tlvBuilder.append(TlvTag.IssuerDataSignature, fileData.signature.startingSignature)
-                    tlvBuilder.append(TlvTag.IssuerDataCounter, fileData.counter)
+                tlvBuilder.append(TlvTag.Size, dataToWrite.data.size)
+                if (dataToWrite is DataToWrite.DataProtectedBySignature) {
+                    tlvBuilder.append(TlvTag.IssuerDataSignature, dataToWrite.signature.startingSignature)
+                    tlvBuilder.append(TlvTag.IssuerDataCounter, dataToWrite.counter)
                 } else {
                     tlvBuilder.append(TlvTag.Pin2, environment.pin2?.value)
                 }
@@ -209,10 +208,10 @@ class WriteFileDataCommand(
                 tlvBuilder.append(TlvTag.FileIndex, fileIndex)
             }
             FileDataMode.ConfirmWritingFile -> {
-                if (fileData is FileData.DataProtectedBySignature) {
-                    tlvBuilder.append(TlvTag.IssuerDataSignature, fileData.signature.finalizingSignature)
+                if (dataToWrite is DataToWrite.DataProtectedBySignature) {
+                    tlvBuilder.append(TlvTag.IssuerDataSignature, dataToWrite.signature.finalizingSignature)
                 } else {
-                    tlvBuilder.append(TlvTag.CodeHash, fileData.data.calculateSha256())
+                    tlvBuilder.append(TlvTag.CodeHash, dataToWrite.data.calculateSha256())
                     tlvBuilder.append(TlvTag.Pin2, environment.pin2?.value)
                 }
                 tlvBuilder.append(TlvTag.FileIndex, fileIndex)
@@ -222,22 +221,22 @@ class WriteFileDataCommand(
     }
 
     private fun getDataToWrite(): ByteArray =
-            fileData.data.copyOfRange(offset, offset + calculatePartSize())
+        dataToWrite.data.copyOfRange(offset, offset + calculatePartSize())
 
     private fun calculatePartSize(): Int {
-        val bytesLeft = fileData.data.size - offset
+        val bytesLeft = dataToWrite.data.size - offset
         return if (bytesLeft < SINGLE_WRITE_SIZE) bytesLeft else SINGLE_WRITE_SIZE
     }
 
     override fun deserialize(
-            environment: SessionEnvironment,
-            apdu: ResponseApdu
-    ): WriteFileDataResponse {
+        environment: SessionEnvironment,
+        apdu: ResponseApdu
+    ): WriteFileResponse {
         val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
         val decoder = TlvDecoder(tlvData)
-        return WriteFileDataResponse(
-                cardId = decoder.decode(TlvTag.CardId),
-                fileIndex = decoder.decodeOptional(TlvTag.FileIndex)
+        return WriteFileResponse(
+            cardId = decoder.decode(TlvTag.CardId),
+            fileIndex = decoder.decodeOptional(TlvTag.FileIndex)
         )
     }
 
