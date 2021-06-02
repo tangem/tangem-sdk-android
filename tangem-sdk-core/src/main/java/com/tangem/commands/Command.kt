@@ -1,5 +1,6 @@
 package com.tangem.commands
 
+import com.squareup.moshi.JsonClass
 import com.tangem.*
 import com.tangem.commands.common.card.Card
 import com.tangem.common.CompletionResult
@@ -7,7 +8,7 @@ import com.tangem.common.PinCode
 import com.tangem.common.apdu.*
 import com.tangem.common.extensions.toInt
 import com.tangem.common.tlv.TlvTag
-import com.tangem.tasks.PreflightReadCapable
+import com.tangem.tasks.PreflightReadMode
 import okhttp3.internal.toHexString
 import java.util.*
 
@@ -37,14 +38,15 @@ interface ApduSerializable<T : CommandResponse> {
  */
 interface CommandResponse
 
+@JsonClass(generateAdapter = true)
 data class SimpleResponse(val cardId: String) : CommandResponse
 
 /**
  * Basic class for Tangem card commands
  */
-abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRunnable<T>, PreflightReadCapable {
+abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRunnable<T> {
 
-    override val requiresPin2: Boolean = false
+    open fun requiresPin2(): Boolean = false
 
     override fun run(session: CardSession, callback: (result: CompletionResult<T>) -> Unit) {
         val commandLog = "Send command: ${this::class.java.simpleName}"
@@ -60,7 +62,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
 
     fun transceive(session: CardSession, callback: (result: CompletionResult<T>) -> Unit) {
         val card = session.environment.card
-        if (card == null && needPreflightRead()) {
+        if (preflightReadMode() != PreflightReadMode.None && card == null) {
             callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
             return
         }
@@ -70,7 +72,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                 return
             }
         }
-        if (session.environment.pin2 == null && requiresPin2) {
+        if (session.environment.pin2 == null && requiresPin2()) {
             requestPin(PinType.Pin2, session, callback)
             return
         }
@@ -93,18 +95,25 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                         }
                     }
                     if (session.environment.handleErrors) {
-                        val error = mapError(session.environment.card, result.error)
-                        if (error is TangemSdkError.Pin1Required) {
+                        val mappedError = mapError(session.environment.card, result.error)
+                        if (mappedError is TangemSdkError.Pin1Required) {
                             requestPin(PinType.Pin1, session, callback)
-                            return@transceiveApdu
+                        } else if (mappedError is TangemSdkError.InvalidParams) {
+                            if (requiresPin2()) {
+                                //Addition check for COS v4 and newer to prevent false-positive pin2 request
+                                if (session.environment.card?.isPin2Default == true
+                                    && session.environment.pin2?.isDefault == true) {
+                                    callback(CompletionResult.Failure(mappedError))
+                                } else {
+                                    requestPin(PinType.Pin2, session, callback)
+                                }
+                            } else {
+                                callback(CompletionResult.Failure(mappedError))
+                            }
+                        } else {
+                            callback(CompletionResult.Failure(mappedError))
                         }
-                        if (error is TangemSdkError.Pin2OrCvcRequired) {
-                            requestPin(PinType.Pin2, session, callback)
-                            return@transceiveApdu
-                        }
-                        callback(CompletionResult.Failure(error))
                         return@transceiveApdu
-
                     }
                     callback(CompletionResult.Failure(result.error))
                 }
