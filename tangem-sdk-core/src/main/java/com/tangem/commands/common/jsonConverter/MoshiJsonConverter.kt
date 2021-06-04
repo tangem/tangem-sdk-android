@@ -62,11 +62,14 @@ class MoshiJsonConverter(adapters: List<Any> = listOf()) {
     }
 
     companion object {
-        val INSTANCE: MoshiJsonConverter by lazy { tangemSdkJsonConverter() }
+        var INSTANCE: MoshiJsonConverter = default()
+            private set
 
-        fun tangemSdkJsonConverter(): MoshiJsonConverter {
-            return MoshiJsonConverter(getTangemSdkAdapters())
+        fun setInstance(converter: MoshiJsonConverter) {
+            INSTANCE = converter
         }
+
+        fun default() = MoshiJsonConverter(getTangemSdkAdapters())
 
         fun getTangemSdkAdapters(): List<Any> {
             return listOf(
