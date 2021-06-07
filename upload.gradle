@@ -16,7 +16,7 @@ afterEvaluate {
                     pom.withXml {
                         Node pomNode = asNode()
                         pomNode.dependencies.'*'.findAll() {
-                            it.groupId.text() == "com.tangem"
+                            it.groupId.text() == artifactConfig.group
                         }.each() {
                             it.parent().remove(it)
                         }
