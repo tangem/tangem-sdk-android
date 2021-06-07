@@ -9,7 +9,7 @@ afterEvaluate {
                 artifactId = "$project.artifactId"
                 version = "$artifactConfig.version"
 
-                if (artifactId == "sdk-android") {
+                if (artifactId == "android") {
                     from components.release
                     artifact(sourceJar)
 
