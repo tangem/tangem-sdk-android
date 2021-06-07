@@ -11,6 +11,7 @@ afterEvaluate {
 
                 if (artifactId == "sdk-android") {
                     from components.release
+                    artifact(sourceJar)
 
                     pom.withXml {
                         Node pomNode = asNode()
