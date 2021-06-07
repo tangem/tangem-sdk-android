@@ -2,12 +2,10 @@ plugins {
     id 'java-library'
     id 'kotlin'
 }
-apply from: '../upload.gradle'
 apply from: '../artifactConfig.gradle'
-
+apply from: '../upload.gradle'
 
 sourceCompatibility = 1.8
-
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
