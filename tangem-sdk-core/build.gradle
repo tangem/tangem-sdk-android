@@ -1,13 +1,10 @@
 apply plugin: "kotlin"
 apply plugin: 'org.jetbrains.dokka'
 apply plugin: 'kotlin-kapt'
-apply from: '../dependencies.gradle'
-apply from: '../upload.gradle'
-apply from: '../artifactConfig.gradle'
 apply plugin: 'com.squareup.sqldelight'
-
-group = "$artifactConfig.group"
-version = "$artifactConfig.version"
+apply from: '../dependencies.gradle'
+apply from: '../artifactConfig.gradle'
+apply from: '../upload.gradle'
 
 dependencies {
     // kotlin
