@@ -70,6 +70,10 @@ compileTestKotlin {
     }
 }
 
+java {
+    withSourcesJar()
+}
+
 task dokkaJavadoc(type: org.jetbrains.dokka.gradle.DokkaTask) {
     outputFormat = 'markdown'
 }
