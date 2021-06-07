@@ -1,1 +1,38 @@
-apply plugin: 'com.github.dcendents.android-maven'
+apply from: '../artifactConfig.gradle'
+apply plugin: 'maven-publish'
+
+afterEvaluate {
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                groupId = "$artifactConfig.group"
+                artifactId = "$project.artifactId"
+                version = "$artifactConfig.version"
+
+                if (artifactId == "sdk-android") {
+                    from components.release
+
+                    pom.withXml {
+                        Node pomNode = asNode()
+                        pomNode.dependencies.'*'.findAll() {
+                            it.groupId.text() == "com.tangem"
+                        }.each() {
+                            it.parent().remove(it)
+                        }
+                    }
+                } else {
+                    from components.java
+                }
+            }
+        }
+        repositories {
+            maven {
+                url = "https://nexus.tangem-tech.com/repository/maven-releases"
+                credentials {
+                    username = "$nexusUser"
+                    password = "$nexusPass"
+                }
+            }
+        }
+    }
+}
