@@ -34,7 +34,7 @@ import kotlinx.android.synthetic.main.wallet.*
  */
 class CommandListFragment : BaseFragment() {
 
-    private val jsonConverter: MoshiJsonConverter = MoshiJsonConverter.tangemSdkJsonConverter()
+    private val jsonConverter: MoshiJsonConverter = MoshiJsonConverter.default()
     private val logger = DefaultSessionViewDelegate.createLogger()
 
     override fun initSdk(): TangemSdk = TangemSdk.init(this.requireActivity(), Config())
