@@ -219,7 +219,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
         }
 
         Log.session { "Request pin of type: $type" }
-        session.requestUserCodeIfNeeded(type) { result ->
+        session.requestUserCodeIfNeeded(type, isFirstAttempt) { result ->
             when (result) {
                 is CompletionResult.Success -> {
                     session.resume()
