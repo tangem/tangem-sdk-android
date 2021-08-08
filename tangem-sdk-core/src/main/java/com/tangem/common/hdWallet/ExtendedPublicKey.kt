@@ -1,5 +1,6 @@
 package com.tangem.common.hdWallet
 
+import com.squareup.moshi.JsonClass
 import com.tangem.common.extensions.calculateHashCode
 import com.tangem.common.extensions.toByteArray
 import com.tangem.common.hdWallet.bip.BIP32
@@ -10,6 +11,7 @@ import com.tangem.operations.CommandResponse
 /**
 [REDACTED_AUTHOR]
  */
+@JsonClass(generateAdapter = true)
 class ExtendedPublicKey(
     val compressedPublicKey: ByteArray,
     val chainCode: ByteArray,
