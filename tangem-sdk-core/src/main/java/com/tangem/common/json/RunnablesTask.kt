@@ -10,7 +10,7 @@ import com.tangem.operations.CommandResponse
 [REDACTED_AUTHOR]
  */
 class RunnablesTaskResponse(
-    val responses: List<String>
+    val responses: List<JSONRPCResponse>
 ) : CommandResponse
 
 internal class RunnablesTask(
@@ -23,7 +23,7 @@ internal class RunnablesTask(
 
     private fun run(session: CardSession, index: Int, callback: CompletionCallback<RunnablesTaskResponse>) {
         if (index >= linkersList.size) {
-            val completeResponse = linkersList.map { it.response.toJson() }
+            val completeResponse = linkersList.map { it.response }
             callback(CompletionResult.Success(RunnablesTaskResponse(completeResponse)))
             return
         }
