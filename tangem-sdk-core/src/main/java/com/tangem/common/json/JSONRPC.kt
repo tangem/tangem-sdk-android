@@ -206,7 +206,7 @@ internal class JSONRPCLinker {
     }
 
     private fun createRequest(map: Map<String, Any>): JSONRPCRequest? {
-        val id = if (map.containsKey("id")) extract<Double>("id", map).toInt() else null
+        val id = if (map.containsKey("id")) (map["id"] as? Double)?.toInt() else null
         // initiate blank response with id
         response = JSONRPCResponse(null, null, id)
 
@@ -248,6 +248,12 @@ internal class JSONRPCLinker {
             }
         }
     }
+}
+
+internal fun List<JSONRPCLinker>.createResult(converter: MoshiJsonConverter): String = when {
+    isEmpty() -> ""
+    size == 1 -> converter.toJson(this[0].response)
+    else -> converter.toJson(this.map { it.response })
 }
 
 class JSONRPCException(val jsonRpcError: JSONRPCError) : Exception(jsonRpcError.message) {
