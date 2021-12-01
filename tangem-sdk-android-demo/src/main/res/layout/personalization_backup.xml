@@ -36,22 +36,22 @@
             android:orientation="vertical">
 
             <Button
-                android:id="@+id/btnPersonalizeMaster"
+                android:id="@+id/btnPersonalizePrimary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Master" />
+                android:text="Primary" />
 
             <Button
-                android:id="@+id/btnPersonalizeSlave1"
+                android:id="@+id/btnPersonalizeBackup1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Slave 1" />
+                android:text="Backup 1" />
 
             <Button
-                android:id="@+id/btnPersonalizeSlave2"
+                android:id="@+id/btnPersonalizeBackup2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Slave 2" />
+                android:text="Backup 2" />
 
             <Button
                 android:id="@+id/btnDepersonalize"
