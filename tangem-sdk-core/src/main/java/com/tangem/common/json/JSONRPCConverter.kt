@@ -1,12 +1,11 @@
 package com.tangem.common.json
 
 import com.tangem.common.core.CardSessionRunnable
-import com.tangem.operations.CommandResponse
 
 /**
 [REDACTED_AUTHOR]
  */
-interface JSONRPCHandler<R : CommandResponse> {
+interface JSONRPCHandler<R> {
     val method: String
 
     fun makeRunnable(params: Map<String, Any?>): CardSessionRunnable<R>
