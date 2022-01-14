@@ -10,7 +10,7 @@ import com.tangem.common.core.TangemSdkError
 /**
 [REDACTED_AUTHOR]
  */
-class DeleteAllFilesTask : CardSessionRunnable<SuccessResponse> {
+internal class DeleteAllFilesTask : CardSessionRunnable<SuccessResponse> {
 
     override fun run(session: CardSession, callback: CompletionCallback<SuccessResponse>) {
         deleteFile(session, callback)
