@@ -59,6 +59,7 @@ class ViewDelegateFragment : BaseFragment() {
             RequestAccessCode(),
             RequestPasscode(),
             RequestUserCode(),
+            RequestPinSetup(),
             SingleRequestAccessCode(false),
             SingleRequestAccessCode(true),
         )
