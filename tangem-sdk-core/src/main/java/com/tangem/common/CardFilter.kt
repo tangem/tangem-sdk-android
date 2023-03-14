@@ -118,9 +118,9 @@ class CardIdRange private constructor(
             )
         }
 
-        private fun String.getBatchPrefix(): String = this.take(4).uppercase()
+        private fun String.getBatchPrefix(): String = this.take(n = 4).uppercase()
 
-        private fun String.stripBatchPrefix(): String = this.drop(4)
+        private fun String.stripBatchPrefix(): String = this.drop(n = 4)
 
         private fun String.toLong(): Long? = this.stripBatchPrefix().toLongOrNull()
     }
