@@ -12,7 +12,7 @@ import com.tangem.common.core.TangemSdkError
  */
 class ReadFilesTask(
     private val fileName: String? = null,
-    private val walletPublicKey: ByteArray? = null
+    private val walletPublicKey: ByteArray? = null,
 ) : CardSessionRunnable<List<File>> {
 
     /**
