@@ -10,11 +10,11 @@ import com.tangem.operations.CommandResponse
 [REDACTED_AUTHOR]
  */
 class RunnablesTaskResponse(
-    val responses: List<JSONRPCResponse>
+    val responses: List<JSONRPCResponse>,
 ) : CommandResponse
 
 internal class RunnablesTask(
-    private val linkersList: List<JSONRPCLinker>
+    private val linkersList: List<JSONRPCLinker>,
 ) : CardSessionRunnable<RunnablesTaskResponse> {
 
     override fun run(session: CardSession, callback: CompletionCallback<RunnablesTaskResponse>) {
