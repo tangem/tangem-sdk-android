@@ -8,7 +8,7 @@ import com.tangem.crypto.generateKeyPair
 [REDACTED_AUTHOR]
  */
 internal class SecureService(
-    private val storage: SecureStorage
+    private val storage: SecureStorage,
 ) {
     private val enclavePublic = "enclavePublic"
     private val enclavePrivate = "enclavePrivate"
