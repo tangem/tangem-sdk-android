@@ -28,7 +28,7 @@ import com.tangem.operations.CommandResponse
 [REDACTED_AUTHOR]
  */
 @JsonClass(generateAdapter = true)
-class ExtendedPublicKey @kotlin.jvm.Throws constructor(
+class ExtendedPublicKey @Throws constructor(
     val publicKey: ByteArray,
     val chainCode: ByteArray,
     val depth: Int = 0,
