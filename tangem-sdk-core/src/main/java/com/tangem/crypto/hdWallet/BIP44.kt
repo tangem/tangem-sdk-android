@@ -1,0 +1,44 @@
+package com.tangem.crypto.hdWallet
+
+/**
+[REDACTED_AUTHOR]
+ */
+class BIP44(
+    val coinType: Long,
+    val account: Long,
+    val change: Chain,
+    val addressIndex: Long,
+) {
+
+    constructor(coinType: Long) : this(
+        coinType,
+        0,
+        Chain.External,
+        0,
+    )
+
+    /**
+     * Build path
+     * @return Path according BIP32
+     */
+    fun buildPath(): DerivationPath {
+        val nodes = listOf(
+            DerivationNode.Hardened(purpose),
+            DerivationNode.Hardened(coinType),
+            DerivationNode.Hardened(account),
+            DerivationNode.NonHardened(change.index),
+            DerivationNode.NonHardened(addressIndex),
+        )
+        return DerivationPath(nodes)
+    }
+
+    companion object {
+        const val purpose: Long = 44
+    }
+
+    enum class Chain(val index: Long) {
+        External(0),
+        Internal(1),
+        ;
+    }
+}
