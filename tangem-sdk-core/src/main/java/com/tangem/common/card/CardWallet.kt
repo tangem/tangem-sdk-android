@@ -90,6 +90,11 @@ data class CardWallet(
         /**
 
          */
+        EmptyBackedUp(code = 0x81),
+
+        /**
+
+         */
         BackedUp(code = 0x82),
 
         /**
@@ -122,7 +127,7 @@ data class CardWallet(
 
         val isAvailable: Boolean
             get() = when (this) {
-                Empty, Purged, BackedUpAndPurged -> false
+                Empty, Purged, BackedUpAndPurged, EmptyBackedUp -> false
                 else -> true
             }
 
