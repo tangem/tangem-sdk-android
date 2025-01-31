@@ -32,7 +32,7 @@
     <string name="error_backup_failed_already_created">Резервне копіювання неможливе, на обраній картці вже створено гаманець. Будь ласка, переконайтеся, що на цій картці немає коштів, відсканувавши її в додатку, а потім скиньте до заводських налаштувань.</string>
     <string name="error_backup_not_empty_wallets">На цій картці вже створено гаманець. Якщо ви хочете продовжити, скиньте картку до заводських налаштувань.</string>
     <string name="error_backup_wrong_card">Цю картку не можна використовувати для резервного копіювання. Код помилки: %s.</string>
-    <string name="error_card_verification_failed">This card is a production sample or a counterfeit</string>
+    <string name="error_card_verification_failed">Ця картка є виробничим зразком або підробкою</string>
     <string name="error_extended_apdu_not_supported">Схоже, ваш телефон не повністю підтримує NFC. Будь ласка, спробуйте використати інший телефон для цієї операції.</string>
     <string name="error_file_not_found">Файл не знайдено</string>
     <string name="error_no_active_backup">Обрана картка не може бути використана для скидання коду доступу картки, оскільки на ній не створено резервну копію. Будь ласка, зверніться до служби підтримки.</string>
