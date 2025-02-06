@@ -1,21 +1,11 @@
 package com.tangem.common.core
 
-import com.tangem.Log
-import com.tangem.Message
-import com.tangem.SessionViewDelegate
-import com.tangem.ViewDelegateMessage
-import com.tangem.WrongValueType
-import com.tangem.common.CardIdFormatter
-import com.tangem.common.CompletionResult
-import com.tangem.common.UserCode
-import com.tangem.common.UserCodeType
+import com.tangem.*
+import com.tangem.common.*
 import com.tangem.common.apdu.Apdu
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.EncryptionMode
-import com.tangem.common.doOnFailure
-import com.tangem.common.doOnResult
-import com.tangem.common.doOnSuccess
 import com.tangem.common.extensions.VoidCallback
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.json.JSONRPCConverter
@@ -33,26 +23,8 @@ import com.tangem.operations.preflightread.PreflightReadFilter
 import com.tangem.operations.read.ReadCommand
 import com.tangem.operations.resetcode.ResetCodesController
 import com.tangem.operations.resetcode.ResetPinService
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import java.io.PrintWriter
 import java.io.StringWriter
 
@@ -258,6 +230,10 @@ class CardSession(
     private fun <T : CardSessionRunnable<*>> prepareSession(runnable: T, callback: CompletionCallback<Unit>) {
         Log.session { "prepare card session" }
         preflightReadMode = runnable.preflightReadMode()
+        environment.encryptionMode = runnable.encryptionMode
+
+        Log.session { "User code policy is ${environment.config.userCodeRequestPolicy}" }
+        Log.session { "Encryption mode is ${environment.encryptionMode}" }
 
         if (!runnable.allowsRequestAccessCodeFromRepository) {
             runnable.prepare(this, callback)
@@ -480,6 +456,7 @@ class CardSession(
                 val sessionKey = (secret + protocolKey).calculateSha256()
                 environment.encryptionKey = sessionKey
 
+                Log.session { "The encryption established" }
                 return CompletionResult.Success(true)
             }
             is CompletionResult.Failure -> {
