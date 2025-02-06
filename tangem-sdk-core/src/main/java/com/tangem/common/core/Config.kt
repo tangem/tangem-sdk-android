@@ -65,7 +65,7 @@ class Config(
     var defaultDerivationPaths: MutableMap<EllipticCurve, List<DerivationPath>> = mutableMapOf(),
 
     /**
-     * User code request policy.
+     * User code [accessCode naming in ios] request policy.
      */
     var userCodeRequestPolicy: UserCodeRequestPolicy = UserCodeRequestPolicy.Default,
 

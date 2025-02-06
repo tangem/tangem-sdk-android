@@ -3,6 +3,7 @@ package com.tangem.operations.wallet
 import com.tangem.Log
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.EllipticCurve
+import com.tangem.common.card.EncryptionMode
 import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.CardSession
 import com.tangem.common.core.CardSessionRunnable
@@ -34,6 +35,9 @@ class CreateWalletTask(
 ) : CardSessionRunnable<CreateWalletResponse> {
 
     private var derivationTask: DeriveWalletPublicKeysTask? = null
+
+    override val encryptionMode: EncryptionMode
+        get() = if (privateKey == null) EncryptionMode.None else EncryptionMode.Strong
 
     override fun run(session: CardSession, callback: CompletionCallback<CreateWalletResponse>) {
         val command = CreateWalletCommand(curve, privateKey)
