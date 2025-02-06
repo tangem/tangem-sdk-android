@@ -7,6 +7,7 @@ import com.tangem.common.core.TangemError
 import com.tangem.common.extensions.VoidCallback
 import com.tangem.operations.resetcode.ResetCodesViewDelegate
 import com.tangem.operations.resetcode.ResetCodesViewState
+import com.tangem.sdk.extensions.SecurityModeController
 import com.tangem.sdk.extensions.sdkThemeContext
 import com.tangem.sdk.ui.ResetCodesDialog
 
@@ -20,8 +21,10 @@ class AndroidResetCodesViewDelegate(val activity: Activity) : ResetCodesViewDele
 
     override fun setState(state: ResetCodesViewState) {
         postUI {
-            if (resetCodesDialog == null) createResetCodesDialog()
-            resetCodesDialog?.showState(state)
+            val dialog = resetCodesDialog ?: createResetCodesDialog()
+
+            dialog.showState(state)
+            SecurityModeController.setSecurityMode(dialog = dialog, value = true)
         }
     }
 
@@ -60,12 +63,15 @@ class AndroidResetCodesViewDelegate(val activity: Activity) : ResetCodesViewDele
         }
     }
 
-    private fun createResetCodesDialog() {
-        resetCodesDialog = ResetCodesDialog(activity.sdkThemeContext()).apply {
+    private fun createResetCodesDialog(): ResetCodesDialog {
+        return ResetCodesDialog(activity.sdkThemeContext()).apply {
+            resetCodesDialog = this
+
             setOwnerActivity(activity)
             dismissWithAnimation = true
             create()
             setOnCancelListener {
+                SecurityModeController.setSecurityMode(dialog = this, value = false)
                 stopSessionCallback()
             }
         }
