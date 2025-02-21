@@ -10,22 +10,17 @@ import com.tangem.operations.CommandResponse
 
 /**
  * Response for [SignHashCommand].
+ *
+ * @property cardId CID, Unique Tangem card ID number
+ * @property walletPublicKey Wallet derivation key
+ * @property signature Signed hash
+ * @property totalSignedHashes Total number of signed  hashes returned by the wallet since its creation. COS: 1.16+
  */
 @JsonClass(generateAdapter = true)
 data class SignHashResponse(
-    /**
-     * CID, Unique Tangem card ID number
-     */
     val cardId: String,
-
-    /**
-     * Signed hash
-     */
+    val walletPublicKey: ByteArray,
     val signature: ByteArray,
-
-    /**
-     * Total number of signed  hashes returned by the wallet since its creation. COS: 1.16+
-     */
     val totalSignedHashes: Int?,
 ) : CommandResponse
 
@@ -47,9 +42,10 @@ class SignHashCommand(
             when (result) {
                 is CompletionResult.Success -> {
                     val response = SignHashResponse(
-                        result.data.cardId,
-                        result.data.signatures[0],
-                        result.data.totalSignedHashes,
+                        cardId = result.data.cardId,
+                        walletPublicKey = walletPublicKey,
+                        signature = result.data.signatures[0],
+                        totalSignedHashes = result.data.totalSignedHashes,
                     )
                     callback(CompletionResult.Success(response))
                 }
