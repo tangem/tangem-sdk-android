@@ -1,6 +1,7 @@
 package com.tangem.operations.sign
 
 import com.squareup.moshi.JsonClass
+import com.tangem.crypto.hdWallet.DerivationPath
 
 @JsonClass(generateAdapter = true)
 data class Hash(
@@ -24,4 +25,11 @@ data class Chunk(
 @JsonClass(generateAdapter = true)
 data class SignedChunk(
     val signedHashes: List<SignedHash>,
+)
+
+@JsonClass(generateAdapter = true)
+data class SignData(
+    val derivationPath: DerivationPath,
+    val hash: ByteArray,
+    val publicKey: ByteArray,
 )
