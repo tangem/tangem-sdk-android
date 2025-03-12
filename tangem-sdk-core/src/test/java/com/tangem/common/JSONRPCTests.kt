@@ -5,12 +5,7 @@ import com.tangem.common.card.Card
 import com.tangem.common.card.CardWallet
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
-import com.tangem.common.json.JSONRPCConverter
-import com.tangem.common.json.JSONRPCLinker
-import com.tangem.common.json.JSONRPCRequest
-import com.tangem.common.json.JSONRPCResponse
-import com.tangem.common.json.MoshiJsonConverter
-import com.tangem.common.json.toJSONRPCError
+import com.tangem.common.json.*
 import com.tangem.crypto.bip39.BIP39Wordlist
 import com.tangem.crypto.bip39.BIP39WordlistTest
 import com.tangem.crypto.bip39.Wordlist
@@ -26,10 +21,8 @@ import com.tangem.operations.personalization.DepersonalizeResponse
 import com.tangem.operations.sign.SignHashResponse
 import com.tangem.operations.sign.SignHashesResponse
 import com.tangem.operations.wallet.CreateWalletResponse
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertDoesNotThrow
 import java.io.InputStream
 import java.nio.file.Files
@@ -163,7 +156,8 @@ class JSONRPCTests {
     @Test
     fun testSignHash() {
         val hash = "EB7411C2B7D871C06DAD51E58E44746583AD134F4E214E4899F2FC84802232A1".hexToBytes()
-        val response = SignHashResponse("c000111122223333", hash, 1)
+        val publicKey = "5130869115A2FF91959774C99D4DC2873F0C41AF3E0BB23D027AB16D39DE1348".hexToBytes()
+        val response = SignHashResponse("c000111122223333", publicKey, hash, 1)
         testMethod("SignHash", response)
     }
 
