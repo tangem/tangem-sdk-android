@@ -22,22 +22,20 @@ class BackupCertificateProvider {
         callback: CompletionCallback<ByteArray>,
     ) {
         if (developmentMode) {
-            val issuerPrivateKey =
-                "11121314151617184771ED81F2BACF57479E4735EB1405083927372D40DA9E92".hexToBytes()
+            val issuerPrivateKey = "11121314151617184771ED81F2BACF57479E4735EB1405083927372D40DA9E92".hexToBytes()
             val issuerSignature = cardPublicKey.sign(issuerPrivateKey)
+
             callback(CompletionResult.Success(generateCertificate(cardPublicKey, issuerSignature)))
             return
         }
 
-        when (
-            val result =
-                onlineCardVerifier.getCardData(cardId, cardPublicKey)
-        ) {
+        when (val result = onlineCardVerifier.getCardData(cardId, cardPublicKey)) {
             is Result.Success -> {
                 val signature = result.data.issuerSignature.guard {
                     callback(CompletionResult.Failure(TangemSdkError.IssuerSignatureLoadingFailed()))
                     return
                 }
+
                 callback(
                     CompletionResult.Success(
                         generateCertificate(cardPublicKey, signature.hexToBytes()),
@@ -45,8 +43,7 @@ class BackupCertificateProvider {
                 )
             }
 
-            is Result.Failure ->
-                callback(CompletionResult.Failure(TangemSdkError.IssuerSignatureLoadingFailed()))
+            is Result.Failure -> callback(CompletionResult.Failure(TangemSdkError.IssuerSignatureLoadingFailed()))
         }
     }
 
