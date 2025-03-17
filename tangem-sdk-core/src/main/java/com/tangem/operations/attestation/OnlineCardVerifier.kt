@@ -11,6 +11,7 @@ import com.tangem.operations.attestation.api.BaseUrl
 import com.tangem.operations.attestation.api.TangemTechApi
 import com.tangem.operations.attestation.api.TangemVerifyApi
 import com.tangem.operations.attestation.api.models.CardDataResponse
+import com.tangem.operations.attestation.api.models.CardVerificationInfoResponse
 import com.tangem.operations.attestation.api.models.CardVerifyAndGetInfo
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -22,9 +23,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import java.io.PrintWriter
 import java.io.StringWriter
 
-class OnlineCardVerifier(
-    @Suppress("UnusedPrivateMember") private val isNewAttestationEnabled: Boolean = false,
-) {
+class OnlineCardVerifier {
 
     val scope = CoroutineScope(Dispatchers.IO) + CoroutineExceptionHandler { _, ex ->
         val sw = StringWriter()
@@ -87,6 +86,15 @@ class OnlineCardVerifier(
 
     internal suspend fun getArtwork(cardId: String, cardPublicKey: String, artworkId: String): Result<ResponseBody> {
         return performRequest { tangemVerifyApi.getArtwork(artworkId, cardId, cardPublicKey) }
+    }
+
+    internal suspend fun getCardVerificationInfo(
+        cardId: String,
+        cardPublicKey: ByteArray,
+    ): Result<CardVerificationInfoResponse> {
+        return performRequest {
+            tangemTechApi.getCardVerificationInfo(cardId = cardId, publicKey = cardPublicKey.toHexString())
+        }
     }
 
     companion object {

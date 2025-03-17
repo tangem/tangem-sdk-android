@@ -3,19 +3,18 @@ package com.tangem.operations.attestation
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.Card
 import com.tangem.common.card.FirmwareVersion
-import com.tangem.common.core.CardSession
-import com.tangem.common.core.CardSessionRunnable
-import com.tangem.common.core.CompletionCallback
-import com.tangem.common.core.TangemSdkError
+import com.tangem.common.core.*
 import com.tangem.common.extensions.guard
+import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.services.Result
 import com.tangem.common.services.TrustedCardsRepo
 import com.tangem.common.services.secure.SecureStorage
 import com.tangem.common.services.toTangemSdkError
-import com.tangem.operations.attestation.api.models.CardVerifyAndGetInfo
+import com.tangem.crypto.CryptoUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
@@ -24,6 +23,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AttestationTask(
     private val mode: Mode,
     secureStorage: SecureStorage,
@@ -40,8 +40,7 @@ class AttestationTask(
 
     private var currentAttestationStatus: Attestation = Attestation.empty
 
-    private var onlineAttestationChannel =
-        ConflatedBroadcastChannel<CompletionResult<CardVerifyAndGetInfo.Response.Item>>()
+    private var onlineAttestationChannel = ConflatedBroadcastChannel<CompletionResult<Any>>()
     private var onlineAttestationSubscription: ReceiveChannel<CompletionResult<*>>? = null
 
     override fun run(session: CardSession, callback: CompletionCallback<Attestation>) {
@@ -89,11 +88,11 @@ class AttestationTask(
         when (mode) {
             Mode.Offline -> complete(session, callback)
             Mode.Normal -> {
-                runOnlineAttestation(session.scope, session.environment.card!!)
+                runOnlineAttestation(session.scope, session.environment.card!!, session.environment.config)
                 waitForOnlineAndComplete(session, callback)
             }
             Mode.Full -> {
-                runOnlineAttestation(session.scope, session.environment.card!!)
+                runOnlineAttestation(session.scope, session.environment.card!!, session.environment.config)
                 runWalletsAttestation(session, callback)
             }
         }
@@ -103,7 +102,15 @@ class AttestationTask(
      * Dev card will not pass online attestation. Or, if the card already failed offline attestation,
      * we can skip online part. So, we can send the error to the publisher immediately
      */
-    private fun runOnlineAttestation(scope: CoroutineScope, card: Card) {
+    private fun runOnlineAttestation(scope: CoroutineScope, card: Card, config: Config) {
+        if (config.isNewOnlineAttestationEnabled) {
+            runNewOnlineAttestation(scope, card)
+        } else {
+            runOldOnlineAttestation(scope, card)
+        }
+    }
+
+    private fun runOldOnlineAttestation(scope: CoroutineScope, card: Card) {
         scope.launch(Dispatchers.IO) {
             val isDevelopmentCard = card.firmwareVersion.type == FirmwareVersion.FirmwareType.Sdk
             val isAttestationFailed = currentAttestationStatus.cardKeyAttestation == Attestation.Status.Failed
@@ -114,6 +121,42 @@ class AttestationTask(
 
             when (val result = onlineCardVerifier.getCardInfo(card.cardId, card.cardPublicKey)) {
                 is Result.Success -> onlineAttestationChannel.send(CompletionResult.Success(result.data))
+                is Result.Failure -> onlineAttestationChannel.send(CompletionResult.Failure(result.toTangemSdkError()))
+            }
+        }
+    }
+
+    private fun runNewOnlineAttestation(scope: CoroutineScope, card: Card) {
+        scope.launch(Dispatchers.IO) {
+            val isDevelopmentCard = card.firmwareVersion.type == FirmwareVersion.FirmwareType.Sdk
+            val isAttestationFailed = currentAttestationStatus.cardKeyAttestation == Attestation.Status.Failed
+            if (isDevelopmentCard || isAttestationFailed) {
+                onlineAttestationChannel.send(CompletionResult.Failure(TangemSdkError.CardVerificationFailed()))
+                return@launch
+            }
+
+            when (val result = onlineCardVerifier.getCardVerificationInfo(card.cardId, card.cardPublicKey)) {
+                is Result.Success -> {
+                    val response = result.data
+
+                    // TODO: verify response.issuerSignature
+                    //  [REDACTED_JIRA]
+                    val isIssuerVerified = true
+
+                    val isCardVerified = CryptoUtils.verify(
+                        publicKey = card.issuer.publicKey,
+                        message = card.cardPublicKey,
+                        signature = response.cardSignature.hexToBytes(),
+                    )
+
+                    val completionResult: CompletionResult<Any> = if (isCardVerified && isIssuerVerified) {
+                        CompletionResult.Success(result.data)
+                    } else {
+                        CompletionResult.Failure(TangemSdkError.CardVerificationFailed())
+                    }
+
+                    onlineAttestationChannel.send(completionResult)
+                }
                 is Result.Failure -> onlineAttestationChannel.send(CompletionResult.Failure(result.toTangemSdkError()))
             }
         }
@@ -209,7 +252,7 @@ class AttestationTask(
             return
         }
 
-        runOnlineAttestation(session.scope, card)
+        runOnlineAttestation(session.scope, card, session.environment.config)
         waitForOnlineAndComplete(session, callback)
     }
 
