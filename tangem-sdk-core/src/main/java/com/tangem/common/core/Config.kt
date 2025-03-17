@@ -75,6 +75,8 @@ class Config(
     var scanTagImage: ScanTagImage = ScanTagImage.GenericCard,
 
     var productType: ProductType = ProductType.ANY,
+
+    var isNewOnlineAttestationEnabled: Boolean = false,
 ) {
 
     fun setupForProduct(type: ProductType) {
