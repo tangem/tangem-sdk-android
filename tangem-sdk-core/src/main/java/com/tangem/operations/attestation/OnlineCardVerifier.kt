@@ -5,12 +5,12 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.Log
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.toHexString
+import com.tangem.common.services.CardVerificationInfoStore
 import com.tangem.common.services.Result
 import com.tangem.common.services.performRequest
 import com.tangem.operations.attestation.api.BaseUrl
 import com.tangem.operations.attestation.api.TangemTechApi
 import com.tangem.operations.attestation.api.TangemVerifyApi
-import com.tangem.operations.attestation.api.models.CardDataResponse
 import com.tangem.operations.attestation.api.models.CardVerificationInfoResponse
 import com.tangem.operations.attestation.api.models.CardVerifyAndGetInfo
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -49,21 +49,6 @@ class OnlineCardVerifier {
         return@lazy builder.create(TangemTechApi::class.java)
     }
 
-    suspend fun getCardData(cardId: String, cardPublicKey: ByteArray): Result<CardDataResponse> {
-        return try {
-            performRequest {
-                tangemTechApi.getCardData(
-                    headers = TangemTechApi.getCardDataHeaders(
-                        cardId = cardId,
-                        publicKey = cardPublicKey.toHexString(),
-                    ),
-                )
-            }
-        } catch (exception: Exception) {
-            Result.Failure(TangemSdkError.NetworkError(exception.localizedMessage))
-        }
-    }
-
     suspend fun getCardInfo(cardId: String, cardPublicKey: ByteArray): Result<CardVerifyAndGetInfo.Response.Item> {
         val requestsBody = CardVerifyAndGetInfo.Request(
             requests = listOf(
@@ -91,9 +76,14 @@ class OnlineCardVerifier {
     internal suspend fun getCardVerificationInfo(
         cardId: String,
         cardPublicKey: ByteArray,
+        cardVerificationInfoStore: CardVerificationInfoStore,
     ): Result<CardVerificationInfoResponse> {
         return performRequest {
             tangemTechApi.getCardVerificationInfo(cardId = cardId, publicKey = cardPublicKey.toHexString())
+        }.also {
+            if (it is Result.Success) {
+                cardVerificationInfoStore.store(cardPublicKey = cardPublicKey, response = it.data)
+            }
         }
     }
 
