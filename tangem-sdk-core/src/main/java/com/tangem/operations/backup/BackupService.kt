@@ -19,14 +19,9 @@ import com.tangem.common.extensions.guard
 import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.services.secure.SecureStorage
 import com.tangem.operations.CommandResponse
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import java.io.PrintWriter
 import java.io.StringWriter
 
@@ -83,7 +78,12 @@ class BackupService(
     }
 
     private val handleErrors = sdk.config.handleErrors
-    private val backupCertificateProvider = BackupCertificateProvider()
+    private val backupCertificateProvider by lazy {
+        BackupCertificateProvider(
+            secureStorage = sdk.secureStorage,
+            isNewAttestationEnabled = sdk.config.isNewOnlineAttestationEnabled,
+        )
+    }
 
     init {
         updateState()
