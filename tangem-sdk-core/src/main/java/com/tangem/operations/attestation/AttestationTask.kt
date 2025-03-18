@@ -13,6 +13,7 @@ import com.tangem.common.services.TrustedCardsRepo
 import com.tangem.common.services.secure.SecureStorage
 import com.tangem.common.services.toTangemSdkError
 import com.tangem.crypto.CryptoUtils
+import com.tangem.operations.attestation.api.models.CardVerificationInfoResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -151,16 +152,9 @@ class AttestationTask(
                 is Result.Success -> {
                     val response = result.data
 
-                    // TODO: verify response.manufacturerSignature
-                    //  [REDACTED_JIRA]
-                    val isManufacturerVerified = true
+                    val isVerified = verifyCertificates(response = response, card = card)
 
-                    val isIssuerVerified = verifyIssuerSignature(
-                        issuerSignature = response.issuerSignature,
-                        card = card,
-                    )
-
-                    val completionResult: CompletionResult<Any> = if (isIssuerVerified && isManufacturerVerified) {
+                    val completionResult: CompletionResult<Any> = if (isVerified) {
                         CompletionResult.Success(result.data)
                     } else {
                         CompletionResult.Failure(TangemSdkError.CardVerificationFailed())
@@ -173,13 +167,38 @@ class AttestationTask(
         }
     }
 
-    private fun verifyIssuerSignature(issuerSignature: String?, card: Card): Boolean {
-        if (issuerSignature == null) return false
+    private fun verifyCertificates(response: CardVerificationInfoResponse, card: Card): Boolean {
+        if (response.issuerSignature == null || response.manufacturerSignature == null) return false
 
+        val isIssuerCertVerified by lazy {
+            verifyIssuerCertificate(certificate = response.manufacturerSignature, card = card)
+        }
+
+        val isCardCertVerified by lazy {
+            verifyCardCertificate(certificate = response.issuerSignature, card = card)
+        }
+
+        return isIssuerCertVerified && isCardCertVerified
+    }
+
+    private fun verifyIssuerCertificate(certificate: String, card: Card): Boolean {
+        val manufacturerPublicKey = ManufacturerPublicKeys.values()
+            .firstOrNull { it.id == card.manufacturer.name }
+            ?.value
+            ?: return false
+
+        return CryptoUtils.verify(
+            publicKey = manufacturerPublicKey.hexToBytes(),
+            message = card.issuer.publicKey,
+            signature = certificate.hexToBytes(),
+        )
+    }
+
+    private fun verifyCardCertificate(certificate: String, card: Card): Boolean {
         return CryptoUtils.verify(
             publicKey = card.issuer.publicKey,
             message = card.cardPublicKey,
-            signature = issuerSignature.hexToBytes(),
+            signature = certificate.hexToBytes(),
         )
     }
 
