@@ -7,6 +7,7 @@ import com.tangem.common.core.*
 import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.json.MoshiJsonConverter
+import com.tangem.common.services.CardVerificationInfoStore
 import com.tangem.common.services.Result
 import com.tangem.common.services.TrustedCardsRepo
 import com.tangem.common.services.secure.SecureStorage
@@ -37,6 +38,11 @@ class AttestationTask(
 
     private val trustedCardsRepo = TrustedCardsRepo(secureStorage, MoshiJsonConverter.INSTANCE)
     private val onlineCardVerifier: OnlineCardVerifier = OnlineCardVerifier()
+
+    private val cardVerificationInfoStore = CardVerificationInfoStore(
+        storage = secureStorage,
+        moshi = MoshiJsonConverter.INSTANCE.moshi,
+    )
 
     private var currentAttestationStatus: Attestation = Attestation.empty
 
@@ -135,21 +141,26 @@ class AttestationTask(
                 return@launch
             }
 
-            when (val result = onlineCardVerifier.getCardVerificationInfo(card.cardId, card.cardPublicKey)) {
+            val result = onlineCardVerifier.getCardVerificationInfo(
+                cardId = card.cardId,
+                cardPublicKey = card.cardPublicKey,
+                cardVerificationInfoStore = cardVerificationInfoStore,
+            )
+
+            when (result) {
                 is Result.Success -> {
                     val response = result.data
 
-                    // TODO: verify response.issuerSignature
+                    // TODO: verify response.manufacturerSignature
                     //  [REDACTED_JIRA]
-                    val isIssuerVerified = true
+                    val isManufacturerVerified = true
 
-                    val isCardVerified = CryptoUtils.verify(
-                        publicKey = card.issuer.publicKey,
-                        message = card.cardPublicKey,
-                        signature = response.cardSignature.hexToBytes(),
+                    val isIssuerVerified = verifyIssuerSignature(
+                        issuerSignature = response.issuerSignature,
+                        card = card,
                     )
 
-                    val completionResult: CompletionResult<Any> = if (isCardVerified && isIssuerVerified) {
+                    val completionResult: CompletionResult<Any> = if (isIssuerVerified && isManufacturerVerified) {
                         CompletionResult.Success(result.data)
                     } else {
                         CompletionResult.Failure(TangemSdkError.CardVerificationFailed())
@@ -160,6 +171,16 @@ class AttestationTask(
                 is Result.Failure -> onlineAttestationChannel.send(CompletionResult.Failure(result.toTangemSdkError()))
             }
         }
+    }
+
+    private fun verifyIssuerSignature(issuerSignature: String?, card: Card): Boolean {
+        if (issuerSignature == null) return false
+
+        return CryptoUtils.verify(
+            publicKey = card.issuer.publicKey,
+            message = card.cardPublicKey,
+            signature = issuerSignature.hexToBytes(),
+        )
     }
 
     private fun waitForOnlineAndComplete(session: CardSession, callback: CompletionCallback<Attestation>) {
