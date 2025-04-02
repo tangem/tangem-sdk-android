@@ -74,12 +74,19 @@ class OnlineCardVerifier {
     }
 
     internal suspend fun getCardVerificationInfo(
+        isProdEnvironment: Boolean,
         cardId: String,
         cardPublicKey: ByteArray,
         cardVerificationInfoStore: CardVerificationInfoStore,
     ): Result<CardVerificationInfoResponse> {
         return performRequest {
-            tangemTechApi.getCardVerificationInfo(cardId = cardId, publicKey = cardPublicKey.toHexString())
+            val baseUrl = if (isProdEnvironment) BaseUrl.CARD_DATA.url else BaseUrl.CARD_DATA_DEV.url
+
+            tangemTechApi.getCardVerificationInfo(
+                url = baseUrl + "card",
+                cardId = cardId,
+                publicKey = cardPublicKey.toHexString(),
+            )
         }.also {
             if (it is Result.Success) {
                 cardVerificationInfoStore.store(cardPublicKey = cardPublicKey, response = it.data)

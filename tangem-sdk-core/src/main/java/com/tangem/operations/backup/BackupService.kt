@@ -26,6 +26,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 @Suppress("LargeClass")
+@OptIn(ExperimentalCoroutinesApi::class)
 class BackupService(
     private val sdk: TangemSdk,
     private var repo: BackupRepo,
@@ -82,6 +83,7 @@ class BackupService(
         BackupCertificateProvider(
             secureStorage = sdk.secureStorage,
             isNewAttestationEnabled = sdk.config.isNewOnlineAttestationEnabled,
+            isTangemAttestationProdEnv = sdk.config.isTangemAttestationProdEnv,
         )
     }
 
