@@ -45,11 +45,6 @@ class Config(
      */
     var attestationMode: AttestationTask.Mode = AttestationTask.Mode.Normal,
 
-    /**
-     * If true, BAP cards will pass online attestation. Use only for debugging purposes and if you understand what to do
-     */
-    var allowUntrustedCards: Boolean = false,
-
     var filter: CardFilter = CardFilter.default(),
 
     /**
@@ -77,6 +72,8 @@ class Config(
     var productType: ProductType = ProductType.ANY,
 
     var isNewOnlineAttestationEnabled: Boolean = false,
+
+    var isTangemAttestationProdEnv: Boolean = true,
 ) {
 
     fun setupForProduct(type: ProductType) {
