@@ -18,6 +18,7 @@ import com.tangem.operations.attestation.api.models.CardVerificationInfoResponse
 internal class BackupCertificateProvider(
     secureStorage: SecureStorage,
     private val isNewAttestationEnabled: Boolean,
+    private val isTangemAttestationProdEnv: Boolean,
 ) {
 
     private val onlineCardVerifier: OnlineCardVerifier by lazy(::OnlineCardVerifier)
@@ -46,7 +47,12 @@ internal class BackupCertificateProvider(
             return
         }
 
-        val result = onlineCardVerifier.getCardVerificationInfo(cardId, cardPublicKey, cardVerificationInfoStore)
+        val result = onlineCardVerifier.getCardVerificationInfo(
+            isProdEnvironment = isTangemAttestationProdEnv,
+            cardId = cardId,
+            cardPublicKey = cardPublicKey,
+            cardVerificationInfoStore = cardVerificationInfoStore,
+        )
 
         if (isNewAttestationEnabled) {
             handleGetCertificateNewWay(result, cardPublicKey, callback)
