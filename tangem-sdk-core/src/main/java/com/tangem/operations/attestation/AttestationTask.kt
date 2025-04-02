@@ -111,7 +111,11 @@ class AttestationTask(
      */
     private fun runOnlineAttestation(scope: CoroutineScope, card: Card, config: Config) {
         if (config.isNewOnlineAttestationEnabled) {
-            runNewOnlineAttestation(scope, card)
+            runNewOnlineAttestation(
+                scope = scope,
+                card = card,
+                isProdEnvironment = config.isTangemAttestationProdEnv,
+            )
         } else {
             runOldOnlineAttestation(scope, card)
         }
@@ -133,7 +137,7 @@ class AttestationTask(
         }
     }
 
-    private fun runNewOnlineAttestation(scope: CoroutineScope, card: Card) {
+    private fun runNewOnlineAttestation(scope: CoroutineScope, card: Card, isProdEnvironment: Boolean) {
         scope.launch(Dispatchers.IO) {
             val isDevelopmentCard = card.firmwareVersion.type == FirmwareVersion.FirmwareType.Sdk
             val isAttestationFailed = currentAttestationStatus.cardKeyAttestation == Attestation.Status.Failed
@@ -143,6 +147,7 @@ class AttestationTask(
             }
 
             val result = onlineCardVerifier.getCardVerificationInfo(
+                isProdEnvironment = isProdEnvironment,
                 cardId = card.cardId,
                 cardPublicKey = card.cardPublicKey,
                 cardVerificationInfoStore = cardVerificationInfoStore,
@@ -244,7 +249,7 @@ class AttestationTask(
                     FirmwareVersion.FirmwareType.Sdk
 
                 // Possible production sample or development card
-                if (isDevelopmentCard || session.environment.config.allowUntrustedCards) {
+                if (isDevelopmentCard) {
                     session.viewDelegate.attestationDidFail(
                         isDevCard = isDevelopmentCard,
                         positive = { complete(session, callback) },
