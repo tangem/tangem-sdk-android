@@ -1,4 +1,4 @@
-package com.tangem.operations.attestation
+package com.tangem.operations.attestation.verification
 
 /**
  * Manufacturer public keys collection
@@ -8,7 +8,7 @@ package com.tangem.operations.attestation
  *
 [REDACTED_AUTHOR]
  */
-enum class ManufacturerPublicKeys(val id: String, val value: String) {
+enum class ManufacturerPublicKey(val id: String, val value: String) {
 
     Tangem(id = "TANGEM", value = "02630EC6371DA464986F51346B64E6A9711C530B1DD5FC3A145414373C231F7862"),
 
