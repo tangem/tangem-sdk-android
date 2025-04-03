@@ -1,6 +1,7 @@
 package com.tangem.operations.backup
 
 import com.tangem.common.CompletionResult
+import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.guard
@@ -13,7 +14,9 @@ import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.sign
 import com.tangem.operations.attestation.OnlineCardVerifier
+import com.tangem.operations.attestation.api.TangemApiService
 import com.tangem.operations.attestation.api.models.CardVerificationInfoResponse
+import com.tangem.operations.attestation.service.OnlineAttestationServiceFactory
 
 internal class BackupCertificateProvider(
     secureStorage: SecureStorage,
@@ -23,6 +26,13 @@ internal class BackupCertificateProvider(
 
     private val onlineCardVerifier: OnlineCardVerifier by lazy(::OnlineCardVerifier)
 
+    private val factory: OnlineAttestationServiceFactory by lazy {
+        OnlineAttestationServiceFactory(
+            tangemApiService = TangemApiService(isProdEnvironment = isTangemAttestationProdEnv),
+            secureStorage = secureStorage,
+        )
+    }
+
     private val cardVerificationInfoStore by lazy {
         CardVerificationInfoStore(
             storage = secureStorage,
@@ -30,54 +40,59 @@ internal class BackupCertificateProvider(
         )
     }
 
+    @Suppress("LongParameterList")
     suspend fun getCertificate(
         cardId: String,
         cardPublicKey: ByteArray,
-        developmentMode: Boolean,
+        issuerPublicKey: ByteArray,
+        manufacturerName: String,
+        firmwareVersion: FirmwareVersion,
         callback: CompletionCallback<ByteArray>,
     ) {
-        if (developmentMode) {
-            val certificate = generateCertificate(
+        if (isNewAttestationEnabled) {
+            val service = factory.create(
                 cardPublicKey = cardPublicKey,
-                issuerSignature = getDevIssuerSignature(cardPublicKey),
+                issuerPublicKey = issuerPublicKey,
+                manufacturerName = manufacturerName,
+                firmwareVersion = firmwareVersion,
             )
 
-            callback(CompletionResult.Success(certificate))
+            when (val result = service.attestCard(cardId, cardPublicKey)) {
+                is CompletionResult.Success -> {
+                    val signature = result.data.issuerSignature.guard {
+                        callback(CompletionResult.Failure(TangemSdkError.IssuerSignatureLoadingFailed()))
+                        return
+                    }
 
-            return
-        }
+                    val certificate = generateCertificate(cardPublicKey, signature.hexToBytes())
 
-        val result = onlineCardVerifier.getCardVerificationInfo(
-            isProdEnvironment = isTangemAttestationProdEnv,
-            cardId = cardId,
-            cardPublicKey = cardPublicKey,
-            cardVerificationInfoStore = cardVerificationInfoStore,
-        )
-
-        if (isNewAttestationEnabled) {
-            handleGetCertificateNewWay(result, cardPublicKey, callback)
+                    callback(CompletionResult.Success(data = certificate))
+                }
+                is CompletionResult.Failure -> {
+                    callback(CompletionResult.Failure(TangemSdkError.IssuerSignatureLoadingFailed()))
+                }
+            }
         } else {
+            if (firmwareVersion.type == FirmwareVersion.FirmwareType.Sdk) {
+                val certificate = generateCertificate(
+                    cardPublicKey = cardPublicKey,
+                    issuerSignature = getDevIssuerSignature(cardPublicKey),
+                )
+
+                callback(CompletionResult.Success(certificate))
+
+                return
+            }
+
+            val result = onlineCardVerifier.getCardVerificationInfo(
+                isProdEnvironment = isTangemAttestationProdEnv,
+                cardId = cardId,
+                cardPublicKey = cardPublicKey,
+                cardVerificationInfoStore = cardVerificationInfoStore,
+            )
+
             handleGetCertificateOldWay(result, cardPublicKey, callback)
         }
-    }
-
-    private fun handleGetCertificateNewWay(
-        result: Result<CardVerificationInfoResponse>,
-        cardPublicKey: ByteArray,
-        callback: CompletionCallback<ByteArray>,
-    ) {
-        val issuerSignature = (result as? Result.Success)?.data?.issuerSignature
-            ?: cardVerificationInfoStore.get(cardPublicKey)?.issuerSignature
-
-        val completionResult = if (issuerSignature != null) {
-            val certificate = generateCertificate(cardPublicKey, issuerSignature.hexToBytes())
-
-            CompletionResult.Success(data = certificate)
-        } else {
-            CompletionResult.Failure(TangemSdkError.IssuerSignatureLoadingFailed())
-        }
-
-        callback(completionResult)
     }
 
     private fun handleGetCertificateOldWay(

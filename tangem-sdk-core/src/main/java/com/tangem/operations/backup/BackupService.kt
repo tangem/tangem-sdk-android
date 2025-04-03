@@ -110,11 +110,26 @@ class BackupService(
             readBackupCard(primaryCard, callback)
             return
         }
+
+        val primaryCardFirmwareVersion = primaryCard.firmwareVersion
+        if (primaryCardFirmwareVersion == null) {
+            callback(CompletionResult.Failure(TangemSdkError.MissingPrimaryCard()))
+            return
+        }
+
+        val primaryCardManufacturerName = primaryCard.manufacturer?.name
+        if (primaryCardManufacturerName == null) {
+            callback(CompletionResult.Failure(TangemSdkError.MissingPrimaryCard()))
+            return
+        }
+
         backupScope.launch {
             fetchCertificate(
                 cardId = primaryCard.cardId,
                 cardPublicKey = primaryCard.cardPublicKey,
-                isDevMode = primaryCard.firmwareVersion?.type == FirmwareVersion.FirmwareType.Sdk,
+                issuerPublicKey = primaryCard.issuer.publicKey,
+                manufacturerName = primaryCardManufacturerName,
+                firmwareVersion = primaryCardFirmwareVersion,
                 onFailed = { callback(CompletionResult.Failure(it)) },
             ) {
                 val updatedPrimaryCard = primaryCard.copy(certificate = it)
@@ -211,17 +226,22 @@ class BackupService(
         }
     }
 
+    @Suppress("LongParameterList")
     private suspend fun fetchCertificate(
         cardId: String,
         cardPublicKey: ByteArray,
-        isDevMode: Boolean,
+        issuerPublicKey: ByteArray,
+        manufacturerName: String,
+        firmwareVersion: FirmwareVersion,
         onFailed: (TangemSdkError) -> Unit,
         onLoaded: (ByteArray) -> Unit,
     ) {
         backupCertificateProvider.getCertificate(
             cardId = cardId,
             cardPublicKey = cardPublicKey,
-            developmentMode = isDevMode,
+            issuerPublicKey = issuerPublicKey,
+            manufacturerName = manufacturerName,
+            firmwareVersion = firmwareVersion,
         ) {
             val certificate = when (it) {
                 is CompletionResult.Success -> it.data
@@ -275,7 +295,9 @@ class BackupService(
             fetchCertificate(
                 cardId = backupCard.cardId,
                 cardPublicKey = backupCard.cardPublicKey,
-                isDevMode = backupCard.firmwareVersion?.type == FirmwareVersion.FirmwareType.Sdk,
+                issuerPublicKey = backupCardResponse.card.issuer.publicKey,
+                manufacturerName = backupCardResponse.card.manufacturer.name,
+                firmwareVersion = backupCardResponse.card.firmwareVersion,
                 onFailed = { callback(CompletionResult.Failure(TangemSdkError.IssuerSignatureLoadingFailed())) },
             ) { cert ->
                 val updatedBackupCard = backupCard.copy(certificate = cert)
@@ -508,26 +530,13 @@ data class PrimaryCard(
     val existingWalletsCount: Int,
     val isHDWalletAllowed: Boolean,
     val issuer: Card.Issuer,
+    val manufacturer: Card.Manufacturer?,
     val walletCurves: List<EllipticCurve>,
     val batchId: String?, // for compatibility with interrupted backups
     val firmwareVersion: FirmwareVersion?, // for compatibility with interrupted backups
     val isKeysImportAllowed: Boolean?, // for compatibility with interrupted backups
     val certificate: ByteArray?,
-) : CommandResponse {
-    constructor(rawPrimaryCard: RawPrimaryCard, certificate: ByteArray) : this(
-        cardId = rawPrimaryCard.cardId,
-        cardPublicKey = rawPrimaryCard.cardPublicKey,
-        linkingKey = rawPrimaryCard.linkingKey,
-        existingWalletsCount = rawPrimaryCard.existingWalletsCount,
-        isHDWalletAllowed = rawPrimaryCard.isHDWalletAllowed,
-        issuer = rawPrimaryCard.issuer,
-        walletCurves = rawPrimaryCard.walletCurves,
-        batchId = rawPrimaryCard.batchId,
-        firmwareVersion = rawPrimaryCard.firmwareVersion,
-        isKeysImportAllowed = rawPrimaryCard.isKeysImportAllowed,
-        certificate = certificate,
-    )
-}
+) : CommandResponse
 
 @JsonClass(generateAdapter = true)
 class RawBackupCard(
