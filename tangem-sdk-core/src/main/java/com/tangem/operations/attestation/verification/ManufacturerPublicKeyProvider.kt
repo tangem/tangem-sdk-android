@@ -18,9 +18,6 @@ class ManufacturerPublicKeyProvider(
     fun get(): ManufacturerPublicKey? {
         if (firmwareVersion < FirmwareVersion.KeysImportAvailable) return ManufacturerPublicKey.Tangem
 
-        val publicKey = ManufacturerPublicKey.values().firstOrNull { manufacturerName == it.id }
-        if (publicKey == null) return null
-
-        return publicKey
+        return ManufacturerPublicKey.values().firstOrNull { manufacturerName == it.id }
     }
 }
