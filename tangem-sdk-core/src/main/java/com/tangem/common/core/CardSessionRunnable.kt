@@ -1,6 +1,7 @@
 package com.tangem.common.core
 
 import com.tangem.common.CompletionResult
+import com.tangem.common.card.EncryptionMode
 import com.tangem.operations.PreflightReadMode
 
 /**
@@ -12,6 +13,10 @@ interface CardSessionRunnable<T> {
      * */
     val allowsRequestAccessCodeFromRepository: Boolean
         get() = true
+
+    // / An enforced encryption mode. Managed by a card if none. None by default.
+    val encryptionMode: EncryptionMode
+        get() = EncryptionMode.None
 
     /**
      * Mode for preflight read. Change this property only if you understand what to do

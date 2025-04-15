@@ -25,12 +25,6 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
     override var readingIsActive: Boolean = false
         set(value) {
             Log.nfc { "set readingIsActive $value" }
-            if (value) {
-                disableReaderMode()
-                // delay before enableReaderMode because some devices catch ANR or smth without it
-                Thread.sleep(200)
-                enableReaderMode()
-            }
             field = value
         }
 
@@ -42,6 +36,7 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
     private val onTagDiscoveredListeners: MutableList<VoidCallback> = mutableListOf()
     private var activity: Activity? = null
     private var nfcAdapter: NfcAdapter? = null
+    private var isReaderModeEnabled: Boolean = false
 
     private val mBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -68,6 +63,14 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
         onTagDiscoveredListeners.remove(listener)
     }
 
+    override fun onForceEnableReadingMode() {
+        enableReaderModeIfNfcEnabled()
+    }
+
+    override fun onForceDisableReadingMode() {
+        disableReaderMode()
+    }
+
     fun setCurrentActivity(activity: Activity) {
         this.activity = activity
         nfcAdapter = NfcAdapter.getDefaultAdapter(activity)
@@ -77,16 +80,16 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
         super.onCreate(owner)
         val filter = IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED)
         activity?.registerReceiver(mBroadcastReceiver, filter)
-        enableReaderModeIfEnabled()
     }
 
     override fun onStart(owner: LifecycleOwner) {
         reader.listener = this
+        enableReaderModeIfNfcEnabled()
     }
 
     override fun onStop(owner: LifecycleOwner) {
-        reader.stopSession(true)
         disableReaderMode()
+        reader.stopSession(true)
         reader.listener = null
     }
 
@@ -96,7 +99,7 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
         nfcAdapter = null
     }
 
-    private fun enableReaderModeIfEnabled() {
+    private fun enableReaderModeIfNfcEnabled() {
         val nfcEnabled = nfcAdapter?.isEnabled == true
 
         if (nfcEnabled) {
@@ -105,23 +108,33 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
     }
 
     private fun enableReaderMode() {
-        Log.nfc { "enableReaderMode $nfcAdapter" }
+        Log.nfc { "enableReaderMode isReaderModeEnabled $isReaderModeEnabled" }
         if (activity?.isDestroyed == false) {
+            if (isReaderModeEnabled) {
+                disableReaderMode()
+                Thread.sleep(DELAY_BEFORE_ENABLE)
+            }
             nfcAdapter?.enableReaderMode(activity, this, READER_FLAGS, Bundle())
+            isReaderModeEnabled = true
         }
     }
 
     private fun disableReaderMode() {
-        Log.nfc { "disableReaderMode $nfcAdapter" }
-        if (activity?.isDestroyed == false) {
+        Log.nfc { "disableReaderMode $isReaderModeEnabled" }
+        if (activity?.isDestroyed == false && isReaderModeEnabled) {
             nfcAdapter?.disableReaderMode(activity)
+            isReaderModeEnabled = false
         }
     }
 
     private fun ignoreTag(tag: Tag?) {
         Log.nfc { "NFC tag is ignored" }
         nfcAdapter?.ignore(tag, IGNORE_DEBOUNCE_MS, null, null)
-        IsoDep.get(tag)?.closeInternal()
+        IsoDep.get(tag)?.closeInternal(
+            onError = {
+                Log.nfc { "ignoreTag close failure" }
+            },
+        )
     }
 
     private companion object {
@@ -132,5 +145,6 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
             NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS
 
         const val IGNORE_DEBOUNCE_MS = 1_500
+        private const val DELAY_BEFORE_ENABLE = 300L
     }
 }
