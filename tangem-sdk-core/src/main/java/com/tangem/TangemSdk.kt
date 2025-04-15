@@ -78,6 +78,24 @@ class TangemSdk(
         CryptoUtils.initCrypto()
     }
 
+    /**
+     * This method enables [NfcAdapter] reader mode if it was disabled
+     * Use carefully, by default sdk enables reader mode automatically
+     * but some devices could disable it in some cases out of lifecycle
+     * For example: launch qr code scanner on Samsung
+     */
+    fun forceEnableReaderMode() {
+        reader.forceEnableReaderMode()
+    }
+
+    /**
+     * This method disables [NfcAdapter] reader mode if it was enabled
+     * Don't forget call [forceEnableReaderMode] after this
+     */
+    fun forceDisableReaderMode() {
+        reader.forceDisableReaderMode()
+    }
+
     // region Card operations
     /**
      * This method launches a [ScanTask] on a new thread.
@@ -206,6 +224,44 @@ class TangemSdk(
         callback: CompletionCallback<SignResponse>,
     ) {
         val command = SignCommand(hashes, walletPublicKey, derivationPath)
+        startSessionWithRunnable(
+            runnable = command,
+            cardId = cardId,
+            initialMessage = initialMessage,
+            accessCode = null,
+            callback = callback,
+        )
+    }
+
+    /**
+     * This method launches a [SignCommand] on a new thread.
+     *
+     * It allows you to sign one or multiple hashes.
+     * Simultaneous signing of array of hashes in a single [SignCommand] is required to support
+     * Bitcoin-type multi-input blockchains (UTXO).
+     * The [SignCommand] will return a corresponding array of signatures.
+     *
+     * Please note that Tangem cards usually protect the signing with a security delay
+     * that may last up to 45 seconds, depending on a card.
+     * It is for [SessionViewDelegate] to notify users of security delay.
+     *
+     * @param dataToSign: Array of transaction hashes. It can be from one or up to ten hashes of the same length.
+     * @param walletPublicKey: Public key of the wallet that should sign hashes.
+     * @param cardId: CID, Unique Tangem card ID number
+     * @param initialMessage: A custom description that shows at the beginning of the NFC session.
+     * If null, default message will be used.
+     * @param callback: is triggered on the completion of the [SignCommand] and provides response
+     * in the form of list of signed hashes [List<ByteArray>] if the task was performed successfully
+     * or [TangemSdkError] in case of an error.
+     */
+    fun sign(
+        dataToSign: List<SignData>,
+        walletPublicKey: ByteArray,
+        cardId: String?,
+        initialMessage: Message? = null,
+        callback: CompletionCallback<List<SignHashResponse>>,
+    ) {
+        val command = MultipleSignCommand(dataToSign, walletPublicKey)
         startSessionWithRunnable(
             runnable = command,
             cardId = cardId,
@@ -1089,6 +1145,7 @@ class TangemSdk(
             accessCode = accessCode,
             preflightReadFilter = CardIdPreflightReadFilter.initOrNull(cardId),
         )
+
         cardSession?.start(onSessionStarted = callback)
     }
 
