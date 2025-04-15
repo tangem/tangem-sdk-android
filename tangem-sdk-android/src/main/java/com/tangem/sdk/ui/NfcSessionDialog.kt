@@ -16,17 +16,13 @@ import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
 import com.tangem.sdk.R
 import com.tangem.sdk.SessionViewDelegateState
+import com.tangem.sdk.extensions.SecurityModeController
 import com.tangem.sdk.extensions.hide
 import com.tangem.sdk.extensions.show
 import com.tangem.sdk.nfc.NfcLocationProvider
 import com.tangem.sdk.nfc.NfcManager
 import com.tangem.sdk.postUI
-import com.tangem.sdk.ui.widget.HeaderWidget
-import com.tangem.sdk.ui.widget.MessageWidget
-import com.tangem.sdk.ui.widget.PinCodeModificationWidget
-import com.tangem.sdk.ui.widget.PinCodeRequestWidget
-import com.tangem.sdk.ui.widget.StateWidget
-import com.tangem.sdk.ui.widget.TouchCardWidget
+import com.tangem.sdk.ui.widget.*
 import com.tangem.sdk.ui.widget.howTo.HowToTapWidget
 import com.tangem.sdk.ui.widget.progressBar.ProgressbarStateWidget
 import kotlinx.coroutines.Dispatchers
@@ -87,9 +83,15 @@ class NfcSessionDialog(
         stateWidgets.add(messageWidget)
         stateWidgets.add(howToTapWidget)
 
-        headerWidget.onHowTo = { show(SessionViewDelegateState.HowToTap) }
+        headerWidget.onHowTo = { show(SessionViewDelegateState.HowToTap) {} }
 
         behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        SecurityModeController.setSecurityMode(dialog = this, value = false)
     }
 
     @UiThread
@@ -111,32 +113,45 @@ class NfcSessionDialog(
         touchCardWidget.setScanImage(scanImage)
     }
 
-    @Suppress("LongMethod", "ComplexMethod")
-    fun show(state: SessionViewDelegateState) {
+    fun show(state: SessionViewDelegateState, onDialogShowed: () -> Unit) {
         postUI {
             if (ownerActivity?.isFinishing == true) return@postUI
             if (!this.isShowing) {
                 show()
             }
 
-            when (state) {
-                is SessionViewDelegateState.Ready -> onReady(state)
-                is SessionViewDelegateState.Success -> onSuccess(state)
-                is SessionViewDelegateState.Error -> onError(state)
-                is SessionViewDelegateState.SecurityDelay -> onSecurityDelay(state)
-                is SessionViewDelegateState.Delay -> onDelay(state)
-                is SessionViewDelegateState.PinRequested -> onPinRequested(state)
-                is SessionViewDelegateState.PinChangeRequested -> onPinChangeRequested(state)
-                is SessionViewDelegateState.WrongCard -> onWrongCard(state)
-                is SessionViewDelegateState.TagConnected -> onTagConnected(state)
-                is SessionViewDelegateState.TagLost -> onTagLost(state)
-                is SessionViewDelegateState.HowToTap -> howToTap(state)
-                is SessionViewDelegateState.None,
-                is SessionViewDelegateState.ResetCodes,
-                -> Unit
-            }
+            setSecurityModelIfPinCode(state)
+
+            handleSessionViewDelegateState(state, onDialogShowed)
 
             currentState = state
+        }
+    }
+
+    private fun setSecurityModelIfPinCode(state: SessionViewDelegateState) {
+        if (state is SessionViewDelegateState.PinRequested || state is SessionViewDelegateState.PinChangeRequested) {
+            SecurityModeController.setSecurityMode(dialog = this, value = true)
+        } else if (SecurityModeController.isEnabled) { // if current state isn't pin code and Security mode is enabled
+            SecurityModeController.setSecurityMode(dialog = this, value = false)
+        }
+    }
+
+    private fun handleSessionViewDelegateState(state: SessionViewDelegateState, onDialogShowed: () -> Unit) {
+        when (state) {
+            is SessionViewDelegateState.Ready -> onReady(state)
+            is SessionViewDelegateState.Success -> onSuccess(state, onDialogShowed)
+            is SessionViewDelegateState.Error -> onError(state)
+            is SessionViewDelegateState.SecurityDelay -> onSecurityDelay(state)
+            is SessionViewDelegateState.Delay -> onDelay(state)
+            is SessionViewDelegateState.PinRequested -> onPinRequested(state)
+            is SessionViewDelegateState.PinChangeRequested -> onPinChangeRequested(state)
+            is SessionViewDelegateState.WrongCard -> onWrongCard(state)
+            is SessionViewDelegateState.TagConnected -> onTagConnected(state)
+            is SessionViewDelegateState.TagLost -> onTagLost(state)
+            is SessionViewDelegateState.HowToTap -> howToTap(state)
+            is SessionViewDelegateState.None,
+            is SessionViewDelegateState.ResetCodes,
+            -> Unit
         }
     }
 
@@ -144,10 +159,13 @@ class NfcSessionDialog(
         setStateAndShow(state, headerWidget, touchCardWidget, messageWidget)
     }
 
-    private fun onSuccess(state: SessionViewDelegateState.Success) {
+    private fun onSuccess(state: SessionViewDelegateState.Success, onDialogShowed: () -> Unit) {
         setStateAndShow(state, headerWidget, progressStateWidget, messageWidget)
         performHapticFeedback()
-        postUI(msTime = 1000) { dismissInternal() }
+        postUI(msTime = 100) {
+            dismissInternal()
+            onDialogShowed()
+        }
     }
 
     private fun onError(state: SessionViewDelegateState.Error) {
@@ -186,6 +204,7 @@ class NfcSessionDialog(
             }
 
             pinCodeRequestWidget.onContinue = {
+                android.util.Log.e("NfcSessionDialog", "onSave: $it")
                 enableBottomSheetAnimation()
                 pinCodeRequestWidget.onContinue = null
                 setStateAndShow(getEmptyOnReadyEvent(), headerWidget, touchCardWidget, messageWidget)
@@ -274,7 +293,7 @@ class NfcSessionDialog(
 
             howToTapWidget.previousState?.let {
                 howToTapWidget.setState(it)
-                show(it)
+                show(it) {}
             }
             howToTapWidget.previousState = null
         }

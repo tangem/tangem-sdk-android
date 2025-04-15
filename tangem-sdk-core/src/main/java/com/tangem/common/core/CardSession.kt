@@ -1,21 +1,11 @@
 package com.tangem.common.core
 
-import com.tangem.Log
-import com.tangem.Message
-import com.tangem.SessionViewDelegate
-import com.tangem.ViewDelegateMessage
-import com.tangem.WrongValueType
-import com.tangem.common.CardIdFormatter
-import com.tangem.common.CompletionResult
-import com.tangem.common.UserCode
-import com.tangem.common.UserCodeType
+import com.tangem.*
+import com.tangem.common.*
 import com.tangem.common.apdu.Apdu
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.EncryptionMode
-import com.tangem.common.doOnFailure
-import com.tangem.common.doOnResult
-import com.tangem.common.doOnSuccess
 import com.tangem.common.extensions.VoidCallback
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.json.JSONRPCConverter
@@ -33,24 +23,8 @@ import com.tangem.operations.preflightread.PreflightReadFilter
 import com.tangem.operations.read.ReadCommand
 import com.tangem.operations.resetcode.ResetCodesController
 import com.tangem.operations.resetcode.ResetPinService
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import java.io.PrintWriter
 import java.io.StringWriter
 
@@ -89,12 +63,8 @@ class CardSession(
 
     private var resetCodesController: ResetCodesController? = null
 
-    val scope = CoroutineScope(Dispatchers.IO) + CoroutineExceptionHandler { _, throwable ->
-        val sw = StringWriter()
-        throwable.printStackTrace(PrintWriter(sw))
-        val exceptionAsString: String = sw.toString()
-        Log.error { exceptionAsString }
-        throw throwable
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO) + CoroutineExceptionHandler { _, throwable ->
+        handleScopeCoroutineException(throwable)
     }
 
     private var preflightReadMode: PreflightReadMode = PreflightReadMode.FullCardRead
@@ -217,10 +187,12 @@ class CardSession(
         scope.launch {
             reader.tag.asFlow()
                 .onCompletion {
-                    if (it is CancellationException && it.message == TangemSdkError.UserCancelled().customMessage) {
-                        stopWithError(TangemSdkError.UserCancelled(), SessionErrorMoment.CancellingByUser)
+                    val exception = it as? CancellationException ?: return@onCompletion
+                    val cause = exception.cause ?: return@onCompletion
+                    if (cause is TangemSdkError.UserCancelled) {
+                        stopWithError(cause, SessionErrorMoment.CancellingByUser)
                         viewDelegate.dismiss()
-                        onSessionStarted(this@CardSession, TangemSdkError.UserCancelled())
+                        onSessionStarted(this@CardSession, cause)
                     }
                 }
                 .collect {
@@ -258,6 +230,10 @@ class CardSession(
     private fun <T : CardSessionRunnable<*>> prepareSession(runnable: T, callback: CompletionCallback<Unit>) {
         Log.session { "prepare card session" }
         preflightReadMode = runnable.preflightReadMode()
+        environment.encryptionMode = runnable.encryptionMode
+
+        Log.session { "User code policy is ${environment.config.userCodeRequestPolicy}" }
+        Log.session { "Encryption mode is ${environment.encryptionMode}" }
 
         if (!runnable.allowsRequestAccessCodeFromRepository) {
             runnable.prepare(this, callback)
@@ -359,8 +335,9 @@ class CardSession(
      * @param message If null, the default message will be shown.
      */
     private fun stop(message: Message? = null) {
-        stopSessionIfActive()
-        viewDelegate.onSessionStopped(message)
+        viewDelegate.onSessionStopped(message) {
+            stopSessionIfActive()
+        }
     }
 
     /**
@@ -381,11 +358,17 @@ class CardSession(
         if (state == CardSessionState.Inactive) return
 
         Log.session { "stop session" }
+        onStopSessionFinalize()
+        reader.stopSession()
+        if (scope.isActive) {
+            scope.cancel()
+        }
+    }
+
+    private fun onStopSessionFinalize() {
         state = CardSessionState.Inactive
         preflightReadMode = PreflightReadMode.FullCardRead
         saveUserCodeIfNeeded()
-        reader.stopSession()
-        scope.cancel()
     }
 
     fun send(apdu: CommandApdu, callback: CompletionCallback<ResponseApdu>) {
@@ -473,6 +456,7 @@ class CardSession(
                 val sessionKey = (secret + protocolKey).calculateSha256()
                 environment.encryptionKey = sessionKey
 
+                Log.session { "The encryption established" }
                 return CompletionResult.Success(true)
             }
             is CompletionResult.Failure -> {
@@ -557,6 +541,22 @@ class CardSession(
             }
             userCode?.type == UserCodeType.Passcode && card.isPasscodeSet == true -> {
                 environment.passcode = userCode
+            }
+        }
+    }
+
+    private fun handleScopeCoroutineException(throwable: Throwable) {
+        when (throwable) {
+            is TangemSdkError.UserCancelled -> {
+                onStopSessionFinalize()
+            }
+
+            else -> {
+                val sw = StringWriter()
+                throwable.printStackTrace(PrintWriter(sw))
+                val exceptionAsString: String = sw.toString()
+                Log.error { exceptionAsString }
+                throw throwable
             }
         }
     }
