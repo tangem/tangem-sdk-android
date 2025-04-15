@@ -11,15 +11,17 @@ import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.TagType
 import com.tangem.common.core.TangemSdkError
-import com.tangem.common.extensions.toHexString
 import com.tangem.common.nfc.CardReader
 import com.tangem.common.nfc.ReadingActiveListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.util.concurrent.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
 
 data class NfcTag(val type: TagType, val isoDep: IsoDep?, val nfcV: NfcV? = null)
@@ -33,61 +35,83 @@ class NfcReader : CardReader {
 
     var listener: ReadingActiveListener? = null
 
+    private val readerMutex = Mutex()
     private var nfcTag: NfcTag? = null
         set(value) {
             field = value
             Log.nfc { "received tag: ${value?.type?.name?.uppercase()}" }
-            scope?.launch { tag.send(value?.type) }
+            scope?.launchWithLock(readerMutex) { tag.send(value?.type) }
         }
 
     override fun startSession() {
-        Log.nfc { "start NFC session" }
-        nfcTag = null
-        listener?.readingIsActive = true
+        scope?.launchWithLock(readerMutex) {
+            Log.nfc { "start NFC session, thread ${Thread.currentThread().id}" }
+            nfcTag = null
+            listener?.readingIsActive = true
+        }
     }
 
     override fun pauseSession() {
-        Log.nfc { "pause NFC session" }
-        listener?.readingIsActive = false
+        scope?.launchWithLock(readerMutex) {
+            Log.nfc { "pause NFC session, thread ${Thread.currentThread().id}" }
+            listener?.readingIsActive = false
+        }
     }
 
     override fun resumeSession() {
-        Log.nfc { "resume NFC session" }
-        listener?.readingIsActive = true
+        scope?.launchWithLock(readerMutex) {
+            Log.nfc { "resume NFC session, thread ${Thread.currentThread().id}" }
+            listener?.readingIsActive = true
+        }
     }
 
     fun onTagDiscovered(tag: Tag?) {
-        NfcV.get(tag)?.let {
-            nfcTag = NfcTag(TagType.Slix, null, NfcV.get(tag))
-            return
-        }
-        IsoDep.get(tag)?.let { isoDep ->
-            connect(isoDep)
-            nfcTag = NfcTag(TagType.Nfc, isoDep)
+        scope?.launchWithLock(readerMutex) {
+            NfcV.get(tag)?.let {
+                nfcTag = NfcTag(TagType.Slix, null, NfcV.get(tag))
+                return@launchWithLock
+            }
+            IsoDep.get(tag)?.let { isoDep ->
+                connect(
+                    isoDep = isoDep,
+                    onSuccess = {
+                        nfcTag = NfcTag(TagType.Nfc, isoDep)
+                    },
+                ) { }
+            }
         }
     }
 
-    private fun connect(isoDep: IsoDep) {
+    private suspend fun connect(isoDep: IsoDep, onSuccess: (IsoDep) -> Unit, onError: () -> Unit) {
         Log.nfc { "connect" }
         if (isoDep.isConnected) {
             Log.nfc { "already connected close and reconnect" }
-            isoDep.closeInternal()
-            Thread.sleep(CONNECTION_DELAY)
-            isoDep.connectInternal()
+            isoDep.closeInternal(onError)
+            delay(CONNECTION_DELAY)
+            isoDep.connectInternal(onError)
         } else {
-            isoDep.connectInternal()
+            isoDep.connectInternal(onError)
             Log.nfc { "connected" }
         }
         isoDep.timeout = ISO_DEP_TIMEOUT_MS
+        onSuccess(isoDep)
     }
 
     override fun stopSession(cancelled: Boolean) {
-        Log.nfc { "stop NFC session" }
-        listener?.readingIsActive = false
-        if (cancelled) {
-            scope?.cancel(CancellationException(TangemSdkError.UserCancelled().customMessage))
-        } else {
-            nfcTag = null
+        scope?.launchWithLock(readerMutex) {
+            Log.nfc { "stop NFC session, thread ${Thread.currentThread().id}" }
+            listener?.readingIsActive = false
+            if (cancelled) {
+                val userCancelledException = TangemSdkError.UserCancelled()
+                scope?.cancel(
+                    CancellationException(
+                        message = userCancelledException.customMessage,
+                        cause = userCancelledException,
+                    ),
+                )
+            } else {
+                nfcTag = null
+            }
         }
     }
 
@@ -123,7 +147,6 @@ class NfcReader : CardReader {
 
     override fun transceiveRaw(apduData: ByteArray, callback: CompletionCallback<ByteArray?>) {
         val rawResponse: ByteArray? = try {
-            Log.nfc { "transceiveRaw: " + apduData.toHexString() }
             transcieveAndLog(apduData)
         } catch (exception: TagLostException) {
             Log.nfc { "ERROR transceiving data TagLostException: $exception" }
@@ -141,13 +164,10 @@ class NfcReader : CardReader {
 
     private fun transcieveAndLog(apduData: ByteArray): ByteArray? {
         Log.nfc { "transcieve..." }
-        val startTime = System.currentTimeMillis()
         val isExtendedLengthApduSupported = nfcTag?.isoDep?.isExtendedLengthApduSupported
         Log.nfc { "isExtendedLengthApduSupported $isExtendedLengthApduSupported" }
         Log.nfc { "transcieveAndLog: isoDep isConnected = " + nfcTag?.isoDep?.isConnected }
         val rawResponse = nfcTag?.isoDep?.transceive(apduData)
-        val finishTime = System.currentTimeMillis()
-        Log.nfc { "transcieve success: [${finishTime - startTime}] ms" }
         return rawResponse
     }
 
@@ -179,8 +199,28 @@ class NfcReader : CardReader {
         }
     }
 
+    override fun forceEnableReaderMode() {
+        Log.nfc { "forceEnableReaderMode" }
+        Thread.sleep(FORCE_ENABLE_READER_MODE_DELAY)
+        listener?.onForceEnableReadingMode()
+    }
+
+    override fun forceDisableReaderMode() {
+        Log.nfc { "forceDisableReaderMode" }
+        listener?.onForceDisableReadingMode()
+    }
+
+    private fun CoroutineScope.launchWithLock(mutex: Mutex, action: suspend () -> Unit) {
+        this.launch {
+            mutex.withLock(null) {
+                action()
+            }
+        }
+    }
+
     private companion object {
         const val ISO_DEP_TIMEOUT_MS = 240_000
         const val CONNECTION_DELAY = 100L
+        const val FORCE_ENABLE_READER_MODE_DELAY = 500L
     }
 }
