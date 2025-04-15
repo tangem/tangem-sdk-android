@@ -136,4 +136,29 @@ class CardIdRange private constructor(
     }
 }
 
+/**
+ * New CardIdRange that cast cardId to decimals [ULong] and compares it
+ * Should use this instead of [CardIdRange]
+ */
+class CardIdRangeDec private constructor(
+    private val range: ULongRange,
+) {
+
+    fun contains(cardId: String): Boolean {
+        val cardIdDecimal = cardId.toULongOrNull(radix = 16) ?: return false
+        return range.contains(cardIdDecimal)
+    }
+
+    companion object {
+        operator fun invoke(start: String, end: String): CardIdRangeDec? {
+            val startCardID = start.toULongOrNull(radix = 16) ?: return null
+            val endCardID = end.toULongOrNull(radix = 16) ?: return null
+
+            return CardIdRangeDec(
+                range = ULongRange(startCardID, endCardID),
+            )
+        }
+    }
+}
+
 fun List<CardIdRange>.contains(cardId: String): Boolean = this.any { it.contains(cardId) }

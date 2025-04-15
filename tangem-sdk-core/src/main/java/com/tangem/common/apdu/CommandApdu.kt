@@ -1,5 +1,6 @@
 package com.tangem.common.apdu
 
+import com.tangem.Log
 import com.tangem.common.card.EncryptionMode
 import com.tangem.common.extensions.calculateCrc16
 import com.tangem.common.extensions.toByteArray
@@ -67,6 +68,8 @@ class CommandApdu(
         val crc: ByteArray = tlvs.calculateCrc16()
         val dataToEncrypt = tlvs.size.toByteArray(2) + crc + tlvs
         val encryptedData = dataToEncrypt.encrypt(encryptionKey)
+
+        Log.apdu { "C-APDU encrypted" }
 
         return CommandApdu(ins, encryptedData, encryptionMode.byteValue, p2, le, cla)
     }
