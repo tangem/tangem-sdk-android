@@ -38,7 +38,10 @@ internal class TangemApiService(private val isProdEnvironment: Boolean) {
 
     suspend fun loadArtwork(cardId: String, cardPublicKey: ByteArray): Result<CardArtworksResponse> {
         return performRequest {
+            val baseUrl = if (isProdEnvironment) BaseUrl.CARD_DATA.url else BaseUrl.CARD_DATA_DEV.url
+
             tangemTechApi.getCardArtworks(
+                url = baseUrl + "card/artworks",
                 cardId = cardId,
                 publicKey = cardPublicKey.toHexString(),
             )
