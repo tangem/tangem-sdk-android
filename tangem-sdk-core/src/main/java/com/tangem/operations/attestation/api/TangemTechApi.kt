@@ -18,8 +18,9 @@ internal interface TangemTechApi {
     ): CardVerificationInfoResponse
 
     @Headers("Content-Type: application/json")
-    @GET("card/artworks")
+    @GET
     suspend fun getCardArtworks(
+        @Url url: String,
         @Header("card_id") cardId: String,
         @Header("card_public_key") publicKey: String,
     ): CardArtworksResponse
