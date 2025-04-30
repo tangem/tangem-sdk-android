@@ -2,6 +2,7 @@ package com.tangem.operations.attestation.service
 
 import com.tangem.common.CompletionResult
 import com.tangem.common.core.TangemSdkError
+import com.tangem.common.core.toTangemSdkError
 import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.services.CardVerificationInfoStore
 import com.tangem.common.services.Result
@@ -38,7 +39,7 @@ internal class CommonOnlineAttestationService(
                     CompletionResult.Failure(TangemSdkError.CardVerificationFailed())
                 }
             }
-            is CompletionResult.Failure -> CompletionResult.Failure(TangemSdkError.CardVerificationFailed())
+            is CompletionResult.Failure -> CompletionResult.Failure(result.error.toTangemSdkError())
         }
     }
 
