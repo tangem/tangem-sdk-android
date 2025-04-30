@@ -13,11 +13,7 @@ import com.tangem.operations.attestation.api.TangemTechApi
 import com.tangem.operations.attestation.api.TangemVerifyApi
 import com.tangem.operations.attestation.api.models.CardVerificationInfoResponse
 import com.tangem.operations.attestation.api.models.CardVerifyAndGetInfo
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.plus
-import okhttp3.ResponseBody
+import kotlinx.coroutines.*
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.io.PrintWriter
@@ -69,10 +65,6 @@ class OnlineCardVerifier {
         }
     }
 
-    internal suspend fun getArtwork(cardId: String, cardPublicKey: String, artworkId: String): Result<ResponseBody> {
-        return performRequest { tangemVerifyApi.getArtwork(artworkId, cardId, cardPublicKey) }
-    }
-
     internal suspend fun getCardVerificationInfo(
         isProdEnvironment: Boolean,
         cardId: String,
@@ -99,10 +91,6 @@ class OnlineCardVerifier {
             Moshi.Builder()
                 .add(KotlinJsonAdapterFactory())
                 .build()
-        }
-
-        fun getUrlForArtwork(cardId: String, cardPublicKey: String, artworkId: String): String {
-            return BaseUrl.VERIFY.url + "card/artwork" + "?artworkId=$artworkId&CID=$cardId&publicKey=$cardPublicKey"
         }
     }
 }

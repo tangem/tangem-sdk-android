@@ -113,7 +113,7 @@ internal class CommonOnlineAttestationServiceTest {
 
         Truth.assertThat(actual).isInstanceOf(CompletionResult.Failure::class.java)
         Truth.assertThat((actual as CompletionResult.Failure).error)
-            .isInstanceOf(TangemSdkError.CardVerificationFailed::class.java)
+            .isEqualTo(apiError)
     }
 
     /**
