@@ -89,6 +89,14 @@ internal class OnlineAttestationVerifierTest(private val model: Model) {
                 response = CardVerificationInfoResponse(manufacturerSignature = "", ISSUER_SIGNATURE),
                 expected = false,
             ),
+            Model(
+                response = CardVerificationInfoResponse(manufacturerSignature = "qwerty", ISSUER_SIGNATURE),
+                expected = false,
+            ),
+            Model(
+                response = CardVerificationInfoResponse(MANUFACTURER_SIGNATURE, issuerSignature = "qwerty"),
+                expected = false,
+            ),
         )
     }
 }
