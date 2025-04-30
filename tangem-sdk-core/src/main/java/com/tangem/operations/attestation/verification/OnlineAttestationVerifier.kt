@@ -1,6 +1,6 @@
 package com.tangem.operations.attestation.verification
 
-import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.hexToBytesOrNull
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.Secp256k1Key
 import com.tangem.operations.attestation.api.models.CardVerificationInfoResponse
@@ -35,21 +35,32 @@ internal class OnlineAttestationVerifier(
     }
 
     private fun verifyIssuerCertificate(certificate: String): Boolean {
-        val manufacturerPublicKey = manufacturerKeyProvider.get() ?: return false
-        val compressedIssuerPublicKey = Secp256k1Key(issuerPublicKey).compress()
-
-        return CryptoUtils.verify(
-            publicKey = manufacturerPublicKey.value.hexToBytes(),
-            message = compressedIssuerPublicKey,
-            signature = certificate.hexToBytes(),
+        return verify(
+            publicKey = {
+                val manufacturerPublicKey = manufacturerKeyProvider.get()
+                manufacturerPublicKey?.value?.hexToBytesOrNull() ?: return false
+            },
+            message = { Secp256k1Key(issuerPublicKey).compress() },
+            signature = certificate,
         )
     }
 
     private fun verifyCardCertificate(certificate: String): Boolean {
-        return CryptoUtils.verify(
-            publicKey = issuerPublicKey,
-            message = cardPublicKey,
-            signature = certificate.hexToBytes(),
+        return verify(
+            publicKey = { issuerPublicKey },
+            message = { cardPublicKey },
+            signature = certificate,
         )
+    }
+
+    private inline fun verify(publicKey: () -> ByteArray, message: () -> ByteArray, signature: String): Boolean {
+        return runCatching {
+            CryptoUtils.verify(
+                publicKey = publicKey(),
+                message = message(),
+                signature = signature.hexToBytesOrNull() ?: return false,
+            )
+        }
+            .getOrDefault(defaultValue = false)
     }
 }
