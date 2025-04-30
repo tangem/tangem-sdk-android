@@ -26,6 +26,8 @@ fun String.hexToBytes(): ByteArray {
     }
 }
 
+fun String.hexToBytesOrNull(): ByteArray? = runCatching(String::hexToBytes).getOrNull()
+
 fun String.toSnakeCase(): String = replace("(?<=.)(?=\\p{Upper})".toRegex(), "_")
 
 fun String.titleFormatted(symbol: String = "=", maxLength: Int = 50): String {
