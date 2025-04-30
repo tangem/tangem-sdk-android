@@ -22,6 +22,7 @@ import com.tangem.sdk.nfc.NfcManager
 import com.tangem.sdk.ui.AttestationFailedDialog
 import com.tangem.sdk.ui.NfcEnableDialog
 import com.tangem.sdk.ui.NfcSessionDialog
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * Default implementation of [SessionViewDelegate].
@@ -34,9 +35,14 @@ class DefaultSessionViewDelegate(
 
     var sdkConfig: Config = Config()
 
+    override val viewVisibility: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val resetCodesViewDelegate: ResetCodesViewDelegate = AndroidResetCodesViewDelegate(activity)
 
     private var readingDialog: NfcSessionDialog? = null
+        set(value) {
+            viewVisibility.value = value != null
+            field = value
+        }
     private var nfcEnableDialog: NfcEnableDialog? = null
     private var stoppedBySession: Boolean = false
 
