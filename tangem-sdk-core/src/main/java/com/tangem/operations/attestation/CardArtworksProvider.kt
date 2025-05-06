@@ -1,6 +1,8 @@
 package com.tangem.operations.attestation
 
 import com.tangem.Log
+import com.tangem.common.card.EllipticCurve
+import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.services.Result
@@ -8,6 +10,8 @@ import com.tangem.crypto.CryptoUtils
 import com.tangem.operations.attestation.api.BaseUrl
 import com.tangem.operations.attestation.api.TangemApiService
 import com.tangem.operations.attestation.api.models.CardArtworksResponse
+import com.tangem.operations.attestation.verification.ManufacturerPublicKey
+import com.tangem.operations.attestation.verification.ManufacturerPublicKeyProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -23,7 +27,13 @@ class CardArtworksProvider(
 
     private val cachedArtworks: ConcurrentHashMap<String, ByteArray> = ConcurrentHashMap()
 
-    suspend fun getArtwork(cardId: String, cardPublicKey: ByteArray, size: ArtworkSize): Result<ByteArray> {
+    suspend fun getArtwork(
+        cardId: String,
+        manufacturerName: String,
+        firmwareVersion: FirmwareVersion,
+        cardPublicKey: ByteArray,
+        size: ArtworkSize,
+    ): Result<ByteArray> {
         return cachedArtworks[getStorageKey(cardId, cardPublicKey, size)]?.let {
             Result.Success(it)
         } ?: when (val result = service.loadArtwork(cardId, cardPublicKey)) {
@@ -31,13 +41,17 @@ class CardArtworksProvider(
                 Result.Failure(TangemSdkError.NetworkError(customMessage = "Empty response: ${result.error.message}"))
             }
             is Result.Success -> {
-                verifyArtwork(cardId, cardPublicKey, size, result.data)
+                val manufacturerPublicKey = ManufacturerPublicKeyProvider(firmwareVersion, manufacturerName).get()
+                    ?: return Result.Failure(TangemSdkError.VerificationFailed())
+                verifyArtwork(cardId, manufacturerPublicKey, cardPublicKey, size, result.data)
             }
         }
     }
 
+    @Suppress("LongParameterList")
     private suspend fun verifyArtwork(
         cardId: String,
+        manufacturerPublicKey: ManufacturerPublicKey,
         cardPublicKey: ByteArray,
         size: ArtworkSize,
         response: CardArtworksResponse,
@@ -54,12 +68,18 @@ class CardArtworksProvider(
             return Result.Failure(TangemSdkError.VerificationFailed())
         }
 
-        val largeImage = getVerifiedImage(cardPublicKey, response.imageLargeUrl, response.imageLargeSignature)
+        val largeImage = getVerifiedImage(
+            url = response.imageLargeUrl,
+            signature = response.imageLargeSignature,
+            size = ArtworkSize.LARGE,
+            manufacturerPublicKey = manufacturerPublicKey,
+        )
         val smallImage = if (hasSmallImage) {
             getVerifiedImage(
-                cardPublicKey,
-                requireNotNull(response.imageSmallUrl),
-                requireNotNull(response.imageLargeSignature),
+                url = requireNotNull(response.imageSmallUrl),
+                signature = requireNotNull(response.imageSmallSignature),
+                size = ArtworkSize.SMALL,
+                manufacturerPublicKey = manufacturerPublicKey,
             )
         } else {
             null
@@ -75,19 +95,37 @@ class CardArtworksProvider(
         }
     }
 
-    private suspend fun getVerifiedImage(cardPublicKey: ByteArray, url: String, signature: String): Result<ByteArray> {
+    private suspend fun getVerifiedImage(
+        url: String,
+        manufacturerPublicKey: ManufacturerPublicKey,
+        signature: String,
+        size: ArtworkSize,
+    ): Result<ByteArray> {
         return when (val imageResult = downloadImage(url)) {
-            is Result.Failure -> {
-                imageResult
-            }
+            is Result.Failure -> imageResult
             is Result.Success -> {
-                if (CryptoUtils.verify(cardPublicKey, imageResult.data, signature.hexToBytes())) {
+                val artworkId = getArtworkIdFromUrl(url)
+                val prefix = "artwork|${size.name.lowercase()}|$artworkId|".encodeToByteArray()
+                val message = prefix + imageResult.data
+
+                val isValid = CryptoUtils.verify(
+                    publicKey = manufacturerPublicKey.value.hexToBytes(),
+                    message = message,
+                    signature = signature.hexToBytes(),
+                    curve = EllipticCurve.Secp256k1,
+                )
+
+                if (isValid) {
                     Result.Success(imageResult.data)
                 } else {
                     Result.Failure(TangemSdkError.VerificationFailed())
                 }
             }
         }
+    }
+
+    private fun getArtworkIdFromUrl(url: String): String {
+        return url.substringAfterLast('/').substringBeforeLast('.')
     }
 
     private suspend fun downloadImage(urlString: String): Result<ByteArray> {
