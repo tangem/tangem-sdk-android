@@ -136,6 +136,7 @@ class CardSession(
      * @param iconScanRes iconResource to replace on Scan Bottom Sheet
      * @param onSessionStarted: callback with the card session. Can contain [TangemSdkError] if something goes wrong.
      */
+    @Suppress("LongMethod")
     fun start(iconScanRes: Int? = null, onSessionStarted: SessionStartedCallback) {
         Log.session { "start card session with delegate" }
         reader.scope = scope
@@ -153,20 +154,27 @@ class CardSession(
         scope.launch {
             reader.tag.asFlow()
                 .filterNotNull()
-                .take(1)
-                .collect { tagType ->
-                    selectApplet()
-                        .doOnSuccess {
-                            if (tagType == TagType.Nfc && preflightReadMode != PreflightReadMode.None) {
-                                preflightCheck(onSessionStarted)
-                            } else {
-                                onSessionStarted(this@CardSession, null)
+                .withIndex()
+                .collect { tagTypeIndexed ->
+                    if (tagTypeIndexed.index == 0) {
+                        selectApplet()
+                            .doOnSuccess {
+                                if (tagTypeIndexed.value == TagType.Nfc &&
+                                    preflightReadMode != PreflightReadMode.None
+                                ) {
+                                    preflightCheck(onSessionStarted)
+                                } else {
+                                    onSessionStarted(this@CardSession, null)
+                                }
                             }
-                        }
-                        .doOnFailure {
-                            onSessionStarted(this@CardSession, it)
-                            stopWithError(it, SessionErrorMoment.AppletSelection)
-                        }
+                            .doOnFailure {
+                                onSessionStarted(this@CardSession, it)
+                                stopWithError(it, SessionErrorMoment.AppletSelection)
+                            }
+                    } else {
+                        // Visa card should receive the applet selection command on each tag connection
+                        selectApplet()
+                    }
                 }
         }
 
