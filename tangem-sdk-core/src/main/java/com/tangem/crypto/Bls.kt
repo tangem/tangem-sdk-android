@@ -74,11 +74,26 @@ object Bls {
         return pairingResult == one
     }
 
+    /**
+     * Sign a message with a private key.
+     * @param data should be raw bytes, not hashed one. For hash use [signHash] method.
+     * @param privateKeyArray private key in bytes
+     */
     fun sign(data: ByteArray, privateKeyArray: ByteArray): ByteArray {
         return BasicSchemeMPL
             .sign(privateKey = PrivateKey.fromBytes(privateKeyArray.toUByteArray()), message = data.toUByteArray())
             .toBytes()
             .toByteArray()
+    }
+
+    /**
+     * Sign a message with a private key.
+     * @param hash hash of the data to sign
+     * @param privateKeyArray private key in bytes
+     */
+    fun signHash(hash: ByteArray, privateKeyArray: ByteArray): ByteArray {
+        val g2 = JacobianPoint.fromBytesG2(hash.toUByteArray())
+        return g2.times(PrivateKey.fromBytes(privateKeyArray.toUByteArray()).value).toBytes().toByteArray()
     }
 
     fun generatePublicKey(privateKeyArray: ByteArray): ByteArray {
