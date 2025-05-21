@@ -22,7 +22,7 @@ import com.tangem.operations.read.ReadWalletsListCommand
  * and then transform it into an address of corresponding blockchain wallet
  * according to a specific blockchain algorithm.
  * WalletPrivateKey is never revealed by the card and will be used by [com.tangem.operations.sign.SignHashCommand] or
- * [com.tangem.operations.sign.SignHashesCommand] and [com.tangem.operations.attestation.AttestWalletKeyCommand].
+ * [com.tangem.operations.sign.SignHashesCommand] and [com.tangem.operations.attestation.AttestWalletKeyTask].
  * RemainingSignature is set to MaxSignatures.
  *
  * @property curve Elliptic curve of the wallet. [com.tangem.common.card.Card.supportedCurves] contains all curves
