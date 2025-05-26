@@ -25,14 +25,18 @@ internal class TangemApiService(private val isProdEnvironment: Boolean) {
         cardId: String,
         cardPublicKey: ByteArray,
     ): Result<CardVerificationInfoResponse> {
-        return performRequest {
+        return try {
             val baseUrl = if (isProdEnvironment) BaseUrl.CARD_DATA.url else BaseUrl.CARD_DATA_DEV.url
 
-            tangemTechApi.getCardVerificationInfo(
+            val response = tangemTechApi.getCardVerificationInfo(
                 url = baseUrl + "card",
                 cardId = cardId,
                 publicKey = cardPublicKey.toHexString(),
             )
+
+            Result.Success(response)
+        } catch (e: Exception) {
+            Result.Failure(e)
         }
     }
 
@@ -58,7 +62,6 @@ internal class TangemApiService(private val isProdEnvironment: Boolean) {
                         TangemApiServiceLogging.apiInterceptors.forEach { addInterceptor(it) }
                     }
                     .build(),
-
             )
             .build()
 
