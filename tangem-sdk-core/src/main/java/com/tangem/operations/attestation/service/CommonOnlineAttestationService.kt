@@ -12,6 +12,7 @@ import com.tangem.operations.attestation.api.TangemApiService
 import com.tangem.operations.attestation.api.models.CardVerificationInfoResponse
 import com.tangem.operations.attestation.verification.OnlineAttestationVerifier
 import retrofit2.HttpException
+import java.io.EOFException
 
 internal class CommonOnlineAttestationService(
     private val tangemApiService: TangemApiService,
@@ -45,7 +46,7 @@ internal class CommonOnlineAttestationService(
             is Result.Failure -> {
                 Log.error { "Failed to get attestation data: ${result.error}" }
 
-                if (result.error.isDataNotFoundException()) {
+                if (result.error.isDataNotFoundException() || result.error.isEmptyResponseBody()) {
                     CompletionResult.Failure(error = TangemSdkError.CardVerificationFailed())
                 } else {
                     CompletionResult.Failure(error = result.toTangemSdkError())
@@ -68,6 +69,8 @@ internal class CommonOnlineAttestationService(
     private fun Throwable.isDataNotFoundException(): Boolean {
         return this is HttpException && code() in DATA_NOT_FOUND_ERROR_CODES
     }
+
+    private fun Throwable.isEmptyResponseBody(): Boolean = this is EOFException
 
     private companion object {
 
