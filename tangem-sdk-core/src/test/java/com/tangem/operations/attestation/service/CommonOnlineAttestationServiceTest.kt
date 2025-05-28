@@ -15,6 +15,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
+import java.io.EOFException
 
 /**
 [REDACTED_AUTHOR]
@@ -282,6 +283,40 @@ internal class CommonOnlineAttestationServiceTest {
         }
 
         val expected = TangemSdkError.ExceptionError(apiError)
+
+        Truth.assertThat(actual.error).isInstanceOf(expected::class.java)
+        Truth.assertThat(actual.error).hasMessageThat().isEqualTo(expected.message)
+    }
+
+    /**
+     * Cache state:  empty
+     * API result:   failure (EOFException)
+     * Verification: never mind
+     *
+     * Result:       failure
+     */
+    @Test
+    fun test_9() = runTest {
+        val apiError = EOFException()
+
+        every { cardVerificationInfoStore.get(cardPublicKey = cardPublicKey) } returns null
+        coEvery { tangemApiService.getOnlineAttestationResponse(CARD_ID, cardPublicKey) } returns Result.Failure(
+            apiError,
+        )
+
+        val actual = service.attestCard(CARD_ID, cardPublicKey) as CompletionResult.Failure
+
+        coVerifyOrder {
+            cardVerificationInfoStore.get(cardPublicKey = cardPublicKey)
+            tangemApiService.getOnlineAttestationResponse(CARD_ID, cardPublicKey)
+        }
+
+        coVerify(inverse = true) {
+            onlineAttestationVerifier.verify(response = any())
+            cardVerificationInfoStore.store(cardPublicKey = any(), response = any())
+        }
+
+        val expected = TangemSdkError.CardVerificationFailed()
 
         Truth.assertThat(actual.error).isInstanceOf(expected::class.java)
         Truth.assertThat(actual.error).hasMessageThat().isEqualTo(expected.message)
