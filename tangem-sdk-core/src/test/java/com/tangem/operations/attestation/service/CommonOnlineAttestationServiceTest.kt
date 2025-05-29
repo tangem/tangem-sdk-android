@@ -11,7 +11,11 @@ import com.tangem.operations.attestation.api.models.CardVerificationInfoResponse
 import com.tangem.operations.attestation.verification.OnlineAttestationVerifier
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
+import java.io.EOFException
 
 /**
 [REDACTED_AUTHOR]
@@ -174,6 +178,148 @@ internal class CommonOnlineAttestationServiceTest {
         Truth.assertThat(actual).isInstanceOf(CompletionResult.Failure::class.java)
         Truth.assertThat((actual as CompletionResult.Failure).error)
             .isInstanceOf(TangemSdkError.CardVerificationFailed::class.java)
+    }
+
+    /**
+     * Cache state:  empty
+     * API result:   failure (http exception with code 403)
+     * Verification: never mind
+     *
+     * Result:       failure
+     */
+    @Test
+    fun test_6() = runTest {
+        val apiError = HttpException(
+            Response.error<CardVerificationInfoResponse>(403, "{}".toResponseBody()),
+        )
+
+        every { cardVerificationInfoStore.get(cardPublicKey = cardPublicKey) } returns null
+        coEvery { tangemApiService.getOnlineAttestationResponse(CARD_ID, cardPublicKey) } returns Result.Failure(
+            apiError,
+        )
+
+        val actual = service.attestCard(CARD_ID, cardPublicKey) as CompletionResult.Failure
+
+        coVerifyOrder {
+            cardVerificationInfoStore.get(cardPublicKey = cardPublicKey)
+            tangemApiService.getOnlineAttestationResponse(CARD_ID, cardPublicKey)
+        }
+
+        coVerify(inverse = true) {
+            onlineAttestationVerifier.verify(response = any())
+            cardVerificationInfoStore.store(cardPublicKey = any(), response = any())
+        }
+
+        val expected = TangemSdkError.CardVerificationFailed()
+
+        Truth.assertThat(actual.error).isInstanceOf(expected::class.java)
+        Truth.assertThat(actual.error).hasMessageThat().isEqualTo(expected.message)
+    }
+
+    /**
+     * Cache state:  empty
+     * API result:   failure (http exception with code 404)
+     * Verification: never mind
+     *
+     * Result:       failure
+     */
+    @Test
+    fun test_7() = runTest {
+        val apiError = HttpException(
+            Response.error<CardVerificationInfoResponse>(404, "{}".toResponseBody()),
+        )
+
+        every { cardVerificationInfoStore.get(cardPublicKey = cardPublicKey) } returns null
+        coEvery { tangemApiService.getOnlineAttestationResponse(CARD_ID, cardPublicKey) } returns Result.Failure(
+            apiError,
+        )
+
+        val actual = service.attestCard(CARD_ID, cardPublicKey) as CompletionResult.Failure
+
+        coVerifyOrder {
+            cardVerificationInfoStore.get(cardPublicKey = cardPublicKey)
+            tangemApiService.getOnlineAttestationResponse(CARD_ID, cardPublicKey)
+        }
+
+        coVerify(inverse = true) {
+            onlineAttestationVerifier.verify(response = any())
+            cardVerificationInfoStore.store(cardPublicKey = any(), response = any())
+        }
+
+        val expected = TangemSdkError.CardVerificationFailed()
+
+        Truth.assertThat(actual.error).isInstanceOf(expected::class.java)
+        Truth.assertThat(actual.error).hasMessageThat().isEqualTo(expected.message)
+    }
+
+    /**
+     * Cache state:  empty
+     * API result:   failure (http exception with code 500)
+     * Verification: never mind
+     *
+     * Result:       failure
+     */
+    @Test
+    fun test_8() = runTest {
+        val apiError = HttpException(
+            Response.error<CardVerificationInfoResponse>(500, "{}".toResponseBody()),
+        )
+
+        every { cardVerificationInfoStore.get(cardPublicKey = cardPublicKey) } returns null
+        coEvery { tangemApiService.getOnlineAttestationResponse(CARD_ID, cardPublicKey) } returns Result.Failure(
+            apiError,
+        )
+
+        val actual = service.attestCard(CARD_ID, cardPublicKey) as CompletionResult.Failure
+
+        coVerifyOrder {
+            cardVerificationInfoStore.get(cardPublicKey = cardPublicKey)
+            tangemApiService.getOnlineAttestationResponse(CARD_ID, cardPublicKey)
+        }
+
+        coVerify(inverse = true) {
+            onlineAttestationVerifier.verify(response = any())
+            cardVerificationInfoStore.store(cardPublicKey = any(), response = any())
+        }
+
+        val expected = TangemSdkError.ExceptionError(apiError)
+
+        Truth.assertThat(actual.error).isInstanceOf(expected::class.java)
+        Truth.assertThat(actual.error).hasMessageThat().isEqualTo(expected.message)
+    }
+
+    /**
+     * Cache state:  empty
+     * API result:   failure (EOFException)
+     * Verification: never mind
+     *
+     * Result:       failure
+     */
+    @Test
+    fun test_9() = runTest {
+        val apiError = EOFException()
+
+        every { cardVerificationInfoStore.get(cardPublicKey = cardPublicKey) } returns null
+        coEvery { tangemApiService.getOnlineAttestationResponse(CARD_ID, cardPublicKey) } returns Result.Failure(
+            apiError,
+        )
+
+        val actual = service.attestCard(CARD_ID, cardPublicKey) as CompletionResult.Failure
+
+        coVerifyOrder {
+            cardVerificationInfoStore.get(cardPublicKey = cardPublicKey)
+            tangemApiService.getOnlineAttestationResponse(CARD_ID, cardPublicKey)
+        }
+
+        coVerify(inverse = true) {
+            onlineAttestationVerifier.verify(response = any())
+            cardVerificationInfoStore.store(cardPublicKey = any(), response = any())
+        }
+
+        val expected = TangemSdkError.CardVerificationFailed()
+
+        Truth.assertThat(actual.error).isInstanceOf(expected::class.java)
+        Truth.assertThat(actual.error).hasMessageThat().isEqualTo(expected.message)
     }
 
     private companion object {
