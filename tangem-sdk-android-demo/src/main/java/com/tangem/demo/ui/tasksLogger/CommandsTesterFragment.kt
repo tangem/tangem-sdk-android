@@ -32,6 +32,8 @@ import com.tangem.operations.resetcode.ResetCodesViewState
 import com.tangem.sdk.nfc.NfcManager
 import com.tangem.tangem_demo.R
 import kotlinx.android.synthetic.main.fg_commands_tester.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
 [REDACTED_AUTHOR]
@@ -175,6 +177,7 @@ class SdkTaskSpinnerFragment : BaseFragment() {
     }
 
     class EmptyViewDelegate : SessionViewDelegate {
+        override val viewVisibility: StateFlow<Boolean> = MutableStateFlow(false)
         override val resetCodesViewDelegate: ResetCodesViewDelegate = EmptyResetCodesViewDelegate()
         override fun onSessionStarted(
             cardId: String?,
