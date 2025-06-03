@@ -20,8 +20,16 @@ class AndroidSecureStorage(
         return preferences.getString(account, null)?.hexToBytes()
     }
 
-    override fun store(data: ByteArray, account: String, overwrite: Boolean) {
+    override fun getAsString(key: String): String? {
+        return preferences.getString(key, null)
+    }
+
+    override fun store(data: ByteArray, account: String) {
         editor.putString(account, data.toHexString()).apply()
+    }
+
+    override fun store(key: String, value: String) {
+        editor.putString(key, value).apply()
     }
 
     override fun delete(account: String) {
@@ -30,10 +38,6 @@ class AndroidSecureStorage(
 
     override fun storeKey(key: ByteArray, account: String) {
         store(key, account)
-    }
-
-    override fun readKey(account: String): ByteArray? {
-        return get(account)
     }
 }
 

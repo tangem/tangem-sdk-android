@@ -24,8 +24,8 @@ internal class SecureService(
     }
 
     private fun makeOrRestoreKey(): KeyPair {
-        val publicKey = storage.readKey(enclavePublic)
-        val privateKey = storage.readKey(enclavePrivate)
+        val publicKey = storage.get(enclavePublic)
+        val privateKey = storage.get(enclavePrivate)
         return if (publicKey != null && privateKey != null) {
             KeyPair(publicKey, privateKey)
         } else {

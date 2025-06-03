@@ -27,8 +27,8 @@ import com.tangem.crypto.hdWallet.masterkey.AnyMasterKeyFactory
 import com.tangem.operations.*
 import com.tangem.operations.attestation.AttestCardKeyCommand
 import com.tangem.operations.attestation.AttestCardKeyResponse
-import com.tangem.operations.attestation.CardVerifyAndGetInfo
 import com.tangem.operations.attestation.OnlineCardVerifier
+import com.tangem.operations.attestation.api.models.CardVerifyAndGetInfo
 import com.tangem.operations.derivation.DeriveWalletPublicKeyTask
 import com.tangem.operations.derivation.DeriveWalletPublicKeysTask
 import com.tangem.operations.derivation.ExtendedPublicKeysMap
@@ -45,6 +45,7 @@ import com.tangem.operations.sign.*
 import com.tangem.operations.usersetttings.SetUserCodeRecoveryAllowedTask
 import com.tangem.operations.wallet.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * The main interface of Tangem SDK that allows your app to communicate with Tangem cards.
@@ -94,6 +95,13 @@ class TangemSdk(
      */
     fun forceDisableReaderMode() {
         reader.forceDisableReaderMode()
+    }
+
+    /**
+     * Returns a [StateFlow] that indicates whether any TangemSdk UI is currently visible
+     */
+    fun uiVisibility(): StateFlow<Boolean> {
+        return viewDelegate.viewVisibility
     }
 
     // region Card operations
