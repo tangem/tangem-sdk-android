@@ -9,6 +9,7 @@ import com.tangem.common.core.ProductType
 import com.tangem.common.core.TangemError
 import com.tangem.common.extensions.VoidCallback
 import com.tangem.operations.resetcode.ResetCodesViewDelegate
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Allows interaction with users and shows visual elements.
@@ -17,6 +18,7 @@ import com.tangem.operations.resetcode.ResetCodesViewDelegate
  */
 interface SessionViewDelegate {
 
+    val viewVisibility: StateFlow<Boolean>
     val resetCodesViewDelegate: ResetCodesViewDelegate
 
     /**
