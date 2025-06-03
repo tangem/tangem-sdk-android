@@ -21,11 +21,7 @@ import com.tangem.demo.ui.separtedCommands.CommandListFragment
 import com.tangem.demo.ui.settings.SettingsFragment
 import com.tangem.demo.ui.viewDelegate.ViewDelegateFragment
 import com.tangem.sdk.DefaultSessionViewDelegate
-import com.tangem.sdk.extensions.createLogger
-import com.tangem.sdk.extensions.getWordlist
-import com.tangem.sdk.extensions.initAuthenticationManager
-import com.tangem.sdk.extensions.initKeystoreManager
-import com.tangem.sdk.extensions.initNfcManager
+import com.tangem.sdk.extensions.*
 import com.tangem.sdk.nfc.AndroidNfcAvailabilityProvider
 import com.tangem.sdk.storage.create
 import com.tangem.tangem_demo.R
@@ -77,7 +73,6 @@ class DemoActivity : AppCompatActivity() {
     private fun initSdk(): TangemSdk {
         val config = Config().apply {
             linkedTerminal = false
-            allowUntrustedCards = true
             filter.allowedCardTypes = FirmwareVersion.FirmwareType.values().toList()
             defaultDerivationPaths = mutableMapOf(
                 EllipticCurve.Secp256k1 to listOf(
