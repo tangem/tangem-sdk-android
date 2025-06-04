@@ -9,6 +9,7 @@ import com.tangem.common.core.ProductType
 import com.tangem.common.core.TangemError
 import com.tangem.common.extensions.VoidCallback
 import com.tangem.operations.resetcode.ResetCodesViewDelegate
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Allows interaction with users and shows visual elements.
@@ -17,6 +18,7 @@ import com.tangem.operations.resetcode.ResetCodesViewDelegate
  */
 interface SessionViewDelegate {
 
+    val viewVisibility: StateFlow<Boolean>
     val resetCodesViewDelegate: ResetCodesViewDelegate
 
     /**
@@ -55,7 +57,7 @@ interface SessionViewDelegate {
     /**
      * It is called when NFC session was completed and a user can take the card away from the Android device.
      */
-    fun onSessionStopped(message: Message? = null)
+    fun onSessionStopped(message: Message? = null, onDialogHidden: () -> Unit)
 
     /**
      * It is called when some error occur during NFC session.

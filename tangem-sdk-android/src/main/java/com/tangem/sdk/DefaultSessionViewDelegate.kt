@@ -22,6 +22,7 @@ import com.tangem.sdk.nfc.NfcManager
 import com.tangem.sdk.ui.AttestationFailedDialog
 import com.tangem.sdk.ui.NfcEnableDialog
 import com.tangem.sdk.ui.NfcSessionDialog
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * Default implementation of [SessionViewDelegate].
@@ -34,9 +35,14 @@ class DefaultSessionViewDelegate(
 
     var sdkConfig: Config = Config()
 
+    override val viewVisibility: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val resetCodesViewDelegate: ResetCodesViewDelegate = AndroidResetCodesViewDelegate(activity)
 
     private var readingDialog: NfcSessionDialog? = null
+        set(value) {
+            viewVisibility.value = value != null
+            field = value
+        }
     private var nfcEnableDialog: NfcEnableDialog? = null
     private var stoppedBySession: Boolean = false
 
@@ -47,7 +53,7 @@ class DefaultSessionViewDelegate(
         iconScanRes: Int?,
         productType: ProductType,
     ) {
-        Log.view { "session started" }
+        Log.view { "onSessionStarted" }
         createAndShowState(
             state = SessionViewDelegateState.Ready(formatCardId(cardId), productType),
             enableHowTo = enableHowTo,
@@ -60,7 +66,7 @@ class DefaultSessionViewDelegate(
     private fun checkNfcEnabled() {
         Log.view { "checkNfcEnabled" }
         // workaround to delay checking isNfcEnabled to let nfcManager become enabled state after enableReaderMode
-        postUI(msTime = 700) {
+        postUI(msTime = DIALOG_NFC_DELAY) {
             Log.view { "checkNfcEnabled isNfcEnabled=${nfcManager.isNfcEnabled}" }
             if (!nfcManager.isNfcEnabled) {
                 nfcEnableDialog?.cancel()
@@ -73,39 +79,45 @@ class DefaultSessionViewDelegate(
         }
     }
 
-    override fun onSessionStopped(message: Message?) {
+    override fun onSessionStopped(message: Message?, onDialogHidden: () -> Unit) {
         Log.view { "session stopped" }
         stoppedBySession = true
-        readingDialog?.show(SessionViewDelegateState.Success(message))
+        readingDialog?.show(SessionViewDelegateState.Success(message)) {
+            onDialogShown()
+            onDialogHidden()
+        }
     }
 
     override fun onSecurityDelay(ms: Int, totalDurationSeconds: Int, productType: ProductType) {
         Log.view { "showing security delay: $ms, $totalDurationSeconds" }
-        readingDialog?.show(SessionViewDelegateState.SecurityDelay(ms, totalDurationSeconds, productType))
+        readingDialog?.show(
+            SessionViewDelegateState.SecurityDelay(ms, totalDurationSeconds, productType),
+            ::onDialogShown,
+        )
     }
 
     override fun onDelay(total: Int, current: Int, step: Int, productType: ProductType) {
         Log.view { "showing delay" }
-        readingDialog?.show(SessionViewDelegateState.Delay(total, current, step, productType))
+        readingDialog?.show(SessionViewDelegateState.Delay(total, current, step, productType), ::onDialogShown)
     }
 
     override fun onTagLost(productType: ProductType) {
         Log.view { "tag lost" }
-        readingDialog?.show(SessionViewDelegateState.TagLost(productType))
+        readingDialog?.show(SessionViewDelegateState.TagLost(productType), ::onDialogShown)
     }
 
     override fun onTagConnected() {
         Log.view { "tag connected" }
-        readingDialog?.show(SessionViewDelegateState.TagConnected)
+        readingDialog?.show(SessionViewDelegateState.TagConnected, ::onDialogShown)
     }
 
     override fun onWrongCard(wrongValueType: WrongValueType) {
         Log.view { "wrong card detected" }
-        readingDialog?.show(SessionViewDelegateState.WrongCard(wrongValueType))
+        readingDialog?.show(SessionViewDelegateState.WrongCard(wrongValueType), ::onDialogShown)
     }
 
     override fun onError(error: TangemError) {
-        readingDialog?.show(SessionViewDelegateState.Error(error))
+        readingDialog?.show(SessionViewDelegateState.Error(error), ::onDialogShown)
     }
 
     override fun requestUserCode(
@@ -129,6 +141,7 @@ class DefaultSessionViewDelegate(
                     cardId = cardId,
                     callback = callback,
                 ),
+                ::onDialogShown,
             )
         }
     }
@@ -137,7 +150,7 @@ class DefaultSessionViewDelegate(
         Log.view { "showing pin change request with type: $type" }
         val dialog = readingDialog ?: createReadingDialog(activity)
 
-        dialog.show(SessionViewDelegateState.PinChangeRequested(type, cardId, callback))
+        dialog.show(SessionViewDelegateState.PinChangeRequested(type, cardId, callback), ::onDialogShown)
     }
 
     override fun dismiss() {
@@ -176,21 +189,39 @@ class DefaultSessionViewDelegate(
         AttestationFailedDialog.completedWithWarnings(activity, positive)
     }
 
+    private fun onDialogShown() {
+        readingDialog = null
+    }
+
     private fun createAndShowState(
         state: SessionViewDelegateState,
         enableHowTo: Boolean,
         message: ViewDelegateMessage? = null,
         iconScanRes: Int? = null,
     ) {
+        Log.view { "createAndShowState" }
         postUI {
-            readingDialog?.let(NfcSessionDialog::dismissInternal)
-
-            with(createReadingDialog(activity, iconScanRes)) {
-                showHowTo(enableHowTo)
-                setInitialMessage(message)
-                setScanImage(sdkConfig.scanTagImage)
-                show(state)
+            if (readingDialog == null) {
+                Log.view { "createAndConfigDialog" }
+                createAndConfigureDialog(state, enableHowTo, message, iconScanRes)
+            } else {
+                readingDialog?.show(state, ::onDialogShown)
             }
+        }
+    }
+
+    private fun createAndConfigureDialog(
+        state: SessionViewDelegateState,
+        enableHowTo: Boolean,
+        message: ViewDelegateMessage? = null,
+        iconScanRes: Int? = null,
+    ) {
+        with(createReadingDialog(activity, iconScanRes)) {
+            Log.view { "createReadingDialog readingDialog $this" }
+            showHowTo(enableHowTo)
+            setInitialMessage(message)
+            setScanImage(sdkConfig.scanTagImage)
+            show(state, ::onDialogShown)
         }
     }
 
@@ -222,5 +253,9 @@ class DefaultSessionViewDelegate(
 
         val formatter = CardIdFormatter(sdkConfig.cardIdDisplayFormat)
         return formatter.getFormattedCardId(cardId)
+    }
+
+    companion object {
+        private const val DIALOG_NFC_DELAY = 800L
     }
 }

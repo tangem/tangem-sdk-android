@@ -62,6 +62,7 @@ class StartPrimaryCardLinkingCommand : Command<PrimaryCard>() {
             existingWalletsCount = card.wallets.size,
             isHDWalletAllowed = card.settings.isHDWalletAllowed,
             issuer = card.issuer,
+            manufacturer = card.manufacturer,
             walletCurves = card.wallets.map { it.curve },
             batchId = card.batchId,
             firmwareVersion = card.firmwareVersion,
