@@ -183,7 +183,7 @@ class AttestWalletKeyTask(
     }
 
     private fun verifyWalletSignature(response: AttestWalletKeyResponse, wallet: CardWallet): Boolean {
-        if (wallet.publicKey == publicKey) {
+        if (wallet.publicKey != publicKey) {
             return false
         }
 
