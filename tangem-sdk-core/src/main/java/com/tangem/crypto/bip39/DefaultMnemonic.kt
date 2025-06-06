@@ -24,6 +24,13 @@ class DefaultMnemonic : Mnemonic {
         mnemonicComponents = bip39.generateMnemonic(entropy)
     }
 
+    @Throws(TangemSdkError.MnemonicException::class)
+    constructor(entropy: ByteArray, wordlist: Wordlist) {
+        bip39 = DefaultBIP39(wordlist)
+        this.wordlist = bip39.wordlist
+        mnemonicComponents = bip39.generateMnemonic(entropy, wordlist)
+    }
+
     override fun generateSeed(passphrase: String): CompletionResult<ByteArray> {
         return bip39.generateSeed(mnemonicComponents, passphrase)
     }
