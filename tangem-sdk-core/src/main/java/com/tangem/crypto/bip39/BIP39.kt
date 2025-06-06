@@ -35,4 +35,11 @@ interface BIP39 {
      */
     @Throws(TangemSdkError.MnemonicException::class)
     fun getEntropy(mnemonicComponents: List<String>): ByteArray
+
+    /** Generate a mnemonic from entropy.
+     * @param entropyData The entropy to use
+     * @return The generated mnemonic split to components
+     */
+    @Throws(TangemSdkError.MnemonicException::class)
+    fun generateMnemonic(entropyData: ByteArray, wordlist: Wordlist): List<String>
 }
