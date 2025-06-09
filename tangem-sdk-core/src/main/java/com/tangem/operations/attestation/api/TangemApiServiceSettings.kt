@@ -2,7 +2,7 @@ package com.tangem.operations.attestation.api
 
 import okhttp3.Interceptor
 
-object TangemApiServiceLogging {
+object TangemApiServiceSettings {
 
     internal val apiInterceptors = mutableListOf<Interceptor>()
 
