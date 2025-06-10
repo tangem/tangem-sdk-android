@@ -4,49 +4,60 @@ import android.content.Context
 import at.favre.lib.armadillo.Armadillo
 import at.favre.lib.armadillo.ArmadilloSharedPreferences
 import com.tangem.common.extensions.hexToBytes
-import com.tangem.common.extensions.toHexString
 import com.tangem.common.services.secure.SecureStorage
 
 /**
 [REDACTED_AUTHOR]
  */
+@Deprecated(
+    "Use AndroidSecureStorageV2 instead",
+    replaceWith = ReplaceWith(
+        "AndroidSecureStorageV2",
+        "com.tangem.sdk.storage.AndroidSecureStorageV2",
+    ),
+)
 class AndroidSecureStorage(
     private val preferences: ArmadilloSharedPreferences,
-) : SecureStorage {
+    private val androidSecureStorageV2: AndroidSecureStorageV2,
+) : SecureStorage by androidSecureStorageV2 {
 
     private val editor = preferences.edit()
 
     override fun get(account: String): ByteArray? {
-        return preferences.getString(account, null)?.hexToBytes()
+        return androidSecureStorageV2.get(account) ?: run {
+            val value = preferences.getString(account, null)?.hexToBytes()
+            if (value != null) {
+                androidSecureStorageV2.store(value, account)
+            }
+            value
+        }
     }
 
     override fun getAsString(key: String): String? {
-        return preferences.getString(key, null)
-    }
-
-    override fun store(data: ByteArray, account: String) {
-        editor.putString(account, data.toHexString()).apply()
-    }
-
-    override fun store(key: String, value: String) {
-        editor.putString(key, value).apply()
+        return androidSecureStorageV2.getAsString(key) ?: run {
+            val value = preferences.getString(key, null)
+            if (value != null) {
+                androidSecureStorageV2.store(value, key)
+            }
+            value
+        }
     }
 
     override fun delete(account: String) {
         editor.remove(account).apply()
-    }
-
-    override fun storeKey(key: ByteArray, account: String) {
-        store(key, account)
+        androidSecureStorageV2.delete(account)
     }
 }
 
+@Deprecated("Use AndroidSecureStorageV2 instead")
 fun SecureStorage.Companion.createEncryptedSharedPreferences(
     context: Context,
     storageName: String,
 ): ArmadilloSharedPreferences = Armadillo.create(context, storageName).encryptionFingerprint(context).build()
 
+@Deprecated("Use AndroidSecureStorageV2 instead")
 fun SecureStorage.Companion.create(context: Context): SecureStorage {
     val sharedPreferences = createEncryptedSharedPreferences(context, "tangemSdkStorage")
-    return AndroidSecureStorage(sharedPreferences)
+    val androidSecureStorageV2 = AndroidSecureStorageV2(appContext = context, name = "tangemSdkStorage2")
+    return AndroidSecureStorage(sharedPreferences, androidSecureStorageV2)
 }
