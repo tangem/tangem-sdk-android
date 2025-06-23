@@ -27,6 +27,7 @@ class AndroidSecureStorage(
         return androidSecureStorageV2.get(account) ?: run {
             val value = preferences.getString(account, null)?.hexToBytes()
             if (value != null) {
+                editor.remove(account).apply()
                 androidSecureStorageV2.store(value, account)
             }
             value
@@ -37,6 +38,7 @@ class AndroidSecureStorage(
         return androidSecureStorageV2.getAsString(key) ?: run {
             val value = preferences.getString(key, null)
             if (value != null) {
+                editor.remove(key).apply()
                 androidSecureStorageV2.store(value, key)
             }
             value
