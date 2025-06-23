@@ -159,6 +159,8 @@ class CardArtworksProvider(
     ) {
         if (smallImage != null && smallImage is Result.Success) {
             store.store(cardId, cardPublicKey, ArtworkSize.SMALL, smallImage.data)
+        } else if (largeImage is Result.Success) {
+            store.store(cardId, cardPublicKey, ArtworkSize.SMALL, largeImage.data)
         }
         if (largeImage is Result.Success) {
             store.store(cardId, cardPublicKey, ArtworkSize.LARGE, largeImage.data)
