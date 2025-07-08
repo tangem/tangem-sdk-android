@@ -7,10 +7,8 @@ import com.tangem.common.core.*
 import com.tangem.common.extensions.guard
 import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.map
-import com.tangem.common.services.Result
 import com.tangem.common.services.TrustedCardsRepo
 import com.tangem.common.services.secure.SecureStorage
-import com.tangem.common.services.toTangemSdkError
 import com.tangem.operations.attestation.api.TangemApiService
 import com.tangem.operations.attestation.service.OnlineAttestationService
 import com.tangem.operations.attestation.service.OnlineAttestationServiceFactory
@@ -38,7 +36,6 @@ class AttestationTask(
     var shouldKeepSessionOpened = false
 
     private val trustedCardsRepo = TrustedCardsRepo(secureStorage, MoshiJsonConverter.INSTANCE)
-    private val onlineCardVerifier: OnlineCardVerifier = OnlineCardVerifier()
 
     private var currentAttestationStatus: Attestation = Attestation.empty
 
@@ -130,32 +127,12 @@ class AttestationTask(
      * we can skip online part. So, we can send the error to the publisher immediately
      */
     private fun runOnlineAttestation(scope: CoroutineScope, card: Card, environment: SessionEnvironment) {
-        if (environment.config.isNewOnlineAttestationEnabled) {
-            val factory = OnlineAttestationServiceFactory(
-                tangemApiService = TangemApiService(isProdEnvironment = environment.config.isTangemAttestationProdEnv),
-                secureStorage = environment.secureStorage,
-            )
+        val factory = OnlineAttestationServiceFactory(
+            tangemApiService = TangemApiService { environment.config.tangemApiBaseUrl },
+            secureStorage = environment.secureStorage,
+        )
 
-            runNewOnlineAttestation(scope = scope, card = card, service = factory.create(card))
-        } else {
-            runOldOnlineAttestation(scope, card)
-        }
-    }
-
-    private fun runOldOnlineAttestation(scope: CoroutineScope, card: Card) {
-        scope.launch(Dispatchers.IO) {
-            val isDevelopmentCard = card.firmwareVersion.type == FirmwareVersion.FirmwareType.Sdk
-            val isAttestationFailed = currentAttestationStatus.cardKeyAttestation == Attestation.Status.Failed
-            if (isDevelopmentCard || isAttestationFailed) {
-                onlineAttestationChannel.send(CompletionResult.Failure(TangemSdkError.CardVerificationFailed()))
-                return@launch
-            }
-
-            when (val result = onlineCardVerifier.getCardInfo(card.cardId, card.cardPublicKey)) {
-                is Result.Success -> onlineAttestationChannel.send(CompletionResult.Success(result.data))
-                is Result.Failure -> onlineAttestationChannel.send(CompletionResult.Failure(result.toTangemSdkError()))
-            }
-        }
+        runNewOnlineAttestation(scope = scope, card = card, service = factory.create(card))
     }
 
     private fun runNewOnlineAttestation(scope: CoroutineScope, card: Card, service: OnlineAttestationService) {
