@@ -10,7 +10,6 @@ import com.tangem.common.services.ArtworksStorage
 import com.tangem.common.services.Result
 import com.tangem.common.services.secure.SecureStorage
 import com.tangem.crypto.CryptoUtils
-import com.tangem.operations.attestation.api.BaseUrl
 import com.tangem.operations.attestation.api.TangemApiService
 import com.tangem.operations.attestation.api.models.CardArtworksResponse
 import com.tangem.operations.attestation.verification.ManufacturerPublicKey
@@ -21,17 +20,17 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 
 class CardArtworksProvider(
-    private val isTangemAttestationProdEnv: Boolean,
+    private val tangemApiBaseUrlProvider: () -> String,
     private val store: ArtworksStorage,
 ) {
 
-    private val service: TangemApiService by lazy { TangemApiService(isTangemAttestationProdEnv) }
+    private val service: TangemApiService by lazy { TangemApiService(tangemApiBaseUrlProvider) }
     private val okHttpClient: OkHttpClient by lazy { OkHttpClient() }
 
     constructor(
-        isTangemAttestationProdEnv: Boolean,
+        tangemApiBaseUrlProvider: () -> String,
         secureStorage: SecureStorage,
-    ) : this(isTangemAttestationProdEnv, createDefaultStore(secureStorage))
+    ) : this(tangemApiBaseUrlProvider, createDefaultStore(secureStorage))
 
     suspend fun getArtwork(
         cardId: String,
@@ -40,15 +39,18 @@ class CardArtworksProvider(
         cardPublicKey: ByteArray,
         size: ArtworkSize,
     ): Result<ByteArray> {
-        return store.get(cardId, cardPublicKey, size)?.let {
-            Result.Success(it)
-        } ?: when (val result = service.loadArtwork(cardId, cardPublicKey)) {
+        val cached = store.get(cardId, cardPublicKey, size)
+
+        if (cached != null) return Result.Success(cached)
+
+        return when (val result = service.loadArtwork(cardId, cardPublicKey)) {
             is Result.Failure -> {
                 Result.Failure(TangemSdkError.NetworkError(customMessage = "Empty response: ${result.error.message}"))
             }
             is Result.Success -> {
                 val manufacturerPublicKey = ManufacturerPublicKeyProvider(firmwareVersion, manufacturerName).get()
                     ?: return Result.Failure(TangemSdkError.VerificationFailed())
+
                 verifyArtwork(cardId, manufacturerPublicKey, cardPublicKey, size, result.data)
             }
         }
@@ -167,13 +169,9 @@ class CardArtworksProvider(
         }
     }
 
-    companion object {
+    private companion object {
 
-        fun getUrlForArtwork(cardId: String, cardPublicKey: String, artworkId: String): String {
-            return BaseUrl.VERIFY.url + "card/artwork" + "?artworkId=$artworkId&CID=$cardId&publicKey=$cardPublicKey"
-        }
-
-        private fun createDefaultStore(secureStorage: SecureStorage): ArtworksStorage {
+        fun createDefaultStore(secureStorage: SecureStorage): ArtworksStorage {
             return ArtworksStorage(
                 storage = secureStorage,
                 moshi = MoshiJsonConverter.INSTANCE.moshi,
