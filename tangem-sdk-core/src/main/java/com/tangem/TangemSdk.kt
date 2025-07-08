@@ -14,9 +14,7 @@ import com.tangem.common.core.*
 import com.tangem.common.json.*
 import com.tangem.common.nfc.CardReader
 import com.tangem.common.nfc.NfcAvailabilityProvider
-import com.tangem.common.services.Result
 import com.tangem.common.services.secure.SecureStorage
-import com.tangem.common.services.toTangemSdkError
 import com.tangem.common.usersCode.UserCodeRepository
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.bip39.DefaultMnemonic
@@ -24,11 +22,9 @@ import com.tangem.crypto.bip39.Wordlist
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import com.tangem.crypto.hdWallet.masterkey.AnyMasterKeyFactory
-import com.tangem.operations.*
+import com.tangem.operations.ScanTask
 import com.tangem.operations.attestation.AttestCardKeyCommand
 import com.tangem.operations.attestation.AttestCardKeyResponse
-import com.tangem.operations.attestation.OnlineCardVerifier
-import com.tangem.operations.attestation.api.models.CardVerifyAndGetInfo
 import com.tangem.operations.derivation.DeriveWalletPublicKeyTask
 import com.tangem.operations.derivation.DeriveWalletPublicKeysTask
 import com.tangem.operations.derivation.ExtendedPublicKeysMap
@@ -37,14 +33,18 @@ import com.tangem.operations.issuerAndUserData.*
 import com.tangem.operations.personalization.DepersonalizeCommand
 import com.tangem.operations.personalization.DepersonalizeResponse
 import com.tangem.operations.personalization.PersonalizeCommand
-import com.tangem.operations.personalization.entities.*
+import com.tangem.operations.personalization.entities.Acquirer
+import com.tangem.operations.personalization.entities.CardConfig
+import com.tangem.operations.personalization.entities.Issuer
+import com.tangem.operations.personalization.entities.Manufacturer
 import com.tangem.operations.pins.SetUserCodeCommand
 import com.tangem.operations.preflightread.CardIdPreflightReadFilter
 import com.tangem.operations.preflightread.PreflightReadFilter
 import com.tangem.operations.sign.*
 import com.tangem.operations.usersetttings.SetUserCodeRecoveryAllowedTask
-import com.tangem.operations.wallet.*
-import kotlinx.coroutines.*
+import com.tangem.operations.wallet.CreateWalletResponse
+import com.tangem.operations.wallet.CreateWalletTask
+import com.tangem.operations.wallet.PurgeWalletCommand
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -72,7 +72,6 @@ class TangemSdk(
 
     private var cardSession: CardSession? = null
 
-    private val onlineCardVerifier = OnlineCardVerifier()
     private val jsonRpcConverter: JSONRPCConverter by lazy { JSONRPCConverter.shared(wordlist) }
 
     init {
@@ -437,26 +436,6 @@ class TangemSdk(
             accessCode = null,
             callback = callback,
         )
-    }
-
-    /**
-     *  Get the card info and verify with Tangem backend. Do not use for developer cards
-     *
-     *  @param cardPublicKey: CardPublicKey returned by [ReadCommand]
-     *  @param cardId: CID, Unique Tangem card ID number.
-     *  @param callback: [CardVerifyAndGetInfo.Response.Item]
-     */
-    fun loadCardInfo(
-        cardPublicKey: ByteArray,
-        cardId: String,
-        callback: CompletionCallback<CardVerifyAndGetInfo.Response.Item>,
-    ) {
-        onlineCardVerifier.scope.launch {
-            when (val result = onlineCardVerifier.getCardInfo(cardId, cardPublicKey)) {
-                is Result.Success -> callback(CompletionResult.Success(result.data))
-                is Result.Failure -> callback(CompletionResult.Failure(result.toTangemSdkError()))
-            }
-        }
     }
 
     /**
