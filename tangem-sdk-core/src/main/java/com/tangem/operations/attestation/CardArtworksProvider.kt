@@ -39,16 +39,18 @@ class CardArtworksProvider(
         firmwareVersion: FirmwareVersion,
         cardPublicKey: ByteArray,
         size: ArtworkSize,
-    ): Result<ByteArray> {
-        return store.get(cardId, cardPublicKey, size)?.let {
+    ): Result<ByteArray> = withContext(Dispatchers.IO) {
+        store.get(cardId, cardPublicKey, size)?.let {
             Result.Success(it)
         } ?: when (val result = service.loadArtwork(cardId, cardPublicKey)) {
             is Result.Failure -> {
-                Result.Failure(TangemSdkError.NetworkError(customMessage = "Empty response: ${result.error.message}"))
+                Result.Failure(
+                    TangemSdkError.NetworkError(customMessage = "Empty response: ${result.error.message}"),
+                )
             }
             is Result.Success -> {
                 val manufacturerPublicKey = ManufacturerPublicKeyProvider(firmwareVersion, manufacturerName).get()
-                    ?: return Result.Failure(TangemSdkError.VerificationFailed())
+                    ?: return@withContext Result.Failure(TangemSdkError.VerificationFailed())
                 verifyArtwork(cardId, manufacturerPublicKey, cardPublicKey, size, result.data)
             }
         }
