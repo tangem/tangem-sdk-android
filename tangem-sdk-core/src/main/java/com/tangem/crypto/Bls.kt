@@ -23,7 +23,7 @@ import com.tangem.common.extensions.calculateSha256
 import kotlin.jvm.Throws
 
 @ExperimentalUnsignedTypes
-internal object Bls {
+object Bls {
     // Version of keygen algorithm prior to number 4 (used in Chia)
     val SALT_PRE_V4: ByteArray = "BLS-SIG-KEYGEN-SALT-".encodeToByteArray()
     // Actual version of keygen algorithm
@@ -33,7 +33,7 @@ internal object Bls {
     private const val COUNT = 48
     private const val KEY_SIZE = SIZE
 
-    internal fun verify(publicKey: ByteArray, message: ByteArray, signature: ByteArray, curve: EllipticCurve): Boolean {
+    fun verify(publicKey: ByteArray, message: ByteArray, signature: ByteArray, curve: EllipticCurve): Boolean {
         val publicKeyJacobianPoint = JacobianPoint.fromBytes(publicKey.toUByteArray(), isExtension = false)
         val signatureJacobianPoint = JacobianPoint.fromBytesG2(signature.toUByteArray(), isExtension = true)
         return when (curve) {
@@ -56,7 +56,7 @@ internal object Bls {
         }
     }
 
-    internal fun verifyHash(publicKey: ByteArray, hash: ByteArray, signature: ByteArray): Boolean {
+    fun verifyHash(publicKey: ByteArray, hash: ByteArray, signature: ByteArray): Boolean {
         val publicKeyJp = JacobianPoint.fromBytes(bytes = publicKey.toUByteArray(), isExtension = false)
         val signatureJp = JacobianPoint.fromBytesG2(bytes = signature.toUByteArray(), isExtension = true)
         val hashJp = JacobianPoint.fromBytes(
@@ -74,14 +74,29 @@ internal object Bls {
         return pairingResult == one
     }
 
-    internal fun sign(data: ByteArray, privateKeyArray: ByteArray): ByteArray {
+    /**
+     * Sign a message with a private key.
+     * @param data should be raw bytes, not hashed one. For hash use [signHash] method.
+     * @param privateKeyArray private key in bytes
+     */
+    fun sign(data: ByteArray, privateKeyArray: ByteArray): ByteArray {
         return BasicSchemeMPL
             .sign(privateKey = PrivateKey.fromBytes(privateKeyArray.toUByteArray()), message = data.toUByteArray())
             .toBytes()
             .toByteArray()
     }
 
-    internal fun generatePublicKey(privateKeyArray: ByteArray): ByteArray {
+    /**
+     * Sign a message with a private key.
+     * @param hash hash of the data to sign
+     * @param privateKeyArray private key in bytes
+     */
+    fun signHash(hash: ByteArray, privateKeyArray: ByteArray): ByteArray {
+        val g2 = JacobianPoint.fromBytesG2(hash.toUByteArray())
+        return g2.times(PrivateKey.fromBytes(privateKeyArray.toUByteArray()).value).toBytes().toByteArray()
+    }
+
+    fun generatePublicKey(privateKeyArray: ByteArray): ByteArray {
         val bytes = KHex(privateKeyArray.toUByteArray()).bigInt.mod(BLS12381.defaultEc.n).toByteArray()
         val bytesEx = ByteArray(KEY_SIZE - bytes.size) { 0 } + bytes
         val bi = BigInteger.fromUByteArray(bytesEx.toUByteArray(), Sign.POSITIVE)
@@ -89,11 +104,11 @@ internal object Bls {
         return g1.toBytes().toByteArray()
     }
 
-    internal fun isPrivateKeyValid(privateKey: ByteArray): Boolean {
+    fun isPrivateKeyValid(privateKey: ByteArray): Boolean {
         return JacobianPoint.fromBytes(privateKey.toUByteArray(), isExtension = false).isValid()
     }
 
-    internal fun makeMasterKey(seed: ByteArray, salt: ByteArray = SALT): ByteArray {
+    fun makeMasterKey(seed: ByteArray, salt: ByteArray = SALT): ByteArray {
         val okm = Hkdf.extractExpand(
             COUNT,
             seed.toUByteArray() + 0.toUByte(),
@@ -107,7 +122,7 @@ internal object Bls {
     }
 
     @Throws(TangemSdkError::class)
-    internal fun prepareHashToSign(message: ByteArray, curve: EllipticCurve): ByteArray {
+    fun prepareHashToSign(message: ByteArray, curve: EllipticCurve): ByteArray {
         val dst = when (curve) {
             EllipticCurve.Bls12381G2 -> Schemes.basicSchemeDst
             EllipticCurve.Bls12381G2Aug -> Schemes.augSchemeDst

@@ -1,5 +1,6 @@
 package com.tangem.crypto
 
+import com.google.common.truth.Truth
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
@@ -187,5 +188,16 @@ internal class BlsTests {
             EllipticCurve.Bls12381G2,
         )
         assertTrue(verified)
+    }
+
+    @Test
+    fun test_signHash() {
+        val mKey = "2474605F98DCDF76E5AAD4C15484AB8AADBC0205684874759FF2CCE7377E514B".hexToBytes()
+        val hashToSign = "845A9DF477D88558EB0BDEF833CBE325EDB2451ADE57C30A488C41751396B8B66F212844AF7C1F87C15BBBE70CB26EAB0D46A1EFA0AC3C56A71F79155029151B5081BEB6ECDD652D5149DEE7B69A1D4776CF2372CC44411CF80ACE010B42D0D3".hexToBytes()
+        val expectedSignature = "A7CA68B8B565930150C6FA63395B38B9D80954463DE0C623022BEDB884C686DBCCEBAFAC9FE20C191D6A90B275A88EA50BDC3BCED6A7AD24FF40909F3E14D5DE28AFBF62D56ACD67C22D6262ED1B118004FBD55B211AC2391D5BA76CCEA978B5".hexToBytes()
+
+        val signature = Bls.signHash(hashToSign, mKey)
+
+        Truth.assertThat(signature).isEqualTo(expectedSignature)
     }
 }

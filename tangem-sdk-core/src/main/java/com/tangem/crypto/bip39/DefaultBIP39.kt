@@ -77,6 +77,47 @@ internal class DefaultBIP39(override val wordlist: Wordlist) : BIP39 {
         return entropyData
     }
 
+    override fun generateMnemonic(entropyData: ByteArray, wordlist: Wordlist): List<String> {
+        val entropyLength = try {
+            EntropyLength.create(entropyData = entropyData)
+        } catch (e: IllegalArgumentException) {
+            throw TangemSdkError.MnemonicException(MnemonicErrorResult.InvalidEntropyLength)
+        }
+
+        // https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki more detail
+        // calculate checksum
+        val entropyHashBits = entropyData.calculateSha256().toBits()
+        // prefix of entropy bits that are checksum of entropyData
+        val entropyChecksumBits = entropyHashBits.take(entropyLength.checksumBitsCount())
+
+        // converts entropyData to bits array ["0", "1", ...]
+        val entropyBits = entropyData.toBits()
+        // sequence of entropy bits and checksum of entropy bits
+        val concatenatedBits = entropyBits + entropyChecksumBits
+        // divide sequence of bits to chunks by 11 bits
+        val bitIndices = concatenatedBits.chunked(size = 11)
+        // converts chunks to Ints that are indices of words in dictionary
+        val indices = bitIndices.map {
+            it.joinToString(separator = "").toInt(2)
+        }
+
+        if (indices.size != entropyLength.wordCount()) {
+            throw TangemSdkError.MnemonicException(MnemonicErrorResult.MnenmonicCreationFailed)
+        }
+
+        val allWords = wordlist.words
+        val maxWordIndex = allWords.size
+
+        val words = indices.map { index ->
+            if (index > maxWordIndex) {
+                throw TangemSdkError.MnemonicException(MnemonicErrorResult.MnenmonicCreationFailed)
+            }
+            allWords[index]
+        }
+
+        return words
+    }
+
     private fun bitStringToByteArray(bitString: String): ByteArray {
         val dataWithSignBit = BigInteger(bitString, 2).toByteArray()
         return if (dataWithSignBit[0] == 0.toByte()) {
@@ -154,47 +195,6 @@ internal class DefaultBIP39(override val wordlist: Wordlist) : BIP39 {
             return wordlist
         }
         throw TangemSdkError.MnemonicException(MnemonicErrorResult.UnsupportedLanguage)
-    }
-
-    private fun generateMnemonic(entropyData: ByteArray, wordlist: Wordlist): List<String> {
-        val entropyLength = try {
-            EntropyLength.create(entropyData = entropyData)
-        } catch (e: IllegalArgumentException) {
-            throw TangemSdkError.MnemonicException(MnemonicErrorResult.InvalidEntropyLength)
-        }
-
-        // https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki more detail
-        // calculate checksum
-        val entropyHashBits = entropyData.calculateSha256().toBits()
-        // prefix of entropy bits that are checksum of entropyData
-        val entropyChecksumBits = entropyHashBits.take(entropyLength.checksumBitsCount())
-
-        // converts entropyData to bits array ["0", "1", ...]
-        val entropyBits = entropyData.toBits()
-        // sequence of entropy bits and checksum of entropy bits
-        val concatenatedBits = entropyBits + entropyChecksumBits
-        // divide sequence of bits to chunks by 11 bits
-        val bitIndices = concatenatedBits.chunked(size = 11)
-        // converts chunks to Ints that are indices of words in dictionary
-        val indices = bitIndices.map {
-            it.joinToString(separator = "").toInt(2)
-        }
-
-        if (indices.size != entropyLength.wordCount()) {
-            throw TangemSdkError.MnemonicException(MnemonicErrorResult.MnenmonicCreationFailed)
-        }
-
-        val allWords = wordlist.words
-        val maxWordIndex = allWords.size
-
-        val words = indices.map { index ->
-            if (index > maxWordIndex) {
-                throw TangemSdkError.MnemonicException(MnemonicErrorResult.MnenmonicCreationFailed)
-            }
-            allWords[index]
-        }
-
-        return words
     }
 
     /** Convert mnemonic components to a single string, split by spaces
