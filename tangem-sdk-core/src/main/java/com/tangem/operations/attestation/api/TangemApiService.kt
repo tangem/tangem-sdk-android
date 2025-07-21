@@ -59,7 +59,7 @@ internal class TangemApiService(private val isProdEnvironment: Boolean) {
             .client(
                 OkHttpClient.Builder()
                     .apply {
-                        TangemApiServiceLogging.apiInterceptors.forEach { addInterceptor(it) }
+                        TangemApiServiceSettings.apiInterceptors.forEach(::addInterceptor)
                     }
                     .build(),
             )

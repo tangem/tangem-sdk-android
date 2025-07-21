@@ -5,7 +5,10 @@ import com.tangem.common.card.EllipticCurve
 import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.json.MoshiJsonConverter
+import com.tangem.common.services.ArtworksStorage
 import com.tangem.common.services.Result
+import com.tangem.common.services.secure.SecureStorage
 import com.tangem.crypto.CryptoUtils
 import com.tangem.operations.attestation.api.BaseUrl
 import com.tangem.operations.attestation.api.TangemApiService
@@ -16,16 +19,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.util.concurrent.ConcurrentHashMap
 
 class CardArtworksProvider(
     private val isTangemAttestationProdEnv: Boolean,
+    private val store: ArtworksStorage,
 ) {
 
     private val service: TangemApiService by lazy { TangemApiService(isTangemAttestationProdEnv) }
     private val okHttpClient: OkHttpClient by lazy { OkHttpClient() }
 
-    private val cachedArtworks: ConcurrentHashMap<String, ByteArray> = ConcurrentHashMap()
+    constructor(
+        isTangemAttestationProdEnv: Boolean,
+        secureStorage: SecureStorage,
+    ) : this(isTangemAttestationProdEnv, createDefaultStore(secureStorage))
 
     suspend fun getArtwork(
         cardId: String,
@@ -34,7 +40,7 @@ class CardArtworksProvider(
         cardPublicKey: ByteArray,
         size: ArtworkSize,
     ): Result<ByteArray> {
-        return cachedArtworks[getStorageKey(cardId, cardPublicKey, size)]?.let {
+        return store.get(cardId, cardPublicKey, size)?.let {
             Result.Success(it)
         } ?: when (val result = service.loadArtwork(cardId, cardPublicKey)) {
             is Result.Failure -> {
@@ -56,17 +62,11 @@ class CardArtworksProvider(
         size: ArtworkSize,
         response: CardArtworksResponse,
     ): Result<ByteArray> {
-        val hasSmallImage = !response.imageSmallUrl.isNullOrEmpty() && !response.imageSmallSignature.isNullOrEmpty()
-
-        val (imageUrl, signature) = if (size == ArtworkSize.SMALL && hasSmallImage) {
-            response.imageSmallUrl to response.imageSmallSignature
-        } else {
-            response.imageLargeUrl to response.imageLargeSignature
-        }
-
-        if (imageUrl == null || signature == null) {
+        if (response.imageLargeSignature.isEmpty() || response.imageLargeUrl.isEmpty()) {
             return Result.Failure(TangemSdkError.VerificationFailed())
         }
+
+        val hasSmallImage = !response.imageSmallUrl.isNullOrEmpty() && !response.imageSmallSignature.isNullOrEmpty()
 
         val largeImage = getVerifiedImage(
             url = response.imageLargeUrl,
@@ -74,6 +74,9 @@ class CardArtworksProvider(
             size = ArtworkSize.LARGE,
             manufacturerPublicKey = manufacturerPublicKey,
         )
+        if (largeImage is Result.Failure) {
+            return Result.Failure(TangemSdkError.VerificationFailed())
+        }
         val smallImage = if (hasSmallImage) {
             getVerifiedImage(
                 url = requireNotNull(response.imageSmallUrl),
@@ -88,7 +91,9 @@ class CardArtworksProvider(
 
         return when (size) {
             ArtworkSize.LARGE -> largeImage
-            ArtworkSize.SMALL -> smallImage ?: run {
+            ArtworkSize.SMALL -> if (smallImage != null && smallImage is Result.Success) {
+                smallImage
+            } else {
                 Log.error { "CardArtworksProvider: No small image" }
                 largeImage
             }
@@ -153,21 +158,26 @@ class CardArtworksProvider(
         cardPublicKey: ByteArray,
     ) {
         if (smallImage != null && smallImage is Result.Success) {
-            cachedArtworks[getStorageKey(cardId, cardPublicKey, ArtworkSize.SMALL)] = smallImage.data
+            store.store(cardId, cardPublicKey, ArtworkSize.SMALL, smallImage.data)
+        } else if (largeImage is Result.Success) {
+            store.store(cardId, cardPublicKey, ArtworkSize.SMALL, largeImage.data)
         }
         if (largeImage is Result.Success) {
-            cachedArtworks[getStorageKey(cardId, cardPublicKey, ArtworkSize.LARGE)] = largeImage.data
+            store.store(cardId, cardPublicKey, ArtworkSize.LARGE, largeImage.data)
         }
-    }
-
-    private fun getStorageKey(cardId: String, cardPublicKey: ByteArray, size: ArtworkSize): String {
-        return "${cardId}_${cardPublicKey}_${size.ordinal}"
     }
 
     companion object {
 
         fun getUrlForArtwork(cardId: String, cardPublicKey: String, artworkId: String): String {
             return BaseUrl.VERIFY.url + "card/artwork" + "?artworkId=$artworkId&CID=$cardId&publicKey=$cardPublicKey"
+        }
+
+        private fun createDefaultStore(secureStorage: SecureStorage): ArtworksStorage {
+            return ArtworksStorage(
+                storage = secureStorage,
+                moshi = MoshiJsonConverter.INSTANCE.moshi,
+            )
         }
     }
 }
