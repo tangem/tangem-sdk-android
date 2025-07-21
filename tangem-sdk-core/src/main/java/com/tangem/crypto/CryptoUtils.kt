@@ -181,7 +181,7 @@ fun ByteArray.sign(privateKeyArray: ByteArray, curve: EllipticCurve = EllipticCu
         EllipticCurve.Secp256r1 -> Secp256r1.sign(this, privateKeyArray)
         EllipticCurve.Ed25519, EllipticCurve.Ed25519Slip0010 -> Ed25519.sign(this, privateKeyArray)
         EllipticCurve.Bls12381G2, EllipticCurve.Bls12381G2Aug, EllipticCurve.Bls12381G2Pop ->
-            throw TangemSdkError.UnsupportedCurve()
+            Bls.signHash(this, privateKeyArray)
         EllipticCurve.Bip0340 -> Bip0340.sign(this, privateKeyArray)
     }
 }
