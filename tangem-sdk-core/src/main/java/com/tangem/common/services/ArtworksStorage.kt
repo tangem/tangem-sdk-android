@@ -1,20 +1,16 @@
 package com.tangem.common.services
 
-import com.squareup.moshi.JsonAdapter
-import com.squareup.moshi.JsonClass
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
 import com.tangem.common.extensions.toHexString
-import com.tangem.common.services.secure.SecureStorage
 import com.tangem.operations.attestation.ArtworkSize
+import java.io.File
+import java.io.FileOutputStream
+import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 
-class ArtworksStorage(
-    private val storage: SecureStorage,
-    moshi: Moshi,
+internal class ArtworksStorage(
+    private val directory: File,
 ) {
 
-    private val adapter = createMoshiAdapter(moshi)
     private val data = mutableMapOf<String, ArtworkData>()
 
     init {
@@ -24,7 +20,7 @@ class ArtworksStorage(
     fun get(cardId: String, cardPublicKey: ByteArray, size: ArtworkSize): ByteArray? {
         val artworkData = data[getStorageKey(cardId, cardPublicKey, size)] ?: return null
         return if (System.currentTimeMillis() < artworkData.timestamp + TimeUnit.DAYS.toMillis(CACHE_LIFE_TIME)) {
-            artworkData.artwork.toByteArray()
+            artworkData.artwork
         } else {
             null
         }
@@ -32,25 +28,25 @@ class ArtworksStorage(
 
     fun store(cardId: String, cardPublicKey: ByteArray, size: ArtworkSize, artwork: ByteArray) {
         val key = getStorageKey(cardId, cardPublicKey, size)
-        data[key] = ArtworkData(artwork.toList(), System.currentTimeMillis())
-        storage.store(key = KEY, value = adapter.toJson(data))
+        val artworkData = ArtworkData(artwork, System.currentTimeMillis())
+        data[key] = artworkData
+        val file = File(directory, key)
+        FileOutputStream(file).use {
+            it.write(artworkData.serialize())
+        }
     }
 
     private fun fetch() {
-        val json = storage.getAsString(key = KEY) ?: return
-        val storedData = adapter.fromJson(json) ?: return
+        val storedData = mutableMapOf<String, ArtworkData>()
+
+        directory.listFiles()?.forEach { file ->
+            if (file.isFile) {
+                val bytes = file.readBytes()
+                storedData[file.name] = ArtworkData.deserialize(bytes)
+            }
+        }
 
         this.data.putAll(storedData)
-    }
-
-    private fun createMoshiAdapter(moshi: Moshi): JsonAdapter<Map<String, ArtworkData>> {
-        return moshi.adapter(
-            Types.newParameterizedType(
-                Map::class.java,
-                String::class.java,
-                ArtworkData::class.java,
-            ),
-        )
     }
 
     private fun getStorageKey(cardId: String, cardPublicKey: ByteArray, size: ArtworkSize): String {
@@ -59,12 +55,32 @@ class ArtworksStorage(
 
     private companion object {
         const val CACHE_LIFE_TIME = 7L
-        const val KEY = "card_artworks"
     }
 
-    @JsonClass(generateAdapter = true)
-    data class ArtworkData(
-        val artwork: List<Byte>,
+    class ArtworkData(
+        val artwork: ByteArray,
         val timestamp: Long,
-    )
+    ) {
+        fun serialize(): ByteArray {
+            return ByteBuffer.allocate(1 + Long.SIZE_BYTES + artwork.size).apply {
+                put(SCHEME_VERSION.toByte())
+                putLong(timestamp)
+                put(artwork)
+            }.array()
+        }
+
+        companion object {
+            private const val SCHEME_VERSION = 1
+
+            fun deserialize(data: ByteArray): ArtworkData {
+                val buffer = ByteBuffer.wrap(data)
+                val version = buffer.get().toInt()
+                require(version == SCHEME_VERSION) { "Unsupported scheme version: $version" }
+                val timestamp = buffer.long
+                val artwork = ByteArray(buffer.remaining())
+                buffer.get(artwork)
+                return ArtworkData(artwork, timestamp)
+            }
+        }
+    }
 }
