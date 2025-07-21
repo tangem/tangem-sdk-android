@@ -13,11 +13,13 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 /**
  * Tangem API service
  *
- * @property isProdEnvironment flag that determines whether to use prod or dev API environment
+ * @property baseUrl base URL for the API service
  *
 [REDACTED_AUTHOR]
  */
-internal class TangemApiService(private val isProdEnvironment: Boolean) {
+internal class TangemApiService(private val baseUrlProvider: () -> String) {
+
+    private val baseUrl: String get() = baseUrlProvider()
 
     private val tangemTechApi: TangemTechApi by lazy(::create)
 
@@ -25,9 +27,11 @@ internal class TangemApiService(private val isProdEnvironment: Boolean) {
         cardId: String,
         cardPublicKey: ByteArray,
     ): Result<CardVerificationInfoResponse> {
-        return try {
-            val baseUrl = if (isProdEnvironment) BaseUrl.CARD_DATA.url else BaseUrl.CARD_DATA_DEV.url
+        if (baseUrl.isBlank()) {
+            return Result.Failure(IllegalArgumentException("Base URL is not set"))
+        }
 
+        return try {
             val response = tangemTechApi.getCardVerificationInfo(
                 url = baseUrl + "card",
                 cardId = cardId,
@@ -41,9 +45,11 @@ internal class TangemApiService(private val isProdEnvironment: Boolean) {
     }
 
     suspend fun loadArtwork(cardId: String, cardPublicKey: ByteArray): Result<CardArtworksResponse> {
-        return performRequest {
-            val baseUrl = if (isProdEnvironment) BaseUrl.CARD_DATA.url else BaseUrl.CARD_DATA_DEV.url
+        if (baseUrl.isBlank()) {
+            return Result.Failure(IllegalArgumentException("Base URL is not set"))
+        }
 
+        return performRequest {
             tangemTechApi.getCardArtworks(
                 url = baseUrl + "card/artworks",
                 cardId = cardId,
@@ -54,7 +60,7 @@ internal class TangemApiService(private val isProdEnvironment: Boolean) {
 
     private fun create(): TangemTechApi {
         val builder = Retrofit.Builder()
-            .baseUrl(BaseUrl.CARD_DATA.url)
+            .baseUrl(baseUrl)
             .addConverterFactory(MoshiConverterFactory.create(MoshiJsonConverter.INSTANCE.moshi))
             .client(
                 OkHttpClient.Builder()
