@@ -71,9 +71,7 @@ class Config(
 
     var productType: ProductType = ProductType.ANY,
 
-    var isNewOnlineAttestationEnabled: Boolean = false,
-
-    var isTangemAttestationProdEnv: Boolean = true,
+    var tangemApiBaseUrl: String = "",
 ) {
 
     fun setupForProduct(type: ProductType) {
