@@ -306,7 +306,7 @@ class AttestationTask(
         session.scope.launch {
             val card = session.environment.card!!
             val walletsKeys = card.wallets.map { it.publicKey }
-            val attestationCommands = walletsKeys.map { AttestWalletKeyCommand(it) }
+            val attestationCommands = walletsKeys.map { AttestWalletKeyTask(it) }
 
             // check for hacking attempts with signs
             var hasWarnings = card.wallets.mapNotNull { it.totalSignedHashes }.any { it > MAX_COUNTER }
