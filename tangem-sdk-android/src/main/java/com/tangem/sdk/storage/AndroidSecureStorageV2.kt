@@ -28,6 +28,12 @@ class AndroidSecureStorageV2(
     name: String = "AndroidSecureStorageV2",
 ) : SecureStorage {
 
+    private val aesKeyAlias = if (useStrongBox) {
+        AES_KEY_ALIAS_STRONG_BOX
+    } else {
+        AES_KEY_ALIAS_HARDWARE
+    }
+
     private val sharedPreferences = appContext.getSharedPreferences(name, Context.MODE_PRIVATE)
 
     override fun get(account: String): ByteArray? {
@@ -105,10 +111,10 @@ class AndroidSecureStorageV2(
 
     private fun getAesKey(): SecretKey {
         val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        return if (keyStore.containsAlias(getAesKeyAlias()).not()) {
+        return if (keyStore.containsAlias(aesKeyAlias).not()) {
             generateAesKey()
         } else {
-            (keyStore.getEntry(getAesKeyAlias(), null) as KeyStore.SecretKeyEntry).secretKey
+            (keyStore.getEntry(aesKeyAlias, null) as KeyStore.SecretKeyEntry).secretKey
         }
     }
 
@@ -116,7 +122,7 @@ class AndroidSecureStorageV2(
         val keyGenerator =
             KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
         val keyGenParameterSpec = KeyGenParameterSpec.Builder(
-            getAesKeyAlias(),
+            aesKeyAlias,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
         ).apply {
             setBlockModes(KeyProperties.BLOCK_MODE_GCM)
@@ -128,14 +134,6 @@ class AndroidSecureStorageV2(
         }.build()
         keyGenerator.init(keyGenParameterSpec)
         return keyGenerator.generateKey()
-    }
-
-    private fun getAesKeyAlias(): String {
-        return if (useStrongBoxFeature()) {
-            AES_KEY_ALIAS_STRONG_BOX
-        } else {
-            AES_KEY_ALIAS_HARDWARE
-        }
     }
 
     private fun useStrongBoxFeature(): Boolean {
