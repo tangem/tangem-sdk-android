@@ -199,7 +199,7 @@ class BackupService(
         updateState()
     }
 
-    fun readPrimaryCard(iconScanRes: Int? = null, cardId: String? = null, callback: CompletionCallback<Unit>) {
+    fun readPrimaryCard(iconScanRes: Int? = null, cardId: String? = null, callback: CompletionCallback<PrimaryCard>) {
         val formattedCardId = cardId?.let { CardIdFormatter(sdk.config.cardIdDisplayFormat).getFormattedCardId(it) }
 
         val message = formattedCardId?.let {
@@ -218,7 +218,7 @@ class BackupService(
             when (result) {
                 is CompletionResult.Success -> {
                     setPrimaryCard(result.data)
-                    callback(CompletionResult.Success(Unit))
+                    callback(CompletionResult.Success(result.data))
                 }
 
                 is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
