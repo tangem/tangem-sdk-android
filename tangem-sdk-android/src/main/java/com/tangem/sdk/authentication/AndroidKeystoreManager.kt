@@ -5,7 +5,6 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import android.security.keystore.UserNotAuthenticatedException
-import androidx.annotation.RequiresApi
 import com.tangem.Log
 import com.tangem.common.authentication.AuthenticationManager
 import com.tangem.common.authentication.keystore.KeystoreManager
@@ -15,6 +14,8 @@ import com.tangem.common.services.secure.SecureStorage
 import com.tangem.crypto.operations.AESCipherOperations
 import com.tangem.crypto.operations.RSACipherOperations
 import com.tangem.sdk.authentication.AndroidAuthenticationManager.AndroidAuthenticationParams
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.security.InvalidKeyException
 import java.security.KeyPair
 import java.security.KeyStore
@@ -23,7 +24,6 @@ import java.security.PublicKey
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 
-@RequiresApi(Build.VERSION_CODES.M)
 internal class AndroidKeystoreManager(
     private val authenticationManager: AuthenticationManager,
     private val secureStorage: SecureStorage,
@@ -117,10 +117,10 @@ internal class AndroidKeystoreManager(
         return unwrappedKeys
     }
 
-    private fun getWrappedKeyBytes(keyAlias: String): ByteArray? {
+    private suspend fun getWrappedKeyBytes(keyAlias: String): ByteArray? = withContext(Dispatchers.IO) {
         val storageKey = getStorageKeyForWrappedSecretKey(keyAlias)
 
-        return secureStorage.get(storageKey)?.takeIf(ByteArray::isNotEmpty)
+        secureStorage.get(storageKey)?.takeIf(ByteArray::isNotEmpty)
     }
 
     private fun unwrapKeyOrNull(keyAlias: String, cipher: Cipher, wrappedKeyBytes: ByteArray): SecretKey? {
@@ -164,7 +164,9 @@ internal class AndroidKeystoreManager(
         val wrappedKey = RSACipherOperations.wrapKey(cipher, key)
         val storageKey = getStorageKeyForWrappedSecretKey(keyAlias)
 
-        secureStorage.store(wrappedKey, storageKey)
+        withContext(Dispatchers.IO) {
+            secureStorage.store(wrappedKey, storageKey)
+        }
 
         Log.biometric {
             """
