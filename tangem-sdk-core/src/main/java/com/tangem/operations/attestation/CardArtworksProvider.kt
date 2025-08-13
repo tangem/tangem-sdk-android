@@ -5,10 +5,8 @@ import com.tangem.common.card.EllipticCurve
 import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.hexToBytes
-import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.services.ArtworksStorage
 import com.tangem.common.services.Result
-import com.tangem.common.services.secure.SecureStorage
 import com.tangem.crypto.CryptoUtils
 import com.tangem.operations.attestation.api.BaseUrl
 import com.tangem.operations.attestation.api.TangemApiService
@@ -19,19 +17,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.File
 
 class CardArtworksProvider(
     private val isTangemAttestationProdEnv: Boolean,
-    private val store: ArtworksStorage,
+    private val artworksDirectory: File,
 ) {
 
     private val service: TangemApiService by lazy { TangemApiService(isTangemAttestationProdEnv) }
     private val okHttpClient: OkHttpClient by lazy { OkHttpClient() }
-
-    constructor(
-        isTangemAttestationProdEnv: Boolean,
-        secureStorage: SecureStorage,
-    ) : this(isTangemAttestationProdEnv, createDefaultStore(secureStorage))
+    private val store = ArtworksStorage(artworksDirectory)
 
     suspend fun getArtwork(
         cardId: String,
@@ -39,16 +34,18 @@ class CardArtworksProvider(
         firmwareVersion: FirmwareVersion,
         cardPublicKey: ByteArray,
         size: ArtworkSize,
-    ): Result<ByteArray> {
-        return store.get(cardId, cardPublicKey, size)?.let {
+    ): Result<ByteArray> = withContext(Dispatchers.IO) {
+        store.get(cardId, cardPublicKey, size)?.let {
             Result.Success(it)
         } ?: when (val result = service.loadArtwork(cardId, cardPublicKey)) {
             is Result.Failure -> {
-                Result.Failure(TangemSdkError.NetworkError(customMessage = "Empty response: ${result.error.message}"))
+                Result.Failure(
+                    TangemSdkError.NetworkError(customMessage = "Empty response: ${result.error.message}"),
+                )
             }
             is Result.Success -> {
                 val manufacturerPublicKey = ManufacturerPublicKeyProvider(firmwareVersion, manufacturerName).get()
-                    ?: return Result.Failure(TangemSdkError.VerificationFailed())
+                    ?: return@withContext Result.Failure(TangemSdkError.VerificationFailed())
                 verifyArtwork(cardId, manufacturerPublicKey, cardPublicKey, size, result.data)
             }
         }
@@ -61,9 +58,9 @@ class CardArtworksProvider(
         cardPublicKey: ByteArray,
         size: ArtworkSize,
         response: CardArtworksResponse,
-    ): Result<ByteArray> {
+    ): Result<ByteArray> = withContext(Dispatchers.IO) {
         if (response.imageLargeSignature.isEmpty() || response.imageLargeUrl.isEmpty()) {
-            return Result.Failure(TangemSdkError.VerificationFailed())
+            return@withContext Result.Failure(TangemSdkError.VerificationFailed())
         }
 
         val hasSmallImage = !response.imageSmallUrl.isNullOrEmpty() && !response.imageSmallSignature.isNullOrEmpty()
@@ -75,7 +72,7 @@ class CardArtworksProvider(
             manufacturerPublicKey = manufacturerPublicKey,
         )
         if (largeImage is Result.Failure) {
-            return Result.Failure(TangemSdkError.VerificationFailed())
+            return@withContext Result.Failure(TangemSdkError.VerificationFailed())
         }
         val smallImage = if (hasSmallImage) {
             getVerifiedImage(
@@ -89,7 +86,7 @@ class CardArtworksProvider(
         }
         storeImages(largeImage, smallImage, cardId, cardPublicKey)
 
-        return when (size) {
+        when (size) {
             ArtworkSize.LARGE -> largeImage
             ArtworkSize.SMALL -> if (smallImage != null && smallImage is Result.Success) {
                 smallImage
@@ -105,8 +102,8 @@ class CardArtworksProvider(
         manufacturerPublicKey: ManufacturerPublicKey,
         signature: String,
         size: ArtworkSize,
-    ): Result<ByteArray> {
-        return when (val imageResult = downloadImage(url)) {
+    ): Result<ByteArray> = withContext(Dispatchers.IO) {
+        when (val imageResult = downloadImage(url)) {
             is Result.Failure -> imageResult
             is Result.Success -> {
                 val artworkId = getArtworkIdFromUrl(url)
@@ -133,21 +130,19 @@ class CardArtworksProvider(
         return url.substringAfterLast('/').substringBeforeLast('.')
     }
 
-    private suspend fun downloadImage(urlString: String): Result<ByteArray> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = okHttpClient
-                    .newCall(Request.Builder().url(urlString).build())
-                    .execute()
-                if (!response.isSuccessful) {
-                    return@withContext Result.Failure(TangemSdkError.NetworkError(response.code.toString()))
-                }
-                response.body?.bytes()?.let {
-                    Result.Success(it)
-                } ?: Result.Failure(TangemSdkError.NetworkError("Empty response body"))
-            } catch (throwable: Throwable) {
-                Result.Failure(TangemSdkError.ExceptionError(throwable))
+    private suspend fun downloadImage(urlString: String): Result<ByteArray> = withContext(Dispatchers.IO) {
+        try {
+            val response = okHttpClient
+                .newCall(Request.Builder().url(urlString).build())
+                .execute()
+            if (!response.isSuccessful) {
+                return@withContext Result.Failure(TangemSdkError.NetworkError(response.code.toString()))
             }
+            response.body?.bytes()?.let {
+                Result.Success(it)
+            } ?: Result.Failure(TangemSdkError.NetworkError("Empty response body"))
+        } catch (throwable: Throwable) {
+            Result.Failure(TangemSdkError.ExceptionError(throwable))
         }
     }
 
@@ -171,13 +166,6 @@ class CardArtworksProvider(
 
         fun getUrlForArtwork(cardId: String, cardPublicKey: String, artworkId: String): String {
             return BaseUrl.VERIFY.url + "card/artwork" + "?artworkId=$artworkId&CID=$cardId&publicKey=$cardPublicKey"
-        }
-
-        private fun createDefaultStore(secureStorage: SecureStorage): ArtworksStorage {
-            return ArtworksStorage(
-                storage = secureStorage,
-                moshi = MoshiJsonConverter.INSTANCE.moshi,
-            )
         }
     }
 }
