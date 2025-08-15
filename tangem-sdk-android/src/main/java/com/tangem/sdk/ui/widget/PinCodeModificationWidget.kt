@@ -17,7 +17,6 @@ import com.tangem.sdk.SessionViewDelegateState
 import com.tangem.sdk.extensions.hideSoftKeyboard
 import com.tangem.sdk.extensions.showSoftKeyboard
 import com.tangem.sdk.postUI
-import com.tangem.sdk.ui.common.disableContextMenu
 import com.tangem.sdk.ui.common.setupImeActionDone
 
 /**
@@ -52,9 +51,6 @@ class PinCodeModificationWidget(
         setupInnerLogic()
 
         etPinCodeConfirm.setupImeActionDone(btnSave::performClick)
-
-        etPinCode.disableContextMenu()
-        etPinCodeConfirm.disableContextMenu()
     }
 
     override fun setState(params: SessionViewDelegateState) {
