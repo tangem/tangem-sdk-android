@@ -66,7 +66,9 @@ internal class CreateWalletCommand @Throws constructor(
     override fun requiresPasscode(): Boolean = true
 
     override fun performPreCheck(card: Card): TangemSdkError? {
-        if (card.firmwareVersion >= FirmwareVersion.MultiWalletAvailable && !card.settings.isSelectBlockchainAllowed) {
+        val shouldCheckSelectBlockchain = card.firmwareVersion >= FirmwareVersion.MultiWalletAvailable &&
+            card.firmwareVersion < FirmwareVersion.CreateWalletResponseAvailable
+        if (shouldCheckSelectBlockchain && !card.settings.isSelectBlockchainAllowed) {
             return TangemSdkError.WalletCannotBeCreated()
         }
         if (!card.supportedCurves.contains(curve)) {
