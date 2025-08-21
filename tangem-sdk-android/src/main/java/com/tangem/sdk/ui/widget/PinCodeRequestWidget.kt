@@ -15,7 +15,6 @@ import com.tangem.sdk.extensions.localizedDescription
 import com.tangem.sdk.extensions.show
 import com.tangem.sdk.extensions.showSoftKeyboard
 import com.tangem.sdk.postUI
-import com.tangem.sdk.ui.common.disableContextMenu
 import com.tangem.sdk.ui.common.setupImeActionDone
 
 /**
@@ -34,7 +33,6 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
         tilPinCode.hint = getString(R.string.pin1)
 
         etPinCode.setupImeActionDone(btnContinue::performClick)
-        etPinCode.disableContextMenu()
     }
 
     override fun setState(params: SessionViewDelegateState) {
