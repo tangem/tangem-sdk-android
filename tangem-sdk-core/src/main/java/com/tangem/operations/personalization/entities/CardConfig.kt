@@ -51,7 +51,7 @@ data class CardConfig(
     internal val useDynamicNDEF: Boolean?,
     internal val useOneCommandAtTime: Boolean?,
     internal val useBlock: Boolean,
-    internal val allowSelectBlockchain: Boolean,
+    internal val allowSelectBlockchain: Boolean?,
     @Json(name = "forbidPurgeWallet")
     internal val prohibitPurgeWallet: Boolean,
     @Json(name = "protocolAllowUnencrypted")
