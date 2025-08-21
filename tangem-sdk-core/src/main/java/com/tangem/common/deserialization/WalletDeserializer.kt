@@ -58,7 +58,7 @@ internal class WalletDeserializer(
             chainCode = decoder.decodeOptional(TlvTag.WalletHDChain),
             curve = decoder.decode(TlvTag.CurveId),
             settings = settings,
-            totalSignedHashes = decoder.decode(TlvTag.WalletSignedHashes),
+            totalSignedHashes = decoder.decodeOptional(TlvTag.WalletSignedHashes),
             remainingSignatures = null,
             index = decoder.decode(TlvTag.WalletIndex),
             isImported = status.isImported,
