@@ -157,6 +157,9 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
             args = listOf(TangemSdkErrorDescription.Type.StringResId(R.string.pin1)),
         )
 
+        is TangemSdkError.InvalidAccessTokens -> TangemSdkErrorDescription() //TODO error description
+        is TangemSdkError.AccessDenied -> TangemSdkErrorDescription() //TODO error description
+
         is TangemSdkError.BackupCardAlreadyAdded,
         is TangemSdkError.BackupCardRequired,
         -> TangemSdkErrorDescription(resId = R.string.error_backup_card_already_added)

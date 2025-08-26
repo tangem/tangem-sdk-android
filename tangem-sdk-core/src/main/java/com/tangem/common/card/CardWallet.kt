@@ -14,7 +14,7 @@ data class CardWallet(
      * For [EllipticCurve.Secp256k1], the key can be compressed or uncompressed.
      * Use [com.tangem.crypto.Secp256k1Key] for any conversions.
      */
-    val publicKey: ByteArray,
+    val publicKey: ByteArray?,
 
     /**
      * Optional chain code for BIP32 derivation.
@@ -137,7 +137,8 @@ data class CardWallet(
                 return values.find { it.code.toByte() == code.toByte() }
             }
 
-            fun initExtendedPublicKey(publicKey: ByteArray, chainCode: ByteArray?): ExtendedPublicKey? {
+            fun initExtendedPublicKey(publicKey: ByteArray?, chainCode: ByteArray?): ExtendedPublicKey? {
+                val publicKey = publicKey ?: return null
                 val chainCode = chainCode ?: return null
 
                 return ExtendedPublicKey(publicKey, chainCode)

@@ -6,6 +6,13 @@ enum class AuthorizeMode(val rawValue: Int) {
     TokenGet(rawValue = 0x03),
     TokenSign(rawValue = 0x04),
     TokenAuthenticate(rawValue = 0x05),
+
+    AuthorizeWithSecureDelay(rawValue = 0x10),
+    AuthorizeWithAccessToken(rawValue = 0x11),
+    AuthorizeWithAsymmetricKey(rawValue = 0x12),
+    AuthorizeWithPIN_Challenge(rawValue = 0x21),
+    AuthorizeWithPIN_Response(rawValue = 0x22),
+
     ;
 
     companion object {

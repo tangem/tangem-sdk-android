@@ -46,7 +46,7 @@ class DeriveWalletPublicKeyTask(
                     }
 
                     val childKey = ExtendedPublicKey(
-                        publicKey = result.data.wallet.publicKey,
+                        publicKey = result.data.wallet.publicKey!!,
                         chainCode = chainCode,
                     )
                     updateKeys(childKey, session)

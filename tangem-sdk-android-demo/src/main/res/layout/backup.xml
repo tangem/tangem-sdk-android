@@ -41,23 +41,110 @@
                 android:layout_height="wrap_content"
                 android:text="To Backup" />
 
-            <Button
-                android:id="@+id/btnPersonalizePrimary"
+            <Space
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Personalize Primary" />
+                android:layout_height="8dp" />
 
-            <Button
-                android:id="@+id/btnPersonalizeBackup1"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Personalize 1 backup card" />
+                android:clipToPadding="false"
 
-            <Button
-                android:id="@+id/btnPersonalizeBackup2"
+                android:padding="8dp">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/rounded_corner" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?android:windowBackground"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:text="Personalize V6"
+                    android:translationX="10dp"
+                    android:translationY="-10dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <Button
+                        android:id="@+id/btnPersonalizePrimary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Personalize Primary" />
+
+                    <Button
+                        android:id="@+id/btnPersonalizeBackup1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Personalize 1 backup card" />
+
+                    <Button
+                        android:id="@+id/btnPersonalizeBackup2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Personalize 2 backup card" />
+
+                </LinearLayout>
+
+            </FrameLayout>
+
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Personalize 2 backup card" />
+                android:clipToPadding="false"
+
+                android:padding="8dp">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/rounded_corner" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?android:windowBackground"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:text="Personalize V7"
+                    android:translationX="10dp"
+                    android:translationY="-10dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <Button
+                        android:id="@+id/btnPersonalizePrimaryV7"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Personalize Primary" />
+
+                    <Button
+                        android:id="@+id/btnPersonalizeBackup1V7"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Personalize 1 backup card" />
+
+                    <Button
+                        android:id="@+id/btnPersonalizeBackup2V7"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Personalize 2 backup card" />
+
+                </LinearLayout>
+
+            </FrameLayout>
+
 
             <Button
                 android:id="@+id/btnDepersonalize"

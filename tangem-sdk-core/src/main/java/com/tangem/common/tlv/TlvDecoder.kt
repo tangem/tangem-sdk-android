@@ -8,8 +8,11 @@ import com.tangem.common.extensions.toHexString
 import com.tangem.common.extensions.toInt
 import com.tangem.common.extensions.toUtf8
 import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.operations.GetEntropyMode
+import com.tangem.operations.ManageAccessTokensMode
 import com.tangem.operations.files.FileDataMode
 import com.tangem.operations.issuerAndUserData.IssuerExtraDataMode
+import com.tangem.operations.masterSecret.ManageMasterSecretMode
 import com.tangem.operations.personalization.entities.ProductMask
 import com.tangem.operations.read.ReadMode
 import com.tangem.operations.resetcode.AuthorizeMode
@@ -160,8 +163,17 @@ class TlvDecoder(val tlvList: List<Tlv>) {
                         typeCheck<T, CardWallet.Status>(tag)
                         CardWallet.Status.byCode(tlvValue.toInt()) as T
                     } catch (ex: Exception) {
-                        logException(tag, tlvValue.toInt().toString(), ex)
-                        throw TangemSdkError.DecodingFailed(provideDecodingFailedMessage(tag))
+                        try {
+                            Log.warning {
+                                "Type of Status is not CardWallet.Status type. " +
+                                    "Trying to check MasterSecret.Status"
+                            }
+                            typeCheck<T, MasterSecret.Status>(tag)
+                            MasterSecret.Status.byCode(tlvValue.toInt()) as T
+                        } catch (ex1: Exception) {
+                            logException(tag, tlvValue.toInt().toString(), ex1)
+                            throw TangemSdkError.DecodingFailed(provideDecodingFailedMessage(tag))
+                        }
                     }
                 }
             }
@@ -190,6 +202,9 @@ class TlvDecoder(val tlvList: List<Tlv>) {
                         ReadMode::class -> ReadMode.byRawValue(tlvValue.toInt()) as T
                         AuthorizeMode::class -> AuthorizeMode.byRawValue(tlvValue.toInt()) as T
                         FileDataMode::class -> FileDataMode.byRawValue(tlvValue.toInt()) as T
+                        ManageAccessTokensMode::class -> ManageAccessTokensMode.byRawValue(tlvValue.toInt()) as T
+                        ManageMasterSecretMode::class -> ManageMasterSecretMode.byRawValue(tlvValue.toInt()) as T
+                        GetEntropyMode::class -> GetEntropyMode.byRawValue(tlvValue.toInt()) as T
                         else -> throw TangemSdkError.DecodingFailed(provideDecodingFailedMessage(tag))
                     }
                 } catch (ex: Exception) {
@@ -205,6 +220,14 @@ class TlvDecoder(val tlvList: List<Tlv>) {
                     logException(tag, tlvValue.toInt().toString(), exception)
                     throw TangemSdkError.DecodingFailed(provideDecodingFailedMessage(tag))
                 }
+            }
+
+            TlvValueType.AccessLevel -> try {
+                typeCheck<T, Card.AccessLevel>(tag)
+                Card.AccessLevel.byCode(tlvValue.toInt()) as T
+            } catch (exception: Exception) {
+                logException(tag, tlvValue.toInt().toString(), exception)
+                throw TangemSdkError.DecodingFailed(provideDecodingFailedMessage(tag))
             }
         }
     }
