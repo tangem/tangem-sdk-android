@@ -2,9 +2,7 @@ package com.tangem.demo.ui
 
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.UiThread
@@ -43,7 +41,6 @@ import com.tangem.operations.issuerAndUserData.WriteIssuerExtraDataCommand
 import com.tangem.operations.personalization.entities.CardConfig
 import com.tangem.operations.preflightread.CardIdPreflightReadFilter
 import com.tangem.tangem_demo.R
-import kotlinx.android.synthetic.main.bottom_sheet_response_layout.*
 import kotlinx.coroutines.runBlocking
 
 @Suppress("LargeClass", "TooManyFunctions")
@@ -85,10 +82,6 @@ abstract class BaseFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         shPrefs = (requireContext().applicationContext as DemoApplication).shPrefs
-    }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(getLayoutId(), container, false)
     }
 
     override fun onResume() {
@@ -484,7 +477,8 @@ abstract class BaseFragment : Fragment() {
         val tv = dlg.findViewById<TextView>(R.id.tvResponse) ?: return
 
         tv.text = message
-        dlg.btnCopyResponse.setOnClickListener { tv.context.copyToClipboard(message) }
+        val btnCopyResponse = dlg.findViewById<Button>(R.id.btnCopyResponse)
+        btnCopyResponse?.setOnClickListener { tv.context.copyToClipboard(message) }
         dlg.show()
     }
 
@@ -537,7 +531,6 @@ abstract class BaseFragment : Fragment() {
         }
     }
 
-    protected abstract fun getLayoutId(): Int
     abstract fun handleCommandResult(result: CompletionResult<*>)
     abstract fun onCardChanged(card: Card?)
 }
