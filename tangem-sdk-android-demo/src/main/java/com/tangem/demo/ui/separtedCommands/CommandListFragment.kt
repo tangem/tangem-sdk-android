@@ -3,7 +3,9 @@ package com.tangem.demo.ui.separtedCommands
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.isVisible
@@ -34,21 +36,7 @@ import com.tangem.operations.attestation.AttestationTask
 import com.tangem.operations.files.FileVisibility
 import com.tangem.operations.usersetttings.SetUserSettingsTask
 import com.tangem.tangem_demo.R
-import kotlinx.android.synthetic.main.attestation.*
-import kotlinx.android.synthetic.main.backup.*
-import kotlinx.android.synthetic.main.card.*
-import kotlinx.android.synthetic.main.card.flCardContainer
-import kotlinx.android.synthetic.main.file_data.*
-import kotlinx.android.synthetic.main.hd_wallet.*
-import kotlinx.android.synthetic.main.issuer_data.*
-import kotlinx.android.synthetic.main.issuer_ex_data.*
-import kotlinx.android.synthetic.main.json_rpc.*
-import kotlinx.android.synthetic.main.set_pin.*
-import kotlinx.android.synthetic.main.sign.*
-import kotlinx.android.synthetic.main.theme.*
-import kotlinx.android.synthetic.main.user_data.*
-import kotlinx.android.synthetic.main.utils.*
-import kotlinx.android.synthetic.main.wallet.*
+import com.tangem.tangem_demo.databinding.FgCommandListBinding
 
 /**
 [REDACTED_AUTHOR]
@@ -87,6 +75,11 @@ class CommandListFragment : BaseFragment() {
     ]
     """.trim()
 
+    private var _binding: FgCommandListBinding? = null
+    // This property is only valid between onCreateView and
+    // onDestroyView.
+    private val binding get() = _binding!!
+
     private val sliderTouchListener = object : Slider.OnSliderTouchListener {
         @SuppressLint("RestrictedApi")
         override fun onStartTrackingTouch(slider: Slider) {
@@ -99,26 +92,35 @@ class CommandListFragment : BaseFragment() {
         }
     }
 
-    override fun getLayoutId(): Int = R.layout.fg_command_list
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        _binding = FgCommandListBinding.inflate(inflater, container, false)
+        val view = binding.root
+        return view
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        chipGroupUserCodeRequestPolicy.fitChipsByGroupWidth()
-        chipGroupUserCodeRequestPolicy.setOnCheckedChangeListener { _, checkedId ->
+        binding.cardView.chipGroupUserCodeRequestPolicy.fitChipsByGroupWidth()
+        binding.cardView.chipGroupUserCodeRequestPolicy.setOnCheckedChangeListener { _, checkedId ->
             val showTypeSelector = checkedId == R.id.chipPolicyAlways ||
                 checkedId == R.id.chipPolicyAlwaysWithBiometrics
-            chipGroupUserCodeType.isVisible = showTypeSelector
-            userCodeRequestPolicyDivider.isVisible = showTypeSelector
+            binding.cardView.chipGroupUserCodeType.isVisible = showTypeSelector
+            binding.cardView.userCodeRequestPolicyDivider.isVisible = showTypeSelector
         }
-        btnScanCard.setOnClickListener {
-            val type = when (chipGroupUserCodeType.checkedChipId) {
+        binding.cardView.btnScanCard.setOnClickListener {
+            val type = when (binding.cardView.chipGroupUserCodeType.checkedChipId) {
                 R.id.chipTypeAccessCode -> UserCodeType.AccessCode
                 R.id.chipTypePasscode -> UserCodeType.Passcode
                 else -> UserCodeType.AccessCode
             }
-            val policy = when (chipGroupUserCodeRequestPolicy.checkedChipId) {
+            val policy = when (binding.cardView.chipGroupUserCodeRequestPolicy.checkedChipId) {
                 R.id.chipPolicyDefault -> UserCodeRequestPolicy.Default
                 R.id.chipPolicyAlways -> UserCodeRequestPolicy.Always(type)
                 R.id.chipPolicyAlwaysWithBiometrics -> UserCodeRequestPolicy.AlwaysWithBiometrics(type)
@@ -126,31 +128,32 @@ class CommandListFragment : BaseFragment() {
             }
             scanCard(policy)
         }
-        btnLoadCardInfo.setOnClickListener { loadCardInfo() }
+        binding.cardView.btnLoadCardInfo.setOnClickListener { loadCardInfo() }
 
-        btnPersonalizePrimary.setOnClickListener { personalize(Backup.primaryCardConfig()) }
-        btnPersonalizeBackup1.setOnClickListener { personalize(Backup.backup1Config()) }
-        btnPersonalizeBackup2.setOnClickListener { personalize(Backup.backup2Config()) }
-        btnPersonalizePrimaryV7.setOnClickListener { personalize(Backup.primaryCardConfigV7()) }
-        btnPersonalizeBackup1V7.setOnClickListener { personalize(Backup.backup1ConfigV7()) }
-        btnPersonalizeBackup2V7.setOnClickListener { personalize(Backup.backup2ConfigV7()) }
-        btnDepersonalize.setOnClickListener { depersonalize() }
+        binding.backupView.btnPersonalizePrimary.setOnClickListener { personalize(Backup.primaryCardConfig()) }
+        binding.backupView.btnPersonalizeBackup1.setOnClickListener { personalize(Backup.backup1Config()) }
+        binding.backupView.btnPersonalizeBackup2.setOnClickListener { personalize(Backup.backup2Config()) }
+        binding.backupView.btnDepersonalize.setOnClickListener { depersonalize() }
+        binding.backupView.btnPersonalizePrimaryV7.setOnClickListener { personalize(Backup.primaryCardConfigV7()) }
+        binding.backupView.btnPersonalizeBackup1V7.setOnClickListener { personalize(Backup.backup1ConfigV7()) }
+        binding.backupView.btnPersonalizeBackup2V7.setOnClickListener { personalize(Backup.backup2ConfigV7()) }
+        binding.backupView.btnDepersonalize.setOnClickListener { depersonalize() }
 
-        btnStartBackup.setOnClickListener {
+        binding.backupView.btnStartBackup.setOnClickListener {
             val intent = Intent(requireContext(), BackupActivity::class.java)
             startActivity(intent)
         }
 
-        chipGroupAttest.fitChipsByGroupWidth()
-        btnAttest.setOnClickListener {
-            val mode = when (chipGroupAttest.checkedChipId) {
+        binding.attestationView.chipGroupAttest.fitChipsByGroupWidth()
+        binding.attestationView.btnAttest.setOnClickListener {
+            val mode = when (binding.attestationView.chipGroupAttest.checkedChipId) {
                 R.id.chipAttestOffline -> AttestationTask.Mode.Offline
                 R.id.chipAttestNormal -> AttestationTask.Mode.Normal
                 else -> AttestationTask.Mode.Full
             }
             attest(mode)
         }
-        btnAttestCardKey.setOnClickListener { attestCardKey() }
+        binding.attestationView.btnAttestCardKey.setOnClickListener { attestCardKey() }
 
         val adapter = ArrayAdapter(
             view.context,
@@ -161,10 +164,17 @@ class CommandListFragment : BaseFragment() {
                 "m/44'/0'/0'/1/0",
             ),
         )
-        etDerivePublicKey.setAdapter(adapter)
-        etDerivePublicKey.addTextChangedListener { derivationPath = if (it!!.isEmpty()) null else it.toString() }
-        btnDerivePublicKey.setOnClickListener { derivePublicKey() }
 
+        binding.hdWalletView.etDerivePublicKey.setAdapter(adapter)
+        binding.hdWalletView.etDerivePublicKey.addTextChangedListener {
+            derivationPath =
+                if (it!!.isEmpty()) null else it.toString()
+        }
+        binding.hdWalletView.btnDerivePublicKey.setOnClickListener { derivePublicKey() }
+
+        binding.signView.btnPasteHashes.setOnClickListener { binding.signView.etHashesToSign.setTextFromClipboard() }
+        binding.signView.btnSignHash.setOnClickListener { sign(SignStrategyType.SINGLE) }
+        binding.signView.btnSignHashes.setOnClickListener { sign(SignStrategyType.MULTIPLE) }
         etDeterministicEntropyPath.setAdapter(
             ArrayAdapter(
                 view.context,
@@ -191,13 +201,20 @@ class CommandListFragment : BaseFragment() {
             android.R.layout.simple_list_item_1,
             EllipticCurve.values(),
         )
-        spinnerCurves.adapter = spinnerAdapter
-        btnCreateWallet.setOnClickListener {
+        binding.walletView.spinnerCurves.adapter = spinnerAdapter
+        binding.walletView.btnCreateWallet.setOnClickListener {
             createOrImportWallet(
-                spinnerCurves.selectedItem as EllipticCurve,
-                etMnemonic.text?.toString(),
+                binding.walletView.spinnerCurves.selectedItem as EllipticCurve,
+                binding.walletView.etMnemonic.text?.toString(),
             )
         }
+        binding.walletView.btnPasteMnemonic.setOnClickListener { binding.walletView.etMnemonic.setTextFromClipboard() }
+
+        binding.walletView.btnPurgeWallet.setOnClickListener { purgeWallet() }
+        binding.walletView.btnPurgeAllWallet.setOnClickListener { purgeAllWallet() }
+
+        binding.issuerDataView.btnReadIssuerData.setOnClickListener { readIssuerData() }
+        binding.issuerDataView.btnWriteIssuerData.setOnClickListener { writeIssuerData() }
         btnCreateMasterSecret.setOnClickListener {
             createOrImportMasterSecret(
                 etMasterSecretMnemonic.text?.toString(),
@@ -214,29 +231,45 @@ class CommandListFragment : BaseFragment() {
         btnReadIssuerData.setOnClickListener { readIssuerData() }
         btnWriteIssuerData.setOnClickListener { writeIssuerData() }
 
-        btnReadIssuerExData.setOnClickListener { readIssuerExtraData() }
-        btnWriteIssuerExData.setOnClickListener { writeIssuerExtraData() }
+        binding.issuerExDataView.btnReadIssuerExData.setOnClickListener { readIssuerExtraData() }
+        binding.issuerExDataView.btnWriteIssuerExData.setOnClickListener { writeIssuerExtraData() }
 
-        btnReadUserData.setOnClickListener { readUserData() }
-        btnWriteUserData.setOnClickListener { writeUserData() }
-        btnWriteUserProtectedData.setOnClickListener { writeUserProtectedData() }
+        binding.userDataView.btnReadUserData.setOnClickListener { readUserData() }
+        binding.userDataView.btnWriteUserData.setOnClickListener { writeUserData() }
+        binding.userDataView.btnWriteUserProtectedData.setOnClickListener { writeUserProtectedData() }
 
-        btnSetAccessCode.setOnClickListener { setAccessCode() }
-        btnSetPasscode.setOnClickListener { setPasscode() }
-        btnResetUserCodes.setOnClickListener { resetUserCodes() }
-        btnClearUserCodes.setOnClickListener {
+        binding.setPinView.btnSetAccessCode.setOnClickListener { setAccessCode() }
+        binding.setPinView.btnSetPasscode.setOnClickListener { setPasscode() }
+        binding.setPinView.btnResetUserCodes.setOnClickListener { resetUserCodes() }
+        binding.setPinView.btnClearUserCodes.setOnClickListener {
             clearUserCodes()
-            userCodeRepositoryContainer.isVisible = hasSavedUserCodes()
+            binding.setPinView.userCodeRepositoryContainer.isVisible = hasSavedUserCodes()
         }
-        btnDeleteUserCode.setOnClickListener {
+        binding.setPinView.btnDeleteUserCode.setOnClickListener {
             deleteUserCodeForScannedCard()
             if (hasSavedUserCodes()) {
-                btnDeleteUserCode.isVisible = hasSavedUserCodeForScannedCard()
+                binding.setPinView.btnDeleteUserCode.isVisible = hasSavedUserCodeForScannedCard()
             } else {
-                userCodeRepositoryContainer.isVisible = false
+                binding.setPinView.userCodeRepositoryContainer.isVisible = false
             }
         }
 
+        binding.fileDataView.btnReadAllFiles.setOnClickListener { readFiles(true) }
+        binding.fileDataView.btnReadPublicFiles.setOnClickListener { readFiles(false) }
+        binding.fileDataView.btnWriteUserFile.setOnClickListener { writeUserFile() }
+        binding.fileDataView.btnWriteOwnerFile.setOnClickListener { writeOwnerFile() }
+        binding.fileDataView.btnDeleteAll.setOnClickListener { deleteFiles() }
+        binding.fileDataView.btnDeleteFirst.setOnClickListener { deleteFiles(listOf(0)) }
+        binding.fileDataView.btnMakeFilePublic.setOnClickListener {
+            changeFilesSettings(
+                mapOf(0 to FileVisibility.Public),
+            )
+        }
+        binding.fileDataView.btnMakeFilePrivate.setOnClickListener {
+            changeFilesSettings(
+                mapOf(0 to FileVisibility.Private),
+            )
+        }
         btnClearAccessTokens.setOnClickListener {
             clearCardTokens()
             cardTokensRepositoryContainer.isVisible = hasSavedCardTokens()
@@ -258,22 +291,40 @@ class CommandListFragment : BaseFragment() {
         btnMakeFilePublic.setOnClickListener { changeFilesSettings(mapOf(0 to FileVisibility.Public)) }
         btnMakeFilePrivate.setOnClickListener { changeFilesSettings(mapOf(0 to FileVisibility.Private)) }
 
-        etJsonRpc.setText(jsonRpcSingleCommandTemplate)
-        btnSingleJsonRpc.setOnClickListener { etJsonRpc.setText(jsonRpcSingleCommandTemplate) }
-        btnListJsonRpc.setOnClickListener { etJsonRpc.setText(jsonRpcListCommandsTemplate) }
-        btnPasteJsonRpc.setOnClickListener { etJsonRpc.setTextFromClipboard() }
-        btnLaunchJsonRpc.setOnClickListener { launchJSONRPC(etJsonRpc.text.toString().trim()) }
+        binding.jRpcView.etJsonRpc.setText(jsonRpcSingleCommandTemplate)
+        binding.jRpcView.btnSingleJsonRpc.setOnClickListener {
+            binding.jRpcView.etJsonRpc.setText(
+                jsonRpcSingleCommandTemplate,
+            )
+        }
+        binding.jRpcView.btnListJsonRpc.setOnClickListener {
+            binding.jRpcView.etJsonRpc.setText(
+                jsonRpcListCommandsTemplate,
+            )
+        }
+        binding.jRpcView.btnPasteJsonRpc.setOnClickListener { binding.jRpcView.etJsonRpc.setTextFromClipboard() }
+        binding.jRpcView.btnLaunchJsonRpc.setOnClickListener {
+            launchJSONRPC(
+                binding.jRpcView.etJsonRpc.text.toString()
+                    .trim(),
+            )
+        }
 
-        btnResetToFactory.setOnClickListener {
+        binding.utilsView.btnResetToFactory.setOnClickListener {
             sdk.startSessionWithRunnable(ResetToFactorySettingsTask()) {
                 postUi { handleCommandResult(it) }
             }
         }
+        binding.utilsView.btnGetEntropy.setOnClickListener {
+            sdk.startSessionWithRunnable(GetEntropyCommand()) {
         btnGetEntropy.setOnClickListener {
             sdk.startSessionWithRunnable(GetEntropyCommand(mode = GetEntropyMode.Random)) {
                 postUi { handleCommandResult(it) }
             }
         }
+        binding.utilsView.chipGroupUserCodeRecoveryAllowed.fitChipsByGroupWidth()
+        binding.utilsView.btnUserCodeRecovery.setOnClickListener {
+            val allow = when (binding.utilsView.chipGroupUserCodeRecoveryAllowed.checkedChipId) {
         chipGroupUserCodeRecoveryAllowed.fitChipsByGroupWidth()
         btnSetUserSettings.setOnClickListener {
             val isUserCodeRecoveryAllowed = when (chipGroupUserCodeRecoveryAllowed.checkedChipId) {
@@ -299,7 +350,7 @@ class CommandListFragment : BaseFragment() {
                 postUi { handleCommandResult(it) }
             }
         }
-        btnCheckSetMessage.setOnClickListener {
+        binding.utilsView.btnCheckSetMessage.setOnClickListener {
             sdk.startSessionWithRunnable(
                 runnable = MultiMessageTask(),
                 cardId = card?.cardId,
@@ -307,8 +358,8 @@ class CommandListFragment : BaseFragment() {
             ) { postUi { handleCommandResult(it) } }
         }
 
-        chipGroupTheme.fitChipsByGroupWidth()
-        chipGroupTheme.setOnCheckedChangeListener { _, checkedId ->
+        binding.themeView.chipGroupTheme.fitChipsByGroupWidth()
+        binding.themeView.chipGroupTheme.setOnCheckedChangeListener { _, checkedId ->
             val mode = when (checkedId) {
                 R.id.chipThemeLight -> AppCompatDelegate.MODE_NIGHT_NO
                 R.id.chipThemeDark -> AppCompatDelegate.MODE_NIGHT_YES
@@ -321,15 +372,15 @@ class CommandListFragment : BaseFragment() {
             }
         }
 
-        sliderWallet.stepSize = 1f
-        tvWalletPubKey.setOnClickListener {
-            requireContext().copyToClipboard(tvWalletPubKey.text)
+        binding.cardView.sliderWallet.stepSize = 1f
+        binding.cardView.tvWalletPubKey.setOnClickListener {
+            requireContext().copyToClipboard(binding.cardView.tvWalletPubKey.text)
             showToast("PubKey copied to clipboard")
         }
     }
 
     private fun sign(strategyType: SignStrategyType) {
-        val userHexHash = etHashesToSign.text.toString()
+        val userHexHash = binding.signView.etHashesToSign.text.toString()
         val strategy = when (strategyType) {
             SignStrategyType.SINGLE -> {
                 SingleSignStrategy(userHexHash, ::signHash, ::prepareHashesToSign)
@@ -349,10 +400,10 @@ class CommandListFragment : BaseFragment() {
                 showDialog(json)
 
                 if (hasSavedUserCodes()) {
-                    userCodeRepositoryContainer.isVisible = true
-                    btnDeleteUserCode.isVisible = hasSavedUserCodeForScannedCard()
+                    binding.setPinView.userCodeRepositoryContainer.isVisible = true
+                    binding.setPinView.btnDeleteUserCode.isVisible = hasSavedUserCodeForScannedCard()
                 } else {
-                    userCodeRepositoryContainer.isVisible = false
+                    binding.setPinView.userCodeRepositoryContainer.isVisible = false
                 }
                 if (hasSavedCardTokens()) {
                     cardTokensRepositoryContainer.isVisible = true
@@ -377,10 +428,10 @@ class CommandListFragment : BaseFragment() {
 
     private fun updateWalletsSlider() {
         fun updateWalletInfoContainerVisibility(visibility: Int) {
-            if (visibility == View.VISIBLE) flCardContainer.beginDelayedTransition()
-            walletInfoContainer.visibility = visibility
+            if (visibility == View.VISIBLE) binding.cardView.flCardContainer.beginDelayedTransition()
+            binding.cardView.walletInfoContainer.visibility = visibility
         }
-        sliderWallet.removeOnSliderTouchListener(sliderTouchListener)
+        binding.cardView.sliderWallet.removeOnSliderTouchListener(sliderTouchListener)
 
         if (walletsCount == 0) {
             updateWalletInfoContainerVisibility(View.GONE)
@@ -388,35 +439,35 @@ class CommandListFragment : BaseFragment() {
             return
         }
 
-        sliderWallet.post {
+        binding.cardView.sliderWallet.post {
             if (walletsCount == 1) {
                 selectedIndexOfWallet = 0
                 updateWalletInfoContainerVisibility(View.VISIBLE)
-                sliderWallet.value = 0f
-                sliderWallet.valueTo = 1f
-                sliderWallet.isEnabled = false
+                binding.cardView.sliderWallet.value = 0f
+                binding.cardView.sliderWallet.valueTo = 1f
+                binding.cardView.sliderWallet.isEnabled = false
                 updateWalletInfo()
                 return@post
             }
 
             updateWalletInfoContainerVisibility(View.VISIBLE)
-            sliderWallet.isEnabled = true
-            sliderWallet.valueFrom = 0f
-            sliderWallet.valueTo = walletsCount - 1f
+            binding.cardView.sliderWallet.isEnabled = true
+            binding.cardView.sliderWallet.valueFrom = 0f
+            binding.cardView.sliderWallet.valueTo = walletsCount - 1f
 
             if (selectedIndexOfWallet == -1 || selectedIndexOfWallet >= walletsCount) {
                 selectedIndexOfWallet = 0
             }
-            sliderWallet.value = selectedIndexOfWallet.toFloat()
-            sliderWallet.addOnSliderTouchListener(sliderTouchListener)
+            binding.cardView.sliderWallet.value = selectedIndexOfWallet.toFloat()
+            binding.cardView.sliderWallet.addOnSliderTouchListener(sliderTouchListener)
             updateWalletInfo()
         }
     }
 
     private fun updateWalletInfo() {
-        tvWalletsCount.text = "$walletsCount"
-        tvWalletIndex.text = "$selectedIndexOfWallet"
-        tvWalletCurve.text = "${selectedWallet?.curve}"
-        tvWalletPubKey.text = "${selectedWallet?.publicKey?.toHexString()}"
+        binding.cardView.tvWalletsCount.text = "$walletsCount"
+        binding.cardView.tvWalletIndex.text = "$selectedIndexOfWallet"
+        binding.cardView.tvWalletCurve.text = "${selectedWallet?.curve}"
+        binding.cardView.tvWalletPubKey.text = "${selectedWallet?.publicKey?.toHexString()}"
     }
 }
