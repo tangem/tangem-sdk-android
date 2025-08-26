@@ -33,7 +33,7 @@ import com.tangem.operations.sign.SignCommand
 import com.tangem.operations.sign.SignHashCommand
 import com.tangem.operations.sign.SignHashResponse
 import com.tangem.operations.sign.SignResponse
-import com.tangem.operations.usersetttings.SetUserCodeRecoveryAllowedTask
+import com.tangem.operations.usersetttings.SetUserSettingsTask
 import com.tangem.operations.wallet.CreateWalletCommand
 import com.tangem.operations.wallet.CreateWalletResponse
 import com.tangem.operations.wallet.CreateWalletTask
@@ -244,7 +244,7 @@ class SetUserCodeRecoveryAllowedHandler : JSONRPCHandler<SuccessResponse> {
 
     override fun makeRunnable(params: Map<String, Any?>): CardSessionRunnable<SuccessResponse> {
         val isAllowed = params["isAllowed"] as? Boolean ?: false
-        return SetUserCodeRecoveryAllowedTask(isAllowed)
+        return SetUserSettingsTask(isAllowed)
     }
 }
 

@@ -4,14 +4,32 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.card.Card
 import com.tangem.common.core.CardSession
 import com.tangem.common.core.CardSessionRunnable
+import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.guard
 import com.tangem.operations.backup.ResetBackupCommand
+import com.tangem.operations.masterSecret.ManageMasterSecretCommand
+import com.tangem.operations.masterSecret.ManageMasterSecretMode
 import com.tangem.operations.wallet.PurgeWalletCommand
 
 class ResetToFactorySettingsTask : CardSessionRunnable<Card> {
 
     override fun run(session: CardSession, callback: (result: CompletionResult<Card>) -> Unit) {
-        deleteWallets(session, callback)
+        if (session.environment.card?.masterSecret == null) {
+            deleteWallets(session, callback)
+        } else {
+            deleteMasterSecret(session, callback)
+        }
+    }
+
+    private fun deleteMasterSecret(session: CardSession, callback: (result: CompletionResult<Card>) -> Unit) {
+        ManageMasterSecretCommand(ManageMasterSecretMode.Purge).run(session) { result ->
+            when (result) {
+                is CompletionResult.Success -> {
+                    deleteWallets(session, callback)
+                }
+                is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+            }
+        }
     }
 
     private fun deleteWallets(session: CardSession, callback: (result: CompletionResult<Card>) -> Unit) {
@@ -20,7 +38,7 @@ class ResetToFactorySettingsTask : CardSessionRunnable<Card> {
             return
         }
 
-        PurgeWalletCommand(wallet.publicKey).run(session) { result ->
+        PurgeWalletCommand(wallet.index, wallet.publicKey).run(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
                     deleteWallets(session, callback)

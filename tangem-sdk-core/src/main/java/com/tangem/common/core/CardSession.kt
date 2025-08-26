@@ -5,17 +5,33 @@ import com.tangem.common.*
 import com.tangem.common.apdu.Apdu
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.ResponseApdu
+import com.tangem.common.card.AesMode
 import com.tangem.common.card.EncryptionMode
+import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.extensions.VoidCallback
 import com.tangem.common.extensions.calculateSha256
+import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.toByteArray
+import com.tangem.common.extensions.toHexString
+import com.tangem.common.extensions.xor
 import com.tangem.common.json.JSONRPCConverter
 import com.tangem.common.json.JSONRPCLinker
 import com.tangem.common.nfc.CardReader
 import com.tangem.common.services.secure.SecureStorage
+import com.tangem.common.usersCode.CardTokensRepository
 import com.tangem.common.usersCode.UserCodeRepository
+import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.EncryptionHelper
+import com.tangem.crypto.Secp256k1
+import com.tangem.crypto.StrongEncryptionHelper
+import com.tangem.crypto.hmacSha256
 import com.tangem.crypto.pbkdf2Hash
+import com.tangem.operations.AuthorizeWithAccessTokensCommand
+import com.tangem.operations.AuthorizeWithPinTask
+import com.tangem.operations.AuthorizeWithSecurityDelayCommand
 import com.tangem.operations.OpenSessionCommand
+import com.tangem.operations.OpenSessionWithAccessTokenCommand
+import com.tangem.operations.OpenSessionWithSecurityDelayCommand
 import com.tangem.operations.PreflightReadMode
 import com.tangem.operations.PreflightReadTask
 import com.tangem.operations.preflightread.CardIdPreflightReadFilter
@@ -27,6 +43,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.PrintWriter
 import java.io.StringWriter
+import kotlin.coroutines.resume
 
 /**
  * Allows interaction with Tangem cards. Should be opened before sending commands.
@@ -47,6 +64,7 @@ class CardSession(
     val viewDelegate: SessionViewDelegate,
     val environment: SessionEnvironment,
     val userCodeRepository: UserCodeRepository?,
+    val cardTokensRepository: CardTokensRepository?,
     val preflightReadFilter: PreflightReadFilter?,
     private val reader: CardReader,
     private val jsonRpcConverter: JSONRPCConverter,
@@ -60,6 +78,8 @@ class CardSession(
         private set
     var state = CardSessionState.Inactive
         private set
+
+    var packetCounter = 0
 
     private var resetCodesController: ResetCodesController? = null
 
@@ -263,6 +283,16 @@ class CardSession(
             is UserCodeRequestPolicy.AlwaysWithBiometrics -> {
                 scope.launch(Dispatchers.Main) {
                     if (shouldRequestBiometrics()) {
+                        cardTokensRepository?.unlock()
+                            ?.doOnSuccess { }
+                            ?.doOnFailure { e ->
+                                Log.error {
+                                    """
+                                       Access tokens could not be unlocked
+                                        |- Cause: $e
+                                    """.trimIndent()
+                                }
+                            }
                         userCodeRepository?.unlock()
                             ?.doOnSuccess { runnable.prepare(this@CardSession, callback) }
                             ?.doOnFailure { e ->
@@ -369,16 +399,28 @@ class CardSession(
         state = CardSessionState.Inactive
         preflightReadMode = PreflightReadMode.FullCardRead
         saveUserCodeIfNeeded()
+        saveAccessTokensIfNeeded()
     }
 
-    fun send(apdu: CommandApdu, callback: CompletionCallback<ResponseApdu>) {
+    private fun aesCcmNonce(forSend: Boolean, cardId: ByteArray, packetCounter: Int): ByteArray {
+        if (cardId.size != 8) throw Exception("Invalid cardId for nonce (${cardId.toHexString()})")
+        val nonce = if (forSend)
+            byteArrayOf(0x7E.toByte()) + cardId + packetCounter.toByteArray(3)
+        else
+            byteArrayOf(0xCA.toByte()) + cardId + packetCounter.toByteArray(3)
+        Log.info { "nonce: ${nonce.toHexString()}" }
+        return nonce
+    }
+
+    fun send(apdu: CommandApdu, requireCheckPin: Boolean = false, callback: CompletionCallback<ResponseApdu>) {
         Log.session { "send CommandApdu" }
         val subscription = reader.tag.openSubscription()
         scope.launch {
             subscription.consumeAsFlow()
                 .filterNotNull()
                 .map { establishEncryptionIfNeeded() }
-                .map { apdu.encrypt(environment.encryptionMode, environment.encryptionKey) }
+                .map { authorizeWithPinIfNeeded(requireCheckPin) }
+                .map { encrypt(apdu) }
                 .map { encryptedApdu -> reader.transceiveApdu(encryptedApdu) }
                 .map { responseApdu -> decrypt(responseApdu) }
                 .catch {
@@ -422,61 +464,213 @@ class CardSession(
         return reader.transceiveRaw(Apdu.build(Apdu.SELECT, Apdu.TANGEM_WALLET_AID))
     }
 
+    suspend fun establishEncryptionWithAccessToken(): CompletionResult<Boolean> {
+        Log.session { "establish encryption with access token" }
+        environment.encryptionMode = EncryptionMode.None
+        environment.encryptionKey = null
+        environment.isPinChecked = false
+
+        val cardPublicKey = environment.card?.cardPublicKey ?: return CompletionResult.Failure(
+            TangemSdkError
+                .MissingPreflightRead()
+        )
+
+        val authorizeCommand = AuthorizeWithAccessTokensCommand()
+
+        val resultAuthorize = when (val responseAuthorize = authorizeCommand.runSync(this)) {
+            is CompletionResult.Success -> responseAuthorize.data
+            is CompletionResult.Failure -> return CompletionResult.Failure(responseAuthorize.error)
+        }
+
+        var key = environment.cardTokens!!.identifyToken!!.xor(resultAuthorize.challengeA)
+
+        val hmacCalculated = key.hmacSha256("SESSION.CARD".toByteArray() + resultAuthorize.challengeA)
+        if (!hmacCalculated.contentEquals(resultAuthorize.hmacAttestA)) {
+            Log.error { "Card attest HMAC (hmacAttestA) is invalid!" }
+            return CompletionResult.Failure(TangemSdkError.InvalidAccessTokens())
+        }
+
+        val challengeB = CryptoUtils.generateRandomBytes(32)
+        key = environment.cardTokens!!.accessToken!!.xor(resultAuthorize.challengeA)
+        val hmacAttestB = key.hmacSha256("SESSION.TERM".toByteArray() + resultAuthorize.challengeA + challengeB)
+        val openSessionCommand = OpenSessionWithAccessTokenCommand(challengeB, hmacAttestB)
+
+        val resultOpenSession = when (val responseOpenSession = openSessionCommand.runSync(this)) {
+            is CompletionResult.Success -> responseOpenSession.data
+            is CompletionResult.Failure -> return CompletionResult.Failure(responseOpenSession.error)
+        }
+
+        val sessionKey =
+            key.pbkdf2Hash(
+                environment.cardTokens!!.identifyToken!! + resultAuthorize.challengeA + challengeB,
+                iterations = 10
+            )
+
+
+        if (!CryptoUtils.verify(
+                cardPublicKey, "SESSION.KEY".toByteArray() + sessionKey,
+                resultOpenSession.signAttestSession
+            )
+        )
+            return CompletionResult.Failure(
+                Exception("Session attest signature (signAttestSession) is invalid!")
+                    .toTangemSdkError()
+            )
+
+        environment.accessLevel = resultOpenSession.accessLevel
+        environment.encryptionMode = EncryptionMode.CcmWithAccessToken
+        environment.encryptionKey = sessionKey
+        packetCounter = 1
+
+        return authorizeWithPinIfNeeded(environment.requirePin)
+    }
+
+    suspend fun establishEncryptionWithSecurityDelay(): CompletionResult<Boolean> {
+        Log.session { "establish encryption with security delay" }
+        val authorizeCommand = AuthorizeWithSecurityDelayCommand()
+
+        environment.encryptionMode = EncryptionMode.None
+        environment.encryptionKey = null
+        environment.isPinChecked = false
+
+        val resultAuthorize = when (val responseAuthorize = authorizeCommand.runSync(this)) {
+            is CompletionResult.Success -> responseAuthorize.data
+            is CompletionResult.Failure -> return CompletionResult.Failure(responseAuthorize.error)
+        }
+
+        if (!Secp256k1.verify(
+                environment.card!!.cardPublicKey,
+                "SESSION.CARD".toByteArray() + resultAuthorize.pubSessionKeyA,
+                resultAuthorize.signAttestA
+            )
+        ) {
+            return CompletionResult.Failure(Exception("Card attest signature is invalid!").toTangemSdkError())
+        } else {
+            Log.session { "Card attest signature - OK" }
+        }
+
+        val encryptionHelper = StrongEncryptionHelper()
+
+        val openSessionCommand = OpenSessionWithSecurityDelayCommand(encryptionHelper.keyA)
+
+        val resultOpenSession = when (val responseOpenSession = openSessionCommand.runSync(this)) {
+            is CompletionResult.Success -> responseOpenSession.data
+            is CompletionResult.Failure -> return CompletionResult.Failure(responseOpenSession.error)
+        }
+
+        environment.accessLevel = resultOpenSession.accessLevel
+
+        val sessionKey = encryptionHelper.generateSecret(resultAuthorize.pubSessionKeyA).calculateSha256()
+        environment.encryptionMode = EncryptionMode.CcmWithSecurityDelay
+        environment.encryptionKey = sessionKey
+        packetCounter = 1
+
+        return CompletionResult.Success(true)
+    }
+
+    private suspend fun authorizeWithPinIfNeeded(requireCheckPin: Boolean): CompletionResult<Boolean> {
+        if (!requireCheckPin || environment.isPinChecked || ((environment.card?.firmwareVersion?.doubleValue ?: 0.0) <
+                FirmwareVersion.v7.doubleValue)
+        ) {
+            return CompletionResult.Success(true)
+        }
+
+        return suspendCancellableCoroutine { continuation ->
+            AuthorizeWithPinTask().run(this) {if (continuation.isActive) continuation.resume(it) }
+        }
+    }
+
     private suspend fun establishEncryptionIfNeeded(): CompletionResult<Boolean> {
         Log.session { "establish encryption if needed" }
         if (environment.encryptionMode == EncryptionMode.None || environment.encryptionKey != null) {
             return CompletionResult.Success(true)
         }
 
-        val encryptionHelper = EncryptionHelper.create(environment.encryptionMode)
-            ?: return CompletionResult.Failure(
-                TangemSdkError.CryptoUtilsError("Failed to establish encryption"),
-            )
+        if (environment.encryptionMode == EncryptionMode.CcmWithAccessToken) {
+            return establishEncryptionWithAccessToken()
+        } else if (environment.encryptionMode == EncryptionMode.CcmWithSecurityDelay) {
+            return establishEncryptionWithSecurityDelay()
+        } else {
+            val encryptionHelper = EncryptionHelper.create(environment.encryptionMode)
+                ?: return CompletionResult.Failure(
+                    TangemSdkError.CryptoUtilsError("Failed to establish encryption"),
+                )
 
-        val openSessionCommand = OpenSessionCommand(encryptionHelper.keyA)
-        val apdu = openSessionCommand.serialize(environment)
+            val openSessionCommand = OpenSessionCommand(encryptionHelper.keyA)
+            val apdu = openSessionCommand.serialize(environment)
 
-        when (val response = reader.transceiveApdu(apdu)) {
-            is CompletionResult.Success -> {
-                val result = try {
-                    openSessionCommand.deserialize(environment, response.data)
-                } catch (error: TangemSdkError) {
-                    return CompletionResult.Failure(error)
-                }
+            when (val response = reader.transceiveApdu(apdu)) {
+                is CompletionResult.Success -> {
+                    val result = try {
+                        openSessionCommand.deserialize(environment, response.data)
+                    } catch (error: TangemSdkError) {
+                        return CompletionResult.Failure(error)
+                    }
 
-                val uid = result.uid
-                val protocolKey = environment.accessCode.value?.pbkdf2Hash(uid, iterations = 50)
-                    ?: return CompletionResult.Failure(
-                        TangemSdkError.CryptoUtilsError(
-                            "Failed to establish encryption",
-                        ),
-                    )
+                    val uid = result.uid
+                    val protocolKey = environment.accessCode.value?.pbkdf2Hash(uid, iterations = 50)
+                        ?: return CompletionResult.Failure(
+                            TangemSdkError.CryptoUtilsError(
+                                "Failed to establish encryption",
+                            ),
+                        )
 
-                val secret = encryptionHelper.generateSecret(result.sessionKeyB)
-                val sessionKey = (secret + protocolKey).calculateSha256()
-                environment.encryptionKey = sessionKey
+                    val secret = encryptionHelper.generateSecret(result.sessionKeyB)
+                    val sessionKey = (secret + protocolKey).calculateSha256()
+                    environment.encryptionKey = sessionKey
 
                 Log.session { "The encryption established" }
-                return CompletionResult.Success(true)
-            }
-            is CompletionResult.Failure -> {
-                Log.session { "establish encryption Failure ${response.error}" }
-                return CompletionResult.Failure(response.error)
+                    return CompletionResult.Success(true)
+                }
+                is CompletionResult.Failure -> {
+                    Log.session { "establish encryption Failure ${response.error}" }
+                    return CompletionResult.Failure(response.error)
+                }
             }
         }
     }
 
+    private fun encrypt(apdu: CommandApdu): CommandApdu {
+        return if (environment.encryptionMode.aesMode == AesMode.Ccm) {
+            apdu.encryptCcm(
+                environment.encryptionKey, encryptionNonce = aesCcmNonce(
+                    forSend = true,
+                    environment.card!!.cardId.hexToBytes(), packetCounter
+                )
+            )
+        } else {
+            apdu.encrypt(environment.encryptionMode, environment.encryptionKey)
+        }
+    }
+
     private fun decrypt(result: CompletionResult<ResponseApdu>): CompletionResult<ResponseApdu> {
-        return when (result) {
+        val r = when (result) {
             is CompletionResult.Success -> {
                 try {
-                    CompletionResult.Success(result.data.decrypt(environment.encryptionKey))
+                    if (environment.encryptionMode.aesMode == AesMode.Ccm) {
+                        CompletionResult.Success(
+                            result.data.decryptCcm(
+                                environment.encryptionKey,
+                                nonce = aesCcmNonce(
+                                    forSend = false,
+                                    environment.card!!.cardId.hexToBytes(),
+                                    packetCounter
+                                ),
+                                cardId = environment.card!!.cardId.hexToBytes()
+                            )
+                        )
+                    } else {
+                        CompletionResult.Success(result.data.decrypt(environment.encryptionKey))
+                    }
                 } catch (error: TangemSdkError) {
                     CompletionResult.Failure(error)
                 }
             }
+
             is CompletionResult.Failure -> result
         }
+        packetCounter++
+        return r
     }
 
     fun requestUserCodeIfNeeded(type: UserCodeType, isFirstAttempt: Boolean, callback: CompletionCallback<Unit>) {
@@ -561,6 +755,12 @@ class CardSession(
         }
     }
 
+    fun updateAccessTokensIfNeeded() {
+        val card = environment.card ?: return
+        environment.cardTokens = cardTokensRepository?.get(card.cardId)
+        // Log.info { "Update tokens: ${environment.cardTokens?.accessToken?.toHexString()}/${environment.cardTokens?.identifyToken?.toHexString()}" }
+    }
+
     private fun saveUserCodeIfNeeded() {
         val saveCodeAndLock: suspend (String, UserCode) -> Unit = { cardId, code ->
             userCodeRepository?.save(cardId, code)
@@ -587,6 +787,31 @@ class CardSession(
         }
     }
 
+    private fun saveAccessTokensIfNeeded() {
+        val saveTokensAndLock: suspend (String, CardTokens) -> Unit = { cardId, tokens ->
+            cardTokensRepository?.save(cardId, tokens)
+                ?.doOnResult {
+                    cardTokensRepository.lock()
+                }
+                ?.doOnFailure {
+                    Log.error { "Access tokens saving failed: $it" }
+                }
+        }
+
+        @Suppress("GlobalCoroutineUsage")
+        GlobalScope.launch {
+            val card = environment.card
+            when {
+                card == null -> cardTokensRepository?.lock()
+                environment.cardTokens != null -> {
+                    Log.info { "Save tokens: ${environment.cardTokens?.accessToken?.toHexString()}/${environment.cardTokens?.identifyToken?.toHexString()}" }
+                    saveTokensAndLock(card.cardId, environment.cardTokens!!)
+                }
+
+            }
+        }
+    }
+
     private fun updateEnvironment(type: UserCodeType, code: String) {
         val userCode = UserCode(type, code)
         environment.encryptionKey = null // we need to reset encryption key with new userCode
@@ -601,6 +826,7 @@ class CardSession(
             viewDelegate = viewDelegate,
             secureStorage = secureStorage,
             userCodeRepository = userCodeRepository,
+            cardTokensRepository = cardTokensRepository,
             reader = reader,
             jsonRpcConverter = jsonRpcConverter,
             preflightReadFilter = null,
@@ -643,6 +869,7 @@ class SessionBuilder(
     private val viewDelegate: SessionViewDelegate,
     private val secureStorage: SecureStorage,
     private val userCodeRepository: UserCodeRepository?,
+    private val cardTokensRepository: CardTokensRepository?,
     private val reader: CardReader,
     private val jsonRpcConverter: JSONRPCConverter,
     private val preflightReadFilter: PreflightReadFilter?,
@@ -653,6 +880,7 @@ class SessionBuilder(
             viewDelegate = viewDelegate,
             environment = SessionEnvironment(config, secureStorage),
             userCodeRepository = userCodeRepository,
+            cardTokensRepository = cardTokensRepository,
             reader = reader,
             jsonRpcConverter = jsonRpcConverter,
             secureStorage = secureStorage,

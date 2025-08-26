@@ -96,6 +96,12 @@ class FirmwareVersion : Comparable<FirmwareVersion> {
          */
         val IsPasscodeStatusAvailable = FirmwareVersion(4, 1)
 
+
+        /**
+         * SW_INVALID_PIN, SW_INVALID_PIN2
+         */
+        val InvalidCodesStatusWordAvailable = FirmwareVersion(4, 33)
+
         /**
          * Is create wallet command answers with the whole wallet
          */
@@ -125,6 +131,13 @@ class FirmwareVersion : Comparable<FirmwareVersion> {
          * Ed25519Slip support
          */
         val Ed25519Slip0010Available = FirmwareVersion(6, 33)
+
+        val v7 = FirmwareVersion(7, 0)
+
+        /**
+         * Multi-wallet
+         */
+        val MasterSecretAvailable = FirmwareVersion(8, 0)
 
         /**
          * Temporary range for visa cards

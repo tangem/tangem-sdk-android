@@ -282,7 +282,7 @@ class AttestationTask(
     private fun attestWallets(session: CardSession, callback: CompletionCallback<Boolean>) {
         session.scope.launch {
             val card = session.environment.card!!
-            val walletsKeys = card.wallets.map { it.publicKey }
+            val walletsKeys = card.wallets.mapNotNull { it.publicKey }
             val attestationCommands = walletsKeys.map { AttestWalletKeyTask(it) }
 
             // check for hacking attempts with signs

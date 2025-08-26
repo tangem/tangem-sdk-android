@@ -10,7 +10,11 @@ fun Int.toByteArray(size: Int = Int.SIZE_BYTES): ByteArray = when (size) {
     }
     Short.SIZE_BYTES -> byteArrayOf(this.ushr(bitCount = 8).toByte(), this.toByte())
     1 -> byteArrayOf(this.toByte())
-    else -> byteArrayOf()
+    else -> 
+        if(size<Int.SIZE_BYTES)
+            toByteArray().copyOfRange(Int.SIZE_BYTES-size, Int.SIZE_BYTES)
+        else
+            ByteArray(size-Int.SIZE_BYTES)+toByteArray()
 }
 
 // For byte comparisons

@@ -8,6 +8,7 @@ import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.Card
 import com.tangem.common.card.EncryptionMode
+import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.CardSession
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.SessionEnvironment
@@ -61,7 +62,11 @@ class PersonalizeCommand(
                 is CompletionResult.Success -> callback(CompletionResult.Failure(TangemSdkError.AlreadyPersonalized()))
                 is CompletionResult.Failure -> {
                     if (result.error is TangemSdkError.NotPersonalized) {
-                        runPersonalize(session, callback)
+                        if (result.error.fwVersion == null || result.error.fwVersion >= FirmwareVersion.v7) {
+                            callback(CompletionResult.Failure(TangemSdkError.NotSupportedFirmwareVersion()))
+                        } else {
+                            runPersonalize(session, callback)
+                        }
                     } else {
                         callback(result)
                     }

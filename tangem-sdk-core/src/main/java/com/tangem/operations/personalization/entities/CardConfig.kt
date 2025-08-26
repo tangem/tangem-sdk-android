@@ -142,6 +142,128 @@ data class CardConfig(
     }
 }
 
+@JsonClass(generateAdapter = true)
+data class CardConfigV7(
+    internal val releaseVersion: Boolean,
+    internal val issuerName: String,
+    internal val series: String?,
+    internal val startNumber: Long,
+    internal val count: Int,
+    internal val numberFormat: String,
+    @Json(name = "PIN")
+    internal val pin: String,
+
+    internal val securityDelay: Int,
+
+    internal val curveID: EllipticCurve?,
+    @Json(name = "SigningMethod")
+    internal val signingMethod: SigningMethod?,
+    @Json(name = "allowSwapPIN")
+    internal val allowSetPIN: Boolean,
+
+    internal val useActivation: Boolean,
+
+    internal val useNDEF: Boolean,
+    internal val useBlock: Boolean,
+
+    @Json(name = "forbidPurgeWallet")
+    internal val prohibitPurgeWallet: Boolean,
+    @Json(name = "forbidDefaultPIN")
+    internal val prohibitDefaultPIN: Boolean,
+
+    internal val disableFiles: Boolean?,
+    internal val allowHDWallets: Boolean?,
+    internal val allowBackup: Boolean?,
+    internal val allowKeysImport: Boolean?,
+    internal val requireBackup: Boolean?,
+    internal val createWallet: Int,
+    internal val cardData: CardConfigData,
+    @Json(name = "NDEF")
+    val ndefRecords: List<NdefRecord>,
+    /**
+     * Number of wallets supported by card, by default - 1
+     */
+    internal val walletsCount: Int?,
+) {
+
+    fun pinSha256(): ByteArray = pin.calculateSha256()
+
+    @Suppress("LongParameterList")
+    class CardConfigData(
+        val date: Date?,
+        val batch: String,
+        val blockchain: String?,
+        @Json(name = "product_note") val productNote: Boolean?,
+        @Json(name = "product_tag") val productTag: Boolean?,
+        @Json(name = "product_id_card") val productIdCard: Boolean?,
+        @Json(name = "product_id_issuer") val productIdIssuer: Boolean?,
+        @Json(name = "product_authentication") val productAuthentication: Boolean?,
+        @Json(name = "product_twin_card") val productTwin: Boolean?,
+        @Json(name = "token_symbol") val tokenSymbol: String?,
+        @Json(name = "token_contract_address") val tokenContractAddress: String?,
+        @Json(name = "token_decimal") val tokenDecimal: Int?,
+    ) {
+
+        internal fun createPersonalizationCardData(): CardData {
+            return CardData(
+                batch,
+                date ?: Date(),
+                blockchain ?: "",
+                createProductMask(),
+                tokenSymbol,
+                tokenContractAddress,
+                tokenDecimal,
+            )
+        }
+
+        private fun createProductMask(): ProductMask {
+            val builder = MaskBuilder()
+            if (productNote == true) {
+                builder.add(ProductMask.Code.Note)
+            }
+            if (productTag == true) {
+                builder.add(ProductMask.Code.Tag)
+            }
+            if (productIdCard == true) {
+                builder.add(ProductMask.Code.IdCard)
+            }
+            if (productIdIssuer == true) {
+                builder.add(ProductMask.Code.IdIssuer)
+            }
+            if (productAuthentication == true) {
+                builder.add(ProductMask.Code.Authentication)
+            }
+            if (productTwin == true) {
+                builder.add(ProductMask.Code.TwinCard)
+            }
+
+            return builder.build()
+        }
+    }
+
+}
+
+
+internal fun CardConfigV7.createSettingsMask(): Card.SettingsMask {
+    val builder = MaskBuilder()
+
+    builder.add(Card.SettingsMask.Code.IsReusable)
+    builder.addIf(allowSetPIN, Card.SettingsMask.Code.AllowSetPIN1)
+    builder.addIf(useNDEF, Card.SettingsMask.Code.UseNDEF)
+    builder.addIf(prohibitDefaultPIN, Card.SettingsMask.Code.ProhibitDefaultPIN1)
+    builder.addIf(useActivation, Card.SettingsMask.Code.UseActivation)
+    builder.addIf(useBlock, Card.SettingsMask.Code.UseBlock)
+    builder.addIf(prohibitPurgeWallet, Card.SettingsMask.Code.PermanentWallet)
+    builder.addIf(disableFiles, Card.SettingsMask.Code.DisableFiles)
+    builder.addIf(allowHDWallets, Card.SettingsMask.Code.AllowHDWallets)
+    builder.addIf(allowBackup, Card.SettingsMask.Code.AllowBackup)
+    builder.addIf(allowKeysImport, Card.SettingsMask.Code.AllowKeysImport)
+    builder.addIf(requireBackup, Card.SettingsMask.Code.RequireBackup)
+
+    return builder.build()
+}
+
+
 internal fun CardConfig.createSettingsMask(): Card.SettingsMask {
     val builder = MaskBuilder()
 
@@ -185,8 +307,17 @@ private fun MaskBuilder.addIf(condition: Boolean?, maskCode: Mask.Code) {
     if (condition == true) add(maskCode)
 }
 
-@Suppress("ComplexMethod", "ImplicitDefaultLocale", "MagicNumber")
 internal fun CardConfig.createCardId(): String? {
+    return createCardId(startNumber,series)
+}
+
+internal fun CardConfigV7.createCardId(): String? {
+    return createCardId(startNumber,series)
+}
+
+@Suppress("ComplexMethod", "ImplicitDefaultLocale", "MagicNumber")
+internal fun createCardId(startNumber:Long, series: String?): String?
+{
     if (startNumber <= 0 || series?.length != 2 && series?.length != 4) return null
 
     val alf = "ABCDEF0123456789"
