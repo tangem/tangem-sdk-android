@@ -13,6 +13,7 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.UserCodeType
 import com.tangem.common.card.Card
 import com.tangem.common.card.EllipticCurve
+import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.Config
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.core.UserCodeRequestPolicy
@@ -28,9 +29,10 @@ import com.tangem.demo.ui.extension.setTextFromClipboard
 import com.tangem.demo.ui.separtedCommands.task.MultiMessageTask
 import com.tangem.demo.ui.separtedCommands.task.ResetToFactorySettingsTask
 import com.tangem.operations.GetEntropyCommand
+import com.tangem.operations.GetEntropyMode
 import com.tangem.operations.attestation.AttestationTask
 import com.tangem.operations.files.FileVisibility
-import com.tangem.operations.usersetttings.SetUserCodeRecoveryAllowedTask
+import com.tangem.operations.usersetttings.SetUserSettingsTask
 import com.tangem.tangem_demo.R
 import kotlinx.android.synthetic.main.attestation.*
 import kotlinx.android.synthetic.main.backup.*
@@ -129,6 +131,9 @@ class CommandListFragment : BaseFragment() {
         btnPersonalizePrimary.setOnClickListener { personalize(Backup.primaryCardConfig()) }
         btnPersonalizeBackup1.setOnClickListener { personalize(Backup.backup1Config()) }
         btnPersonalizeBackup2.setOnClickListener { personalize(Backup.backup2Config()) }
+        btnPersonalizePrimaryV7.setOnClickListener { personalize(Backup.primaryCardConfigV7()) }
+        btnPersonalizeBackup1V7.setOnClickListener { personalize(Backup.backup1ConfigV7()) }
+        btnPersonalizeBackup2V7.setOnClickListener { personalize(Backup.backup2ConfigV7()) }
         btnDepersonalize.setOnClickListener { depersonalize() }
 
         btnStartBackup.setOnClickListener {
@@ -160,6 +165,23 @@ class CommandListFragment : BaseFragment() {
         etDerivePublicKey.addTextChangedListener { derivationPath = if (it!!.isEmpty()) null else it.toString() }
         btnDerivePublicKey.setOnClickListener { derivePublicKey() }
 
+        etDeterministicEntropyPath.setAdapter(
+            ArrayAdapter(
+                view.context,
+                android.R.layout.simple_dropdown_item_1line,
+                listOf(
+                    "bip39: m/83696968'/39'/{language}'/{words}'/{index}'",
+                    "xprv: m/83696968'/32'/{index}",
+                    "hex: m/83696968'/128169'/{num_bytes}'/{index}'",
+                    "PWD BASE 64: m/83696968'/707764'/{pwd_len}'/{index}'"
+                ),
+            )
+        )
+        btnDeriveEntropy.setOnClickListener {
+            deriveEntropy(
+                etDeterministicEntropyPath.text.toString()
+            )
+        }
         btnPasteHashes.setOnClickListener { etHashesToSign.setTextFromClipboard() }
         btnSignHash.setOnClickListener { sign(SignStrategyType.SINGLE) }
         btnSignHashes.setOnClickListener { sign(SignStrategyType.MULTIPLE) }
@@ -176,11 +198,19 @@ class CommandListFragment : BaseFragment() {
                 etMnemonic.text?.toString(),
             )
         }
+        btnCreateMasterSecret.setOnClickListener {
+            createOrImportMasterSecret(
+                etMasterSecretMnemonic.text?.toString(),
+            )
+        }
         btnPasteMnemonic.setOnClickListener { etMnemonic.setTextFromClipboard() }
-
+        btnPasteMasterSecretMnemonic.setOnClickListener {
+            etMasterSecretMnemonic
+                .setTextFromClipboard()
+        }
         btnPurgeWallet.setOnClickListener { purgeWallet() }
         btnPurgeAllWallet.setOnClickListener { purgeAllWallet() }
-
+        btnPurgeMasterSecret.setOnClickListener { purgeMasterSecret() }
         btnReadIssuerData.setOnClickListener { readIssuerData() }
         btnWriteIssuerData.setOnClickListener { writeIssuerData() }
 
@@ -207,6 +237,18 @@ class CommandListFragment : BaseFragment() {
             }
         }
 
+        btnClearAccessTokens.setOnClickListener {
+            clearCardTokens()
+            cardTokensRepositoryContainer.isVisible = hasSavedCardTokens()
+        }
+        btnDeleteUserCode.setOnClickListener {
+            deleteCardTokensForScannedCard()
+            if (hasSavedCardTokens()) {
+                btnDeleteAccessToken.isVisible = hasSavedCardTokensForScannedCard()
+            } else {
+                cardTokensRepositoryContainer.isVisible = false
+            }
+        }
         btnReadAllFiles.setOnClickListener { readFiles(true) }
         btnReadPublicFiles.setOnClickListener { readFiles(false) }
         btnWriteUserFile.setOnClickListener { writeUserFile() }
@@ -228,18 +270,32 @@ class CommandListFragment : BaseFragment() {
             }
         }
         btnGetEntropy.setOnClickListener {
-            sdk.startSessionWithRunnable(GetEntropyCommand()) {
+            sdk.startSessionWithRunnable(GetEntropyCommand(mode = GetEntropyMode.Random)) {
                 postUi { handleCommandResult(it) }
             }
         }
         chipGroupUserCodeRecoveryAllowed.fitChipsByGroupWidth()
-        btnUserCodeRecovery.setOnClickListener {
-            val allow = when (chipGroupUserCodeRecoveryAllowed.checkedChipId) {
+        btnSetUserSettings.setOnClickListener {
+            val isUserCodeRecoveryAllowed = when (chipGroupUserCodeRecoveryAllowed.checkedChipId) {
                 R.id.chipUserCodeRecoveryEnable -> true
                 R.id.chipUserCodeRecoveryDisable -> false
                 else -> false
             }
-            sdk.startSessionWithRunnable(SetUserCodeRecoveryAllowedTask(allow)) {
+            val isPinRequired = if( card==null || card!!.firmwareVersion>=FirmwareVersion.v7 ) {
+                when (chipGroupPinRequired.checkedChipId) {
+                    R.id.chipPinRequiredEnable -> true
+                    R.id.chipPinRequiredDisable -> false
+                    else -> false
+                }
+            }else null
+            val isNdefDisabled =if( card==null || card!!.firmwareVersion>=FirmwareVersion.v7 ) {
+                when (chipGroupNdef.checkedChipId) {
+                    R.id.chipNdefDisable -> true
+                    R.id.chipNdefEnable -> false
+                    else -> false
+                }
+            }else null
+            sdk.startSessionWithRunnable(SetUserSettingsTask(isUserCodeRecoveryAllowed,isPinRequired,isNdefDisabled)) {
                 postUi { handleCommandResult(it) }
             }
         }
@@ -297,6 +353,12 @@ class CommandListFragment : BaseFragment() {
                     btnDeleteUserCode.isVisible = hasSavedUserCodeForScannedCard()
                 } else {
                     userCodeRepositoryContainer.isVisible = false
+                }
+                if (hasSavedCardTokens()) {
+                    cardTokensRepositoryContainer.isVisible = true
+                    btnDeleteAccessToken.isVisible = hasSavedCardTokens()
+                } else {
+                    cardTokensRepositoryContainer.isVisible = false
                 }
             }
             is CompletionResult.Failure -> {

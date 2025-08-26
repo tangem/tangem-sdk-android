@@ -54,7 +54,7 @@ internal class WalletDeserializer(
         }
 
         return CardWallet(
-            publicKey = decoder.decode(TlvTag.WalletPublicKey),
+            publicKey = decoder.decodeOptional(TlvTag.WalletPublicKey),
             chainCode = decoder.decodeOptional(TlvTag.WalletHDChain),
             curve = decoder.decode(TlvTag.CurveId),
             settings = settings,

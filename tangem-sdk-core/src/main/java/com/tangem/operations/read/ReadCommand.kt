@@ -8,11 +8,7 @@ import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.Card
 import com.tangem.common.card.WalletData
-import com.tangem.common.core.CardSession
-import com.tangem.common.core.CompletionCallback
-import com.tangem.common.core.SessionEnvironment
-import com.tangem.common.core.TangemError
-import com.tangem.common.core.TangemSdkError
+import com.tangem.common.core.*
 import com.tangem.common.deserialization.CardDeserializer
 import com.tangem.common.deserialization.WalletDataDeserializer
 import com.tangem.common.tlv.TlvBuilder
@@ -31,7 +27,7 @@ data class ReadResponse(
  * This command receives from the Tangem Card all the data about the card and the wallet,
  * including unique card number (CID or cardId) that has to be submitted while calling all other commands.
  */
-class ReadCommand : Command<ReadResponse>() {
+class ReadCommand(private val allowNotPersonalised: Boolean =false) : Command<ReadResponse>() {
 
     override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
@@ -76,7 +72,7 @@ class ReadCommand : Command<ReadResponse>() {
         val cardDataDecoder = CardDeserializer.getCardDataDecoder(decoder.tlvList)
 
         val isAccessCodeSetLegacy = environment.isUserCodeSet(UserCodeType.AccessCode)
-        val card = CardDeserializer.deserialize(isAccessCodeSetLegacy, decoder, cardDataDecoder)
+        val card = CardDeserializer.deserialize(isAccessCodeSetLegacy, decoder, cardDataDecoder, allowNotPersonalised)
         val walletData = cardDataDecoder?.let { WalletDataDeserializer.deserialize(it) }
 
         return ReadResponse(card, walletData)

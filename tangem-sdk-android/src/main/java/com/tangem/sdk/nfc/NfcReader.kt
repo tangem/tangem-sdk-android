@@ -7,6 +7,7 @@ import android.nfc.tech.NfcV
 import com.tangem.Log
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
+import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.TagType
@@ -123,6 +124,7 @@ class NfcReader : CardReader {
         }
 
     override fun transceiveApdu(apdu: CommandApdu, callback: CompletionCallback<ResponseApdu>) {
+        Log.nfc { "C-APDU[${Instruction.byCode(apdu.ins)}]" }
         transceiveRaw(apdu.apduData) { result ->
             when (result) {
                 is CompletionResult.Success -> {
@@ -163,11 +165,16 @@ class NfcReader : CardReader {
     }
 
     private fun transcieveAndLog(apduData: ByteArray): ByteArray? {
-        Log.nfc { "transcieve..." }
-        val isExtendedLengthApduSupported = nfcTag?.isoDep?.isExtendedLengthApduSupported
-        Log.nfc { "isExtendedLengthApduSupported $isExtendedLengthApduSupported" }
+        Log.nfc { "<<<< [${apduData.size} bytes]" }
+
+        nfcTag?.isoDep?.isExtendedLengthApduSupported.let {
+            //TODO Зачем это делать на каждой команде?
+            if (it != true)
+                Log.nfc { "transcieveAndLog: isoDep isExtendedLengthApduSupported = $it" }
+        }
         Log.nfc { "transcieveAndLog: isoDep isConnected = " + nfcTag?.isoDep?.isConnected }
         val rawResponse = nfcTag?.isoDep?.transceive(apduData)
+        Log.nfc { ">>>> [${rawResponse?.size} bytes]" }
         return rawResponse
     }
 

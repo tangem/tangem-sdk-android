@@ -21,18 +21,32 @@ import com.tangem.operations.Command
  * @property walletPublicKey: Public key of the wallet to delete
  */
 class PurgeWalletCommand(
-    private val walletPublicKey: ByteArray,
+    private val walletIndex: Int?,
+    private val walletPublicKey: ByteArray?
 ) : Command<SuccessResponse>() {
 
     override fun requiresPasscode(): Boolean = true
 
     override fun performPreCheck(card: Card): TangemSdkError? {
-        val wallet = card.wallet(walletPublicKey)
+        if( walletPublicKey!=null ) {
+            val wallet = card.wallet(walletPublicKey)
 
-        return when {
-            wallet == null -> TangemSdkError.WalletNotFound()
-            wallet.settings.isPermanent -> TangemSdkError.PurgeWalletProhibited()
-            else -> null
+            return when {
+                wallet == null -> TangemSdkError.WalletNotFound()
+                wallet.settings.isPermanent -> TangemSdkError.PurgeWalletProhibited()
+                ( walletIndex!=null && (walletIndex>card.wallets.size || wallet!=card.wallets[walletIndex])) ->
+                {
+                    TangemSdkError.WalletNotFound()
+                }
+                else -> null
+            }
+        }else if(walletIndex!=null){
+            return if(walletIndex>card.wallets.size )
+            {
+                TangemSdkError.WalletNotFound()
+            }else null
+        }else{
+            return TangemSdkError.WalletNotFound()
         }
     }
 
@@ -45,7 +59,8 @@ class PurgeWalletCommand(
         super.run(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
-                    session.environment.card = card.removeWallet(walletPublicKey)
+                    val walletIndex = walletIndex?:card.wallet(walletPublicKey!!)?.index ?: throw TangemSdkError.WalletNotFound()
+                    session.environment.card = card.removeWallet(walletIndex)
                     callback(CompletionResult.Success(result.data))
                 }
                 is CompletionResult.Failure -> callback(result)
@@ -54,7 +69,7 @@ class PurgeWalletCommand(
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val walletIndex = environment.card?.wallet(walletPublicKey)?.index ?: throw TangemSdkError.WalletNotFound()
+        val walletIndex = walletIndex?:environment.card?.wallet(walletPublicKey!!)?.index ?: throw TangemSdkError.WalletNotFound()
 
         val tlvBuilder = TlvBuilder()
         tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)

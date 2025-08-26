@@ -36,7 +36,16 @@ class PurgeAllWalletsTask : CardSessionRunnable<SuccessResponse> {
             return
         }
 
-        val walletIndex = session.environment.card?.wallet(wallet.publicKey)?.index ?: -1
+        val walletIndex = wallet.publicKey?.let {
+            session.environment.card?.wallet(it)?.index ?: -1
+        }?: wallet.index
+
+        if( wallet.index!=walletIndex )
+        {
+            callback(CompletionResult.Failure(TangemSdkError.WalletNotFound()))
+            return
+        }
+
         session.setMessage(
             Message(
                 "Deleting the #$walletIndex wallet index",
@@ -44,10 +53,10 @@ class PurgeAllWalletsTask : CardSessionRunnable<SuccessResponse> {
             ),
         )
 
-        PurgeWalletCommand(wallet.publicKey).run(session) { result ->
+        PurgeWalletCommand(wallet.index,wallet.publicKey).run(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
-                    session.environment.card = session.environment.card?.removeWallet(wallet.publicKey)
+                    session.environment.card = session.environment.card?.removeWallet(wallet.index)
                     purgeWallet(copyOfWallets.pollLast(), session, callback)
                 }
                 is CompletionResult.Failure -> {

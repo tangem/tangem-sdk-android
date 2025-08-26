@@ -85,6 +85,11 @@ data class Card internal constructor(
     val wallets: List<CardWallet>,
 
     /**
+
+     */
+    val masterSecret: MasterSecret?,
+
+    /**
      * Card's attestation report
      */
     val attestation: Attestation = Attestation.empty,
@@ -127,6 +132,10 @@ data class Card internal constructor(
         return setWallets(wallets.toMutableList().apply { remove(wallet) })
     }
 
+    fun removeWallet(walletIndex: Int): Card {
+        return setWallets(wallets.toMutableList().apply { removeAt(walletIndex) })
+    }
+
     fun updateWallet(wallet: CardWallet): Card {
         val mutableWallets = wallets.toMutableList()
         val foundIndex = mutableWallets.indexOfFirst { it.index == wallet.index }
@@ -137,6 +146,11 @@ data class Card internal constructor(
             this
         }
     }
+
+    fun setMasterSecret(masterSecret: MasterSecret?): Card {
+        return this.copy(masterSecret = masterSecret)
+    }
+
 
     data class Manufacturer(
         /**
@@ -245,6 +259,20 @@ data class Card internal constructor(
         }
     }
 
+    enum class AccessLevel(val code: Int) {
+        Public(0x01),
+        PublicSecureChannel(0x02),
+        User(0x04),
+        Issuer(0x08),
+        FileOwner(0x10),
+        BackupCard(0x20);
+
+        companion object {
+            private val values = values()
+            fun byCode(code: Int): AccessLevel? = values.find { it.code == code }
+        }
+    }
+
     data class Settings internal constructor(
         /**
          * Delay in milliseconds before executing a command that affects any sensitive data or wallets on the card
@@ -280,6 +308,11 @@ data class Card internal constructor(
          * Is backup feature available
          */
         val isBackupAllowed: Boolean,
+
+        /**
+         * Is backup required
+         */
+        val isBackupRequired: Boolean,
 
         /**
          * Is allowed to import  keys. COS. v6+
@@ -357,6 +390,7 @@ data class Card internal constructor(
             isLinkedTerminalEnabled = mask.contains(SettingsMask.Code.SkipSecurityDelayIfValidatedByLinkedTerminal),
             isHDWalletAllowed = mask.contains(SettingsMask.Code.AllowHDWallets),
             isBackupAllowed = mask.contains(SettingsMask.Code.AllowBackup),
+            isBackupRequired = mask.contains(SettingsMask.Code.RequireBackup),
             isKeysImportAllowed = mask.contains(SettingsMask.Code.AllowKeysImport),
             supportedEncryptionModes = createEncryptionModes(mask),
             isPermanentWallet = mask.contains(SettingsMask.Code.PermanentWallet),
@@ -422,6 +456,7 @@ data class Card internal constructor(
             AllowHDWallets(value = 0x00200000),
             AllowBackup(value = 0x00400000),
             AllowKeysImport(value = 0x00800000),
+            RequireBackup(value = 0x08000000),
         }
     }
 }
