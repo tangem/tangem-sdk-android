@@ -7,9 +7,9 @@ import android.view.ViewGroup
 import androidx.transition.TransitionManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.tangem.Log
+import com.tangem.sdk.R
 import com.tangem.sdk.SessionViewDelegateState
 import com.tangem.sdk.ui.widget.StateWidget
-import kotlinx.android.synthetic.main.bottom_sheet_layout.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 open class BaseSdkDialog(context: Context) : BottomSheetDialog(context) {
@@ -42,6 +42,7 @@ open class BaseSdkDialog(context: Context) : BottomSheetDialog(context) {
     }
 
     protected fun performHapticFeedback() {
+        val llHeader = this.findViewById<View>(R.id.llHeader)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             llHeader?.isHapticFeedbackEnabled = true
             llHeader?.performHapticFeedback(
