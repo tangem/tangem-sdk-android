@@ -15,6 +15,7 @@ import com.tangem.common.json.*
 import com.tangem.common.nfc.CardReader
 import com.tangem.common.nfc.NfcAvailabilityProvider
 import com.tangem.common.services.secure.SecureStorage
+import com.tangem.common.usersCode.CardTokensRepository
 import com.tangem.common.usersCode.UserCodeRepository
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.bip39.DefaultMnemonic
@@ -22,6 +23,9 @@ import com.tangem.crypto.bip39.Wordlist
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import com.tangem.crypto.hdWallet.masterkey.AnyMasterKeyFactory
+import com.tangem.operations.GetEntropyCommand
+import com.tangem.operations.GetEntropyMode
+import com.tangem.operations.GetEntropyResponse
 import com.tangem.operations.ScanTask
 import com.tangem.operations.attestation.AttestCardKeyCommand
 import com.tangem.operations.attestation.AttestCardKeyResponse
@@ -30,18 +34,24 @@ import com.tangem.operations.derivation.DeriveWalletPublicKeysTask
 import com.tangem.operations.derivation.ExtendedPublicKeysMap
 import com.tangem.operations.files.*
 import com.tangem.operations.issuerAndUserData.*
+import com.tangem.operations.masterSecret.CreateMasterSecretTask
+import com.tangem.operations.masterSecret.ManageMasterSecretCommand
+import com.tangem.operations.masterSecret.ManageMasterSecretMode
 import com.tangem.operations.personalization.DepersonalizeCommand
 import com.tangem.operations.personalization.DepersonalizeResponse
 import com.tangem.operations.personalization.PersonalizeCommand
+import com.tangem.operations.personalization.PersonalizeV7Command
 import com.tangem.operations.personalization.entities.Acquirer
 import com.tangem.operations.personalization.entities.CardConfig
+import com.tangem.operations.personalization.entities.CardConfigV7
 import com.tangem.operations.personalization.entities.Issuer
 import com.tangem.operations.personalization.entities.Manufacturer
 import com.tangem.operations.pins.SetUserCodeCommand
 import com.tangem.operations.preflightread.CardIdPreflightReadFilter
 import com.tangem.operations.preflightread.PreflightReadFilter
+import com.tangem.operations.read.ReadMasterSecretResponse
 import com.tangem.operations.sign.*
-import com.tangem.operations.usersetttings.SetUserCodeRecoveryAllowedTask
+import com.tangem.operations.usersetttings.SetUserSettingsTask
 import com.tangem.operations.wallet.CreateWalletResponse
 import com.tangem.operations.wallet.CreateWalletTask
 import com.tangem.operations.wallet.PurgeWalletCommand
@@ -424,13 +434,109 @@ class TangemSdk(
      * or [TangemSdkError] in case of an error.
      */
     fun purgeWallet(
-        walletPublicKey: ByteArray,
+       walletIndex: Int?,
+        walletPublicKey: ByteArray?,
         cardId: String,
         initialMessage: Message? = null,
         callback: CompletionCallback<SuccessResponse>,
     ) {
         startSessionWithRunnable(
-            runnable = PurgeWalletCommand(walletPublicKey),
+            runnable = PurgeWalletCommand(walletIndex, walletPublicKey),
+            cardId = cardId,
+            initialMessage = initialMessage,
+            accessCode = null,
+            callback = callback,
+        )
+    }
+
+
+    /**
+     * This method launches a [com.tangem.operations.masterSecret.CreateMasterSecretTask] on a new thread.
+     *
+     * This command will create a master secret on the card.
+     * A key pair is generated and securely stored in the card.
+     *
+     * @param cardId: CID, Unique Tangem card ID number.
+     * @param initialMessage: A custom description that shows at the beginning of the NFC session.
+     * If null, default message will be used
+     * @param callback: is triggered on the completion of the [CreateMasterSecretTask] and provides
+     * card response in the form of [CreateWalletResponse] if the task was performed successfully
+     * or [TangemSdkError] in case of an error.
+     */
+    fun createMasterSecret(
+        cardId: String,
+        initialMessage: Message? = null,
+        callback: CompletionCallback<ReadMasterSecretResponse>,
+    ) {
+        startSessionWithRunnable(
+            runnable = CreateMasterSecretTask(ManageMasterSecretMode.Create),
+            cardId = cardId,
+            initialMessage = initialMessage,
+            accessCode = null,
+            callback = callback,
+        )
+    }
+
+    fun purgeMasterSecret(
+        cardId: String,
+        initialMessage: Message? = null,
+        callback: CompletionCallback<ReadMasterSecretResponse>,
+    ) {
+        startSessionWithRunnable(
+            runnable = ManageMasterSecretCommand(ManageMasterSecretMode.Purge),
+            cardId = cardId,
+            initialMessage = initialMessage,
+            accessCode = null,
+            callback = callback,
+        )
+    }
+
+    /**
+     * This command will import an existing wallet.
+     *
+     * @param curve: Wallet's elliptic curve
+     * @param mnemonic: BIP39 mnemonic to create wallet from. COS v.6+.
+     * @param passphrase: BIP39 passphrase to create wallet from. COS v.6+. Empty passphrase by default.
+     * @param cardId: CID, Unique Tangem card ID number.
+     * @param initialMessage: A custom description that shows at the beginning of the NFC session.
+     * If null, default message will be used
+     * @param callback: is triggered on the completion of the [CreateWalletTask] and provides
+     * card response in the form of [CreateWalletResponse] if the task was performed successfully
+     * or [TangemSdkError] in case of an error.
+     */
+    fun importMasterSecret(
+        cardId: String,
+        mnemonic: String,
+        passphrase: String = "",
+        initialMessage: Message? = null,
+        callback: CompletionCallback<ReadMasterSecretResponse>,
+    ) {
+        try {
+            val defaultMnemonic = DefaultMnemonic(mnemonic, wordlist)
+            val factory = AnyMasterKeyFactory(defaultMnemonic, passphrase)
+            val privateKey = factory.makeMasterKey(EllipticCurve.Secp256k1)
+
+            startSessionWithRunnable(
+                runnable = CreateMasterSecretTask(ManageMasterSecretMode.Create, privateKey),
+                cardId = cardId,
+                initialMessage = initialMessage,
+                accessCode = null,
+                callback = callback,
+            )
+        } catch (error: Exception) {
+            callback(CompletionResult.Failure(error.toTangemSdkError()))
+        }
+    }
+
+    fun deriveEntropy(
+        cardId: String,
+        derivationPath: DerivationPath,
+        initialMessage: Message? = null,
+        callback: CompletionCallback<GetEntropyResponse>,
+    ) {
+        val command = GetEntropyCommand(mode = GetEntropyMode.Deterministic, derivationPath=derivationPath)
+        startSessionWithRunnable(
+            runnable = command,
             cardId = cardId,
             initialMessage = initialMessage,
             accessCode = null,
@@ -467,6 +573,22 @@ class TangemSdk(
         callback: CompletionCallback<Card>,
     ) {
         val command = PersonalizeCommand(config, issuer, manufacturer, acquirer)
+        startSessionWithRunnable(
+            runnable = command,
+            cardId = null,
+            initialMessage = initialMessage,
+            accessCode = null,
+            callback = callback,
+        )
+    }
+
+    fun personalize(
+        config: CardConfigV7,
+        issuer: Issuer,
+        initialMessage: Message? = null,
+        callback: CompletionCallback<Card>,
+    ) {
+        val command = PersonalizeV7Command(config, issuer)
         startSessionWithRunnable(
             runnable = command,
             cardId = null,
@@ -583,7 +705,7 @@ class TangemSdk(
     }
 
     /**
-     * This method launches a [SetUserCodeRecoveryAllowedTask] on a new thread.
+     * This method launches a [SetUserSettingsTask] on a new thread.
      *
      * Set if card allowed to reset user code
      *
@@ -591,18 +713,18 @@ class TangemSdk(
      * @param cardId: CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used
-     * @param callback: is triggered on the completion of the [SetUserCodeRecoveryAllowedTask] and provides
+     * @param callback: is triggered on the completion of the [SetUserSettingsTask] and provides
      * card response in the form of [SuccessResponse] if the task was performed successfully
      * or [TangemSdkError] in case of an error.
      */
-    fun setUserCodeRecoveryAllowed(
+    fun setUserCodeRecoveryAllowed11(
         isAllowed: Boolean,
         cardId: String,
         initialMessage: Message? = null,
         callback: CompletionCallback<SuccessResponse>,
     ) {
         startSessionWithRunnable(
-            runnable = SetUserCodeRecoveryAllowedTask(isAllowed),
+            runnable = SetUserSettingsTask(isAllowed),
             cardId = cardId,
             initialMessage = initialMessage,
             accessCode = null,
@@ -1239,6 +1361,24 @@ class TangemSdk(
         }
     }.getOrNull()
 
+    private fun createCardTokensRepository(
+        authenticationManager: AuthenticationManager,
+        keystoreManager: KeystoreManager,
+        secureStorage: SecureStorage,
+        config: Config,
+    ): CardTokensRepository? {
+        return if (authenticationManager.canAuthenticate &&
+            config.userCodeRequestPolicy is UserCodeRequestPolicy.AlwaysWithBiometrics
+        ) {
+            CardTokensRepository(
+                keystoreManager = keystoreManager,
+                secureStorage = secureStorage,
+            )
+        } else {
+            null
+        }
+    }
+
     private fun makeSession(
         cardId: String? = null,
         initialMessage: Message? = null,
@@ -1257,6 +1397,12 @@ class TangemSdk(
             viewDelegate = viewDelegate,
             environment = environment,
             userCodeRepository = createUserCodeRepository(
+                authenticationManager = authenticationManager,
+                keystoreManager = keystoreManager,
+                secureStorage = secureStorage,
+                config = config,
+            ),
+            cardTokensRepository = createCardTokensRepository(
                 authenticationManager = authenticationManager,
                 keystoreManager = keystoreManager,
                 secureStorage = secureStorage,

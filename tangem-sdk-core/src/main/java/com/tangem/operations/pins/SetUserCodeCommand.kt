@@ -17,6 +17,7 @@ import com.tangem.common.core.TangemSdkError
 import com.tangem.common.doOnFailure
 import com.tangem.common.doOnSuccess
 import com.tangem.common.extensions.calculateSha256
+import com.tangem.common.extensions.guard
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -30,6 +31,8 @@ class SetUserCodeCommand private constructor() : Command<SuccessResponse>() {
     private var codes = mutableMapOf<UserCodeType, UserCodeAction>()
 
     override fun requiresPasscode(): Boolean = isPasscodeRequire
+
+    override fun requireCheckPin() = true
 
     override fun prepare(session: CardSession, callback: CompletionCallback<Unit>) {
         requestIfNeeded(UserCodeType.AccessCode, session) { result ->
@@ -111,16 +114,25 @@ class SetUserCodeCommand private constructor() : Command<SuccessResponse>() {
         }
 
         val tlvBuilder = TlvBuilder()
-        tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
-        tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
-        tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
-        tlvBuilder.append(TlvTag.NewPin2, passcodeValue)
-        tlvBuilder.append(TlvTag.Cvc, environment.cvc)
+        val card = environment.card.guard {
+            throw TangemSdkError.MissingPreflightRead()
+        }
+        if( card.firmwareVersion<FirmwareVersion.v7 ){
+            tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+            tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
+            tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+            tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
+            tlvBuilder.append(TlvTag.NewPin2, passcodeValue)
+            tlvBuilder.append(TlvTag.Cvc, environment.cvc)
 
-        val firmwareVersion = environment.card?.firmwareVersion
-        if (firmwareVersion != null && firmwareVersion >= FirmwareVersion.BackupAvailable) {
-            val hash = (accessCodeValue + passcodeValue).calculateSha256()
+            val firmwareVersion = environment.card?.firmwareVersion
+            if (firmwareVersion != null && firmwareVersion >= FirmwareVersion.BackupAvailable) {
+                val hash = (accessCodeValue + passcodeValue).calculateSha256()
+                tlvBuilder.append(TlvTag.CodeHash, hash)
+            }
+        }else{
+            tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
+            val hash = accessCodeValue.calculateSha256()
             tlvBuilder.append(TlvTag.CodeHash, hash)
         }
 

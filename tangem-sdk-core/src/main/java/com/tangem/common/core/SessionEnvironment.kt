@@ -1,5 +1,6 @@
 package com.tangem.common.core
 
+import com.tangem.common.CardTokens
 import com.tangem.common.KeyPair
 import com.tangem.common.UserCode
 import com.tangem.common.UserCodeType
@@ -29,9 +30,14 @@ class SessionEnvironment(
     var terminalKeysService: WeakReference<TerminalKeysService> = WeakReference(TerminalKeysStorage(secureStorage))
     var encryptionMode: EncryptionMode = EncryptionMode.None
     var encryptionKey: ByteArray? = null
+    var cardTokens: CardTokens? = null
     var cvc: ByteArray? = null
     var accessCode: UserCode = UserCode(UserCodeType.AccessCode)
     var passcode: UserCode = UserCode(UserCodeType.Passcode)
+    var accessLevel: Card.AccessLevel = Card.AccessLevel.Public
+    val requirePin: Boolean
+        get() = card?.userSettings?.isPinRequired?:false
+    var isPinChecked: Boolean = false
 
     /**
      * Keys for Linked Terminal feature

@@ -14,7 +14,7 @@ import com.tangem.operations.pins.CheckUserCodesCommand
 /**
  * Task that allows to read Tangem card and verify its private key.
  * Returns data from a Tangem card after successful completion of [ReadCommand]
- * and [com.tangem.operations.attestation.AttestWalletKeyTask], subsequently.
+ * and [AttestWalletKeyCommand], subsequently.
  */
 class ScanTask(
     override val allowsRequestAccessCodeFromRepository: Boolean = false,
@@ -72,7 +72,7 @@ class ScanTask(
 
         val derivations = card.wallets.mapNotNull { wallet ->
             val paths = defaultPaths[wallet.curve]
-            if (!paths.isNullOrEmpty()) wallet.publicKey.toMapKey() to paths else null
+            if (!paths.isNullOrEmpty() && wallet.publicKey!=null) wallet.publicKey.toMapKey() to paths else null
         }.toMap()
 
         if (derivations.isEmpty()) {

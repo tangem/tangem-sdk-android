@@ -3,6 +3,7 @@ package com.tangem.demo
 import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.operations.personalization.entities.Acquirer
 import com.tangem.operations.personalization.entities.CardConfig
+import com.tangem.operations.personalization.entities.CardConfigV7
 import com.tangem.operations.personalization.entities.Issuer
 import com.tangem.operations.personalization.entities.Manufacturer
 
@@ -231,9 +232,111 @@ object Backup {
     }
     """
 
+    private const val configJsonPrimaryV7 =
+        """
+     {
+        "releaseVersion": false,
+        "issuerName": "TANGEM AG",
+        "series": "AC",
+        "startNumber": 7900000000001,
+        "count": 2500,
+        "numberFormat": "",
+        "PIN": "000000",
+        "walletsCount": 20,
+        "securityDelay": 5000,
+        "allowSwapPIN": false,
+        "useActivation": false,
+        "useNDEF": true,
+        "useBlock": false,
+        "forbidPurgeWallet": false,
+        "forbidDefaultPIN": false,
+        "disableFiles": false,
+        "allowHDWallets": true,
+        "allowBackup": true,
+        "allowKeysImport": true,
+        "requireBackup": true,
+        "NDEF": [],
+        "cardData": {
+            "date": "2025-08-15",
+            "batch": "AC79"
+        },
+        "createWallet": 0
+    }
+    """
+    private const val configJsonBackup1V7 =
+        """
+     {
+        "releaseVersion": false,
+        "issuerName": "TANGEM AG",
+        "series": "AC",
+        "startNumber": 7900000000002,
+        "count": 2500,
+        "numberFormat": "",
+        "PIN": "000000",
+        "walletsCount": 20,
+        "securityDelay": 5000,
+        "allowSwapPIN": false,
+        "useActivation": false,
+        "useNDEF": true,
+        "useBlock": false,
+        "forbidPurgeWallet": false,
+        "forbidDefaultPIN": false,
+        "disableFiles": false,
+        "allowHDWallets": true,
+        "allowBackup": true,
+        "allowKeysImport": true,
+        "requireBackup": true,
+        "NDEF": [],
+        "cardData": {
+            "date": "2025-08-15",
+            "batch": "AC79"
+        },
+        "createWallet": 0
+    }
+    """
+
+    private const val configJsonBackup2V7 =
+        """
+     {
+        "releaseVersion": true,
+        "issuerName": "TANGEM AG",
+        "series": "AC",
+        "startNumber": 7900000000003,
+        "count": 2500,
+        "numberFormat": "",
+        "PIN": "000000",
+        "walletsCount": 20,
+        "securityDelay": 5000,
+        "allowSwapPIN": false,
+        "useActivation": false,
+        "useNDEF": true,
+        "useBlock": false,
+        "forbidPurgeWallet": false,
+        "forbidDefaultPIN": false,
+        "disableFiles": false,
+        "allowHDWallets": true,
+        "allowBackup": true,
+        "allowKeysImport": true,
+        "requireBackup": true,
+        "NDEF": [],
+        "cardData": {
+            "date": "2025-08-15",
+            "batch": "AC79"
+        },
+        "createWallet": 0
+    }
+    """
+
     fun primaryCardConfig(): CardConfig = MoshiJsonConverter.INSTANCE.fromJson(configJsonPrimary)!!
 
     fun backup1Config(): CardConfig = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup1)!!
 
     fun backup2Config(): CardConfig = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup2)!!
+
+    fun primaryCardConfigV7(): CardConfigV7 = MoshiJsonConverter.INSTANCE.fromJson(configJsonPrimaryV7)!!
+
+    fun backup1ConfigV7(): CardConfigV7 = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup1V7)!!
+
+    fun backup2ConfigV7(): CardConfigV7 = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup2V7)!!
+
 }

@@ -10,17 +10,19 @@ import com.tangem.common.apdu.StatusWord
 import com.tangem.common.apdu.toTangemSdkError
 import com.tangem.common.card.Card
 import com.tangem.common.card.EncryptionMode
+import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.CardSession
 import com.tangem.common.core.CardSessionRunnable
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
-import com.tangem.common.extensions.toHexString
 import com.tangem.common.extensions.toInt
 import com.tangem.common.tlv.Tlv
 import com.tangem.common.tlv.TlvTag
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.internal.toHexString
+import kotlin.coroutines.resume
 
 /**
  * Basic interface for a parsed response from [Command].
@@ -52,12 +54,24 @@ interface ApduSerializable<T : CommandResponse> {
  */
 abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRunnable<T> {
 
+    open fun requireCheckPin(): Boolean = false
+
     open fun requiresPasscode(): Boolean = false
 
     override fun run(session: CardSession, callback: CompletionCallback<T>) {
         Log.command(this)
         transceive(session, callback)
     }
+
+    suspend inline fun runSync(session: CardSession): CompletionResult<T> {
+        val result = suspendCancellableCoroutine { continuation ->
+            Log.command(this)
+            transceive(session) { if (continuation.isActive) continuation.resume(it) }
+        }
+        return result
+    }
+
+
 
     protected open fun performPreCheck(card: Card): TangemError? = null
 
@@ -88,7 +102,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
         val apdu = serialize(session.environment)
         Log.apduCommand { "C-APDU serialization complete" }
         showMissingSecurityDelay(session)
-        transceiveApdu(apdu, session) { result ->
+        transceiveApdu(apdu, requireCheckPin(), session) { result ->
             when (result) {
                 is CompletionResult.Failure -> {
                     val environment = session.environment
@@ -106,7 +120,9 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                         is TangemSdkError.AccessCodeRequired -> requestPin(UserCodeType.AccessCode, session, callback)
                         is TangemSdkError.PasscodeRequired -> requestPin(UserCodeType.Passcode, session, callback)
                         is TangemSdkError.InvalidParams -> {
-                            if (requiresPasscode()) {
+                            if (requiresPasscode() &&
+                                (environment.card==null || environment.card!!.firmwareVersion < FirmwareVersion.InvalidCodesStatusWordAvailable) )
+                            {
                                 // Addition check for COS v4 and newer to prevent false-positive pin2 request
                                 val isPasscodeSet = environment.card?.isPasscodeSet == false
                                 if (isPasscodeSet && !environment.isUserCodeSet(UserCodeType.Passcode)) {
@@ -127,7 +143,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                         val response = deserialize(session.environment, result.data)
                         Log.apduCommand { "R-APDU deserialization complete" }
                         callback(CompletionResult.Success(response))
-                    } catch (error: TangemSdkError) {
+                } catch (error: TangemSdkError) {
                         callback(CompletionResult.Failure(error))
                     }
                 }
@@ -136,8 +152,8 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
     }
 
     @Suppress("LongMethod", "ComplexMethod")
-    private fun transceiveApdu(apdu: CommandApdu, session: CardSession, callback: CompletionCallback<ResponseApdu>) {
-        session.send(apdu) { result ->
+    private fun transceiveApdu(apdu: CommandApdu, requireCheckPin: Boolean, session: CardSession, callback: CompletionCallback<ResponseApdu>) {
+        session.send(apdu,requireCheckPin) { result ->
             when (result) {
                 is CompletionResult.Success -> {
                     val responseApdu = result.data
@@ -160,7 +176,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                                     productType = session.environment.config.productType,
                                 )
                             }
-                            transceiveApdu(apdu, session, callback)
+                            transceiveApdu(apdu, requireCheckPin(), session, callback)
                         }
                         StatusWord.NeedEncryption -> {
                             when (session.environment.encryptionMode) {
@@ -178,8 +194,12 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                                     callback(CompletionResult.Failure(TangemSdkError.NeedEncryption()))
                                     return@send
                                 }
+                                else->{
+                                    callback(CompletionResult.Failure(TangemSdkError.NeedEncryption()))
+                                    return@send
+                                }
                             }
-                            transceiveApdu(apdu, session, callback)
+                            transceiveApdu(apdu, requireCheckPin(), session, callback)
                         }
                         StatusWord.Unknown -> {
                             callback(
@@ -224,7 +244,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
      *
      * @return Remaining security delay in milliseconds.
      */
-    private fun deserializeSecurityDelay(responseApdu: ResponseApdu): Int? {
+    fun deserializeSecurityDelay(responseApdu: ResponseApdu): Int? {
         val tlv = responseApdu.getTlvData()
         return tlv?.find { it.tag == TlvTag.Pause }?.value?.toInt()
     }

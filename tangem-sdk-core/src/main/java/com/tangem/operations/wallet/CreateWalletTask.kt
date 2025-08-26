@@ -2,6 +2,7 @@ package com.tangem.operations.wallet
 
 import com.tangem.Log
 import com.tangem.common.CompletionResult
+import com.tangem.common.card.Card
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.card.EncryptionMode
 import com.tangem.common.card.FirmwareVersion
@@ -121,8 +122,15 @@ class CreateWalletTask(
             return
         }
 
+        if( card.firmwareVersion > FirmwareVersion.v7 && card.settings.isBackupRequired && card.backupStatus !is Card.BackupStatus.Active)
+        {
+            // on v8+ firmware no public keys returned (when isBackupRequired) before backup completed
+            callback(CompletionResult.Success(response))
+            return
+        }
+
         derivationTask = DeriveWalletPublicKeysTask(
-            walletPublicKey = response.wallet.publicKey,
+            walletPublicKey = response.wallet.publicKey!!,
             derivationPaths = paths,
         )
         derivationTask!!.run(session) { result ->

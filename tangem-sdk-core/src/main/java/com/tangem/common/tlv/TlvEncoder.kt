@@ -4,6 +4,7 @@ import com.tangem.Log
 import com.tangem.common.card.Card
 import com.tangem.common.card.CardWallet
 import com.tangem.common.card.EllipticCurve
+import com.tangem.common.card.MasterSecret
 import com.tangem.common.card.SigningMethod
 import com.tangem.common.card.UserSettingsMask
 import com.tangem.common.core.TangemSdkError
@@ -12,9 +13,12 @@ import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
 import com.tangem.crypto.hdWallet.DerivationNode.Companion.serialize
 import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.operations.GetEntropyMode
+import com.tangem.operations.ManageAccessTokensMode
 import com.tangem.operations.attestation.AttestCardKeyCommand
 import com.tangem.operations.files.FileDataMode
 import com.tangem.operations.issuerAndUserData.IssuerExtraDataMode
+import com.tangem.operations.masterSecret.ManageMasterSecretMode
 import com.tangem.operations.personalization.entities.ProductMask
 import com.tangem.operations.read.ReadMode
 import com.tangem.operations.resetcode.AuthorizeMode
@@ -110,14 +114,28 @@ class TlvEncoder {
                 (value as UserSettingsMask).rawValue.toByteArray(size = 4)
             }
             TlvValueType.Status -> {
-                try {
-                    typeCheck<T, Card.Status>(tag)
-                    (value as Card.Status).code.toByteArray()
-                } catch (ex: Exception) {
-                    Log.warning { "Status is not Card.Status type. Trying to check CardWallet.Status" }
-                    typeCheck<T, CardWallet.Status>(tag)
-                    (value as CardWallet.Status).code.toByteArray()
+                when( T::class)
+                {
+                    Card.Status::class -> (value as Card.Status).code.toByteArray()
+                    CardWallet.Status::class -> (value as CardWallet.Status).code.toByteArray()
+                    MasterSecret.Status::class -> (value as MasterSecret.Status).code.toByteArray()
+                    else -> throw getEncodingError<T>(tag)
                 }
+                // try {
+                //     typeCheck<T, Card.Status>(tag)
+                //     (value as Card.Status).code.toByteArray()
+                // } catch (ex: Exception) {
+                //     Log.warning { "Status is not Card.Status type. Trying to check CardWallet.Status" }
+                    // try {
+                    //     typeCheck<T, CardWallet.Status>(tag)
+                    //     (value as CardWallet.Status).code.toByteArray()
+                    // } catch (ex1: Exception) {
+                    //     throw ex1
+                    //     Log.warning { "Status is not CardWallet.Status type. Trying to check MasterSecret.Status" }
+                    //     typeCheck<T, MasterSecret.Status>(tag)
+                    //     (value as MasterSecret.Status).code.toByteArray()
+                    // }
+                // }
             }
             TlvValueType.BackupStatus -> {
                 typeCheck<T, Card.BackupRawStatus>(tag)
@@ -132,8 +150,11 @@ class TlvEncoder {
                     IssuerExtraDataMode::class -> byteArrayOf((value as IssuerExtraDataMode).code)
                     ReadMode::class -> byteArrayOf((value as ReadMode).rawValue.toByte())
                     AuthorizeMode::class -> byteArrayOf((value as AuthorizeMode).rawValue.toByte())
+                    ManageAccessTokensMode::class -> byteArrayOf((value as ManageAccessTokensMode).rawValue.toByte())
                     FileDataMode::class -> byteArrayOf((value as FileDataMode).rawValue.toByte())
                     AttestCardKeyCommand.RawMode::class -> byteArrayOf((value as AttestCardKeyCommand.RawMode).value)
+                    ManageMasterSecretMode::class -> byteArrayOf((value as ManageMasterSecretMode).rawValue.toByte())
+                    GetEntropyMode::class -> byteArrayOf((value as GetEntropyMode).rawValue.toByte())
                     else -> {
                         val error = getEncodingError<T>(tag)
                         Log.error { error.customMessage }
@@ -144,6 +165,11 @@ class TlvEncoder {
             TlvValueType.DerivationPath -> {
                 typeCheck<T, DerivationPath>(tag)
                 return (value as DerivationPath).nodes.map { it.serialize() }.reduce { acc, bytes -> acc + bytes }
+            }
+
+            TlvValueType.AccessLevel -> {
+                typeCheck<T, Card.AccessLevel>(tag)
+                (value as Card.AccessLevel).code.toByteArray()
             }
         }
     }

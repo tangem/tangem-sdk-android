@@ -3,6 +3,7 @@ package com.tangem.common.core
 import com.tangem.common.UserCodeType
 import com.tangem.common.apdu.StatusWord
 import com.tangem.common.card.Card
+import com.tangem.common.card.FirmwareVersion
 import com.tangem.crypto.bip39.MnemonicErrorResult
 import com.tangem.operations.ScanTask
 import com.tangem.operations.read.ReadCommand
@@ -97,7 +98,7 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
     class WalletNotFound : TangemSdkError(code = 30008)
 
     // General Errors
-    class NotPersonalized : TangemSdkError(code = 40001)
+    class NotPersonalized(val fwVersion: FirmwareVersion?) : TangemSdkError(code = 40001)
     class NotActivated : TangemSdkError(code = 40002)
     class WalletIsPurged : TangemSdkError(code = 40003)
     class PasscodeRequired : TangemSdkError(code = 40004)
@@ -137,6 +138,7 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
     class WalletCannotBeCreated : TangemSdkError(code = 40403)
     class CardWithMaxZeroWallets : TangemSdkError(code = 40404)
     class WalletAlreadyCreated : TangemSdkError(code = 40405)
+    class AccessDenied: TangemSdkError(code = 40406)
 
     // CreateWallet Errors
     class AlreadyCreated : TangemSdkError(code = 40501)
@@ -151,6 +153,9 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
     class AccessCodeCannotBeChanged : TangemSdkError(code = 40801)
     class PasscodeCannotBeChanged : TangemSdkError(code = 40802)
     class AccessCodeCannotBeDefault : TangemSdkError(code = 40803)
+
+    // FW v8
+    class InvalidAccessTokens : TangemSdkError(code = 40850)
 
     // Sign Errors
     class NoRemainingSignatures : TangemSdkError(code = 40901)

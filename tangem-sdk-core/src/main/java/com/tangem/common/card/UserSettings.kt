@@ -9,17 +9,26 @@ data class UserSettings(
      * Is allowed to recover user codes
      */
     val isUserCodeRecoveryAllowed: Boolean,
+    /**
+     * Is required Pin to open session for v7+ cards
+     */
+    val isPinRequired: Boolean,
+    // Is disabled read NDEF feature
+    val isNdefDisabled: Boolean
+
 ) {
     val mask: UserSettingsMask
         get() {
             val builder = MaskBuilder()
             if (!isUserCodeRecoveryAllowed) builder.add(UserSettingsMask.Code.ForbidResetPIN)
+            if (isPinRequired) builder.add(UserSettingsMask.Code.RequirePIN)
+            if (isNdefDisabled) builder.add(UserSettingsMask.Code.DisableNDEF)
             return builder.build()
         }
 
     internal constructor(
         mask: UserSettingsMask,
-    ) : this(!mask.contains(UserSettingsMask.Code.ForbidResetPIN))
+    ) : this(!mask.contains(UserSettingsMask.Code.ForbidResetPIN), mask.contains(UserSettingsMask.Code.RequirePIN), mask.contains(UserSettingsMask.Code.DisableNDEF) )
 }
 
 class UserSettingsMask(override var rawValue: Int) : BaseMask() {
@@ -28,5 +37,7 @@ class UserSettingsMask(override var rawValue: Int) : BaseMask() {
 
     enum class Code(override val value: Int) : Mask.Code {
         ForbidResetPIN(value = 0x00000001),
+        RequirePIN(value = 0x00000002),
+        DisableNDEF(value = 0x00000010)
     }
 }

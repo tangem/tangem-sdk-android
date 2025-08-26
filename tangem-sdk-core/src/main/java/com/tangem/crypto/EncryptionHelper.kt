@@ -19,6 +19,9 @@ interface EncryptionHelper {
                 EncryptionMode.None -> null
                 EncryptionMode.Fast -> FastEncryptionHelper()
                 EncryptionMode.Strong -> StrongEncryptionHelper()
+                EncryptionMode.CcmWithSecurityDelay -> TODO()
+                EncryptionMode.CcmWithAccessToken -> TODO()
+                EncryptionMode.CcmWithAsymmetricKeys -> TODO()
             }
         }
     }
