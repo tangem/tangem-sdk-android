@@ -10,35 +10,68 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <include android:id="@+id/lCard" layout="@layout/card" />
+        <include
+            android:id="@+id/cardView"
+            layout="@layout/card" />
 
-        <include android:id="@+id/lAttestation" layout="@layout/attestation" />
+        <include
+            android:id="@+id/attestationView"
+            layout="@layout/attestation" />
 
-        <include android:id="@+id/lWallet" layout="@layout/wallet" />
+        <include
+            android:id="@+id/walletView"
+            layout="@layout/wallet" />
 
-        <include android:id="@+id/lMasterSecret" layout="@layout/master_secret" />
+        <include android:id="@+id/masterSecret" layout="@layout/master_secret" />
+        <include
+            android:id="@+id/signView"
+            layout="@layout/sign" />
 
-        <include android:id="@+id/lSign" layout="@layout/sign" />
+        <include
+            android:id="@+id/hdWalletView"
+            layout="@layout/hd_wallet" />
 
-        <include android:id="@+id/lHdWallet" layout="@layout/hd_wallet" />
+        <include android:id="@+id/deterministicEntropy" layout="@layout/deterministic_entropy" />
+        <include
+            android:id="@+id/backupView"
+            layout="@layout/backup" />
 
-        <include android:id="@+id/lDeterministicEntropy" layout="@layout/deterministic_entropy" />
+        <include
+            android:id="@+id/issuerDataView"
+            layout="@layout/issuer_data" />
 
-        <include android:id="@+id/lBackup" layout="@layout/backup" />
+        <include
+            android:id="@+id/issuerExDataView"
+            layout="@layout/issuer_ex_data" />
 
-        <include android:id="@+id/lSetPin" layout="@layout/set_pin" />
+        <include
+            android:id="@+id/userDataView"
+            layout="@layout/user_data" />
 
-        <include android:id="@+id/lFileData" layout="@layout/file_data" />
+        <include
+            android:id="@+id/setPinView"
+            layout="@layout/set_pin" />
 
-        <include android:id="@+id/lJsonRpc" layout="@layout/json_rpc" />
+        <include
+            android:id="@+id/fileDataView"
+            layout="@layout/file_data" />
 
-        <include android:id="@+id/lUserSettings" layout="@layout/user_settings" />
+        <include
+            android:id="@+id/jRpcView"
+            layout="@layout/json_rpc" />
 
-        <include android:id="@+id/lUtils" layout="@layout/utils" />
+        <include android:id="@+id/userSettings" layout="@layout/user_settings" />
 
-        <include android:id="@+id/lDepricated" layout="@layout/depricated" />
+        <include
+            android:id="@+id/utilsView"
+            layout="@layout/utils" />
 
-        <include android:id="@+id/lTheme" layout="@layout/theme" />
+        <include android:id="@+id/depricated" layout="@layout/depricated" />
+
+        <include
+            android:id="@+id/themeView"
+            layout="@layout/theme" />
+
 
     </LinearLayout>
 
