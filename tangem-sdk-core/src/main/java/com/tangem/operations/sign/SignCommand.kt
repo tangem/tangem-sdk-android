@@ -223,7 +223,7 @@ internal class SignCommand(
         return SignResponse.PartialSignResponse(
             cardId = decoder.decode(TlvTag.CardId),
             signedChunk = signedChunk,
-            totalSignedHashes = decoder.decode(TlvTag.WalletSignedHashes),
+            totalSignedHashes = decoder.decodeOptional(TlvTag.WalletSignedHashes),
         )
     }
 
