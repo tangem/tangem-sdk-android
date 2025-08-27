@@ -8,7 +8,6 @@ import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.services.ArtworksStorage
 import com.tangem.common.services.Result
 import com.tangem.crypto.CryptoUtils
-import com.tangem.operations.attestation.api.BaseUrl
 import com.tangem.operations.attestation.api.TangemApiService
 import com.tangem.operations.attestation.api.models.CardArtworksResponse
 import com.tangem.operations.attestation.verification.ManufacturerPublicKey
@@ -20,11 +19,11 @@ import okhttp3.Request
 import java.io.File
 
 class CardArtworksProvider(
-    private val isTangemAttestationProdEnv: Boolean,
+    private val tangemApiBaseUrlProvider: () -> String,
     private val artworksDirectory: File,
 ) {
 
-    private val service: TangemApiService by lazy { TangemApiService(isTangemAttestationProdEnv) }
+    private val service: TangemApiService by lazy { TangemApiService(tangemApiBaseUrlProvider) }
     private val okHttpClient: OkHttpClient by lazy { OkHttpClient() }
     private val store = ArtworksStorage(artworksDirectory)
 
@@ -162,10 +161,12 @@ class CardArtworksProvider(
         }
     }
 
-    companion object {
+    private companion object {
+
+        const val VERIFY = "https://verify.tangem.com/"
 
         fun getUrlForArtwork(cardId: String, cardPublicKey: String, artworkId: String): String {
-            return BaseUrl.VERIFY.url + "card/artwork" + "?artworkId=$artworkId&CID=$cardId&publicKey=$cardPublicKey"
+            return VERIFY + "card/artwork" + "?artworkId=$artworkId&CID=$cardId&publicKey=$cardPublicKey"
         }
     }
 }
