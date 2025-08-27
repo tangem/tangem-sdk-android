@@ -4,11 +4,16 @@ import com.tangem.common.extensions.toHexString
 import org.spongycastle.asn1.ASN1EncodableVector
 import org.spongycastle.asn1.ASN1Integer
 import org.spongycastle.asn1.DERSequence
+import org.spongycastle.asn1.DERSequenceGenerator
+import org.spongycastle.crypto.params.ECDomainParameters
+import org.spongycastle.crypto.params.ECPrivateKeyParameters
+import org.spongycastle.crypto.signers.ECDSASigner
 import org.spongycastle.jce.ECNamedCurveTable
 import org.spongycastle.jce.spec.ECParameterSpec
 import org.spongycastle.jce.spec.ECPrivateKeySpec
 import org.spongycastle.jce.spec.ECPublicKeySpec
 import org.spongycastle.math.ec.ECPoint
+import java.io.ByteArrayOutputStream
 import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.PublicKey
@@ -41,6 +46,27 @@ object Secp256k1 {
             error("Signature self verify failed - ,enc:" + enc.toHexString() + ",res:" + res.toHexString())
         }
 
+        return res
+    }
+
+    fun ecdsaSignDigest(digest: ByteArray, privateKeyBytes: ByteArray): ByteArray {
+        val ecSpec = ECNamedCurveTable.getParameterSpec("secp256k1")
+        val domain = ECDomainParameters(ecSpec.curve, ecSpec.g, ecSpec.n, ecSpec.h)
+
+        val d = BigInteger(1, privateKeyBytes)
+        val privateKeyParams = ECPrivateKeyParameters(d, domain)
+
+        val signer = ECDSASigner()
+        signer.init(true, privateKeyParams)
+        val signature = signer.generateSignature(digest)
+
+        val outputStream = ByteArrayOutputStream()
+        val seqGen = DERSequenceGenerator(outputStream)
+        seqGen.addObject(ASN1Integer(signature[0]))
+        seqGen.addObject(ASN1Integer(signature[1]))
+        seqGen.close()
+
+        val res = toByte64(outputStream.toByteArray())
         return res
     }
 
