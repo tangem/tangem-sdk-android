@@ -21,12 +21,7 @@ import com.tangem.common.core.Config
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.core.UserCodeRequestPolicy
 import com.tangem.common.deserialization.WalletDataDeserializer
-import com.tangem.common.extensions.VoidCallback
-import com.tangem.common.extensions.guard
-import com.tangem.common.extensions.hexToBytes
-import com.tangem.common.extensions.ifNotNullOr
-import com.tangem.common.extensions.toByteArray
-import com.tangem.common.extensions.toHexString
+import com.tangem.common.extensions.*
 import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.tlv.Tlv
 import com.tangem.common.tlv.TlvDecoder
@@ -34,13 +29,7 @@ import com.tangem.common.usersCode.UserCodeRepository
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.sign
-import com.tangem.demo.DemoActivity
-import com.tangem.demo.DemoApplication
-import com.tangem.demo.Personalization
-import com.tangem.demo.PurgeAllWalletsTask
-import com.tangem.demo.Utils
-import com.tangem.demo.post
-import com.tangem.demo.postUi
+import com.tangem.demo.*
 import com.tangem.demo.ui.extension.copyToClipboard
 import com.tangem.demo.ui.settings.SettingsFragment
 import com.tangem.operations.PreflightReadMode
@@ -56,7 +45,6 @@ import com.tangem.operations.preflightread.CardIdPreflightReadFilter
 import com.tangem.tangem_demo.R
 import kotlinx.android.synthetic.main.bottom_sheet_response_layout.*
 import kotlinx.coroutines.runBlocking
-import kotlin.collections.set
 
 @Suppress("LargeClass", "TooManyFunctions")
 abstract class BaseFragment : Fragment() {
@@ -148,7 +136,8 @@ abstract class BaseFragment : Fragment() {
             showToast("CardId & publicKey required. Scan your card before proceeding")
             return
         }
-        sdk.loadCardInfo(card?.cardPublicKey!!, card?.cardId!!) { handleResult(it) }
+
+        Toast.makeText(context, "Not implemented", Toast.LENGTH_SHORT).show()
     }
 
     protected fun attest(mode: AttestationTask.Mode) {
@@ -514,8 +503,7 @@ abstract class BaseFragment : Fragment() {
             runBlocking {
                 userCodeRepository.hasSavedUserCode(it.cardId)
             }
-        }
-            ?: false
+        } == true
     }
 
     protected fun hasSavedUserCodes(): Boolean {
@@ -544,7 +532,7 @@ abstract class BaseFragment : Fragment() {
 
         return try {
             DerivationPath(hdPath)
-        } catch (ex: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
