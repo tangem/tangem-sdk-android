@@ -82,8 +82,7 @@ class BackupService(
     private val backupCertificateProvider by lazy {
         BackupCertificateProvider(
             secureStorage = sdk.secureStorage,
-            isNewAttestationEnabled = sdk.config.isNewOnlineAttestationEnabled,
-            isTangemAttestationProdEnv = sdk.config.isTangemAttestationProdEnv,
+            config = sdk.config,
         )
     }
 
