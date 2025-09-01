@@ -9,11 +9,20 @@ sealed class DerivationNode(
     private val internalIndex: Long,
     val isHardened: Boolean = true,
 ) {
-    val index: Long
-        get() = if (isHardened) internalIndex + BIP32.Constants.hardenedOffset else internalIndex
+
+    /** Index with offset if the node is hardened */
+    val index: Long get() = getIndex()
 
     val pathDescription: String
         get() = if (isHardened) "$internalIndex${BIP32.Constants.hardenedSymbol}" else "$internalIndex"
+
+    fun getIndex(includeHardened: Boolean = true): Long {
+        return if (includeHardened && isHardened) {
+            internalIndex + BIP32.Constants.hardenedOffset
+        } else {
+            internalIndex
+        }
+    }
 
     class Hardened(index: Long) : DerivationNode(index, true)
     class NonHardened(index: Long) : DerivationNode(index, false)
