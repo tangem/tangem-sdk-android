@@ -6,17 +6,8 @@ import com.tangem.common.MaskBuilder
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
-import com.tangem.common.card.Card
-import com.tangem.common.card.CardWallet
-import com.tangem.common.card.EllipticCurve
-import com.tangem.common.card.FirmwareVersion
-import com.tangem.common.card.SigningMethod
-import com.tangem.common.core.CardSession
-import com.tangem.common.core.CompletionCallback
-import com.tangem.common.core.SessionEnvironment
-import com.tangem.common.core.TangemError
-import com.tangem.common.core.TangemSdkError
-import com.tangem.common.core.toTangemSdkError
+import com.tangem.common.card.*
+import com.tangem.common.core.*
 import com.tangem.common.deserialization.WalletDeserializer
 import com.tangem.common.extensions.guard
 import com.tangem.common.tlv.TlvBuilder
@@ -134,8 +125,8 @@ internal class CreateWalletCommand @Throws constructor(
         walletIndex = calculateWalletIndex(card)
 
         val tlvBuilder = TlvBuilder()
-        tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
-        tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
+        tlvBuilder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
+        tlvBuilder.appendPinIfNeeded(TlvTag.Pin2, environment.passcode, environment.card)
         tlvBuilder.append(TlvTag.CardId, card.cardId)
         tlvBuilder.append(TlvTag.Cvc, environment.cvc)
 
