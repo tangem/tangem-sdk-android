@@ -107,6 +107,11 @@ class FirmwareVersion : Comparable<FirmwareVersion> {
         val IsAccessCodeStatusAvailable = FirmwareVersion(4, 33)
 
         /**
+         * Determines when default PINs are optional in commands
+         */
+        val isDefaultPinsOptional = FirmwareVersion(4, 34)
+
+        /**
          * Backup
          */
         val BackupAvailable = FirmwareVersion(4, 43)

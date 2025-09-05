@@ -146,7 +146,7 @@ class AttestWalletKeyTask(
         val walletIndex = card.wallet(publicKey)?.index ?: throw TangemSdkError.WalletNotFound()
 
         val builder = TlvBuilder()
-        builder.append(TlvTag.Pin, environment.accessCode.value)
+        builder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, card)
         builder.append(TlvTag.CardId, card.cardId)
         builder.append(TlvTag.Challenge, challenge)
         builder.append(TlvTag.WalletIndex, walletIndex)
