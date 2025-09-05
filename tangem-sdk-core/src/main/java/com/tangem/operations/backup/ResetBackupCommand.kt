@@ -74,8 +74,8 @@ class ResetBackupCommand : Command<ResetBackupResponse>() {
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         val tlvBuilder = TlvBuilder()
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
-        tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
-        tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
+        tlvBuilder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
+        tlvBuilder.appendPinIfNeeded(TlvTag.Pin2, environment.passcode, environment.card)
 
         return CommandApdu(Instruction.BackupReset, tlvBuilder.serialize())
     }

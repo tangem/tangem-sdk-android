@@ -8,16 +8,12 @@ import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.Card
 import com.tangem.common.card.CardWallet
 import com.tangem.common.card.FirmwareVersion
-import com.tangem.common.core.CardSession
-import com.tangem.common.core.CompletionCallback
-import com.tangem.common.core.SessionEnvironment
-import com.tangem.common.core.TangemError
-import com.tangem.common.core.TangemSdkError
+import com.tangem.common.core.*
 import com.tangem.common.deserialization.WalletDeserializer
-import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
+import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.operations.Command
 import com.tangem.operations.CommandResponse
 import com.tangem.operations.PreflightReadMode
@@ -60,7 +56,7 @@ class ReadWalletCommand(
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         val tlvBuilder = TlvBuilder()
-        tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+        tlvBuilder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.InteractionMode, ReadMode.Wallet)
         tlvBuilder.append(TlvTag.WalletIndex, walletIndex)
