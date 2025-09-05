@@ -100,7 +100,7 @@ class AttestCardKeyCommand(
         }
 
         val builder = TlvBuilder()
-        builder.append(TlvTag.Pin, environment.accessCode.value)
+        builder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
         builder.append(TlvTag.CardId, environment.card?.cardId)
         builder.append(TlvTag.Challenge, challenge)
         if (card.backupStatus?.isActive == true) {

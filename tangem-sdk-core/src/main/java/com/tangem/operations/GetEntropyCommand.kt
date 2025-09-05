@@ -32,7 +32,7 @@ class GetEntropyCommand : Command<GetEntropyResponse>() {
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         val tlvBuilder = TlvBuilder()
-        tlvBuilder.append(tag = TlvTag.Pin, value = environment.accessCode.value)
+        tlvBuilder.appendPinIfNeeded(tag = TlvTag.Pin, userCode = environment.accessCode, card = environment.card)
         tlvBuilder.append(tag = TlvTag.CardId, value = environment.card?.cardId)
 
         return CommandApdu(Instruction.GetEntropy, tlvBuilder.serialize())
