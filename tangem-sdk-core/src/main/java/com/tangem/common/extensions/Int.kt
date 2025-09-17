@@ -13,6 +13,10 @@ fun Int.toByteArray(size: Int = Int.SIZE_BYTES): ByteArray = when (size) {
     else -> byteArrayOf()
 }
 
+fun Int.toHexString(): String {
+    return Integer.toHexString(this)
+}
+
 // For byte comparisons
 fun Int.containsByte(byte: Int): Boolean {
     return this and byte != 0
