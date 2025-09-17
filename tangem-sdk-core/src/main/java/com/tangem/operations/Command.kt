@@ -20,7 +20,6 @@ import com.tangem.common.extensions.toHexString
 import com.tangem.common.extensions.toInt
 import com.tangem.common.tlv.Tlv
 import com.tangem.common.tlv.TlvTag
-import okhttp3.internal.toHexString
 
 /**
  * Basic interface for a parsed response from [Command].
