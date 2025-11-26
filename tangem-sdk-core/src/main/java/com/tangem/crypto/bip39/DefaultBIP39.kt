@@ -8,7 +8,6 @@ import com.tangem.common.extensions.leadingZeroPadding
 import com.tangem.common.extensions.toBits
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.pbkdf2sha512
-import java.math.BigInteger
 import java.text.Normalizer
 
 internal class DefaultBIP39(override val wordlist: Wordlist) : BIP39 {
@@ -118,13 +117,25 @@ internal class DefaultBIP39(override val wordlist: Wordlist) : BIP39 {
         return words
     }
 
+    @Suppress("MagicNumber")
     private fun bitStringToByteArray(bitString: String): ByteArray {
-        val dataWithSignBit = BigInteger(bitString, 2).toByteArray()
-        return if (dataWithSignBit[0] == 0.toByte()) {
-            dataWithSignBit.drop(1).toByteArray()
-        } else {
-            dataWithSignBit
-        }
+        // Number of bits in the input
+        val bitLength = bitString.length
+
+        // We need the total number of bits to be a multiple of 8 (full bytes).
+        val byteCount = (bitLength + 7) / 8
+
+        // Convert byte count back to bit count
+        val totalBitLength = byteCount * 8
+
+        // Pad on the left with '0' so the string length becomes totalBitLength
+        val paddedBitString = bitString.padStart(totalBitLength, '0')
+
+        // Now convert every 8 bits into a byte
+        return paddedBitString
+            .chunked(8) // split into groups of 8 characters
+            .map { chunk -> chunk.toInt(2).toByte() } // parse each chunk as binary
+            .toByteArray()
     }
 
     @OptIn(ExperimentalUnsignedTypes::class)
