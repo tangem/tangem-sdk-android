@@ -24,8 +24,7 @@ import com.tangem.sdk.DefaultSessionViewDelegate
 import com.tangem.sdk.extensions.*
 import com.tangem.sdk.nfc.AndroidNfcAvailabilityProvider
 import com.tangem.sdk.storage.create
-import com.tangem.tangem_demo.R
-import kotlinx.android.synthetic.main.activity_demo.*
+import com.tangem.tangem_demo.databinding.ActivityDemoBinding
 
 class DemoActivity : AppCompatActivity() {
 
@@ -35,6 +34,8 @@ class DemoActivity : AppCompatActivity() {
         private set
     lateinit var viewDelegate: SessionViewDelegate
         private set
+
+    lateinit var binding: ActivityDemoBinding
 
     private val pageChangeListeners = mutableListOf<(Int) -> Unit>()
     private val fragmentPages = listOf(
@@ -46,18 +47,20 @@ class DemoActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         sdk = initSdk()
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_demo)
+        binding = ActivityDemoBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
         Log.addLogger(logger)
-        viewPager.adapter = ViewPagerAdapter(fragmentPages, this)
-        viewPager.registerOnPageChangeCallback(
+        binding.viewPager.adapter = ViewPagerAdapter(fragmentPages, this)
+        binding.viewPager.registerOnPageChangeCallback(
             object : ViewPager2.OnPageChangeCallback() {
                 override fun onPageSelected(position: Int) {
                     pageChangeListeners.forEach { it.invoke(position) }
                 }
             },
         )
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             tab.text = fragmentPages[position].simpleName.replace("Fragment", "")
         }.attach()
     }
@@ -67,7 +70,7 @@ class DemoActivity : AppCompatActivity() {
     }
 
     fun enableSwipe(enable: Boolean) {
-        viewPager.isUserInputEnabled = enable
+        binding.viewPager.isUserInputEnabled = enable
     }
 
     private fun initSdk(): TangemSdk {
