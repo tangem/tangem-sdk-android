@@ -41,7 +41,7 @@ class StartBackupCardLinkingCommand(
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         val tlvBuilder = TlvBuilder()
-        tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+        tlvBuilder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.PrimaryCardLinkingKey, primaryCardLinkingKey)
 
