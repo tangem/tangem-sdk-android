@@ -10,33 +10,61 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <include layout="@layout/card" />
+        <include
+            android:id="@+id/cardView"
+            layout="@layout/card" />
 
-        <include layout="@layout/attestation" />
+        <include
+            android:id="@+id/attestationView"
+            layout="@layout/attestation" />
 
-        <include layout="@layout/wallet" />
+        <include
+            android:id="@+id/walletView"
+            layout="@layout/wallet" />
 
-        <include layout="@layout/sign" />
+        <include
+            android:id="@+id/signView"
+            layout="@layout/sign" />
 
-        <include layout="@layout/hd_wallet" />
+        <include
+            android:id="@+id/hdWalletView"
+            layout="@layout/hd_wallet" />
 
-        <include layout="@layout/backup" />
+        <include
+            android:id="@+id/backupView"
+            layout="@layout/backup" />
 
-        <include layout="@layout/issuer_data" />
+        <include
+            android:id="@+id/issuerDataView"
+            layout="@layout/issuer_data" />
 
-        <include layout="@layout/issuer_ex_data" />
+        <include
+            android:id="@+id/issuerExDataView"
+            layout="@layout/issuer_ex_data" />
 
-        <include layout="@layout/user_data" />
+        <include
+            android:id="@+id/userDataView"
+            layout="@layout/user_data" />
 
-        <include layout="@layout/set_pin" />
+        <include
+            android:id="@+id/setPinView"
+            layout="@layout/set_pin" />
 
-        <include layout="@layout/file_data" />
+        <include
+            android:id="@+id/fileDataView"
+            layout="@layout/file_data" />
 
-        <include layout="@layout/json_rpc" />
+        <include
+            android:id="@+id/jRpcView"
+            layout="@layout/json_rpc" />
 
-        <include layout="@layout/utils" />
+        <include
+            android:id="@+id/utilsView"
+            layout="@layout/utils" />
 
-        <include layout="@layout/theme" />
+        <include
+            android:id="@+id/themeView"
+            layout="@layout/theme" />
 
     </LinearLayout>
 
