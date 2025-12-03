@@ -6,19 +6,17 @@ import com.tangem.common.extensions.VoidCallback
 import com.tangem.sdk.extensions.dpToPx
 import com.tangem.sdk.extensions.fadeIn
 import com.tangem.sdk.extensions.fadeOut
-import com.tangem.sdk.extensions.isHorizontal
-import com.tangem.sdk.extensions.isOnTheBack
-import com.tangem.sdk.ui.NfcLocation
+import com.tangem.sdk.ui.NfcLocationData
 
 /**
 [REDACTED_AUTHOR]
  */
-class TouchCardAnimation(
+internal class TouchCardAnimation(
     private val phone: View,
-    private val cardHorizontal: View,
-    private val cardVertical: View,
+    cardHorizontal: View,
+    cardVertical: View,
     private val animationProperty: AnimationProperty,
-    private val nfcLocation: NfcLocation,
+    private val nfcLocationData: NfcLocationData,
 ) {
 
     var onAnimationEnd: VoidCallback? = null
@@ -35,17 +33,17 @@ class TouchCardAnimation(
             tapAnimator?.animatorCallback = value
         }
 
-    private val touchView: View = if (nfcLocation.isHorizontal()) cardHorizontal else cardVertical
+    private val touchView: View = if (nfcLocationData.isHorizontal) cardHorizontal else cardVertical
     private var tapAnimator: TapAnimator? = null
 
     init {
-        touchView.elevation = touchView.dpToPx(getTouchViewElevation(nfcLocation))
+        touchView.elevation = touchView.dpToPx(getTouchViewElevation(nfcLocationData))
     }
 
     fun animate() {
         tapAnimator?.cancel()
-        translateToNfcLocation(touchView, phone, nfcLocation)
-        tapAnimator = TapAnimator.create(touchView, nfcLocation.isOnTheBack(), animationProperty)
+        translateToNfcLocation(touchView, phone)
+        tapAnimator = TapAnimator.create(touchView, nfcLocationData.isOnTheBack, animationProperty)
         tapAnimator?.tapAnimationCallback = tapAnimationCallback
         tapAnimator?.animatorCallback = animatorCallback
         tapAnimator?.onAnimationEnd = onAnimationEnd
@@ -53,7 +51,7 @@ class TouchCardAnimation(
     }
 
     fun showTouchViewAtNfcPosition(duration: Long, onEnd: VoidCallback? = null) {
-        translateToNfcLocation(touchView, phone, nfcLocation)
+        translateToNfcLocation(touchView, phone)
         touchView.translationX = touchView.translationX + animationProperty.xEnd
         touchView.fadeIn(duration, onEnd = onEnd)
     }
@@ -66,15 +64,15 @@ class TouchCardAnimation(
         tapAnimator?.cancel()
     }
 
-    private fun translateToNfcLocation(tappedView: View, inView: View, nfcLocation: NfcLocation) {
+    private fun translateToNfcLocation(tappedView: View, inView: View) {
         val yCardCenter = tappedView.height * getYCenterOfCardRelativeToSelf()
-        val xPositionFactor = if (nfcLocation.isOnTheBack()) -1 else 1
-        tappedView.translationX = calculateRelativePosition(nfcLocation.x, inView.width) * xPositionFactor
-        tappedView.translationY = calculateRelativePosition(nfcLocation.y, inView.height) + yCardCenter
+        val xPositionFactor = if (nfcLocationData.isOnTheBack) -1 else 1
+        tappedView.translationX = calculateRelativePosition(nfcLocationData.x, inView.width) * xPositionFactor
+        tappedView.translationY = calculateRelativePosition(nfcLocationData.y, inView.height) + yCardCenter
     }
 
     @Suppress("MagicNumber")
-    private fun getYCenterOfCardRelativeToSelf(): Float = if (nfcLocation.isHorizontal()) 0.33f else 0.27f
+    private fun getYCenterOfCardRelativeToSelf(): Float = if (nfcLocationData.isHorizontal) 0.33f else 0.27f
 
     companion object {
         // Only for views centered in a relative view. Works with positioning on x and y vectors
@@ -85,6 +83,6 @@ class TouchCardAnimation(
         }
 
         @Suppress("MagicNumber")
-        fun getTouchViewElevation(nfcLocation: NfcLocation): Float = if (nfcLocation.isOnTheBack()) 0f else 4f
+        fun getTouchViewElevation(nfcLocationData: NfcLocationData): Float = if (nfcLocationData.isOnTheBack) 0f else 4f
     }
 }

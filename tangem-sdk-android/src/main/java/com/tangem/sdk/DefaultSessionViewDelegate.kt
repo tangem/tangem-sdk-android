@@ -1,6 +1,7 @@
 package com.tangem.sdk
 
 import android.app.Activity
+import android.nfc.NfcAdapter
 import android.os.Build
 import androidx.core.app.ComponentActivity
 import com.tangem.Log
@@ -17,6 +18,7 @@ import com.tangem.common.core.TangemError
 import com.tangem.common.extensions.VoidCallback
 import com.tangem.operations.resetcode.ResetCodesViewDelegate
 import com.tangem.sdk.extensions.sdkThemeContext
+import com.tangem.sdk.nfc.CompositeNfcLocationProvider
 import com.tangem.sdk.nfc.NfcAntennaLocationProvider
 import com.tangem.sdk.nfc.NfcManager
 import com.tangem.sdk.ui.AttestationFailedDialog
@@ -227,10 +229,14 @@ class DefaultSessionViewDelegate(
 
     private fun createReadingDialog(activity: Activity, iconScanRes: Int? = null): NfcSessionDialog {
         Log.view { "createReadingDialog" }
+        val compositeProvider = CompositeNfcLocationProvider(
+            nfcAdapter = NfcAdapter.getDefaultAdapter(activity.applicationContext),
+            deviceLocationProvider = NfcAntennaLocationProvider(Build.DEVICE),
+        )
         return NfcSessionDialog(
             context = activity.sdkThemeContext(),
             nfcManager = nfcManager,
-            nfcLocationProvider = NfcAntennaLocationProvider(Build.DEVICE),
+            compositeProvider = compositeProvider,
             iconScanRes = iconScanRes,
         )
             .apply {
