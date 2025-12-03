@@ -17,7 +17,7 @@ import com.tangem.sdk.extensions.fadeIn
 import com.tangem.sdk.extensions.fadeOut
 import com.tangem.sdk.extensions.hide
 import com.tangem.sdk.extensions.show
-import com.tangem.sdk.nfc.NfcLocationProvider
+import com.tangem.sdk.nfc.CompositeNfcLocationProvider
 import com.tangem.sdk.nfc.NfcManager
 import com.tangem.sdk.ui.widget.BaseSessionDelegateStateWidget
 import com.tangem.sdk.ui.widget.BaseStateWidget
@@ -25,10 +25,10 @@ import com.tangem.sdk.ui.widget.BaseStateWidget
 /**
 [REDACTED_AUTHOR]
  */
-class HowToTapWidget constructor(
+class HowToTapWidget(
     mainView: View,
     private val nfcManager: NfcManager,
-    private val nfcLocationProvider: NfcLocationProvider,
+    compositeProvider: CompositeNfcLocationProvider,
 ) : BaseSessionDelegateStateWidget(mainView) {
 
     var onCloseListener: VoidCallback? = null
@@ -39,9 +39,14 @@ class HowToTapWidget constructor(
     var previousState: SessionViewDelegateState? = null
 
     private val vibrator = mainView.context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-    private val nfcLocation = nfcLocationProvider.getLocation()
+    private val nfcLocation = compositeProvider.getLocationData()
 
-    private var initialMode: HowToMode = if (nfcLocation == null) HowToMode.UNKNOWN else HowToMode.KNOWN
+    private var initialMode: HowToMode =
+        if (compositeProvider.getLocation() == null) {
+            HowToMode.UNKNOWN
+        } else {
+            HowToMode.KNOWN
+        }
     private var currentMode: HowToMode = initialMode
     private var controller: HowToController? = null
 
@@ -76,7 +81,7 @@ class HowToTapWidget constructor(
                 val view = layoutInflater.inflate(R.layout.how_to_known, null)
                 NfcKnownWidget(
                     mainView = view,
-                    nfcLocation = nfcLocation!!,
+                    nfcLocationData = nfcLocation,
                     onSwitch = {
                         currentMode = HowToMode.UNKNOWN
                         setState(SessionViewDelegateState.HowToTap)
