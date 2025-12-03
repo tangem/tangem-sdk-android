@@ -1,18 +1,56 @@
 Tangem Proprietary and Confidential
 Copyright (c) 2025 Tangem AG. All rights reserved.
 ================================================================================
-NOTICE: THIS IS NOT AN OPEN SOURCE LICENSE.
-This software, including all source code, documentation, and accompanying files (the "Software") stored in this repository, is the proprietary and confidential information of Tangem AG ("Tangem"). The publication of this Software on a public platform does not grant any license, express or implied.
-1.  Definitions.
+NOTICE: THIS IS A SOURCE-AVAILABLE LICENSE WITH IRREVOCABLE NON-COMMERCIAL RIGHTS.
+This software, including all source code, documentation, and accompanying files (the "Software") stored in this repository, is the proprietary and confidential information of Tangem AG ("Tangem"). The publication of this Software on a public platform grants the specific limited rights described herein.
+
+PREAMBLE: ACKNOWLEDGMENT OF COMMUNITY FUND RECOVERY RIGHTS
+Tangem acknowledges that the Software governs access to and interaction with hardware wallets that may hold users' digital assets, cryptocurrencies, and other items of value. Tangem further acknowledges and agrees that:
+(a) Dependency Risk. Users of Tangem hardware are dependent upon the continued availability and maintenance of compatible software to access and recover their funds;
+(b) Abandonment Scenario. In the event that Tangem AG ceases operations, discontinues maintenance of this repository, becomes insolvent, is acquired, or otherwise fails to provide ongoing support for the Software, users would be unable to recover their funds without the rights granted herein;
+(c) Justification for Irrevocable Rights. The irrevocable non-commercial rights granted in this License are specifically intended to ensure that the community retains the perpetual ability to maintain, modify, and distribute the Software as necessary to access and recover funds stored on Tangem hardware, regardless of Tangem's future business status or decisions;
+(d) User Protection. Restricting or revoking these rights would constitute an unacceptable risk to users' financial security and property rights, and Tangem expressly disclaims any intent to place users in such a position;
+(e) Good Faith Commitment. This acknowledgment represents Tangem's good faith commitment to its user community and shall be interpreted broadly in favor of preserving users' ability to access their own funds.
+
+1. Definitions.
 "Software" refers to all contents of this repository.
 "Protocol" refers to the proprietary communication protocol, including the sequence of, data structures, and cryptographic methods used to interact with Tangem hardware.
 "SDKs" refer to the official Software Development Kits (e.g., for Android, iOS, React Native) provided by Tangem in separate repositories and under their own distinct licenses.
-2.  Strict Prohibition of Use. Any use of the Software, in whole or in part, is strictly prohibited without the express prior written consent of Tangem. This prohibition includes, but is not limited to, the following actions for any purpose, whether commercial or non-commercial:
-- Copying, modifying, or merging the Software.
-- Publishing, distributing, or sublicensing the Software.
-- Selling copies of the Software.
-- Creating derivative works based on the Software.
-3.  Protocol Usage. Reverse-engineering, analyzing, decompiling, or attempting to recreate the Protocol is strictly prohibited. The only authorized method for third-party applications to interact with Tangem hardware is by using the official Tangem SDKs. The SDKs are governed by their own license terms (e.g., MIT License), which permit their use in third-party applications. This Software is provided for transparency and reference purposes only.
-4.  No Implied Rights. The act of Tangem publishing the Software to a public repository does not grant users any implied rights or licenses to use, modify, or distribute the Software. All rights not expressly granted by Tangem in a separate written agreement are reserved.
-5.  Legal Action. Unauthorized use, reproduction, or distribution of the Software or the Protocol may result in severe civil and criminal penalties, and will be prosecuted to the maximum extent possible under applicable law.
-For inquiries about licensing or permissions to use the Software or the Protocol, please contact Tangem AG at: legal@tangem.com.
+"Non-Commercial Use" means any use that is not primarily intended for or directed toward commercial advantage or monetary compensation.
+"Derivative Work" means any work that is based on or derived from the Software.
+"Fund Recovery" means any use of the Software intended to access, transfer, manage, or recover digital assets, cryptocurrencies, or other items of value stored on or accessible through Tangem hardware.
+2. Grant of Irrevocable Non-Commercial Rights.
+Subject to the terms of this License, Tangem hereby grants to any person obtaining a copy of the Software a perpetual, worldwide, irrevocable, royalty-free, non-exclusive license to:
+(a) Use, copy, modify, and merge the Software for any personal or private purpose;
+(b) Create Derivative Works based on the Software for non-commercial purposes;
+(c) Publish, distribute, and share the Software and any non-commercial Derivative Works, provided that:
+
+Such distribution is not for commercial advantage or monetary compensation;
+This license notice and copyright notice are included in all copies or substantial portions of the Software;
+Any Derivative Works are clearly marked as modified from the original.
+
+(d) Use, modify, and distribute the Software and Derivative Works for Fund Recovery purposes, which shall always be considered a permitted non-commercial use regardless of the value of assets recovered.
+3. Irrevocability and Supremacy Clause.
+(a) Irrevocability. The rights granted under Section 2 are irrevocable and shall survive any termination, amendment, or replacement of this License. Once granted, these rights cannot be rescinded, revoked, or diminished by Tangem AG, its successors, assigns, or any future owner of the Software or associated intellectual property.
+(b) Supremacy. The rights granted under Section 2 shall supersede and take precedence over any subsequent license terms, amendments, addenda, or replacement licenses applied to this Software. No future modification to this License, nor any new license applied to this Software or subsequent versions thereof, may restrict, limit, or eliminate the rights granted under Section 2 as they apply to any version of the Software to which this License has been applied.
+(c) Binding on Successors and Assigns. This License, including the irrevocable rights granted herein, shall be binding upon and inure to the benefit of Tangem AG, its successors, assigns, and any party that acquires ownership or control of the Software, the associated intellectual property, or Tangem AG itself. Any transfer of ownership or assignment of rights in the Software shall be subject to the continued obligations set forth in this License.
+(d) Severability of Irrevocable Rights. If any provision of this License is held to be unenforceable, the irrevocable non-commercial rights granted under Section 2 shall remain in full force and effect to the maximum extent permitted by law.
+(e) Fund Recovery Protection. Notwithstanding any other provision of this License or any future license, the right to use the Software for Fund Recovery purposes shall never be restricted, conditioned, or revoked.
+4. Commercial Use Restrictions.
+Any commercial use of the Software, in whole or in part, requires the express prior written consent of Tangem. Commercial use includes, but is not limited to:
+
+Selling copies of the Software or Derivative Works;
+Using the Software in a commercial product or service;
+Distributing the Software or Derivative Works for commercial advantage or monetary compensation;
+Sublicensing the Software for commercial purposes.
+
+Clarification: Fund Recovery, as defined herein, shall not be considered commercial use regardless of the value of assets involved.
+5. Protocol Usage.
+Reverse-engineering, analyzing, decompiling, or attempting to recreate the Protocol for commercial purposes is prohibited without express written consent from Tangem. Non-commercial analysis, study, interoperability efforts, and Fund Recovery purposes are permitted under this License.
+The official Tangem SDKs remain the recommended method for third-party applications to interact with Tangem hardware. The SDKs are governed by their own license terms (e.g., MIT License), which permit their use in third-party applications.
+6. No Additional Implied Rights.
+Except as expressly granted in Section 2, the act of Tangem publishing the Software to a public repository does not grant users any additional implied rights or licenses. All rights not expressly granted herein are reserved.
+7. Disclaimer of Warranty.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL TANGEM BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+8. Enforcement.
+Unauthorized commercial use, reproduction, or distribution of the Software or the Protocol may result in civil and criminal penalties under applicable law.
