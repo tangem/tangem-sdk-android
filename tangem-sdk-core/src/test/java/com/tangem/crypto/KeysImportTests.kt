@@ -127,6 +127,23 @@ internal class KeysImportTests {
         assertEquals(pubKey.chainCode.toHexString(), "4C3BD3E0DF9EA6371678CCF2B741A762825783B8746E2527D8C15749E64B9D60")
     }
 
+    @Test
+    fun testKeyImportEd25519_leading_zero_entropy() {
+        val mnemonicString = "abstract during yellow work turtle duty cluster leaf over gallery often help century" +
+            " deal convince mosquito romance sense pen quality lava vibrant recall gift"
+        val mnemonicWithLeadingZeros = DefaultMnemonic(mnemonicString, createDefaultWordlist())
+        val prvKey = IkarusMasterKeyFactory(mnemonicWithLeadingZeros.getEntropy(), passphrase = "").makePrivateKey()
+
+        assertEquals(
+            expected = prvKey.privateKey.toHexString(),
+            actual = "E8ECE93A5B85405A4B6598A898D7740AAA2DE4AF0BB53540AF17FA4590839C4D8BA79A2F184F7F57550853FE5CF0DB5FA1B308F023E15562C433DBAC95E4E9B7",
+        )
+        assertEquals(
+            prvKey.chainCode.toHexString().lowercase(),
+            "d123f1999905d63db686d684ffc7c37d95ade77f2e526cd9814ad151ebdce754",
+        )
+    }
+
     // / All BLS schemes tested to produce same public key.
     @Test
     fun testKeyImportBLS() {
