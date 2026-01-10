@@ -148,5 +148,4 @@ enum class ProductType {
     ANY,
     CARD,
     RING,
-    ;
 }

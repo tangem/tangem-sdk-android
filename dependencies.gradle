@@ -2,8 +2,8 @@ ext {
     versions = [
         kotlin            : '1.5.30',
         build_gradle      : '7.4.2',
-        detekt            : '1.22.0',
-        composeDetektRules: '1.2.2'
+        detekt            : '1.23.8',
+        composeDetektRules: '1.4.0'
     ]
 
     classpaths = [

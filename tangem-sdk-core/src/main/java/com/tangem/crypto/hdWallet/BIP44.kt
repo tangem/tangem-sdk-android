@@ -39,6 +39,5 @@ class BIP44(
     enum class Chain(val index: Long) {
         External(0),
         Internal(1),
-        ;
     }
 }
