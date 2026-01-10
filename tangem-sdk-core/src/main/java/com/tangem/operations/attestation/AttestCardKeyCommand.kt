@@ -132,7 +132,7 @@ class AttestCardKeyCommand(
     }
 
     enum class Mode {
-        Default, Full;
+        Default, Full
     }
 
     private fun Mode.toRawMode(): RawMode? {
