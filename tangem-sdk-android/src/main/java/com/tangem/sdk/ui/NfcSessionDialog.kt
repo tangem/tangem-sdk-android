@@ -19,7 +19,7 @@ import com.tangem.sdk.SessionViewDelegateState
 import com.tangem.sdk.extensions.SecurityModeController
 import com.tangem.sdk.extensions.hide
 import com.tangem.sdk.extensions.show
-import com.tangem.sdk.nfc.NfcLocationProvider
+import com.tangem.sdk.nfc.CompositeNfcLocationProvider
 import com.tangem.sdk.nfc.NfcManager
 import com.tangem.sdk.postUI
 import com.tangem.sdk.ui.widget.*
@@ -30,7 +30,7 @@ import kotlinx.coroutines.Dispatchers
 class NfcSessionDialog(
     context: Context,
     private val nfcManager: NfcManager,
-    private val nfcLocationProvider: NfcLocationProvider,
+    private val compositeProvider: CompositeNfcLocationProvider,
     private val iconScanRes: Int? = null,
 ) : BaseSdkDialog(context) {
 
@@ -58,13 +58,13 @@ class NfcSessionDialog(
     override fun setContentView(view: View) {
         super.setContentView(view)
 
-        val nfcLocation = nfcLocationProvider.getLocation() ?: NfcLocation.Model13
+        val nfcLocationData = compositeProvider.getLocationData()
 
         taskContainer = view.findViewById(R.id.taskContainer)
         howToContainer = view.findViewById(R.id.howToContainer)
 
         headerWidget = HeaderWidget(view.findViewById(R.id.llHeader))
-        touchCardWidget = TouchCardWidget(view.findViewById(R.id.flImageContainer), nfcLocation)
+        touchCardWidget = TouchCardWidget(view.findViewById(R.id.flImageContainer), nfcLocationData)
         touchCardWidget.setIconScanRes(iconScanRes)
         progressStateWidget = ProgressbarStateWidget(view.findViewById(R.id.clProgress))
         pinCodeRequestWidget = PinCodeRequestWidget(view.findViewById(R.id.csPinCode))
@@ -73,7 +73,7 @@ class NfcSessionDialog(
             PinCodeModificationWidget.Mode.SET,
         )
         messageWidget = MessageWidget(view.findViewById(R.id.llMessage))
-        howToTapWidget = HowToTapWidget(howToContainer, nfcManager, nfcLocationProvider)
+        howToTapWidget = HowToTapWidget(howToContainer, nfcManager, compositeProvider)
 
         stateWidgets.add(headerWidget)
         stateWidgets.add(touchCardWidget)

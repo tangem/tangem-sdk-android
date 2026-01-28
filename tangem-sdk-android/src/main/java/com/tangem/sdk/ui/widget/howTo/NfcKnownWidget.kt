@@ -12,9 +12,8 @@ import com.tangem.sdk.extensions.dpToPx
 import com.tangem.sdk.extensions.fadeIn
 import com.tangem.sdk.extensions.fadeOut
 import com.tangem.sdk.extensions.hide
-import com.tangem.sdk.extensions.isOnTheBack
 import com.tangem.sdk.extensions.show
-import com.tangem.sdk.ui.NfcLocation
+import com.tangem.sdk.ui.NfcLocationData
 import com.tangem.sdk.ui.animation.AnimationProperty
 import com.tangem.sdk.ui.animation.FlipAnimator
 import com.tangem.sdk.ui.animation.Side
@@ -24,9 +23,9 @@ import com.tangem.sdk.ui.animation.TouchCardAnimation.Companion.calculateRelativ
 /**
 [REDACTED_AUTHOR]
  */
-class NfcKnownWidget(
+internal class NfcKnownWidget(
     mainView: View,
-    private val nfcLocation: NfcLocation,
+    private val nfcLocationData: NfcLocationData,
     private val onSwitch: VoidCallback,
 ) : NfcHowToWidget(mainView) {
 
@@ -39,7 +38,7 @@ class NfcKnownWidget(
         mainView.findViewById(R.id.imvHandWithCardH),
         mainView.findViewById(R.id.imvHandWithCardV),
         AnimationProperty(context.dpToPx(-395f), context.dpToPx(-95f), context.dpToPx(200f)),
-        nfcLocation,
+        nfcLocationData,
     )
     private val animationScheduler = Handler()
     private val phoneFlipAnimator: FlipAnimator = FlipAnimator(phone, phoneBack, flipDuration)
@@ -118,8 +117,8 @@ class NfcKnownWidget(
     }
 
     private fun translateViewToNfcLocation(view: View) {
-        view.translationX = calculateRelativePosition(nfcLocation.x, phone.width)
-        view.translationY = calculateRelativePosition(nfcLocation.y, phone.height)
+        view.translationX = calculateRelativePosition(nfcLocationData.x, phone.width)
+        view.translationY = calculateRelativePosition(nfcLocationData.y, phone.height)
     }
 
     private fun prepareInitialState() {
@@ -155,7 +154,7 @@ class NfcKnownWidget(
 
         rippleView.startRippleAnimation()
 
-        if (nfcLocation.isOnTheBack()) {
+        if (nfcLocationData.isOnTheBack) {
             phoneFlipAnimator.onAnimationEnd = fadeIn
             phoneFlipAnimator.animate()
         } else {
@@ -169,7 +168,7 @@ class NfcKnownWidget(
         nfcBadge.fadeOut(fadeDuration)
         rippleView.fadeOut(fadeDuration) {
             rippleView.stopRippleAnimation()
-            if (nfcLocation.isOnTheBack()) {
+            if (nfcLocationData.isOnTheBack) {
                 setText(R.string.how_to_unknown_tap_card)
                 phoneFlipAnimator.onAnimationEnd = { touchCardAnimation.animate() }
                 phoneFlipAnimator.animate()
@@ -196,7 +195,7 @@ class NfcKnownWidget(
 
         val showCardAndRippleView = {
             touchCardAnimation.showTouchViewAtNfcPosition(fadeDuration) {
-                rippleView.elevation = if (nfcLocation.isOnTheBack()) dpToPx(1f) else rippleView.elevation
+                rippleView.elevation = if (nfcLocationData.isOnTheBack) dpToPx(1f) else rippleView.elevation
                 rippleView.alpha = 1f
                 rippleView.startRippleAnimation()
                 imvSuccess.fadeIn(fadeDuration)
