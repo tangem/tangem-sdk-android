@@ -15,9 +15,8 @@ import com.tangem.sdk.SessionViewDelegateState
 import com.tangem.sdk.extensions.dpToPx
 import com.tangem.sdk.extensions.fadeOut
 import com.tangem.sdk.extensions.hide
-import com.tangem.sdk.extensions.isOnTheBack
 import com.tangem.sdk.extensions.show
-import com.tangem.sdk.ui.NfcLocation
+import com.tangem.sdk.ui.NfcLocationData
 import com.tangem.sdk.ui.animation.AnimationProperty
 import com.tangem.sdk.ui.animation.TapAnimationCallback
 import com.tangem.sdk.ui.animation.TouchCardAnimation
@@ -26,9 +25,9 @@ import com.tangem.sdk.ui.animation.TouchCardAnimation.Companion.calculateRelativ
 /**
 [REDACTED_AUTHOR]
  */
-class TouchCardWidget(
+internal class TouchCardWidget(
     mainView: View,
-    private val nfcLocation: NfcLocation,
+    private val nfcLocationData: NfcLocationData,
     private var scanImage: ScanTagImage = ScanTagImage.GenericCard,
 ) : BaseSessionDelegateStateWidget(mainView) {
 
@@ -48,7 +47,7 @@ class TouchCardWidget(
         ivHandCardHorizontal,
         ivHandCardVertical,
         AnimationProperty(mainView.dpToPx(-160f), mainView.dpToPx(-70f), mainView.dpToPx(150f), repeatCount = -1),
-        nfcLocation,
+        nfcLocationData,
     )
 
     private var customBitmapHolder: BitmapImageHolder? = null
@@ -114,10 +113,10 @@ class TouchCardWidget(
                 override fun onGlobalLayout() {
                     ivPhone.viewTreeObserver.removeOnGlobalLayoutListener(this)
                     val rippleElevation =
-                        if (nfcLocation.isOnTheBack()) ivPhone.elevation - 1 else ivPhone.elevation + 1
+                        if (nfcLocationData.isOnTheBack) ivPhone.elevation - 1 else ivPhone.elevation + 1
                     rippleBackgroundNfc.elevation = rippleElevation
-                    rippleBackgroundNfc.translationX = calculateRelativePosition(nfcLocation.x, ivPhone.width)
-                    rippleBackgroundNfc.translationY = calculateRelativePosition(nfcLocation.y, ivPhone.height)
+                    rippleBackgroundNfc.translationX = calculateRelativePosition(nfcLocationData.x, ivPhone.width)
+                    rippleBackgroundNfc.translationY = calculateRelativePosition(nfcLocationData.y, ivPhone.height)
                     touchCardAnimation.animate()
                 }
             },
