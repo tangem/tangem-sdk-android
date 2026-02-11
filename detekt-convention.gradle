@@ -18,6 +18,7 @@ detekt {
     autoCorrect = true
     buildUponDefaultConfig = true
     config.setFrom(rootProject.files("tangem-android-tools/detekt-config.yml"))
+    baseline = rootProject.file("detekt-baseline.xml")
 }
 
 tasks.withType(io.gitlab.arturbosch.detekt.Detekt) {
@@ -32,6 +33,12 @@ tasks.withType(io.gitlab.arturbosch.detekt.Detekt) {
             enabled = true
         }
     }
+}
+
+tasks.withType(io.gitlab.arturbosch.detekt.DetektCreateBaselineTask) {
+    setSource(file(projectDir))
+    include("**/*.kt")
+    exclude("**/resources/**", "**/build/**")
 }
 
 dependencies {

@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AlsoCouldBeApply:AESCipherOperations.kt$AESCipherOperations$also</ID>
+    <ID>AlsoCouldBeApply:RSACipherOperations.kt$RSACipherOperations$also</ID>
+    <ID>BracesOnIfStatements:File.kt$File$if</ID>
+    <ID>BracesOnIfStatements:FileHashData.kt$FileHashData$if</ID>
+    <ID>MemberNameEqualsClassName:TapAnimator.kt$TapAnimator$private var tapAnimator: AnimatorSet? = null</ID>
+    <ID>MemberNameEqualsClassName:Timer.kt$Timer$private val timer: Job = scope.launch(dispatcher) { if (withInitialDelay) delay(delayMs) while (!isCompleted) { progress += step onTick?.invoke(progress) delay(delayMs) if (isInterrupted) return@launch } onComplete?.invoke() }</ID>
+  </CurrentIssues>
+</SmellBaseline>
