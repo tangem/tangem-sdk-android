@@ -33,8 +33,8 @@ afterEvaluate {
                 name = "GitHubPackages"
                 url = uri("https://maven.pkg.github.com/tangem/tangem-sdk-android")
                 credentials {
-                    username = "$githubUser"
-                    password = "$githubPass"
+                    username = findProperty("githubUser")
+                    password = findProperty("githubPass")
                 }
             }
         }
