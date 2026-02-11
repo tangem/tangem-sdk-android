@@ -24,6 +24,4 @@ enum class ManufacturerPublicKey(val id: String, val value: String) {
         id = "SMART CASH SDK",
         value = "03BAB86D56298C996F564A84FC88E28AED38184B12F07E519113BEF48C76F3DF3A",
     ),
-
-    ;
 }
