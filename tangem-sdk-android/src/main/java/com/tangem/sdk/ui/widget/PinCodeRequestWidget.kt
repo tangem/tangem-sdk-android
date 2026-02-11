@@ -2,6 +2,7 @@ package com.tangem.sdk.ui.widget
 
 import android.view.View
 import android.widget.Button
+import android.widget.TextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.tangem.common.CompletionResult
@@ -28,9 +29,11 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
     private val etPinCode = tilPinCode.findViewById<TextInputEditText>(R.id.etPinCode)
     private val btnContinue = mainView.findViewById<Button>(R.id.btnContinue)
     private val btnForgotCode = mainView.findViewById<Button>(R.id.btnForgotCode)
+    private val tvWarningMessage = mainView.findViewById<TextView>(R.id.tvWarningMessage)
 
     init {
         tilPinCode.hint = getString(R.string.pin1)
+        tvWarningMessage.setText(R.string.tangem_never_pregenerate_code_alert)
 
         etPinCode.setupImeActionDone(btnContinue::performClick)
     }

@@ -42,4 +42,14 @@
     <color name="sdk_drawable_stroke">#C7C7CC</color>
     <color name="sdk_drawable_stroke_alternative">#1C1C1E</color>
 
+    <color name="sdk_button_primary_bg">#C9C9C9</color>
+    <color name="sdk_button_primary_text">#1E1E1E</color>
+    <color name="sdk_button_secondary_bg">#3B3B3B</color>
+    <color name="sdk_button_secondary_text">#FFFFFF</color>
+    <color name="sdk_button_disabled_bg">#303030</color>
+    <color name="sdk_button_disabled_text">#5A5A5A</color>
+
+    <color name="sdk_warning_background">#1AFFB71B</color>
+    <color name="sdk_warning_text">#FFFFFF</color>
+
 </resources>

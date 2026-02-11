@@ -22,13 +22,13 @@
 
     </FrameLayout>
 
-    <TextView
+    <include
+        android:id="@+id/warningView"
+        layout="@layout/view_warning"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="12dp"
-        android:text="@string/tangem_never_pregenerate_code_alert"
-        android:textColor="@color/dark_gray" />
+        android:layout_marginTop="12dp" />
 
     <View
         android:layout_width="match_parent"
@@ -38,38 +38,29 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="72dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="32dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnForgotCode"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            style="@style/Widget.Sdk.Button.Secondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:text="@string/reset_codes_btn_forgot_your_code"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_marginBottom="8dp"
+            android:text="@string/reset_codes_btn_forgot_your_code" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnContinue"
+            style="@style/Widget.Sdk.Button.Primary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:text="@string/common_continue"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:text="@string/common_continue" />
 
     </LinearLayout>
 

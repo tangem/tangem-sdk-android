@@ -46,4 +46,14 @@
     <color name="sdk_drawable_stroke">#1B1C20</color>
     <color name="sdk_drawable_stroke_alternative">#1B1C20</color>
 
+    <color name="sdk_button_primary_bg">#1E1E1E</color>
+    <color name="sdk_button_primary_text">#FFFFFF</color>
+    <color name="sdk_button_secondary_bg">#EBEBEB</color>
+    <color name="sdk_button_secondary_text">#1E1E1E</color>
+    <color name="sdk_button_disabled_bg">#EBEBEB</color>
+    <color name="sdk_button_disabled_text">#B0B0B0</color>
+
+    <color name="sdk_warning_background">#1AFFB71B</color>
+    <color name="sdk_warning_text">#1E1E1E</color>
+
 </resources>
