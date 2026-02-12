@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/llWarning"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_warning"
+    android:padding="12dp">
+
+    <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/ic_alert_20"
+        android:contentDescription="@null" />
+
+    <TextView
+        android:id="@+id/tvWarningMessage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:fontFamily="sans-serif"
+        android:textColor="@color/sdk_warning_text"
+        android:textSize="12sp"
+        tools:text="@string/tangem_never_pregenerate_code_alert" />
+
+</LinearLayout>

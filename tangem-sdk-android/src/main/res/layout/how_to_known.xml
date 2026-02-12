@@ -138,50 +138,41 @@
         android:id="@+id/flButtonContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="46dp"
-        android:layout_marginEnd="46dp"
-        android:layout_marginBottom="4dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toTopOf="@+id/btnCancel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSwitchMode"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/Widget.Sdk.Button.Secondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:text="@string/how_to_try_other_way_button"
-            app:layout_constraintBottom_toTopOf="@+id/btnCancel"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:text="@string/how_to_try_other_way_button" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnShowAgain"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/Widget.Sdk.Button.Secondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
             android:text="@string/how_to_show_again_button"
-            android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@+id/btnCancel"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:visibility="gone" />
 
     </FrameLayout>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnCancel"
+        style="@style/Widget.Sdk.Button.Primary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="46dp"
-        android:layout_marginEnd="46dp"
-        android:layout_marginBottom="32dp"
-        android:insetTop="0dp"
-        android:insetBottom="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
         android:text="@string/common_cancel"
+        app:backgroundTint="@color/sdk_button_primary_bg_selector"
+        app:cornerRadius="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
