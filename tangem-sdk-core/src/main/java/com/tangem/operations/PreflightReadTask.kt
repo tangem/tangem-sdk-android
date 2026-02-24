@@ -1,15 +1,16 @@
 package com.tangem.operations
 
 import com.tangem.Log
-import com.tangem.common.CompletionResult
+import com.tangem.common.CompletionResult.Failure
+import com.tangem.common.CompletionResult.Success
+import com.tangem.common.UserCodeType
 import com.tangem.common.card.Card
 import com.tangem.common.card.FirmwareVersion
-import com.tangem.common.core.CardIdDisplayFormat
-import com.tangem.common.core.CardSession
-import com.tangem.common.core.CardSessionRunnable
-import com.tangem.common.core.CompletionCallback
-import com.tangem.common.core.TangemSdkError
+import com.tangem.common.core.*
 import com.tangem.common.extensions.guard
+import com.tangem.common.json.MoshiJsonConverter
+import com.tangem.common.services.TrustedCardsRepo
+import com.tangem.common.services.secure.SecureStorage
 import com.tangem.operations.preflightread.PreflightReadFilter
 import com.tangem.operations.read.ReadCommand
 import com.tangem.operations.read.ReadWalletsListCommand
@@ -37,20 +38,28 @@ sealed class PreflightReadMode {
      */
     object FullCardRead : PreflightReadMode()
 
+    /**
+     * Read card info and all wallets. Show alert if this card is unknown yet
+     */
+    object FullCardReadWithAccessCodeCheck : PreflightReadMode()
+
     override fun toString(): String = this::class.java.simpleName
 }
 
 class PreflightReadTask(
     private val readMode: PreflightReadMode,
     private val filter: PreflightReadFilter? = null,
+    secureStorage: SecureStorage,
 ) : CardSessionRunnable<Card> {
+
+    private val trustedCardsRepo = TrustedCardsRepo(secureStorage, MoshiJsonConverter.INSTANCE)
 
     override fun run(session: CardSession, callback: CompletionCallback<Card>) {
         Log.command(this) { " [mode - $readMode]" }
 
         ReadCommand().run(session) readCommand@{ result ->
             when (result) {
-                is CompletionResult.Success -> {
+                is Success -> {
                     val card = result.data.card
 
                     try {
@@ -60,7 +69,7 @@ class PreflightReadTask(
                             filter?.onCardRead(card = card, environment = session.environment)
                         }
                     } catch (error: TangemSdkError) {
-                        callback(CompletionResult.Failure(error))
+                        callback(Failure(error))
                         return@readCommand
                     }
 
@@ -69,7 +78,7 @@ class PreflightReadTask(
                     finalizeRead(session = session, card = card, callback = callback)
                 }
 
-                is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+                is Failure -> callback(Failure(result.error))
             }
         }
     }
@@ -78,9 +87,9 @@ class PreflightReadTask(
         if (card.firmwareVersion < FirmwareVersion.MultiWalletAvailable) {
             val result = try {
                 filterOnReadWalletsList(card, session)
-                CompletionResult.Success(card)
+                Success(card)
             } catch (error: TangemSdkError) {
-                CompletionResult.Failure(error)
+                Failure(error)
             }
 
             callback(result)
@@ -89,30 +98,67 @@ class PreflightReadTask(
 
         when (readMode) {
             PreflightReadMode.FullCardRead -> readWalletsList(session, callback)
-            PreflightReadMode.ReadCardOnly, PreflightReadMode.None -> callback(CompletionResult.Success(card))
+            PreflightReadMode.FullCardReadWithAccessCodeCheck -> checkFullCardReadWithAccessCodeCheckMode(
+                session = session,
+                card = card,
+                callback = callback,
+            )
+            PreflightReadMode.ReadCardOnly, PreflightReadMode.None -> callback(Success(card))
+        }
+    }
+
+    private fun checkFullCardReadWithAccessCodeCheckMode(
+        session: CardSession,
+        card: Card,
+        callback: CompletionCallback<Card>,
+    ) {
+        val cardPublicKey = session.environment.card?.cardPublicKey ?: run {
+            callback(Failure(TangemSdkError.MissingPreflightRead()))
+            return
+        }
+        val attestationResult = trustedCardsRepo.attestation(cardPublicKey)
+        if (card.isAccessCodeSet && attestationResult == null) {
+            session.pause()
+
+            session.requestUserCodeIfNeeded(
+                type = UserCodeType.AccessCode,
+                isFirstAttempt = true,
+                showWelcomeBackWarning = true,
+            ) { result ->
+                when (result) {
+                    is Success -> {
+                        session.resume { readWalletsList(session, callback) }
+                    }
+                    is Failure -> {
+                        callback(Failure(result.error))
+                    }
+                }
+            }
+        } else {
+            readWalletsList(session, callback)
         }
     }
 
     private fun readWalletsList(session: CardSession, callback: CompletionCallback<Card>) {
         ReadWalletsListCommand().run(session) { result ->
             when (result) {
-                is CompletionResult.Success -> {
+                is Success -> {
                     val card = session.environment.card.guard {
-                        callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
+                        callback(Failure(TangemSdkError.MissingPreflightRead()))
                         return@run
                     }
 
                     val callbackResult = try {
                         filterOnReadWalletsList(card, session)
-                        CompletionResult.Success(card)
+                        Success(card)
                     } catch (error: TangemSdkError) {
-                        CompletionResult.Failure(error)
+                        Failure(error)
                     }
 
                     callback(callbackResult)
                 }
 
-                is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+                is Failure -> callback(Failure(result.error))
             }
         }
     }

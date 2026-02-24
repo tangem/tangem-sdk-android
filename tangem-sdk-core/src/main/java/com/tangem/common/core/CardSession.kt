@@ -252,6 +252,7 @@ class CardSession(
             requestUserCodeIfNeeded(
                 type = codeType,
                 isFirstAttempt = true,
+                showWelcomeBackWarning = false,
             ) { userCodeResult ->
                 userCodeResult
                     .doOnSuccess { runnable.prepare(this, callback) }
@@ -294,6 +295,7 @@ class CardSession(
         val preflightTask = PreflightReadTask(
             readMode = preflightReadMode,
             filter = preflightReadFilter ?: cardId?.let(::CardIdPreflightReadFilter),
+            secureStorage = secureStorage,
         )
 
         preflightTask.run(this) { result ->
@@ -479,23 +481,71 @@ class CardSession(
         }
     }
 
-    fun requestUserCodeIfNeeded(type: UserCodeType, isFirstAttempt: Boolean, callback: CompletionCallback<Unit>) {
-        val userCode = when (type) {
-            UserCodeType.AccessCode -> environment.accessCode.value
-            UserCodeType.Passcode -> environment.passcode.value
-        }
-        if (userCode != null) {
-            callback(CompletionResult.Success(Unit))
-            return
-        }
-        Log.session { "request user code of type: $type" }
+    fun requestUserCodeIfNeeded(
+        type: UserCodeType,
+        isFirstAttempt: Boolean,
+        showWelcomeBackWarning: Boolean,
+        callback: CompletionCallback<Unit>,
+    ) {
+        if (showWelcomeBackWarning) {
+            Log.session { "showWelcomeBackWarning" }
+            viewDelegate.showWelcomeBackWarning { result ->
+                when (result) {
+                    is CompletionResult.Success -> {
+                        Log.session { "showWelcomeBackWarning success" }
+                        val showForgotButton = environment.card?.backupStatus?.isActive ?: false
+                        val cardId = environment.card?.cardId ?: this.cardId
+                        val formattedCardId = cardId?.let {
+                            CardIdFormatter(environment.config.cardIdDisplayFormat).getFormattedCardId(it)
+                        }
+                        showRequestAccessCode(
+                            type = type,
+                            isFirstAttempt = isFirstAttempt,
+                            showForgotButton = showForgotButton,
+                            formattedCardId = formattedCardId,
+                            callback = callback,
+                        )
+                    }
+                    is CompletionResult.Failure -> {
+                        Log.session { "showWelcomeBackWarning error" }
+                        callback(CompletionResult.Failure(result.error))
+                    }
+                }
+            }
+        } else {
+            val userCode = when (type) {
+                UserCodeType.AccessCode -> environment.accessCode.value
+                UserCodeType.Passcode -> environment.passcode.value
+            }
+            if (userCode != null) {
+                callback(CompletionResult.Success(Unit))
+                return
+            }
+            Log.session { "request user code of type: $type" }
 
-        val cardId = environment.card?.cardId ?: this.cardId
-        val showForgotButton = environment.card?.backupStatus?.isActive ?: false
-        val formattedCardId = cardId?.let {
-            CardIdFormatter(environment.config.cardIdDisplayFormat).getFormattedCardId(it)
-        }
+            val cardId = environment.card?.cardId ?: this.cardId
+            val showForgotButton = environment.card?.backupStatus?.isActive ?: false
+            val formattedCardId = cardId?.let {
+                CardIdFormatter(environment.config.cardIdDisplayFormat).getFormattedCardId(it)
+            }
 
+            showRequestAccessCode(
+                type = type,
+                isFirstAttempt = isFirstAttempt,
+                showForgotButton = showForgotButton,
+                formattedCardId = formattedCardId,
+                callback = callback,
+            )
+        }
+    }
+
+    private fun showRequestAccessCode(
+        type: UserCodeType,
+        isFirstAttempt: Boolean,
+        showForgotButton: Boolean,
+        formattedCardId: String?,
+        callback: CompletionCallback<Unit>,
+    ) {
         viewDelegate.requestUserCode(
             type = type,
             isFirstAttempt = isFirstAttempt,

@@ -6,6 +6,7 @@ import com.tangem.common.card.CardWallet
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.json.*
+import com.tangem.common.services.InMemoryStorage
 import com.tangem.crypto.bip39.BIP39Wordlist
 import com.tangem.crypto.bip39.BIP39WordlistTest
 import com.tangem.crypto.bip39.Wordlist
@@ -34,7 +35,7 @@ import java.nio.file.Paths
  */
 class JSONRPCTests {
     private val converter = MoshiJsonConverter.INSTANCE
-    private val jsonRpcConverter = JSONRPCConverter.shared(createDefaultWordlist())
+    private val jsonRpcConverter = JSONRPCConverter.shared(createDefaultWordlist(), InMemoryStorage())
     private val testCard: Card = initCard()
 
     private fun initCard(): Card {
