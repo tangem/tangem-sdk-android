@@ -10,10 +10,7 @@ import com.tangem.Log
 import com.tangem.ViewDelegateMessage
 import com.tangem.common.CompletionResult
 import com.tangem.common.Timer
-import com.tangem.common.core.ProductType
-import com.tangem.common.core.ScanTagImage
-import com.tangem.common.core.SessionEnvironment
-import com.tangem.common.core.TangemSdkError
+import com.tangem.common.core.*
 import com.tangem.sdk.R
 import com.tangem.sdk.SessionViewDelegateState
 import com.tangem.sdk.extensions.SecurityModeController
@@ -25,8 +22,11 @@ import com.tangem.sdk.postUI
 import com.tangem.sdk.ui.widget.*
 import com.tangem.sdk.ui.widget.howTo.HowToTapWidget
 import com.tangem.sdk.ui.widget.progressBar.ProgressbarStateWidget
+import com.tangem.sdk.url.DefaultUrlOpener
+import com.tangem.sdk.url.UrlOpener
 import kotlinx.coroutines.Dispatchers
 
+@Suppress("LargeClass")
 class NfcSessionDialog(
     context: Context,
     private val nfcManager: NfcManager,
@@ -36,6 +36,7 @@ class NfcSessionDialog(
 
     private lateinit var taskContainer: ViewGroup
     private lateinit var howToContainer: ViewGroup
+    private lateinit var welcomeBackContainer: ViewGroup
 
     private lateinit var headerWidget: HeaderWidget
     private lateinit var touchCardWidget: TouchCardWidget
@@ -44,8 +45,10 @@ class NfcSessionDialog(
     private lateinit var pinCodeSetChangeWidget: PinCodeModificationWidget
     private lateinit var messageWidget: MessageWidget
     private lateinit var howToTapWidget: HowToTapWidget
+    private lateinit var welcomeBackWidget: AlreadyActivatedWidget
 
     private var currentState: SessionViewDelegateState? = null
+    private val urlOpener: UrlOpener = DefaultUrlOpener(context)
 
     @Deprecated("Used to fix lack of security delay on cards with firmware version below 1.21")
     private var emulateSecurityDelayTimer: Timer? = null
@@ -62,6 +65,7 @@ class NfcSessionDialog(
 
         taskContainer = view.findViewById(R.id.taskContainer)
         howToContainer = view.findViewById(R.id.howToContainer)
+        welcomeBackContainer = view.findViewById(R.id.welcomeBackContainer)
 
         headerWidget = HeaderWidget(view.findViewById(R.id.llHeader))
         touchCardWidget = TouchCardWidget(view.findViewById(R.id.flImageContainer), nfcLocationData)
@@ -74,6 +78,11 @@ class NfcSessionDialog(
         )
         messageWidget = MessageWidget(view.findViewById(R.id.llMessage))
         howToTapWidget = HowToTapWidget(howToContainer, nfcManager, compositeProvider)
+        val layoutInflater = LayoutInflater.from(view.context)
+        val welcomeBackView = layoutInflater.inflate(R.layout.already_activated_widget_layout, null)
+        welcomeBackContainer.removeAllViews()
+        welcomeBackContainer.addView(welcomeBackView)
+        welcomeBackWidget = AlreadyActivatedWidget(welcomeBackView)
 
         stateWidgets.add(headerWidget)
         stateWidgets.add(touchCardWidget)
@@ -82,6 +91,7 @@ class NfcSessionDialog(
         stateWidgets.add(pinCodeSetChangeWidget)
         stateWidgets.add(messageWidget)
         stateWidgets.add(howToTapWidget)
+        stateWidgets.add(welcomeBackWidget)
 
         headerWidget.onHowTo = { show(SessionViewDelegateState.HowToTap) {} }
 
@@ -149,6 +159,7 @@ class NfcSessionDialog(
             is SessionViewDelegateState.TagConnected -> onTagConnected(state)
             is SessionViewDelegateState.TagLost -> onTagLost(state)
             is SessionViewDelegateState.HowToTap -> howToTap(state)
+            is SessionViewDelegateState.AlreadyActivated -> alreadyActivated(state, state.callback)
             is SessionViewDelegateState.None,
             is SessionViewDelegateState.ResetCodes,
             -> Unit
@@ -204,7 +215,6 @@ class NfcSessionDialog(
             }
 
             pinCodeRequestWidget.onContinue = {
-                android.util.Log.e("NfcSessionDialog", "onSave: $it")
                 enableBottomSheetAnimation()
                 pinCodeRequestWidget.onContinue = null
                 setStateAndShow(getEmptyOnReadyEvent(), headerWidget, touchCardWidget, messageWidget)
@@ -300,6 +310,32 @@ class NfcSessionDialog(
         setStateAndShow(state, howToTapWidget)
     }
 
+    private fun alreadyActivated(state: SessionViewDelegateState, callback: CompletionCallback<Unit>) {
+        Log.view { "showing alreadyActivated" }
+        enableBottomSheetAnimation()
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        taskContainer.hide()
+        findDesignBottomSheetView()?.let { it.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT }
+        howToContainer.hide()
+        welcomeBackContainer.show()
+
+        welcomeBackWidget.onConfirm = {
+            welcomeBackWidget.onConfirm = null
+            welcomeBackContainer.hide()
+            taskContainer.show()
+            findDesignBottomSheetView()?.let { it.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT }
+            callback.invoke(CompletionResult.Success(Unit))
+        }
+
+        welcomeBackWidget.onJustBoughtClick = {
+            urlOpener.openUrlExternalBrowser(PREACTIVATED_WALLETS_URL)
+            welcomeBackContainer.hide()
+            taskContainer.show()
+            callback.invoke(CompletionResult.Failure(TangemSdkError.UserCancelled()))
+        }
+        setStateAndShow(state, welcomeBackWidget)
+    }
+
     override fun setStateAndShow(
         state: SessionViewDelegateState,
         vararg views: StateWidget<SessionViewDelegateState>,
@@ -359,5 +395,6 @@ class NfcSessionDialog(
 
     private companion object {
         const val SECURITY_DELAY_MS = 950L
+        const val PREACTIVATED_WALLETS_URL = "https://tangem.com/en/blog/post/preactivated-wallets/"
     }
 }
