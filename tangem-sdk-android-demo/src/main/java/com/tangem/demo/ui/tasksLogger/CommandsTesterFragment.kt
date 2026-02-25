@@ -211,6 +211,9 @@ class SdkTaskSpinnerFragment : BaseFragment() {
         ) {
         }
 
+        override fun showWelcomeBackWarning(callback: CompletionCallback<Unit>) {
+        }
+
         override fun requestUserCodeChange(type: UserCodeType, cardId: String?, callback: CompletionCallback<String>) {}
         override fun setConfig(config: Config) {}
         override fun setMessage(message: ViewDelegateMessage?) {}

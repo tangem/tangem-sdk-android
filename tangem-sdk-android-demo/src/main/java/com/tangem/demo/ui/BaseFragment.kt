@@ -450,6 +450,7 @@ abstract class BaseFragment : Fragment() {
                     val command = PreflightReadTask(
                         readMode = PreflightReadMode.FullCardRead,
                         filter = card?.cardId?.let(::CardIdPreflightReadFilter),
+                        secureStorage = sdk.secureStorage,
                     )
 
                     sdk.startSessionWithRunnable(command) {

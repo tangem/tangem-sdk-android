@@ -13,6 +13,7 @@
     <color name="sdk_on_error">#ffffff</color>
 
     <color name="sdk_text">#ffffff</color>
+    <color name="sdk_text_secondary">#B0B0B0</color>
 
     <color name="light_gray">#514E4E</color>
     <color name="medium_gray">#707070</color>

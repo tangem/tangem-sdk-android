@@ -75,6 +75,8 @@ interface SessionViewDelegate {
         callback: CompletionCallback<String>,
     )
 
+    fun showWelcomeBackWarning(callback: CompletionCallback<Unit>)
+
     /**
      * It is called when a user wants to change pin code.
      */

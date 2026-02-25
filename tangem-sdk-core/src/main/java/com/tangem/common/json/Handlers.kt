@@ -5,12 +5,14 @@ import com.tangem.common.card.Card
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.core.CardSessionRunnable
 import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.services.secure.SecureStorage
 import com.tangem.crypto.bip39.DefaultMnemonic
 import com.tangem.crypto.bip39.Wordlist
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import com.tangem.crypto.hdWallet.HDWalletError
 import com.tangem.crypto.hdWallet.masterkey.AnyMasterKeyFactory
+import com.tangem.operations.PreflightReadMode
 import com.tangem.operations.PreflightReadTask
 import com.tangem.operations.ScanTask
 import com.tangem.operations.attestation.AttestCardKeyCommand
@@ -63,11 +65,15 @@ class DepersonalizeHandler : JSONRPCHandler<DepersonalizeResponse> {
     }
 }
 
-class PreflightReadHandler : JSONRPCHandler<Card> {
+class PreflightReadHandler(private val secureStorage: SecureStorage) : JSONRPCHandler<Card> {
     override val method: String = "PREFLIGHT_READ"
 
     override fun makeRunnable(params: Map<String, Any?>): CardSessionRunnable<Card> {
-        return make<PreflightReadTask>(params)
+        val readMode: PreflightReadMode = (params["readMode"] as? String)?.let {
+            MoshiJsonConverter.INSTANCE.fromJson<PreflightReadMode>("\"$it\"")
+        } ?: PreflightReadMode.FullCardRead
+
+        return PreflightReadTask(readMode = readMode, secureStorage = secureStorage)
     }
 }
 
