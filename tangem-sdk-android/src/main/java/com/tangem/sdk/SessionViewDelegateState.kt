@@ -47,5 +47,9 @@ sealed class SessionViewDelegateState {
     data class TagLost(val productType: ProductType) : SessionViewDelegateState()
     object TagConnected : SessionViewDelegateState()
     object HowToTap : SessionViewDelegateState()
+    data class AlreadyActivated(
+        val callback: CompletionCallback<Unit>,
+    ) : SessionViewDelegateState()
+
     object None : SessionViewDelegateState()
 }
