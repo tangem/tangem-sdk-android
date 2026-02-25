@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+    <string name="already_activated_btn_confirm">これは私のウォレットです</string>
+    <string name="already_activated_btn_just_bought">今購入したばかりです</string>
+    <string name="already_activated_message">このウォレットはすでに有効化されています。この操作を行ったのがご本人であることを確認してください。</string>
+    <string name="already_activated_title">おかえりなさい</string>
     <string name="attestation_failed_card">このカードは、製造サンプルまたは偽造品である可能性があります。自己責任で続行してください。</string>
     <string name="attestation_failed_card_title">カード認証に失敗しました</string>
     <string name="attestation_failed_dev_card">これは開発カードです。真正性は確認できません。このカードを支払い手段として使用しないでください。</string>
     <string name="attestation_online_failed_body">現在、カードのオンライン認証は実行できません。自己責任で続行するか、後でもう一度お試しください。</string>
     <string name="attestation_online_failed_title">オンライン認証に失敗しました</string>
     <string name="attestation_warning_attest_wallets">カードのウォレットの不審な使用が検出されました。</string>
-    <string name="backup_add_backup_card_message">スマートフォンとバックアップとして使用したいカードを、上記のとおりに接続してください。</string>
+    <string name="backup_add_backup_card_message">上記のとおり、バックアップとして使用したいカードまたはリングとスマートフォンを接続します。</string>
     <string name="backup_finalize_backup_card_message_format">上図のように、番号%sのカードをスマートフォンにタップしてください。</string>
     <string name="backup_finalize_backup_ring_message">上図のようにリングをスマートフォンにタップします。</string>
     <string name="backup_finalize_primary_card_message_format">お使いのスマートフォンと番号%sのプライマリカードを、上記のように接続してください。</string>
@@ -14,6 +18,7 @@
     <string name="backup_prepare_primary_card_message">スマートフォンとプライマリカードを上記のとおりに接続してください。</string>
     <string name="backup_prepare_primary_card_message_format">お使いのスマートフォンと番号%sのプライマリカードを、上記のように接続してください。</string>
     <string name="biometric_prompt_title">金庫のロック解除</string>
+    <string name="card_health_warning">Tangemカードに問題が発生しています。Tangemサポートまでお問い合わせください。</string>
     <string name="common_cancel">キャンセル</string>
     <string name="common_card">カード</string>
     <string name="common_card_or_ring">カードまたはリング</string>
@@ -55,14 +60,14 @@
     <string name="how_to_button">どのように</string>
     <string name="how_to_got_it_button">わかりました!</string>
     <string name="how_to_known_antenna_is_here">NFCアンテナはここにあります</string>
-    <string name="how_to_known_here_how_to_use">Tangemカードを（スマートフォン）で使用する方法は次のとおりです。</string>
-    <string name="how_to_known_tap_card_to_the_front">カードをスマートフォンの前面にタップします</string>
+    <string name="how_to_known_here_how_to_use">Tangemウォレットを (スマートフォン) で使用する方法は以下のとおりです</string>
+    <string name="how_to_known_tap_card_to_the_front">カードまたはリングをスマートフォンの前面にタップします</string>
     <string name="how_to_nfc_detected">NFCアンテナの場所が見つかりました。覚えておいてください。</string>
     <string name="how_to_show_again_button">もう一度表示</string>
     <string name="how_to_try_other_way_button">まだ動作していません</string>
-    <string name="how_to_unknown_move_card">NFCアンテナの位置を検出するには、確認されるまでカードを上下に動かしてください。</string>
-    <string name="how_to_unknown_nothing_happened">何も起こりませんでしたか? カードをスマートフォンから外して、もう一度戻してみてください。</string>
-    <string name="how_to_unknown_tap_card">カードをスマートフォンの背面にタップしてください</string>
+    <string name="how_to_unknown_move_card">NFCアンテナの位置を検出するには、カードまたはリングを上下に動かして確認を待ちます。</string>
+    <string name="how_to_unknown_nothing_happened">何も起こりませんでしたか？カードまたはリングをスマートフォンから離して、再度近づけてみてください。</string>
+    <string name="how_to_unknown_tap_card">カードまたはリングをスマートフォンの背面にタップします</string>
     <string name="issuer_signature_loading_failed">カードの証明書を読み込めませんでした。しばらくしてからもう一度お試しください。</string>
     <string name="nfc_session_timeout">処理が完了していません。操作を完了するには、カードをもう一度タップしてください。</string>
     <string name="pin1">アクセスコード</string>
@@ -77,23 +82,23 @@
     <string name="reset_codes_current_card">現在のカード</string>
     <string name="reset_codes_linked_card">リンクされたカード</string>
     <string name="reset_codes_message_body_backup">リンクされたカードをタップしてください</string>
-    <string name="reset_codes_message_body_restore">まず、復元処理のためにカードを準備してください</string>
+    <string name="reset_codes_message_body_restore">まず、復元プロセスのためにカードまたはリングを準備します</string>
     <string name="reset_codes_message_body_restore_final">アクセスコードを復元したいカードを、もう一度タップしてください</string>
-    <string name="reset_codes_message_title_backup">バックアップカードをタップしてください</string>
-    <string name="reset_codes_message_title_restore">復元したいカードをタップしてください</string>
-    <string name="reset_codes_scan_confirmation_card">別のリンクされたカードをスキャンしてください</string>
+    <string name="reset_codes_message_title_backup">バックアップカードまたはリングをタップします</string>
+    <string name="reset_codes_message_title_restore">復元したいカードまたはリングをタップします</string>
+    <string name="reset_codes_scan_confirmation_card">リンクされた別のカードまたはリングをスキャンします</string>
     <string name="reset_codes_scan_first_card">%sをリセットしたいカードをスキャンしてください</string>
-    <string name="reset_codes_scan_to_reset">カードをスキャンしてユーザーコードをリセットしてください</string>
+    <string name="reset_codes_scan_to_reset">カードまたはリングをスキャンして、ユーザーコードをリセットします</string>
     <string name="reset_codes_success_message">コードは正常にリセットされました</string>
     <string name="sign_multiple_chunks_part">%2$dのうち%1$d部分に署名しています</string>
     <string name="tangem_never_pregenerate_code_alert">Tangemは、事前に生成されたアクセスコードと一緒にウォレットを販売することはありません</string>
     <string name="view_delegate_delay">操作が進行中です</string>
     <string name="view_delegate_header_card">カード</string>
     <string name="view_delegate_scan">スキャン準備完了</string>
-    <string name="view_delegate_scan_description">上記のようにカードをタップし、操作が完了するまでホールドし続けます。</string>
+    <string name="view_delegate_scan_description">上図のようにカードまたはリングをタップし、操作が終了するまで持ち続けます</string>
     <string name="view_delegate_scan_description_format">上記のように%sタップし、操作が終了するまで押し続けます。</string>
     <string name="view_delegate_security_delay">長くタップ</string>
-    <string name="view_delegate_security_delay_description">セキュリティを確保するため、操作が完了するまでカードをホールドしてください。</string>
+    <string name="view_delegate_security_delay_description">セキュリティを確保するため、操作が完了するまでカードまたはリングを持ち続けてください</string>
     <string name="view_delegate_security_delay_description_format">セキュリティを確保するため、操作が完了するまで%sを押し続けてください</string>
     <string name="wallet_not_found">カードが間違っているようです。このカードでは操作を実行できません。</string>
 </resources>
