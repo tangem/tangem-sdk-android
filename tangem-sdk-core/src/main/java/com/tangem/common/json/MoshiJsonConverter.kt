@@ -1,20 +1,9 @@
 package com.tangem.common.json
 
-import com.squareup.moshi.FromJson
-import com.squareup.moshi.JsonAdapter
-import com.squareup.moshi.JsonReader
-import com.squareup.moshi.JsonWriter
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.ToJson
-import com.squareup.moshi.Types
+import com.squareup.moshi.*
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tangem.common.MaskBuilder
-import com.tangem.common.card.Card
-import com.tangem.common.card.CardWallet
-import com.tangem.common.card.EllipticCurve
-import com.tangem.common.card.EncryptionMode
-import com.tangem.common.card.FirmwareVersion
-import com.tangem.common.card.SigningMethod
+import com.tangem.common.card.*
 import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
@@ -201,6 +190,7 @@ class TangemSdkAdapter {
             return when (src) {
                 PreflightReadMode.FullCardRead -> "fullCardRead"
                 PreflightReadMode.ReadCardOnly -> "readCardOnly"
+                PreflightReadMode.FullCardReadWithAccessCodeCheck -> "fullCardReadWithAccessCodeCheck"
                 PreflightReadMode.None -> "none"
             }
         }
@@ -210,6 +200,7 @@ class TangemSdkAdapter {
             return when (json) {
                 "fullCardRead" -> PreflightReadMode.FullCardRead
                 "readCardOnly" -> PreflightReadMode.ReadCardOnly
+                "fullCardReadWithAccessCodeCheck" -> PreflightReadMode.FullCardReadWithAccessCodeCheck
                 "none" -> PreflightReadMode.None
                 else -> error("PreflightReadMode not found")
             }
