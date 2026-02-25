@@ -130,7 +130,11 @@ class PreflightReadTask(
                         session.resume { readWalletsList(session, callback) }
                     }
                     is Failure -> {
-                        callback(Failure(result.error))
+                        if (result.error is TangemSdkError.UserCancelled) {
+                            session.viewDelegate.dismiss()
+                        } else {
+                            callback(Failure(result.error))
+                        }
                     }
                 }
             }
