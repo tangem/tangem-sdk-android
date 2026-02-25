@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+    <string name="already_activated_btn_confirm">This is my wallet</string>
+    <string name="already_activated_btn_just_bought">I\'ve just bought it</string>
+    <string name="already_activated_message">This wallet has already been activated, and we would like to confirm that it was activated by you.</string>
+    <string name="already_activated_title">Welcome back</string>
     <string name="attestation_failed_card">This card may be production sample or counterfeit. You can continue at your own risk.</string>
     <string name="attestation_failed_card_title">Card verification failed</string>
     <string name="attestation_failed_dev_card">This is a development card. Its authenticity cannot be verified. Do not accept this card as a means of payment.</string>
@@ -14,6 +18,7 @@
     <string name="backup_prepare_primary_card_message">Connect your phone and the primary card exactly as it shown above.</string>
     <string name="backup_prepare_primary_card_message_format">Connect your phone and the primary card with number %s exactly as it shown above.</string>
     <string name="biometric_prompt_title">Vault unlocking</string>
+    <string name="card_health_warning">There is an issue with your Tangem card. Please contact Tangem Support for assistance.</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_card">card</string>
     <string name="common_card_or_ring">card or ring</string>
@@ -96,8 +101,4 @@
     <string name="view_delegate_security_delay_description">To ensure security please hold the card or ring until the operation complete</string>
     <string name="view_delegate_security_delay_description_format">To ensure security please hold the %s until the operation is complete</string>
     <string name="wallet_not_found">Looks like you got the wrong card. The operation cannot be performed with this card.</string>
-    <string name="already_activated_btn_confirm">This is my wallet</string>
-    <string name="already_activated_btn_just_bought">I\'ve just bought it</string>
-    <string name="already_activated_message">This wallet has already been activated, and we would like to confirm that it was activated by you.</string>
-    <string name="already_activated_title">Welcome back</string>
 </resources>
