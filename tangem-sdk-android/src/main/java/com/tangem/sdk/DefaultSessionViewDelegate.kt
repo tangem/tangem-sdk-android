@@ -255,6 +255,8 @@ class DefaultSessionViewDelegate(
                 create()
                 setOnCancelListener {
                     if (!stoppedBySession) nfcManager.reader.stopSession(true)
+                }
+                setOnDismissListener {
                     readingDialog = null
                 }
             }
