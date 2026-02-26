@@ -100,7 +100,7 @@ class NfcSessionDialog(
 
     override fun onStop() {
         super.onStop()
-
+        dismiss()
         SecurityModeController.setSecurityMode(dialog = this, value = false)
     }
 
