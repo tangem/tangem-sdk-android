@@ -13,12 +13,8 @@ import com.tangem.common.core.TagType
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.nfc.CardReader
 import com.tangem.common.nfc.ReadingActiveListener
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.cancellation.CancellationException
@@ -30,7 +26,7 @@ data class NfcTag(val type: TagType, val isoDep: IsoDep?, val nfcV: NfcV? = null
  * Provides NFC communication between an Android application and Tangem card.
  */
 class NfcReader : CardReader {
-    override val tag = ConflatedBroadcastChannel<TagType?>()
+    override val tag = Channel<TagType?>()
     override var scope: CoroutineScope? = null
 
     var listener: ReadingActiveListener? = null
@@ -40,7 +36,7 @@ class NfcReader : CardReader {
         set(value) {
             field = value
             Log.nfc { "received tag: ${value?.type?.name?.uppercase()}" }
-            scope?.launchWithLock(readerMutex) { tag.send(value?.type) }
+            scope?.launchWithLock(readerMutex) { tag.trySend(value?.type) }
         }
 
     override fun startSession() {
@@ -122,7 +118,7 @@ class NfcReader : CardReader {
             }
         }
 
-    override fun transceiveApdu(apdu: CommandApdu, callback: CompletionCallback<ResponseApdu>) {
+    private fun transceiveApdu(apdu: CommandApdu, callback: CompletionCallback<ResponseApdu>) {
         transceiveRaw(apdu.apduData) { result ->
             when (result) {
                 is CompletionResult.Success -> {
@@ -145,7 +141,7 @@ class NfcReader : CardReader {
             }
         }
 
-    override fun transceiveRaw(apduData: ByteArray, callback: CompletionCallback<ByteArray?>) {
+    private fun transceiveRaw(apduData: ByteArray, callback: CompletionCallback<ByteArray?>) {
         val rawResponse: ByteArray? = try {
             transcieveAndLog(apduData)
         } catch (exception: TagLostException) {

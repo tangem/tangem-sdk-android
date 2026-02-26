@@ -24,7 +24,9 @@ import com.tangem.sdk.nfc.NfcManager
 import com.tangem.sdk.ui.AttestationFailedDialog
 import com.tangem.sdk.ui.NfcEnableDialog
 import com.tangem.sdk.ui.NfcSessionDialog
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.withContext
 
 /**
  * Default implementation of [SessionViewDelegate].
@@ -48,7 +50,7 @@ class DefaultSessionViewDelegate(
     private var nfcEnableDialog: NfcEnableDialog? = null
     private var stoppedBySession: Boolean = false
 
-    override fun onSessionStarted(
+    override suspend fun onSessionStarted(
         cardId: String?,
         message: ViewDelegateMessage?,
         enableHowTo: Boolean,
@@ -195,14 +197,14 @@ class DefaultSessionViewDelegate(
         readingDialog = null
     }
 
-    private fun createAndShowState(
+    private suspend fun createAndShowState(
         state: SessionViewDelegateState,
         enableHowTo: Boolean,
         message: ViewDelegateMessage? = null,
         iconScanRes: Int? = null,
     ) {
         Log.view { "createAndShowState" }
-        postUI {
+        withContext(Dispatchers.Main) {
             if (readingDialog == null) {
                 Log.view { "createAndConfigDialog" }
                 createAndConfigureDialog(state, enableHowTo, message, iconScanRes)
@@ -230,7 +232,7 @@ class DefaultSessionViewDelegate(
     private fun createReadingDialog(activity: Activity, iconScanRes: Int? = null): NfcSessionDialog {
         Log.view { "createReadingDialog" }
         val compositeProvider = CompositeNfcLocationProvider(
-            nfcAdapter = NfcAdapter.getDefaultAdapter(activity.applicationContext),
+            nfcAdapter = NfcAdapter.getDefaultAdapter(activity.applicationContext), // todo: pass nfcAdapter from outside to avoid calling getDefaultAdapter multiple times
             deviceLocationProvider = NfcAntennaLocationProvider(Build.DEVICE),
         )
         return NfcSessionDialog(

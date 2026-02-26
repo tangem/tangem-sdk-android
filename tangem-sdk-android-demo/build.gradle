@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
+    namespace "com.tangem.tangem_demo"
     compileSdkVersion 34
     buildToolsVersion "30.0.3"
 

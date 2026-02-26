@@ -186,7 +186,7 @@ class SdkTaskSpinnerFragment : BaseFragment() {
     class EmptyViewDelegate : SessionViewDelegate {
         override val viewVisibility: StateFlow<Boolean> = MutableStateFlow(false)
         override val resetCodesViewDelegate: ResetCodesViewDelegate = EmptyResetCodesViewDelegate()
-        override fun onSessionStarted(
+        override suspend fun onSessionStarted(
             cardId: String?,
             message: ViewDelegateMessage?,
             enableHowTo: Boolean,
