@@ -24,9 +24,11 @@ import com.tangem.operations.read.ReadCommand
 import com.tangem.operations.resetcode.ResetCodesController
 import com.tangem.operations.resetcode.ResetPinService
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import java.io.PrintWriter
 import java.io.StringWriter
+import kotlin.coroutines.resume
 
 /**
  * Allows interaction with Tangem cards. Should be opened before sending commands.
@@ -53,6 +55,8 @@ class CardSession(
     private val secureStorage: SecureStorage,
     private var initialMessage: ViewDelegateMessage? = null,
 ) {
+
+    private val sendCommandApduBridge: Channel<Pair<CommandApdu, CompletionCallback<ResponseApdu>>> = Channel()
 
     var cardId: String? = cardId
         private set
@@ -90,26 +94,104 @@ class CardSession(
         iconScanRes: Int? = null,
         runnable: T,
         callback: CompletionCallback<R>,
-    ) {
+    ): Unit = runBlocking {
+        val result = startWithRunnable(iconScanRes, runnable)
+        callback(result)
+    }
+
+    suspend fun <T : CardSessionRunnable<R>, R> startWithRunnable(
+        iconScanRes: Int? = null,
+        runnable: T,
+    ): CompletionResult<R> {
         if (state != CardSessionState.Inactive) {
             val error = TangemSdkError.Busy()
             Log.error { "$error" }
-            callback(CompletionResult.Failure(error))
-            return
+            return CompletionResult.Failure(error)
         }
 
+        channelFlow<SessionStartedInner> {
+            suspend fun finish(result: SessionStartedInner) {
+                channel.send(result)
+                channel.close()
+            }
+
+            suspend fun finishWithError(error: TangemError, sessionErrorStage: SessionErrorMoment) {
+                val result = SessionStartedInner(
+                    session = this@CardSession,
+                    error = error,
+                    sessionErrorStage = sessionErrorStage
+                )
+                finish(result)
+            }
+
+            Log.session { "start card session with runnable" }
+            val prepareResult = prepareSession(runnable)
+            if (prepareResult is CompletionResult.Failure) {
+                finishWithError(prepareResult.error, SessionErrorMoment.Preparation)
+                return@channelFlow
+            }
+
+            val sessionStartedResult = start2(iconScanRes)
+            Log.session { "start runnable" }
+
+            val tagFlow: SharedFlow<TagType?> = reader.tag
+                .receiveAsFlow()
+                .shareIn(this, SharingStarted.Eagerly)
+            val latestTagFlow: SharedFlow<TagType?> = tagFlow.shareIn(
+                scope = this,
+                started = SharingStarted.Eagerly,
+                replay = 1
+            )
+
+            suspend fun latestTag() = latestTagFlow.first()
+            // wait initial nfc tag not null
+            tagFlow.filterNotNull().first()
+
+            tagFlow.runningReduce { previous, new ->
+                if (new == null && previous != null && state == CardSessionState.Active) {
+                    environment.encryptionKey = null
+                }
+                new
+            }.launchIn(this)
+
+            val selectAppletResult = selectApplet()
+            if (selectAppletResult is CompletionResult.Failure) {
+                finishWithError(selectAppletResult.error, SessionErrorMoment.AppletSelection)
+                return@channelFlow
+            }
+
+            if (latestTag() == TagType.Nfc && preflightReadMode != PreflightReadMode.None) {
+                preflightCheck { latestTag() }
+            }
+
+            val runnableResult = runnable.run(this@CardSession)
+            Log.session { "runnable completed" }
+            if (runnableResult is CompletionResult.Failure) {
+                finishWithError(runnableResult.error, SessionErrorMoment.End)
+                return@channelFlow
+            }
+
+        }
+
+            .first()
+
         Log.session { "start card session with runnable" }
-        prepareSession(runnable) { prepareResult ->
-            when (prepareResult) {
+        val prepareResult = prepareSession(runnable)
+        if (prepareResult is CompletionResult.Failure) {
+            stopWithError(prepareResult.error, SessionErrorMoment.Preparation)
+            return CompletionResult.Failure(prepareResult.error)
+        }
+        val sessionStarted = start2(iconScanRes)
+        Log.session { "start runnable" }
+        when (val prepareResult = prepareSession(runnable)) {
                 is CompletionResult.Success -> {
-                    start(iconScanRes) { _, error ->
+                    val sessionStarted = start(iconScanRes)
+                    val error = sessionStarted.error
                         if (error != null) {
                             Log.error { "$error" }
-                            callback(CompletionResult.Failure(error))
-                            return@start
+                            return CompletionResult.Failure(error)
                         }
-                        Log.session { "start runnable" }
-                        runnable.run(this) { result ->
+                    val result = runnable.run(this)
                             Log.session { "runnable completed" }
                             when (result) {
                                 is CompletionResult.Success -> {
@@ -119,14 +201,11 @@ class CardSession(
                                     stopWithError(result.error, SessionErrorMoment.End)
                                 }
                             }
-                            callback(result)
-                        }
-                    }
+                    return result
                 }
                 is CompletionResult.Failure -> {
                     stopWithError(prepareResult.error, SessionErrorMoment.Preparation)
-                    callback(CompletionResult.Failure(prepareResult.error))
-                }
+                    return CompletionResult.Failure(prepareResult.error)
             }
         }
     }
@@ -136,7 +215,27 @@ class CardSession(
      * @param iconScanRes iconResource to replace on Scan Bottom Sheet
      * @param onSessionStarted: callback with the card session. Can contain [TangemSdkError] if something goes wrong.
      */
-    fun start(iconScanRes: Int? = null, onSessionStarted: SessionStartedCallback) {
+    internal suspend fun start2(iconScanRes: Int? = null) {
+        Log.session { "start card session with delegate" }
+        reader.scope = scope
+
+        state = CardSessionState.Active
+        viewDelegate.onSessionStarted(
+            cardId = cardId,
+            message = initialMessage,
+            enableHowTo = environment.config.howToIsEnabled,
+            iconScanRes = iconScanRes,
+            productType = environment.config.productType,
+        )
+        reader.startSession()
+    }
+
+    /**
+     * Starts a card session and performs preflight [ReadCommand].
+     * @param iconScanRes iconResource to replace on Scan Bottom Sheet
+     * @param onSessionStarted: callback with the card session. Can contain [TangemSdkError] if something goes wrong.
+     */
+    internal suspend fun start(iconScanRes: Int? = null): SessionStarted {
         Log.session { "start card session with delegate" }
         reader.scope = scope
         reader.startSession()
@@ -158,7 +257,7 @@ class CardSession(
                     selectApplet()
                         .doOnSuccess {
                             if (tagType == TagType.Nfc && preflightReadMode != PreflightReadMode.None) {
-                                preflightCheck(onSessionStarted)
+                                preflightCheck()
                             } else {
                                 onSessionStarted(this@CardSession, null)
                             }
@@ -227,7 +326,7 @@ class CardSession(
         }
     }
 
-    private fun <T : CardSessionRunnable<*>> prepareSession(runnable: T, callback: CompletionCallback<Unit>) {
+    private suspend fun <T : CardSessionRunnable<*>> prepareSession(runnable: T): CompletionResult<Unit> {
         Log.session { "prepare card session" }
         preflightReadMode = runnable.preflightReadMode()
         environment.encryptionMode = runnable.encryptionMode
@@ -236,11 +335,41 @@ class CardSession(
         Log.session { "Encryption mode is ${environment.encryptionMode}" }
 
         if (!runnable.allowsRequestAccessCodeFromRepository) {
-            runnable.prepare(this, callback)
-            return
+            return runnable.prepare(this)
         }
 
-        val requestUserCode = { codeType: UserCodeType ->
+        val successResult = CompletionResult.Success(Unit)
+        val userCodeRequestResult = when (val policy = environment.config.userCodeRequestPolicy) {
+            is UserCodeRequestPolicy.AlwaysWithBiometrics -> {
+                if (shouldRequestBiometrics()) {
+                    when (val unlockResult = userCodeRepository?.unlock()) {
+                        is CompletionResult.Success -> successResult
+                        is CompletionResult.Failure -> {
+                            Log.error {
+                                """
+                                        User codes storage could not be unlocked
+                                        |- Cause: ${unlockResult.error}
+                                    """.trimIndent()
+                            }
+                            requestCode(policy.codeType)
+                        }
+                        else -> requestCode(policy.codeType)
+                    }
+                } else {
+                    requestCode(policy.codeType)
+                }
+            }
+            is UserCodeRequestPolicy.Always -> requestCode(policy.codeType)
+            is UserCodeRequestPolicy.Default -> successResult
+        }
+
+        return when (userCodeRequestResult) {
+            is CompletionResult.Success -> catching { runnable.prepare(this) }
+            is CompletionResult.Failure -> userCodeRequestResult
+        }
+    }
+
+    private suspend fun requestCode(codeType: UserCodeType): CompletionResult<Unit> {
             when (codeType) {
                 UserCodeType.AccessCode -> {
                     environment.accessCode = UserCode(codeType, null)
@@ -249,46 +378,21 @@ class CardSession(
                     environment.passcode = UserCode(codeType, null)
                 }
             }
+        return suspendCancellableCoroutine { continuation ->
             requestUserCodeIfNeeded(
                 type = codeType,
                 isFirstAttempt = true,
             ) { userCodeResult ->
-                userCodeResult
-                    .doOnSuccess { runnable.prepare(this, callback) }
-                    .doOnFailure { error -> callback(CompletionResult.Failure(error)) }
-            }
-        }
-
-        when (val policy = environment.config.userCodeRequestPolicy) {
-            is UserCodeRequestPolicy.AlwaysWithBiometrics -> {
-                scope.launch(Dispatchers.Main) {
-                    if (shouldRequestBiometrics()) {
-                        userCodeRepository?.unlock()
-                            ?.doOnSuccess { runnable.prepare(this@CardSession, callback) }
-                            ?.doOnFailure { e ->
-                                Log.error {
-                                    """
-                                        User codes storage could not be unlocked
-                                        |- Cause: $e
-                                    """.trimIndent()
-                                }
-                                requestUserCode(policy.codeType)
-                            }
-                    } else {
-                        requestUserCode(policy.codeType)
-                    }
-                }
-            }
-            is UserCodeRequestPolicy.Always -> {
-                requestUserCode(policy.codeType)
-            }
-            is UserCodeRequestPolicy.Default -> {
-                runnable.prepare(this, callback)
+                val result =
+                    userCodeResult
+                        .doOnSuccess { CompletionResult.Success(Unit) }
+                        .doOnFailure { error -> CompletionResult.Failure<Unit>(error) }
+                if (continuation.isActive) continuation.resume(result)
             }
         }
     }
 
-    private fun preflightCheck(onSessionStarted: SessionStartedCallback) {
+    private suspend fun preflightCheck(actualTag: suspend () -> TagType?): SessionStartedInner {
         Log.session { "start preflight check" }
 
         val preflightTask = PreflightReadTask(
@@ -296,10 +400,9 @@ class CardSession(
             filter = preflightReadFilter ?: cardId?.let(::CardIdPreflightReadFilter),
         )
 
-        preflightTask.run(this) { result ->
-            when (result) {
+        when (val result = preflightTask.run(this)) {
                 is CompletionResult.Success -> {
-                    onSessionStarted(this, null)
+                    return SessionStartedInner(this)
                 }
 
                 is CompletionResult.Failure -> {
@@ -310,21 +413,20 @@ class CardSession(
                     }
                     if (wrongType != null) {
                         Log.error { "${result.error}" }
-                        viewDelegate.onWrongCard(wrongType)
-                        scope.launch(scope.coroutineContext) {
+                        viewDelegate.onWrongCard(wrongType) // todo check it, compare with old, onboarding case?
                             delay(timeMillis = 3500)
-                            if (connectedTag == null) {
-                                onSessionStarted(this@CardSession, result.error)
-                                stopWithError(result.error, SessionErrorMoment.PreflightCheck)
+                        if (actualTag() == null) {
+                            return SessionStartedInner(
+                                this@CardSession,
+                                result.error,
+                                SessionErrorMoment.PreflightCheck
+                            )
                             } else {
                                 viewDelegate.onTagConnected()
-                                preflightCheck(onSessionStarted)
-                            }
+                            return preflightCheck(actualTag)
                         }
                     } else {
-                        onSessionStarted(this, result.error)
-                        stopWithError(result.error, SessionErrorMoment.PreflightCheck)
-                    }
+                        return SessionStartedInner(this, result.error, SessionErrorMoment.PreflightCheck)
                 }
             }
         }
@@ -371,41 +473,26 @@ class CardSession(
         saveUserCodeIfNeeded()
     }
 
+
     fun send(apdu: CommandApdu, callback: CompletionCallback<ResponseApdu>) {
-        Log.session { "send CommandApdu" }
-        val subscription = reader.tag.openSubscription()
-        scope.launch {
-            subscription.consumeAsFlow()
-                .filterNotNull()
-                .map { establishEncryptionIfNeeded() }
-                .map { apdu.encrypt(environment.encryptionMode, environment.encryptionKey) }
-                .map { encryptedApdu -> reader.transceiveApdu(encryptedApdu) }
-                .map { responseApdu -> decrypt(responseApdu) }
-                .catch {
-                    if (it is TangemSdkError) {
-                        Log.error { "$it" }
-                        callback(CompletionResult.Failure(it))
-                    }
-                }
-                .collect { result ->
-                    when (result) {
-                        is CompletionResult.Success -> {
-                            subscription.cancel()
-                            callback(result)
-                        }
-                        is CompletionResult.Failure -> {
-                            when (result.error) {
-                                is TangemSdkError.TagLost -> Log.session { "tag lost. Waiting for tag..." }
-                                else -> {
-                                    Log.error { "${result.error}" }
-                                    subscription.cancel()
-                                    callback(result)
-                                }
-                            }
-                        }
-                    }
-                }
+        sendCommandApduBridge.trySend(apdu to callback)
+    }
+
+    suspend fun send(apdu: CommandApdu): CompletionResult<ResponseApdu> = try {
+        establishEncryptionIfNeeded()
+        val encryptedApdu = apdu.encrypt(environment.encryptionMode, environment.encryptionKey)
+        val responseApdu = reader.transceiveApdu(encryptedApdu)
+        when (val result = decrypt(responseApdu)) {
+            is CompletionResult.Success -> result
+            is CompletionResult.Failure -> {
+                Log.error { "${result.error}" } // todo catch is TangemSdkError.TagLost -> Log.session { "tag lost. Waiting for tag..." }
+                result
+            }
         }
+    } catch (throwable: Throwable) {
+        val error = throwable as? TangemSdkError ?: TangemSdkError.UnknownError()
+        Log.error { "$error" }
+        CompletionResult.Failure(error)
     }
 
     fun pause() {
@@ -632,7 +719,24 @@ class CardSession(
     }
 }
 
-typealias SessionStartedCallback = (session: CardSession, error: TangemError?) -> Unit
+private typealias SessionStartedCallback = suspend (session: CardSession, error: TangemError?) -> Unit
+
+internal data class SessionStarted(
+    val session: CardSession,
+    val error: TangemError?,
+) {
+    // means successfully, useful for view where is using
+    constructor(session: CardSession) : this(session, null)
+}
+
+internal data class SessionStartedInner(
+    val session: CardSession,
+    val error: TangemError?,
+    val sessionErrorStage: SessionErrorMoment?,
+) {
+    // means successfully, useful for view where is using
+    constructor(session: CardSession) : this(session, null, null)
+}
 
 enum class TagType {
     Nfc,

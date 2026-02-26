@@ -7,6 +7,7 @@ import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.TagType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.Channel
 
 /**
  * Allows interaction between the phone or any other terminal and Tangem card.
@@ -15,7 +16,7 @@ import kotlinx.coroutines.channels.BroadcastChannel
  */
 interface CardReader {
 
-    val tag: BroadcastChannel<TagType?>
+    val tag: Channel<TagType?>
     var scope: CoroutineScope?
 
     /**
@@ -27,18 +28,7 @@ interface CardReader {
      */
     suspend fun transceiveApdu(apdu: CommandApdu): CompletionResult<ResponseApdu>
 
-    /**
-     * Sends data to the card and receives the reply.
-     *
-     * @param apdu Data to be sent. [CommandApdu] serializes it to a [ByteArray]
-     * @param callback Returns response from the card,
-     * [ResponseApdu] Allows to convert raw data to [Tlv]
-     */
-    fun transceiveApdu(apdu: CommandApdu, callback: CompletionCallback<ResponseApdu>)
-
     suspend fun transceiveRaw(apduData: ByteArray): CompletionResult<ByteArray?>
-
-    fun transceiveRaw(apduData: ByteArray, callback: CompletionCallback<ByteArray?>)
 
     /**
      * Signals to [CardReader] to become ready to transceive data.
