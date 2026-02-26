@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
     <string name="already_activated_btn_confirm">Це мій гаманець</string>
-    <string name="already_activated_btn_just_bought">I\'ve just bought it</string>
-    <string name="already_activated_message">This wallet has already been activated, and we would like to confirm that it was activated by you.</string>
-    <string name="already_activated_title">Welcome back</string>
+    <string name="already_activated_btn_just_bought">Я щойно його придбав</string>
+    <string name="already_activated_message">Цей гаманець уже активовано, і ми хочемо переконатися, що це зробили саме ви.</string>
+    <string name="already_activated_title">З поверненням</string>
     <string name="attestation_failed_card">Ця картка – тестовий зразок або підробка. Ви можете продовжувати на свій страх і ризик.</string>
     <string name="attestation_failed_card_title">Помилка перевірки картки</string>
     <string name="attestation_failed_dev_card">Ця картка призначена для тестових цілей. Її автентичність не може бути перевірена. Не приймайте цю карту як засіб оплати.</string>
