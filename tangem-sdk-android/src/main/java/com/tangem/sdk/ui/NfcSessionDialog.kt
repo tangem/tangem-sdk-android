@@ -328,7 +328,7 @@ class NfcSessionDialog(
         }
 
         welcomeBackWidget.onJustBoughtClick = {
-            urlOpener.openUrlExternalBrowser(PREACTIVATED_WALLETS_URL)
+            urlOpener.openUrlExternalBrowser(getPreactivatedWalletsUrl(context))
             welcomeBackContainer.hide()
             taskContainer.show()
             findDesignBottomSheetView()?.let { it.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT }
@@ -394,8 +394,24 @@ class NfcSessionDialog(
         return SessionViewDelegateState.Ready(headerWidget.cardId, ProductType.ANY)
     }
 
+    private fun getPreactivatedWalletsUrl(context: Context): String {
+        val defaultLanguage = "en"
+        val supportedLanguages = setOf("en", "es", "de", "ja", "ru")
+        val deviceLocales = context.resources.configuration.locales
+        val currentLanguage = if (deviceLocales.isEmpty) {
+            defaultLanguage
+        } else {
+            deviceLocales[0].language
+        }
+        val actualLanguage = if (currentLanguage in supportedLanguages) {
+            currentLanguage
+        } else {
+            defaultLanguage
+        }
+        return "https://tangem.com/$actualLanguage/blog/post/preactivated-wallets/"
+    }
+
     private companion object {
         const val SECURITY_DELAY_MS = 950L
-        const val PREACTIVATED_WALLETS_URL = "https://tangem.com/en/blog/post/preactivated-wallets/"
     }
 }
