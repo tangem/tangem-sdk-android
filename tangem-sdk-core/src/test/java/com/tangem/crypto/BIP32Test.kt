@@ -5,7 +5,6 @@ import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import com.tangem.common.successOrNull
 import com.tangem.crypto.bip39.BIP39Wordlist
-import com.tangem.crypto.bip39.BIP39WordlistTest
 import com.tangem.crypto.bip39.DefaultBIP39
 import com.tangem.crypto.bip39.DefaultMnemonic
 import com.tangem.crypto.bip39.Wordlist
@@ -15,7 +14,6 @@ import com.tangem.crypto.hdWallet.bip32.ExtendedPrivateKey
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
-import java.io.InputStream
 import kotlin.test.assertFailsWith
 
 // Tests for firmware 6.33
@@ -527,16 +525,7 @@ internal class BIP32Test {
     }
     // endregion
 
-    private fun createDefaultWordlist(): Wordlist {
-        val wordlistStream = getInputStreamForTestFile()
-        return BIP39Wordlist(wordlistStream)
-    }
+    private fun createDefaultWordlist(): Wordlist = BIP39Wordlist()
 
-    private fun createDefaultBIP39(): DefaultBIP39 {
-        return DefaultBIP39(createDefaultWordlist())
-    }
-
-    private fun getInputStreamForTestFile(): InputStream {
-        return object {}.javaClass.classLoader.getResourceAsStream(BIP39WordlistTest.TEST_DICTIONARY_FILE_NAME)!!
-    }
+    private fun createDefaultBIP39(): DefaultBIP39 = DefaultBIP39(createDefaultWordlist())
 }
