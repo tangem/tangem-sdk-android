@@ -98,7 +98,7 @@ class DemoActivity : AppCompatActivity() {
             viewDelegate = viewDelegate,
             nfcAvailabilityProvider = nfcAvailabilityProvider,
             secureStorage = secureStorage,
-            wordlist = Wordlist.getWordlist(this),
+            wordlist = Wordlist.getWordlist(),
             config = config,
             authenticationManager = authenticationManager,
             keystoreManager = TangemSdk.initKeystoreManager(authenticationManager, secureStorage),
