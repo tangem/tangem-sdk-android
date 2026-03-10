@@ -8,7 +8,6 @@ import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import com.tangem.common.successOrNull
 import com.tangem.crypto.bip39.BIP39Wordlist
-import com.tangem.crypto.bip39.BIP39WordlistTest
 import com.tangem.crypto.bip39.DefaultMnemonic
 import com.tangem.crypto.bip39.Wordlist
 import com.tangem.crypto.hdWallet.DerivationNode
@@ -17,7 +16,6 @@ import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.assertThrows
-import java.io.InputStream
 import kotlin.test.assertContentEquals
 
 internal class ExtendedKeyTest {
@@ -133,12 +131,5 @@ internal class ExtendedKeyTest {
         )
     }
 
-    private fun createDefaultWordlist(): Wordlist {
-        val wordlistStream = getInputStreamForTestFile()
-        return BIP39Wordlist(wordlistStream)
-    }
-
-    private fun getInputStreamForTestFile(): InputStream {
-        return object {}.javaClass.classLoader.getResourceAsStream(BIP39WordlistTest.TEST_DICTIONARY_FILE_NAME)!!
-    }
+    private fun createDefaultWordlist(): Wordlist = BIP39Wordlist()
 }
