@@ -8,7 +8,6 @@ import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.json.*
 import com.tangem.common.services.InMemoryStorage
 import com.tangem.crypto.bip39.BIP39Wordlist
-import com.tangem.crypto.bip39.BIP39WordlistTest
 import com.tangem.crypto.bip39.Wordlist
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
@@ -25,7 +24,6 @@ import com.tangem.operations.wallet.CreateWalletResponse
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertDoesNotThrow
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -333,12 +331,5 @@ class JSONRPCTests {
         return true
     }
 
-    private fun createDefaultWordlist(): Wordlist {
-        val wordlistStream = getInputStreamForFile(BIP39WordlistTest.TEST_DICTIONARY_FILE_NAME)
-        return BIP39Wordlist(wordlistStream)
-    }
-
-    private fun getInputStreamForFile(fileName: String): InputStream {
-        return object {}.javaClass.classLoader.getResourceAsStream(fileName)!!
-    }
+    private fun createDefaultWordlist(): Wordlist = BIP39Wordlist()
 }
