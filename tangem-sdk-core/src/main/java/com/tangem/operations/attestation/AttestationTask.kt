@@ -12,16 +12,11 @@ import com.tangem.common.services.secure.SecureStorage
 import com.tangem.operations.attestation.api.TangemApiService
 import com.tangem.operations.attestation.service.OnlineAttestationService
 import com.tangem.operations.attestation.service.OnlineAttestationServiceFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AttestationTask(
@@ -39,8 +34,11 @@ class AttestationTask(
 
     private var currentAttestationStatus: Attestation = Attestation.empty
 
-    private var onlineAttestationChannel = ConflatedBroadcastChannel<CompletionResult<Any>>()
-    private var onlineAttestationSubscription: ReceiveChannel<CompletionResult<*>>? = null
+    private val onlineAttestationChannel = MutableSharedFlow<CompletionResult<Any>>(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+    private var onlineAttestationSubscription: Job? = null
 
     override fun run(session: CardSession, callback: CompletionCallback<Attestation>) {
         session.environment.card.guard {
@@ -140,7 +138,7 @@ class AttestationTask(
             val isDevelopmentCard = card.firmwareVersion.type == FirmwareVersion.FirmwareType.Sdk
 
             if (isDevelopmentCard) {
-                onlineAttestationChannel.send(CompletionResult.Failure(TangemSdkError.CardVerificationFailed()))
+                onlineAttestationChannel.emit(CompletionResult.Failure(TangemSdkError.CardVerificationFailed()))
                 return@launch
             }
 
@@ -150,7 +148,7 @@ class AttestationTask(
             )
                 .map { /* cast to Any */ }
 
-            onlineAttestationChannel.send(result)
+            onlineAttestationChannel.emit(result)
         }
     }
 
@@ -161,15 +159,14 @@ class AttestationTask(
      * @param callback callback
      */
     private fun waitForOnlineAndComplete(session: CardSession, callback: CompletionCallback<Attestation>) {
-        if (onlineAttestationSubscription != null) return
+        if (onlineAttestationSubscription?.isActive == true) return
 
         if (!shouldKeepSessionOpened) {
             session.pause()
         }
 
-        session.scope.launch {
-            onlineAttestationSubscription = onlineAttestationChannel.openSubscription()
-            onlineAttestationSubscription?.consumeEach { result ->
+        onlineAttestationSubscription = session.scope.launch {
+            onlineAttestationChannel.collect { result ->
                 when (result) {
                     is CompletionResult.Success -> {
                         // We assume, that card verified, because we skip online attestation for dev cards and cards that failed keys attestation
@@ -241,9 +238,8 @@ class AttestationTask(
     }
 
     private fun retryOnline(session: CardSession, callback: CompletionCallback<Attestation>) {
-        onlineAttestationSubscription = null
-        onlineAttestationChannel.cancel()
-        onlineAttestationChannel = ConflatedBroadcastChannel()
+        onlineAttestationSubscription?.cancel()
+        onlineAttestationChannel.resetReplayCache()
 
         val card = session.environment.card.guard {
             callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
@@ -330,8 +326,8 @@ class AttestationTask(
         session.environment.card = session.environment.card?.copy(attestation = currentAttestationStatus)
         callback(CompletionResult.Success(currentAttestationStatus))
 
-        onlineAttestationChannel.cancel()
-        onlineAttestationSubscription = null
+        onlineAttestationChannel.resetReplayCache()
+        onlineAttestationSubscription?.cancel()
     }
 
     enum class Mode {
