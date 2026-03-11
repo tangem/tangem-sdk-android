@@ -69,9 +69,13 @@ inline fun <T> CompletionResult<T>.doOnSuccess(
     return when (this) {
         is CompletionResult.Failure -> this
         is CompletionResult.Success -> if (catchException) {
-            catching { block(data); data }
+            catching {
+                block(data)
+                data
+            }
         } else {
-            block(data); this
+            block(data)
+            this
         }
     }
 }
@@ -80,7 +84,8 @@ inline fun <T> CompletionResult<T>.doOnSuccess(
 inline fun <T> CompletionResult<T>.doOnFailure(block: (TangemError) -> Unit): CompletionResult<T> {
     return when (this) {
         is CompletionResult.Failure -> {
-            block(error); this
+            block(error)
+            this
         }
         is CompletionResult.Success -> this
     }
