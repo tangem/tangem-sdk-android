@@ -20,7 +20,6 @@ import com.tangem.crypto.bip39.MnemonicTestData.mnemonic21ParsedComponents
 import com.tangem.crypto.bip39.MnemonicTestData.mnemonic24ParsedComponents
 import org.junit.Test
 import org.junit.jupiter.api.fail
-import java.io.InputStream
 
 internal class DefaultBIP39Test {
 
@@ -165,12 +164,6 @@ internal class DefaultBIP39Test {
     }
 
     private fun createDefaultBIP39(): DefaultBIP39 {
-        val wordlistStream = getInputStreamForFile(BIP39WordlistTest.TEST_DICTIONARY_FILE_NAME)
-        val biP39Wordlist = BIP39Wordlist(wordlistStream)
-        return DefaultBIP39(biP39Wordlist)
-    }
-
-    private fun getInputStreamForFile(fileName: String): InputStream {
-        return object {}.javaClass.classLoader.getResourceAsStream(fileName)!!
+        return DefaultBIP39(wordlist = BIP39Wordlist())
     }
 }

@@ -72,7 +72,7 @@ class TangemSdk(
 
     private var cardSession: CardSession? = null
 
-    private val jsonRpcConverter: JSONRPCConverter by lazy { JSONRPCConverter.shared(wordlist) }
+    private val jsonRpcConverter: JSONRPCConverter by lazy { JSONRPCConverter.shared(wordlist, secureStorage) }
 
     init {
         CryptoUtils.initCrypto()
