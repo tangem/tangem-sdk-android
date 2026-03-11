@@ -5,11 +5,7 @@ package com.tangem.sdk.extensions
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.fragment.app.FragmentActivity
-import com.tangem.Log
-import com.tangem.LogFormat
-import com.tangem.SessionViewDelegate
-import com.tangem.TangemSdk
-import com.tangem.TangemSdkLogger
+import com.tangem.*
 import com.tangem.common.authentication.AuthenticationManager
 import com.tangem.common.authentication.DummyAuthenticationManager
 import com.tangem.common.authentication.keystore.DummyKeystoreManager
@@ -41,7 +37,7 @@ fun TangemSdk.Companion.init(activity: ComponentActivity, config: Config = Confi
         viewDelegate = viewDelegate,
         nfcAvailabilityProvider = nfcAvailabilityProvider,
         secureStorage = secureStorage,
-        wordlist = Wordlist.getWordlist(activity),
+        wordlist = Wordlist.getWordlist(),
         config = config,
     )
 }
@@ -63,7 +59,7 @@ fun TangemSdk.Companion.initWithBiometrics(activity: FragmentActivity, config: C
         secureStorage = secureStorage,
         authenticationManager = authenticationManager,
         keystoreManager = keystoreManager,
-        wordlist = Wordlist.getWordlist(activity),
+        wordlist = Wordlist.getWordlist(),
         config = config,
     )
 }
@@ -86,7 +82,7 @@ fun TangemSdk.Companion.customDelegate(
         viewDelegate = safeViewDelegate,
         nfcAvailabilityProvider = nfcAvailabilityProvider,
         secureStorage = secureStorage,
-        wordlist = Wordlist.getWordlist(activity),
+        wordlist = Wordlist.getWordlist(),
         config = config,
     )
 }
