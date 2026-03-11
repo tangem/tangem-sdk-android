@@ -236,7 +236,11 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
             UserCodeType.Passcode -> session.environment.passcode = UserCode(UserCodeType.Passcode, null)
         }
 
-        session.requestUserCodeIfNeeded(type, isFirstAttempt) { result ->
+        session.requestUserCodeIfNeeded(
+            type = type,
+            isFirstAttempt = isFirstAttempt,
+            showWelcomeBackWarning = false,
+        ) { result ->
             when (result) {
                 is CompletionResult.Success -> session.resume { transceiveInternal(session, callback) }
                 is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))

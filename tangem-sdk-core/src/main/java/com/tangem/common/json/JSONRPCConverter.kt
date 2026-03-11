@@ -1,6 +1,7 @@
 package com.tangem.common.json
 
 import com.tangem.common.core.CardSessionRunnable
+import com.tangem.common.services.secure.SecureStorage
 import com.tangem.crypto.bip39.Wordlist
 import java.util.Locale
 
@@ -49,11 +50,11 @@ class JSONRPCConverter {
     }
 
     companion object {
-        fun shared(wordlist: Wordlist): JSONRPCConverter {
+        fun shared(wordlist: Wordlist, secureStorage: SecureStorage): JSONRPCConverter {
             return JSONRPCConverter().apply {
                 register(PersonalizeHandler())
                 register(DepersonalizeHandler())
-                register(PreflightReadHandler())
+                register(PreflightReadHandler(secureStorage))
                 register(ScanHandler())
                 register(CreateWalletHandler())
                 register(ImportWalletHandler(wordlist))
