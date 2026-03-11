@@ -20,7 +20,10 @@ class MultiMessageTask : CardSessionRunnable<SignHashResponse> {
         Thread.sleep(THREAD_DELAY_MS)
         session.setMessage(message2)
         Thread.sleep(THREAD_DELAY_MS)
-        PreflightReadTask(PreflightReadMode.None).run(session) {
+        PreflightReadTask(
+            readMode = PreflightReadMode.None,
+            secureStorage = session.environment.secureStorage,
+        ).run(session) {
             when (it) {
                 is CompletionResult.Success -> {
                     session.setMessage(Message(header = "Success", body = "SignHashCommand"))

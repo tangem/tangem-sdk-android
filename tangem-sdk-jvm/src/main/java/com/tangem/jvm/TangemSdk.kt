@@ -8,7 +8,6 @@ import com.tangem.TangemSdkLogger
 import com.tangem.common.biometric.DummyBiometricManager
 import com.tangem.common.core.Config
 import com.tangem.common.services.InMemoryStorage
-import com.tangem.crypto.bip39.BIP39Wordlist
 import com.tangem.crypto.bip39.Wordlist
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -24,7 +23,7 @@ fun TangemSdk.init(verbose: Boolean = false, indexOfTerminal: Int? = null): Tang
         biometricManager = DummyBiometricManager(),
         secureStorage = InMemoryStorage(),
         config = Config(),
-        wordlist = createDefaultWordlist(),
+        wordlist = Wordlist.getWordlist(),
     )
 }
 
@@ -43,11 +42,3 @@ private fun setLogger(verbose: Boolean) {
         },
     )
 }
-
-private fun createDefaultWordlist(): Wordlist {
-    Thread.currentThread().contextClassLoader.getResourceAsStream(DICTIONARY_FILE_NAME).use { wordListInputStream ->
-        return BIP39Wordlist(wordListInputStream)
-    }
-}
-
-private const val DICTIONARY_FILE_NAME = "mnemonic/mnemonic_dictionary_en.txt"

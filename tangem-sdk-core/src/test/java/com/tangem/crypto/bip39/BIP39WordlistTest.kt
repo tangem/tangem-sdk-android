@@ -1,33 +1,39 @@
 package com.tangem.crypto.bip39
 
-import com.tangem.common.core.TangemSdkError
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.assertThrows
-import java.io.BufferedInputStream
-import java.io.InputStream
 
-internal class BIP39WordlistTest {
+class BIP39WordlistTest {
 
+    // compatibility test
     @Test
-    fun testBIP39WordlistInitializationSuccess() {
-        val wordlistStream = getInputStreamForFile(TEST_DICTIONARY_FILE_NAME)
-        val biP39Wordlist = BIP39Wordlist(wordlistStream)
-        assertNotNull(biP39Wordlist)
-    }
+    fun `BIP39Wordlist matches mnemonic_dictionary_en file`() {
+        val bip39Words = BIP39Wordlist().words
 
-    @Test
-    fun testBIP39WordlistInitializationFail() {
-        assertThrows<TangemSdkError.MnemonicException> {
-            BIP39Wordlist(BufferedInputStream(ByteArray(10).inputStream()))
+        val wordsFromFile = javaClass.classLoader!!
+            .getResourceAsStream("mnemonic/mnemonic_dictionary_en.txt")!!
+            .bufferedReader()
+            .readLines()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+
+        assertEquals(
+            "Number of words in BIP39Wordlist should match the file",
+            wordsFromFile.size,
+            bip39Words.size,
+        )
+
+        wordsFromFile.forEachIndexed { index, wordFromFile ->
+            assertEquals(
+                "Word at index $index should match",
+                wordFromFile,
+                bip39Words[index],
+            )
         }
     }
 
-    private fun getInputStreamForFile(fileName: String): InputStream {
-        return object {}.javaClass.classLoader.getResourceAsStream(fileName)!!
-    }
-
-    companion object {
-        const val TEST_DICTIONARY_FILE_NAME = "mnemonic/mnemonic_dictionary_en.txt"
+    @Test
+    fun `BIP39Wordlist contains exactly 2048 words`() {
+        assertEquals(2048, BIP39Wordlist().words.size)
     }
 }
