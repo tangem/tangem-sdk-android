@@ -2,12 +2,10 @@ package com.tangem.crypto
 
 import com.tangem.common.extensions.toHexString
 import com.tangem.crypto.bip39.BIP39Wordlist
-import com.tangem.crypto.bip39.BIP39WordlistTest
 import com.tangem.crypto.bip39.DefaultMnemonic
 import com.tangem.crypto.bip39.Wordlist
 import com.tangem.crypto.hdWallet.Slip23
 import org.junit.Test
-import java.io.InputStream
 import kotlin.test.assertEquals
 
 internal class Slip23Tests {
@@ -70,12 +68,5 @@ internal class Slip23Tests {
         assertEquals(concatenated.toHexString().lowercase(), expectedPrivateKey)
     }
 
-    private fun createDefaultWordlist(): Wordlist {
-        val wordlistStream = getInputStreamForTestFile()
-        return BIP39Wordlist(wordlistStream)
-    }
-
-    private fun getInputStreamForTestFile(): InputStream {
-        return object {}.javaClass.classLoader.getResourceAsStream(BIP39WordlistTest.TEST_DICTIONARY_FILE_NAME)!!
-    }
+    private fun createDefaultWordlist(): Wordlist = BIP39Wordlist()
 }
