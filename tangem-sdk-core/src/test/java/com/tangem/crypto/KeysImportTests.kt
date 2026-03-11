@@ -5,7 +5,6 @@ import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import com.tangem.common.successOrNull
 import com.tangem.crypto.bip39.BIP39Wordlist
-import com.tangem.crypto.bip39.BIP39WordlistTest
 import com.tangem.crypto.bip39.DefaultMnemonic
 import com.tangem.crypto.bip39.Wordlist
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
@@ -13,7 +12,6 @@ import com.tangem.crypto.hdWallet.masterkey.Bip32MasterKeyFactory
 import com.tangem.crypto.hdWallet.masterkey.Eip2333MasterKeyFactory
 import com.tangem.crypto.hdWallet.masterkey.IkarusMasterKeyFactory
 import org.junit.Test
-import java.io.InputStream
 import kotlin.test.assertEquals
 
 internal class KeysImportTests {
@@ -177,12 +175,5 @@ internal class KeysImportTests {
         // A73E200D8FA36522EBBBBD285EFCC9E9F173E9AE7284E42E91FE13D7D7514204E92813AB8082878EAB45867C32EBAA0B106E98FC8DFEB8D3CDA3E1130B8E17AC99BCFC005513F73BB8A17135D78923169BD9567C33C6E9D69D382E018B33FFC1
     }
 
-    private fun createDefaultWordlist(): Wordlist {
-        val wordlistStream = getInputStreamForTestFile()
-        return BIP39Wordlist(wordlistStream)
-    }
-
-    private fun getInputStreamForTestFile(): InputStream {
-        return object {}.javaClass.classLoader.getResourceAsStream(BIP39WordlistTest.TEST_DICTIONARY_FILE_NAME)!!
-    }
+    private fun createDefaultWordlist(): Wordlist = BIP39Wordlist()
 }

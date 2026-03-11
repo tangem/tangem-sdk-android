@@ -4,11 +4,7 @@ import android.app.Activity
 import android.nfc.NfcAdapter
 import android.os.Build
 import androidx.core.app.ComponentActivity
-import com.tangem.Log
-import com.tangem.Message
-import com.tangem.SessionViewDelegate
-import com.tangem.ViewDelegateMessage
-import com.tangem.WrongValueType
+import com.tangem.*
 import com.tangem.common.CardIdFormatter
 import com.tangem.common.UserCodeType
 import com.tangem.common.core.CompletionCallback
@@ -148,6 +144,19 @@ class DefaultSessionViewDelegate(
         }
     }
 
+    override fun showWelcomeBackWarning(callback: CompletionCallback<Unit>) {
+        Log.view { "showing welcome back screen" }
+        postUI(msTime = 200) {
+            Log.view { "readingDialog: $readingDialog" }
+            val dialog = readingDialog ?: createReadingDialog(activity)
+
+            dialog.show(
+                SessionViewDelegateState.AlreadyActivated(callback = callback),
+                ::onDialogShown,
+            )
+        }
+    }
+
     override fun requestUserCodeChange(type: UserCodeType, cardId: String?, callback: CompletionCallback<String>) {
         Log.view { "showing pin change request with type: $type" }
         val dialog = readingDialog ?: createReadingDialog(activity)
@@ -246,6 +255,8 @@ class DefaultSessionViewDelegate(
                 create()
                 setOnCancelListener {
                     if (!stoppedBySession) nfcManager.reader.stopSession(true)
+                }
+                setOnDismissListener {
                     readingDialog = null
                 }
             }
