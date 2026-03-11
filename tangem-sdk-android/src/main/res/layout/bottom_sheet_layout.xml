@@ -13,6 +13,14 @@
     </FrameLayout>
 
     <FrameLayout
+        android:id="@+id/welcomeBackContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+    </FrameLayout>
+
+    <FrameLayout
         android:id="@+id/taskContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
