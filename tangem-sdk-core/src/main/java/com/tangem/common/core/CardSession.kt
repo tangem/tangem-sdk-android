@@ -495,14 +495,11 @@ class CardSession(
                         Log.session { "showWelcomeBackWarning success" }
                         val showForgotButton = environment.card?.backupStatus?.isActive ?: false
                         val cardId = environment.card?.cardId ?: this.cardId
-                        val formattedCardId = cardId?.let {
-                            CardIdFormatter(environment.config.cardIdDisplayFormat).getFormattedCardId(it)
-                        }
                         showRequestAccessCode(
                             type = type,
                             isFirstAttempt = isFirstAttempt,
                             showForgotButton = showForgotButton,
-                            formattedCardId = formattedCardId,
+                            cardId = cardId,
                             callback = callback,
                         )
                     }
@@ -525,15 +522,12 @@ class CardSession(
 
             val cardId = environment.card?.cardId ?: this.cardId
             val showForgotButton = environment.card?.backupStatus?.isActive ?: false
-            val formattedCardId = cardId?.let {
-                CardIdFormatter(environment.config.cardIdDisplayFormat).getFormattedCardId(it)
-            }
 
             showRequestAccessCode(
                 type = type,
                 isFirstAttempt = isFirstAttempt,
                 showForgotButton = showForgotButton,
-                formattedCardId = formattedCardId,
+                cardId = cardId,
                 callback = callback,
             )
         }
@@ -543,9 +537,12 @@ class CardSession(
         type: UserCodeType,
         isFirstAttempt: Boolean,
         showForgotButton: Boolean,
-        formattedCardId: String?,
+        cardId: String?,
         callback: CompletionCallback<Unit>,
     ) {
+        val formattedCardId = cardId?.let {
+            CardIdFormatter(environment.config.cardIdDisplayFormat).getFormattedCardId(it)
+        }
         viewDelegate.requestUserCode(
             type = type,
             isFirstAttempt = isFirstAttempt,
