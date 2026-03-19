@@ -1,24 +1,16 @@
 package com.tangem.sdk.authentication
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.biometric.BiometricPrompt
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import com.tangem.Log
 import com.tangem.common.authentication.AuthenticationManager
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
 import com.tangem.sdk.R
-import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import javax.crypto.Cipher
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -26,7 +18,6 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import androidx.biometric.BiometricManager as SystemBiometricManager
 
-@RequiresApi(Build.VERSION_CODES.M)
 internal class AndroidAuthenticationManager(
     private val activity: FragmentActivity,
 ) : AuthenticationManager,
@@ -42,43 +33,21 @@ internal class AndroidAuthenticationManager(
             .build()
     }
 
-    private val biometricsStatus = MutableStateFlow(BiometricsStatus.NOT_INITIALIZED)
+    private val biometricManager by lazy { SystemBiometricManager.from(activity) }
+    private val biometricsStatus by lazy { MutableStateFlow(getBiometricsAvailabilityStatus()) }
 
     override val isInitialized: Boolean
-        get() = biometricsStatus.value != BiometricsStatus.NOT_INITIALIZED
+        get() = true
 
     override val canAuthenticate: Boolean
-        get() {
-            if (!isInitialized) {
-                Log.biometric {
-                    "Biometrics status must be initialized before checking if biometrics can authenticate"
-                }
-
-                throw TangemSdkError.AuthenticationNotInitialized()
-            }
-
-            return biometricsStatus.value == BiometricsStatus.READY
-        }
+        get() = biometricsStatus.value == BiometricsStatus.READY
 
     override val needEnrollBiometrics: Boolean
-        get() {
-            if (!isInitialized) {
-                Log.biometric {
-                    "Biometrics status must be initialized before checking if biometrics need to be enrolled"
-                }
-
-                throw TangemSdkError.AuthenticationNotInitialized()
-            }
-
-            return biometricsStatus.value == BiometricsStatus.NEED_ENROLL
-        }
+        get() = biometricsStatus.value == BiometricsStatus.NEED_ENROLL
 
     override fun onResume(owner: LifecycleOwner) {
-        owner.lifecycleScope.launch {
-            biometricsStatus.value = getBiometricsAvailabilityStatus()
-
-            Log.biometric { "Owner has been resumed, biometrics status: ${biometricsStatus.value}" }
-        }
+        biometricsStatus.value = getBiometricsAvailabilityStatus()
+        Log.biometric { "Owner has been resumed, biometrics status: ${biometricsStatus.value}" }
     }
 
     override suspend fun authenticate(
@@ -109,11 +78,6 @@ internal class AndroidAuthenticationManager(
                 Log.biometric { "Unable to authenticate the user as the biometrics feature is unavailable" }
 
                 throw TangemSdkError.AuthenticationUnavailable()
-            }
-            BiometricsStatus.NOT_INITIALIZED -> {
-                Log.biometric { "Unable to authenticate the user as the biometrics feature is not initialized" }
-
-                throw TangemSdkError.AuthenticationNotInitialized()
             }
         }
     }
@@ -166,39 +130,39 @@ internal class AndroidAuthenticationManager(
         )
 
     @Suppress("LongMethod")
-    private suspend fun getBiometricsAvailabilityStatus(): BiometricsStatus {
-        val biometricManager = SystemBiometricManager.from(activity)
-
-        return suspendCancellableCoroutine { continuation ->
-            when (biometricManager.canAuthenticate(AUTHENTICATORS)) {
-                SystemBiometricManager.BIOMETRIC_SUCCESS -> {
-                    Log.biometric { "Biometric features are available" }
-                    continuation.resume(BiometricsStatus.READY)
-                }
-                SystemBiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
-                    Log.biometric { "No biometric features enrolled" }
-                    continuation.resume(BiometricsStatus.NEED_ENROLL)
-                }
-                SystemBiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> {
-                    Log.biometric { "No biometric features available on this device" }
-                    continuation.resume(BiometricsStatus.UNAVAILABLE)
-                }
-                SystemBiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
-                    Log.biometric { "Biometric features are currently unavailable" }
-                    continuation.resume(BiometricsStatus.UNAVAILABLE)
-                }
-                SystemBiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED -> {
-                    Log.biometric { "Biometric features are currently unavailable, security update required" }
-                    continuation.resume(BiometricsStatus.UNAVAILABLE)
-                }
-                SystemBiometricManager.BIOMETRIC_STATUS_UNKNOWN -> {
-                    Log.biometric { "Biometric features are in unknown status" }
-                    continuation.resume(BiometricsStatus.UNAVAILABLE)
-                }
-                SystemBiometricManager.BIOMETRIC_ERROR_UNSUPPORTED -> {
-                    Log.biometric { "Biometric features are unsupported" }
-                    continuation.resume(BiometricsStatus.UNAVAILABLE)
-                }
+    private fun getBiometricsAvailabilityStatus(): BiometricsStatus {
+        return when (biometricManager.canAuthenticate(AUTHENTICATORS)) {
+            SystemBiometricManager.BIOMETRIC_SUCCESS -> {
+                Log.biometric { "Biometric features are available" }
+                BiometricsStatus.READY
+            }
+            SystemBiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
+                Log.biometric { "No biometric features enrolled" }
+                BiometricsStatus.NEED_ENROLL
+            }
+            SystemBiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> {
+                Log.biometric { "No biometric features available on this device" }
+                BiometricsStatus.UNAVAILABLE
+            }
+            SystemBiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
+                Log.biometric { "Biometric features are currently unavailable" }
+                BiometricsStatus.UNAVAILABLE
+            }
+            SystemBiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED -> {
+                Log.biometric { "Biometric features are currently unavailable, security update required" }
+                BiometricsStatus.UNAVAILABLE
+            }
+            SystemBiometricManager.BIOMETRIC_STATUS_UNKNOWN -> {
+                Log.biometric { "Biometric features are in unknown status" }
+                BiometricsStatus.UNAVAILABLE
+            }
+            SystemBiometricManager.BIOMETRIC_ERROR_UNSUPPORTED -> {
+                Log.biometric { "Biometric features are unsupported" }
+                BiometricsStatus.UNAVAILABLE
+            }
+            else -> {
+                Log.biometric { "Biometric features are unsupported" }
+                BiometricsStatus.UNAVAILABLE
             }
         }
     }
@@ -256,7 +220,6 @@ internal class AndroidAuthenticationManager(
         AUTHENTICATING,
         UNAVAILABLE,
         NEED_ENROLL,
-        NOT_INITIALIZED,
     }
 
     private sealed interface BiometricAuthenticationResult {
