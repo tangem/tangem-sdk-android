@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.fragment.app.FragmentActivity
 import com.tangem.*
 import com.tangem.common.authentication.AuthenticationManager
-import com.tangem.common.authentication.DummyAuthenticationManager
 import com.tangem.common.authentication.keystore.DummyKeystoreManager
 import com.tangem.common.authentication.keystore.KeystoreManager
 import com.tangem.common.core.Config
@@ -118,12 +117,8 @@ fun TangemSdk.Companion.createLogger(formatter: LogFormat? = null): TangemSdkLog
 }
 
 fun TangemSdk.Companion.initAuthenticationManager(activity: FragmentActivity): AuthenticationManager {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        AndroidAuthenticationManager(activity)
-            .also { activity.lifecycle.addObserver(it) }
-    } else {
-        DummyAuthenticationManager()
-    }
+    return AndroidAuthenticationManager(activity)
+        .also { activity.lifecycle.addObserver(it) }
 }
 
 fun TangemSdk.Companion.initKeystoreManager(
