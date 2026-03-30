@@ -378,7 +378,7 @@ class CardSession(
     fun send(apdu: CommandApdu, callback: CompletionCallback<ResponseApdu>) {
         Log.session { "send CommandApdu" }
         scope.launch {
-            val finalResult = reader.tag
+            reader.tag
                 .filterNotNull()
                 .map { establishEncryptionIfNeeded() }
                 .map { apdu.encrypt(environment.encryptionMode, environment.encryptionKey) }
@@ -397,14 +397,16 @@ class CardSession(
                         emit(result)
                     }
                 }
-                .first()
-            when (finalResult) {
-                is CompletionResult.Success -> callback(finalResult)
-                is CompletionResult.Failure -> {
-                    Log.error { "${finalResult.error}" }
-                    callback(finalResult)
+                .take(1)
+                .collect { finalResult ->
+                    when (finalResult) {
+                        is CompletionResult.Success -> callback(finalResult)
+                        is CompletionResult.Failure -> {
+                            Log.error { "${finalResult.error}" }
+                            callback(finalResult)
+                        }
+                    }
                 }
-            }
         }
     }
 
