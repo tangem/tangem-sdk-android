@@ -120,10 +120,10 @@ internal class AndroidAuthenticationManager(
 
                 when (biometricResult) {
                     is BiometricAuthenticationResult.Failure -> {
-                        continuation.resumeWithException(biometricResult.error)
+                        if (continuation.isActive) continuation.resumeWithException(biometricResult.error)
                     }
                     is BiometricAuthenticationResult.Success -> {
-                        continuation.resume(biometricResult.result)
+                        if (continuation.isActive) continuation.resume(biometricResult.result)
                     }
                 }
             },
