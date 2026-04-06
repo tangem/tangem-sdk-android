@@ -318,8 +318,6 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
 
     class MnemonicException(val mnemonicResult: MnemonicErrorResult) : TangemSdkError(code = 50023)
 
-    class AuthenticationNotInitialized : TangemSdkError(code = 50026)
-
     /**
      * Returns if NFC feature for device is not supported
      */
