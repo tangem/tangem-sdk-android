@@ -96,7 +96,6 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
         is TangemSdkError.WalletIsPurged,
         is TangemSdkError.SignHashesNotAvailable,
         is TangemSdkError.NonHardenedDerivationNotSupported,
-        is TangemSdkError.AuthenticationNotInitialized,
         is TangemSdkError.NfcFeatureIsUnavailable,
         -> TangemSdkErrorDescription()
 
