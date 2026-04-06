@@ -11,7 +11,6 @@ import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.*
 import com.tangem.common.deserialization.WalletDeserializer
 import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 import com.tangem.operations.CommandResponse
@@ -21,6 +20,7 @@ import com.tangem.operations.PreflightReadMode
 class ReadWalletsListResponse(
     val cardId: String,
     val wallets: List<CardWallet>,
+    val backupHash: ByteArray? = null,
 ) : CommandResponse
 
 /**
@@ -30,6 +30,7 @@ class ReadWalletsListCommand : Command<ReadWalletsListResponse>() {
 
     private val loadedWallets = mutableListOf<CardWallet>()
     private var receivedWalletsCount: Int = 0
+    private var backupHash: ByteArray? = null
 
     override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.ReadCardOnly
 
@@ -46,6 +47,7 @@ class ReadWalletsListCommand : Command<ReadWalletsListResponse>() {
             when (result) {
                 is CompletionResult.Success -> {
                     loadedWallets.addAll(result.data.wallets)
+                    if (result.data.backupHash != null) backupHash = result.data.backupHash
                     if (receivedWalletsCount == 0 && result.data.wallets.isEmpty()) {
                         callback(CompletionResult.Failure(TangemSdkError.CardWithMaxZeroWallets()))
                         return@transceive
@@ -58,7 +60,11 @@ class ReadWalletsListCommand : Command<ReadWalletsListResponse>() {
 
                     loadedWallets.sortBy { it.index }
                     session.environment.card = session.environment.card?.setWallets(loadedWallets)
-                    callback(CompletionResult.Success(ReadWalletsListResponse(result.data.cardId, loadedWallets)))
+                    callback(
+                        CompletionResult.Success(
+                            ReadWalletsListResponse(result.data.cardId, loadedWallets, backupHash),
+                        ),
+                    )
                 }
                 is CompletionResult.Failure -> callback(result)
             }
@@ -66,10 +72,16 @@ class ReadWalletsListCommand : Command<ReadWalletsListResponse>() {
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
-        tlvBuilder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+        val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
+
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.InteractionMode, ReadMode.WalletsList)
+        if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+        }
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+        }
         if (receivedWalletsCount > 0) tlvBuilder.append(TlvTag.WalletIndex, receivedWalletsCount)
 
         return CommandApdu(Instruction.Read, tlvBuilder.serialize())
@@ -77,13 +89,12 @@ class ReadWalletsListCommand : Command<ReadWalletsListResponse>() {
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): ReadWalletsListResponse {
         val card = environment.card ?: throw TangemSdkError.UnknownError()
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         val deserializedData = WalletDeserializer(card.settings.isPermanentWallet)
             .deserializeWallets(decoder)
         receivedWalletsCount += deserializedData.second
 
-        return ReadWalletsListResponse(decoder.decode(TlvTag.CardId), deserializedData.first)
+        val backupHash: ByteArray? = decoder.decodeOptional(TlvTag.BackupHash)
+        return ReadWalletsListResponse(decoder.decode(TlvTag.CardId), deserializedData.first, backupHash)
     }
 }

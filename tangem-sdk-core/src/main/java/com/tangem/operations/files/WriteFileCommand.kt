@@ -8,16 +8,10 @@ import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.Card
 import com.tangem.common.card.FirmwareVersion
-import com.tangem.common.core.CardSession
-import com.tangem.common.core.CompletionCallback
-import com.tangem.common.core.SessionEnvironment
-import com.tangem.common.core.TangemError
-import com.tangem.common.core.TangemSdkError
+import com.tangem.common.core.*
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.ifNotNullOr
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.DefaultIssuerDataVerifier
 import com.tangem.crypto.IssuerDataToVerify
@@ -163,7 +157,7 @@ class WriteFileCommand private constructor(
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
         tlvBuilder.append(TlvTag.InteractionMode, mode)
@@ -203,7 +197,7 @@ class WriteFileCommand private constructor(
                 if (finalizingSignature != null) {
                     tlvBuilder.append(TlvTag.IssuerDataSignature, finalizingSignature)
                 } else {
-                    tlvBuilder.append(TlvTag.CodeHash, data.calculateSha256())
+                    tlvBuilder.append(TlvTag.Hash, data.calculateSha256())
                     tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
                 }
             }
@@ -214,8 +208,7 @@ class WriteFileCommand private constructor(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): WriteFileResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         return WriteFileResponse(
             cardId = decoder.decode(TlvTag.CardId),
             fileIndex = decoder.decodeOptional(TlvTag.FileIndex),

@@ -1,7 +1,6 @@
 package com.tangem.operations.issuerAndUserData
 
 import com.squareup.moshi.JsonClass
-import com.tangem.*
 import com.tangem.common.CompletionResult
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
@@ -14,7 +13,6 @@ import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.guard
 import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.DefaultIssuerDataVerifier
 import com.tangem.crypto.IssuerDataToVerify
@@ -175,7 +173,7 @@ class ReadIssuerExtraDataCommand(
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.InteractionMode, IssuerExtraDataMode.ReadOrStartWrite)
@@ -184,9 +182,7 @@ class ReadIssuerExtraDataCommand(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): ReadIssuerExtraDataResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         return ReadIssuerExtraDataResponse(
             cardId = decoder.decode(TlvTag.CardId),
             size = decoder.decodeOptional(TlvTag.Size),

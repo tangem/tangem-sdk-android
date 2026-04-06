@@ -3,12 +3,12 @@ package com.tangem.operations.wallet
 import com.tangem.Log
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.EllipticCurve
-import com.tangem.common.card.EncryptionMode
 import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.CardSession
 import com.tangem.common.core.CardSessionRunnable
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.TangemSdkError
+import com.tangem.common.encryption.EncryptionMode
 import com.tangem.common.extensions.guard
 import com.tangem.crypto.hdWallet.bip32.ExtendedPrivateKey
 import com.tangem.operations.derivation.DeriveWalletPublicKeysTask
@@ -117,6 +117,13 @@ class CreateWalletTask(
         if (card.firmwareVersion < FirmwareVersion.HDWalletAvailable ||
             !card.settings.isHDWalletAllowed || paths.isNullOrEmpty()
         ) {
+            callback(CompletionResult.Success(response))
+            return
+        }
+
+        // There is no key because the card requires a backup, and the backup has not yet been made.
+        // There is no point in doing a derivation.
+        response.wallet.publicKey.guard {
             callback(CompletionResult.Success(response))
             return
         }

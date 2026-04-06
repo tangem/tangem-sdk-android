@@ -7,8 +7,6 @@ import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.Card
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 import com.tangem.operations.CommandResponse
@@ -55,7 +53,7 @@ class ReadFileChecksumCommand private constructor() : Command<ReadFileChecksumRe
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
         tlvBuilder.append(TlvTag.InteractionMode, FileDataMode.ReadFileHash)
@@ -68,12 +66,10 @@ class ReadFileChecksumCommand private constructor() : Command<ReadFileChecksumRe
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): ReadFileChecksumResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         return ReadFileChecksumResponse(
             decoder.decode(TlvTag.CardId),
-            decoder.decode(TlvTag.CodeHash),
+            decoder.decode(TlvTag.Hash),
             decoder.decodeOptional(TlvTag.FileIndex),
         )
     }

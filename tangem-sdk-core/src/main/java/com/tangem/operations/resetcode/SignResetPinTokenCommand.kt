@@ -9,7 +9,6 @@ import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 import com.tangem.operations.PreflightReadMode
@@ -49,7 +48,7 @@ class SignResetPinTokenCommand(
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder().apply {
+        val tlvBuilder = createTlvBuilder(environment.legacyMode).apply {
             append(TlvTag.CardId, environment.card?.cardId)
             append(TlvTag.InteractionMode, AuthorizeMode.TokenSign)
             append(TlvTag.Challenge, resetPinCard.token)
@@ -60,10 +59,7 @@ class SignResetPinTokenCommand(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): ConfirmationCard {
-        val tlvData = apdu.getTlvData()
-            ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
 
         val isAccessCodeSet = environment.card?.isAccessCodeSet
         val isPasscodeSet = environment.card?.isPasscodeSet

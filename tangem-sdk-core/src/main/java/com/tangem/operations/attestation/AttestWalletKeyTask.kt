@@ -8,15 +8,10 @@ import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.Card
 import com.tangem.common.card.CardWallet
 import com.tangem.common.card.FirmwareVersion
-import com.tangem.common.core.CardSession
-import com.tangem.common.core.CompletionCallback
-import com.tangem.common.core.SessionEnvironment
-import com.tangem.common.core.TangemError
-import com.tangem.common.core.TangemSdkError
+import com.tangem.common.core.*
 import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.toByteArray
 import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.hdWallet.DerivationPath
@@ -145,8 +140,14 @@ class AttestWalletKeyTask(
         val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
         val walletIndex = card.wallet(publicKey)?.index ?: throw TangemSdkError.WalletNotFound()
 
-        val builder = TlvBuilder()
-        builder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, card)
+        val builder = createTlvBuilder(environment.legacyMode)
+        if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
+            builder.append(TlvTag.Pin, environment.accessCode.value)
+        }
+
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            builder.append(TlvTag.CardId, environment.card?.cardId)
+        }
         builder.append(TlvTag.CardId, card.cardId)
         builder.append(TlvTag.Challenge, challenge)
         builder.append(TlvTag.WalletIndex, walletIndex)
@@ -168,8 +169,7 @@ class AttestWalletKeyTask(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): AttestWalletKeyResponse {
-        val tlv = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-        val decoder = TlvDecoder(tlv)
+        val decoder = createTlvDecoder(environment, apdu)
         return AttestWalletKeyResponse(
             cardId = decoder.decode(TlvTag.CardId),
             salt = decoder.decode(TlvTag.Salt),

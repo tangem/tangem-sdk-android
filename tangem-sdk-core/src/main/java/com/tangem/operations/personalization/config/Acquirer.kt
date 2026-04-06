@@ -1,4 +1,4 @@
-package com.tangem.operations.personalization.entities
+package com.tangem.operations.personalization.config
 
 import com.tangem.common.KeyPair
 

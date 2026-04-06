@@ -1,6 +1,6 @@
 package com.tangem.operations.issuerAndUserData
 
-import com.tangem.*
+import com.tangem.Log
 import com.tangem.common.CompletionResult
 import com.tangem.common.SuccessResponse
 import com.tangem.common.apdu.CommandApdu
@@ -11,7 +11,6 @@ import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.*
 import com.tangem.common.extensions.guard
 import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.DefaultIssuerDataVerifier
 import com.tangem.crypto.IssuerDataToVerify
@@ -133,7 +132,7 @@ class WriteIssuerExtraDataCommand(
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.InteractionMode, mode)
@@ -163,9 +162,8 @@ class WriteIssuerExtraDataCommand(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): SuccessResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        return SuccessResponse(TlvDecoder(tlvData).decode(TlvTag.CardId))
+        val decoder = createTlvDecoder(environment, apdu)
+        return SuccessResponse(decoder.decode(TlvTag.CardId))
     }
 
     companion object {

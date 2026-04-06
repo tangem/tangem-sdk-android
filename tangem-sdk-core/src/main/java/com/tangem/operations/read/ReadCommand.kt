@@ -63,7 +63,7 @@ class ReadCommand : Command<ReadResponse>() {
      *  The card will not respond if wrong pin1 has been submitted.
      */
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
         tlvBuilder.append(TlvTag.InteractionMode, ReadMode.Card)
         tlvBuilder.append(TlvTag.TerminalPublicKey, environment.terminalKeys?.publicKey)

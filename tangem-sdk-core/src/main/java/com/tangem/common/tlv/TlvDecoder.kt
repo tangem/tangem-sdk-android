@@ -1,7 +1,8 @@
 package com.tangem.common.tlv
 
-import com.tangem.*
+import com.tangem.Log
 import com.tangem.common.card.*
+import com.tangem.common.core.AccessLevel
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.toDate
 import com.tangem.common.extensions.toHexString
@@ -13,7 +14,7 @@ import com.tangem.operations.issuerAndUserData.IssuerExtraDataMode
 import com.tangem.operations.personalization.entities.ProductMask
 import com.tangem.operations.read.ReadMode
 import com.tangem.operations.resetcode.AuthorizeMode
-import java.util.*
+import java.util.Date
 
 /**
  * Maps value fields in [Tlv] from raw [ByteArray] to concrete classes
@@ -206,24 +207,31 @@ class TlvDecoder(val tlvList: List<Tlv>) {
                     throw TangemSdkError.DecodingFailed(provideDecodingFailedMessage(tag))
                 }
             }
+            TlvValueType.AccessLevel -> try {
+                typeCheck<T, AccessLevel>(tag)
+                AccessLevel.byCode(tlvValue.toInt()) as T
+            } catch (exception: Exception) {
+                logException(tag, tlvValue.toInt().toString(), exception)
+                throw TangemSdkError.DecodingFailed(provideDecodingFailedMessage(tag))
+            }
         }
     }
+}
 
-    fun provideDecodingFailedMessage(tag: TlvTag): String =
-        "Decoding failed. Failed to convert $tag to ${tag.valueType()}"
+fun provideDecodingFailedMessage(tag: TlvTag): String =
+    "Decoding failed. Failed to convert $tag to ${tag.valueType()}"
 
-    fun logException(tag: TlvTag, value: String, exception: Exception) {
-        Log.error { "Unknown ${tag.name} with value of: $value, \n${exception.message}" }
-    }
+fun logException(tag: TlvTag, value: String, exception: Exception) {
+    Log.error { "Unknown ${tag.name} with value of: $value, \n${exception.message}" }
+}
 
-    inline fun <reified T, reified ExpectedT> typeCheck(tag: TlvTag, logError: Boolean = true) {
-        if (T::class != ExpectedT::class) {
-            val error = TangemSdkError.DecodingFailedTypeMismatch(
-                "Decoder: type check failed for tag: " +
-                    "$tag must be ${tag.valueType()}. It is ${T::class}",
-            )
-            if (logError) Log.error { error.customMessage }
-            throw error
-        }
+inline fun <reified T, reified ExpectedT> typeCheck(tag: TlvTag, logError: Boolean = true) {
+    if (T::class != ExpectedT::class) {
+        val error = TangemSdkError.DecodingFailedTypeMismatch(
+            "Decoder: type check failed for tag: " +
+                "$tag must be ${tag.valueType()}. It is ${T::class}",
+        )
+        if (logError) Log.error { error.customMessage }
+        throw error
     }
 }

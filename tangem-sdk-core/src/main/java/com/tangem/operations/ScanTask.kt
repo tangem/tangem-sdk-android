@@ -1,6 +1,5 @@
 package com.tangem.operations
 
-import com.tangem.*
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.Card
 import com.tangem.common.card.FirmwareVersion
@@ -32,7 +31,7 @@ class ScanTask(
         // We cannot run checkUserCodes command for cards whose `isResettingUserCodesAllowed` is set to false
         // because of an error
         @Suppress("MagicNumber")
-        if (card.firmwareVersion < FirmwareVersion.IsPasscodeStatusAvailable &&
+        if (card.firmwareVersion < FirmwareVersion.PasscodeStatusAvailable &&
             card.firmwareVersion.doubleValue > 1.19 &&
             card.settings.isRemovingUserCodesAllowed
         ) {
@@ -58,6 +57,11 @@ class ScanTask(
     private fun deriveKeysIfNeeded(session: CardSession, callback: CompletionCallback<Card>) {
         val card = session.environment.card.guard {
             callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
+            return
+        }
+
+        if (card.assertWalletsAccess() != null) {
+            runAttestation(session, callback)
             return
         }
 

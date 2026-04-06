@@ -2,8 +2,9 @@ package com.tangem.common.json
 
 import com.squareup.moshi.*
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import com.tangem.common.MaskBuilder
+import com.tangem.operations.personalization.config.MaskBuilder
 import com.tangem.common.card.*
+import com.tangem.common.encryption.EncryptionMode
 import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString

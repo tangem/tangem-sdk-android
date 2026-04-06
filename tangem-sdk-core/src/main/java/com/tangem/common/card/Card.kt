@@ -3,6 +3,8 @@ package com.tangem.common.card
 import com.squareup.moshi.JsonClass
 import com.tangem.common.BaseMask
 import com.tangem.common.Mask
+import com.tangem.common.encryption.EncryptionMode
+import com.tangem.common.core.TangemSdkError
 import com.tangem.operations.CommandResponse
 import com.tangem.operations.attestation.Attestation
 import com.tangem.operations.read.ReadCommand
@@ -85,6 +87,17 @@ data class Card internal constructor(
     val wallets: List<CardWallet>,
 
     /**
+     * Master secret info for deterministic entropy (BIP-0085). Available on COS v8+.
+     */
+    val masterSecret: MasterSecret? = null,
+
+    /**
+     * Whether the card's backup data is consistent. Calculated by comparing local hash
+     * with card's backup hash. Available on COS v8+.
+     */
+    val isBackupVerified: Boolean? = null,
+
+    /**
      * Card's attestation report
      */
     val attestation: Attestation = Attestation.empty,
@@ -94,8 +107,7 @@ data class Card internal constructor(
      *  User should withdraw the value to other blockchain wallet as soon as possible.
      *  Non-zero Health tag will also appear in responses of all other commands.
      */
-    @Transient
-    internal var health: Int? = null,
+    var health: Int? = null,
 
     /**
      *  Remaining number of `SignCommand` operations before the wallet will stop signing transactions.
@@ -106,6 +118,27 @@ data class Card internal constructor(
 
     val backupStatus: BackupStatus? = null,
 ) : CommandResponse {
+
+    val hasHealthReport: Boolean
+        get() {
+            val health = health ?: return false
+            val msb = health and 0xFF
+            return msb and 0x7F != 0
+        }
+
+    fun assertWalletsAccess(): TangemSdkError? {
+        if (firmwareVersion < FirmwareVersion.v8 || !settings.isBackupRequired) {
+            return null
+        }
+
+        val backupStatus = backupStatus ?: return null
+
+        if (backupStatus.isActive) {
+            return null
+        }
+
+        return TangemSdkError.WalletUnavailableBackupRequired()
+    }
 
     fun setWallets(newWallets: List<CardWallet>): Card {
         val sortedWallets = newWallets.toMutableList().apply { sortBy { it.index } }
@@ -207,6 +240,12 @@ data class Card internal constructor(
                 NoBackup -> 0
             }
 
+        val backupCardsCount: Int
+            get() = when (this) {
+                is Active -> cardsCount
+                is CardLinked, NoBackup -> 0
+            }
+
         fun toRawStatus(): BackupRawStatus {
             return when (this) {
                 NoBackup -> BackupRawStatus.NoBackup
@@ -302,6 +341,11 @@ data class Card internal constructor(
         val isHDWalletAllowed: Boolean,
 
         /**
+         * Is backup required for this card
+         */
+        val isBackupRequired: Boolean,
+
+        /**
          * Is allowed to delete wallet. COS before v4
          * Default value used only for Moshi
          */
@@ -366,6 +410,7 @@ data class Card internal constructor(
             isIssuerDataProtectedAgainstReplay = mask.contains(SettingsMask.Code.ProtectIssuerDataAgainstReplay),
             isSelectBlockchainAllowed = mask.contains(SettingsMask.Code.AllowSelectBlockchain),
             isFilesAllowed = !mask.contains(SettingsMask.Code.DisableFiles),
+            isBackupRequired = mask.contains(SettingsMask.Code.RequireBackup),
         )
 
         fun updated(mask: SettingsMask): Settings {
@@ -422,6 +467,7 @@ data class Card internal constructor(
             AllowHDWallets(value = 0x00200000),
             AllowBackup(value = 0x00400000),
             AllowKeysImport(value = 0x00800000),
+            RequireBackup(value = 0x08000000),
         }
     }
 }

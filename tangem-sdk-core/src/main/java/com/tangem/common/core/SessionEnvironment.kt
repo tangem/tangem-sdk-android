@@ -4,12 +4,13 @@ import com.tangem.common.KeyPair
 import com.tangem.common.UserCode
 import com.tangem.common.UserCodeType
 import com.tangem.common.card.Card
-import com.tangem.common.card.EncryptionMode
+import com.tangem.common.encryption.EncryptionMode
 import com.tangem.common.card.WalletData
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.services.secure.SecureStorage
 import com.tangem.common.services.secure.TerminalKeysService
 import com.tangem.common.services.secure.TerminalKeysStorage
+import com.tangem.common.v8.CardAccessTokens
 import java.lang.ref.WeakReference
 
 /**
@@ -30,8 +31,11 @@ class SessionEnvironment(
     var encryptionMode: EncryptionMode = EncryptionMode.None
     var encryptionKey: ByteArray? = null
     var cvc: ByteArray? = null
+    /// COS v8+
+    var cardAccessTokens: CardAccessTokens? = null
     var accessCode: UserCode = UserCode(UserCodeType.AccessCode)
     var passcode: UserCode = UserCode(UserCodeType.Passcode)
+    var legacyMode: Boolean = config.legacyMode ?: false
 
     /**
      * Keys for Linked Terminal feature
@@ -45,11 +49,25 @@ class SessionEnvironment(
     @Deprecated("Used to fix lack of security delay on cards with firmware version below 1.21")
     var enableMissingSecurityDelay: Boolean = false
 
+    var currentSecurityDelay: Float? = null
+
     fun isUserCodeSet(type: UserCodeType): Boolean {
         return when (type) {
-            UserCodeType.AccessCode -> accessCode.value?.contentEquals(type.defaultValue.calculateSha256()) == false
-            UserCodeType.Passcode -> passcode.value?.contentEquals(type.defaultValue.calculateSha256()) == false
+            UserCodeType.AccessCode -> !accessCode.isDefault() && accessCode.value != null
+            UserCodeType.Passcode -> !passcode.isDefault() && passcode.value != null
         }
+    }
+
+    fun reset() {
+        card = null
+        walletData = null
+        encryptionMode = EncryptionMode.None
+        encryptionKey = null
+        cvc = null
+        cardAccessTokens = null
+        accessCode = UserCode(UserCodeType.AccessCode)
+        passcode = UserCode(UserCodeType.Passcode)
+        currentSecurityDelay = null
     }
 
     companion object {

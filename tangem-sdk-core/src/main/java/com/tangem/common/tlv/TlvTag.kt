@@ -22,6 +22,7 @@ enum class TlvValueType {
     DerivationPath,
     BackupStatus,
     UserSettingsMask,
+    AccessLevel,
 }
 
 /**
@@ -84,7 +85,7 @@ enum class TlvTag(val code: Int, val shouldMask: Boolean = false) {
 
     CodePageAddress(code = 0x40),
     CodePageCount(code = 0x41),
-    CodeHash(code = 0x42),
+    Hash(code = 0x42),
 
     TransactionOutHash(code = 0x50, shouldMask = true),
     TransactionOutHashSize(code = 0x51),
@@ -130,6 +131,8 @@ enum class TlvTag(val code: Int, val shouldMask: Boolean = false) {
     TerminalIsLinked(code = 0x58),
     TerminalPublicKey(code = 0x5C, shouldMask = true),
     TerminalTransactionSignature(code = 0x57, shouldMask = true),
+    Flash(code = 0x28),
+    LegacyMode(code = 0x29, shouldMask = false),
 
     UserData(code = 0x2A),
     UserProtectedData(code = 0x2B),
@@ -152,6 +155,13 @@ enum class TlvTag(val code: Int, val shouldMask: Boolean = false) {
     BackupCardLink(code = 0xD4, shouldMask = true),
     BackupAttestSignature(code = 0xD5, shouldMask = true),
     BackupCardPublicKey(code = 0xD6, shouldMask = true),
+    BackupHash(code = 0xD7),
+
+    // COS v8+
+    Hmac(code = 0x44),
+    AccessToken(code = 0x48, shouldMask = true),
+    IdentifyToken(code = 0x49, shouldMask = true),
+    AccessLevel(code = 0x4A),
     ;
 
     /**
@@ -179,7 +189,7 @@ enum class TlvTag(val code: Int, val shouldMask: Boolean = false) {
             Offset,
             Size,
             -> TlvValueType.Uint16
-            FileIndex, WalletIndex, FileOwnerIndex, WalletsCount, CheckWalletCounter, FileCounter, BackupCount ->
+            LegacyMode, FileIndex, WalletIndex, FileOwnerIndex, WalletsCount, CheckWalletCounter, FileCounter, BackupCount ->
                 TlvValueType.Uint8
             MaxSignatures, UserCounter, UserProtectedCounter, IssuerDataCounter -> TlvValueType.Uint32
             IsActivated, TerminalIsLinked, CreateWalletAtPersonalize,
@@ -194,6 +204,7 @@ enum class TlvTag(val code: Int, val shouldMask: Boolean = false) {
             WalletHDPath -> TlvValueType.DerivationPath
             BackupStatus -> TlvValueType.BackupStatus
             UserSettingsMask -> TlvValueType.UserSettingsMask
+            AccessLevel -> TlvValueType.AccessLevel
             else -> TlvValueType.ByteArray
         }
     }

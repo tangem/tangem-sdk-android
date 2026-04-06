@@ -1,12 +1,7 @@
 package com.tangem.common.deserialization
 
 import com.tangem.common.apdu.ResponseApdu
-import com.tangem.common.card.Card
-import com.tangem.common.card.CardWallet
-import com.tangem.common.card.EllipticCurve
-import com.tangem.common.card.FirmwareVersion
-import com.tangem.common.card.UserSettings
-import com.tangem.common.card.UserSettingsMask
+import com.tangem.common.card.*
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.tlv.Tlv
 import com.tangem.common.tlv.TlvDecoder
@@ -29,11 +24,12 @@ object CardDeserializer {
         allowNotPersonalized: Boolean = false,
     ): Card {
         val status: Card.Status = decoder.decode(TlvTag.Status)
-        assertStatus(allowNotPersonalized, status)
+        val firmware = FirmwareVersion(decoder.decode(TlvTag.Firmware))
+
+        assertStatus(allowNotPersonalized, status, firmware)
         assertActivation(decoder.decode(TlvTag.IsActivated) as Boolean)
         val cardDataDecoder = cardDataDecoder ?: throw TangemSdkError.DeserializeApduFailed()
 
-        val firmware = FirmwareVersion(decoder.decode(TlvTag.Firmware))
         val cardSettingsMask: Card.SettingsMask = decoder.decode(TlvTag.SettingsMask)
         val isAccessCodeSet: Boolean? = isAccessCodeSet(firmware, decoder)
         val isPasscodeSet: Boolean? = isPasscodeSet(firmware, decoder)
@@ -57,6 +53,7 @@ object CardDeserializer {
                 index = 0,
                 isImported = false,
                 hasBackup = false,
+                status = CardWallet.Status.Loaded,
             )
             wallets.add(wallet)
         }
@@ -75,7 +72,11 @@ object CardDeserializer {
         val userSettings: UserSettings = if (userSettingsMask != null) {
             UserSettings(userSettingsMask)
         } else {
-            UserSettings(isUserCodeRecoveryAllowed = firmware >= FirmwareVersion.BackupAvailable)
+            UserSettings(
+                isUserCodeRecoveryAllowed = firmware >= FirmwareVersion.BackupAvailable,
+                isPINRequired = false,
+                isNDEFDisabled = false,
+            )
         }
 
         return Card(
@@ -121,14 +122,17 @@ object CardDeserializer {
     }
 
     private fun isAccessCodeSet(firmware: FirmwareVersion, decoder: TlvDecoder): Boolean? =
-        if (firmware >= FirmwareVersion.IsAccessCodeStatusAvailable) {
+        if (firmware >= FirmwareVersion.UserCodeStatusesAvailable) {
             !(decoder.decode(TlvTag.PinIsDefault) as Boolean)
         } else {
             null
         }
 
     private fun isPasscodeSet(firmware: FirmwareVersion, decoder: TlvDecoder): Boolean? =
-        if (firmware >= FirmwareVersion.IsPasscodeStatusAvailable) {
+        if (firmware >= FirmwareVersion.v8) {
+            // Not supported for v8. Should be false for backward compatibility.
+            false
+        } else if (firmware >= FirmwareVersion.PasscodeStatusAvailable) {
             !(decoder.decode(TlvTag.Pin2IsDefault) as Boolean)
         } else {
             null
@@ -167,9 +171,15 @@ object CardDeserializer {
         return if (cardDataValue.isNullOrEmpty()) null else TlvDecoder(cardDataValue)
     }
 
-    private fun assertStatus(allowNotPersonalized: Boolean, status: Card.Status) {
+    private fun assertStatus(
+        allowNotPersonalized: Boolean,
+        status: Card.Status,
+        firmware: FirmwareVersion,
+    ) {
         when {
-            status == Card.Status.NotPersonalized && !allowNotPersonalized -> throw TangemSdkError.NotPersonalized()
+            status == Card.Status.NotPersonalized || !allowNotPersonalized -> throw TangemSdkError.NotPersonalized(
+                firmware = firmware,
+            )
             status == Card.Status.Purged -> throw TangemSdkError.WalletIsPurged()
         }
     }

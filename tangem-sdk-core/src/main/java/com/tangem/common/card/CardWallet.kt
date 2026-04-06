@@ -59,6 +59,11 @@ data class CardWallet(
     val hasBackup: Boolean,
 
     /**
+     * Raw status of the wallet
+     */
+    val status: Status,
+
+    /**
      * Derived keys according to [com.tangem.common.core.Config.defaultDerivationPaths]
      */
     val derivedKeys: Map<DerivationPath, ExtendedPublicKey> = emptyMap(),
@@ -137,7 +142,8 @@ data class CardWallet(
                 return values.find { it.code.toByte() == code.toByte() }
             }
 
-            fun initExtendedPublicKey(publicKey: ByteArray, chainCode: ByteArray?): ExtendedPublicKey? {
+            fun initExtendedPublicKey(publicKey: ByteArray?, chainCode: ByteArray?): ExtendedPublicKey? {
+                val publicKey = publicKey ?: return null
                 val chainCode = chainCode ?: return null
 
                 return ExtendedPublicKey(publicKey, chainCode)

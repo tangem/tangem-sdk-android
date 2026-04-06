@@ -1,5 +1,6 @@
-package com.tangem.operations.personalization.entities
+package com.tangem.operations.personalization.config
 
+import com.tangem.operations.personalization.entities.ProductMask
 import java.util.Date
 
 /**

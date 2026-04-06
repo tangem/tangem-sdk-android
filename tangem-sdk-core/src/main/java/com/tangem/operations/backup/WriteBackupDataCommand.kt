@@ -11,8 +11,6 @@ import com.tangem.common.core.CardSession
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 import com.tangem.operations.CommandResponse
@@ -84,22 +82,24 @@ class WriteBackupDataCommand(
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
-        tlvBuilder.append(TlvTag.Pin, accessCode)
+        val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
+
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
+
         tlvBuilder.append(TlvTag.Pin2, passcode)
         tlvBuilder.append(TlvTag.Salt, backupData[index].salt)
         tlvBuilder.append(TlvTag.IssuerData, backupData[index].data)
+
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+            tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+        }
 
         return CommandApdu(Instruction.WriteBackupData, tlvBuilder.serialize())
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): WriteBackupDataResponse {
-        val tlvData = apdu.getTlvData()
-            ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
-
+        val decoder = createTlvDecoder(environment, apdu)
         return WriteBackupDataResponse(
             cardId = decoder.decode(TlvTag.CardId),
             backupStatus = decoder.decode(TlvTag.BackupStatus),

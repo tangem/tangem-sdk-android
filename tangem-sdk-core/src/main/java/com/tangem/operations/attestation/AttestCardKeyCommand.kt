@@ -21,6 +21,7 @@ import com.tangem.crypto.CryptoUtils
 import com.tangem.operations.Command
 import com.tangem.operations.CommandResponse
 import com.tangem.operations.PreflightReadMode
+import kotlin.text.append
 
 /**
  * Deserialized response from the Tangem card after `AttestCardKeyCommand`.
@@ -99,9 +100,14 @@ class AttestCardKeyCommand(
             throw TangemSdkError.MissingPreflightRead()
         }
 
-        val builder = TlvBuilder()
-        builder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
-        builder.append(TlvTag.CardId, environment.card?.cardId)
+        val builder = createTlvBuilder(environment.legacyMode)
+        if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
+            builder.append(TlvTag.Pin, environment.accessCode.value)
+        }
+
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            builder.append(TlvTag.CardId, environment.card?.cardId)
+        }
         builder.append(TlvTag.Challenge, challenge)
         if (card.backupStatus?.isActive == true) {
             builder.append(TlvTag.InteractionMode, mode.toRawMode())
@@ -110,15 +116,13 @@ class AttestCardKeyCommand(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): AttestCardKeyResponse {
-        val tlv = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlv)
+        val decoder = createTlvDecoder(environment, apdu)
         return AttestCardKeyResponse(
             cardId = decoder.decode(TlvTag.CardId),
             salt = decoder.decode(TlvTag.Salt),
             cardSignature = decoder.decode(TlvTag.CardSignature),
             challenge = challenge!!,
-            linkedCardsPublicKeys = decodeLinkedCardsPublicKeys(tlv),
+            linkedCardsPublicKeys = decodeLinkedCardsPublicKeys(decoder.tlvList),
         )
     }
 

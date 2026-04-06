@@ -167,6 +167,16 @@ fun Secp256k1.generateKeyPair(): KeyPair {
     return KeyPair(publicKey, privateKey)
 }
 
+fun ByteArray.secureCompare(other: ByteArray): Boolean {
+    if (this.size != other.size) return false
+
+    var result = 0
+    for (i in this.indices) {
+        result = result or (this[i].toInt() xor other[i].toInt())
+    }
+    return result == 0
+}
+
 /**
  * Extension function to sign a ByteArray with an elliptic curve cryptography.
  *
@@ -201,6 +211,52 @@ fun ByteArray.decrypt(key: ByteArray, usePkcs7: Boolean = true): ByteArray {
     val secretKeySpec = SecretKeySpec(key, spec)
     val cipher = Cipher.getInstance(spec)
     cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, IvParameterSpec(ByteArray(16)))
+    return cipher.doFinal(this.copyOfRange(0, this.size))
+}
+
+/**
+ * Encrypt data using AES-CCM with 8-byte authentication tag.
+ * Compatible with ciphersuite AEAD_AES_256_CCM_8 from RFC6655.
+ *
+ * @param key AES encryption key (256-bit)
+ * @param nonce CCM nonce/IV
+ * @param associatedData additional authenticated data (AAD)
+ * @return encrypted data with appended authentication tag (8 bytes)
+ */
+@Suppress("MagicNumber")
+fun ByteArray.encryptAesCcm(
+    key: ByteArray,
+    nonce: ByteArray,
+    associatedData: ByteArray,
+): ByteArray {
+    val keySpec = SecretKeySpec(key, "AES/CCM/NoPadding")
+    val ivSpec = IvParameterSpec(nonce)
+    val cipher = Cipher.getInstance("AES/CCM/NoPadding", BouncyCastleProvider.PROVIDER_NAME)
+    cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
+    cipher.updateAAD(associatedData)
+    return cipher.doFinal(this)
+}
+
+/**
+ * Decrypt data using AES-CCM with 8-byte authentication tag.
+ * Compatible with ciphersuite AEAD_AES_256_CCM_8 from RFC6655.
+ *
+ * @param key AES encryption key (256-bit)
+ * @param nonce CCM nonce/IV
+ * @param associatedData additional authenticated data (AAD)
+ * @return decrypted data
+ */
+@Suppress("MagicNumber")
+fun ByteArray.decryptAesCcm(
+    key: ByteArray,
+    nonce: ByteArray,
+    associatedData: ByteArray,
+): ByteArray {
+    val keySpec = SecretKeySpec(key, "AES/CCM/NoPadding")
+    val ivSpec = IvParameterSpec(nonce)
+    val cipher = Cipher.getInstance("AES/CCM/NoPadding",  BouncyCastleProvider.PROVIDER_NAME)
+    cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec)
+    cipher.updateAAD(associatedData)
     return cipher.doFinal(this.copyOfRange(0, this.size))
 }
 

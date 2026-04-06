@@ -62,7 +62,8 @@ internal class WalletDeserializer(
             remainingSignatures = null,
             index = decoder.decode(TlvTag.WalletIndex),
             isImported = status.isImported,
-            hasBackup = status == CardWallet.Status.BackedUp,
+            hasBackup = status.isBackedUp,
+            status = status,
         )
     }
 }
