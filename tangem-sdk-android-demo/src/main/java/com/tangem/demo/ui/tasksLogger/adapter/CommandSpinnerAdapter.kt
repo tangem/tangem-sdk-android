@@ -35,5 +35,5 @@ class CommandSpinnerAdapter(private val itemList: List<CommandType>) : BaseAdapt
 
     override fun getItemId(position: Int): Long = itemList.size.toLong()
 
-    private fun toText(type: CommandType): String = type.name.splitCamelCase().toLowerCase().capitalize()
+    private fun toText(type: CommandType): String = type.name.splitCamelCase().lowercase().capitalize()
 }

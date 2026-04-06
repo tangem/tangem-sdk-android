@@ -142,16 +142,18 @@ class CardSession(
         reader.startSession()
 
         state = CardSessionState.Active
-        viewDelegate.onSessionStarted(
-            cardId = cardId,
-            message = initialMessage,
-            enableHowTo = environment.config.howToIsEnabled,
-            iconScanRes = iconScanRes,
-            productType = environment.config.productType,
-        )
+        runBlocking {
+            viewDelegate.onSessionStarted(
+                cardId = cardId,
+                message = initialMessage,
+                enableHowTo = environment.config.howToIsEnabled,
+                iconScanRes = iconScanRes,
+                productType = environment.config.productType,
+            )
+        }
 
         scope.launch {
-            reader.tag.asFlow()
+            reader.tag
                 .filterNotNull()
                 .take(1)
                 .collect { tagType ->
@@ -171,7 +173,7 @@ class CardSession(
         }
 
         scope.launch {
-            reader.tag.asFlow()
+            reader.tag
                 .drop(1)
                 .collect {
                     if (it == null) {
@@ -185,7 +187,7 @@ class CardSession(
         }
 
         scope.launch {
-            reader.tag.asFlow()
+            reader.tag
                 .onCompletion {
                     val exception = it as? CancellationException ?: return@onCompletion
                     val cause = exception.cause ?: return@onCompletion
@@ -375,9 +377,8 @@ class CardSession(
 
     fun send(apdu: CommandApdu, callback: CompletionCallback<ResponseApdu>) {
         Log.session { "send CommandApdu" }
-        val subscription = reader.tag.openSubscription()
         scope.launch {
-            subscription.consumeAsFlow()
+            reader.tag
                 .filterNotNull()
                 .map { establishEncryptionIfNeeded() }
                 .map { apdu.encrypt(environment.encryptionMode, environment.encryptionKey) }
@@ -389,21 +390,20 @@ class CardSession(
                         callback(CompletionResult.Failure(it))
                     }
                 }
-                .collect { result ->
-                    when (result) {
-                        is CompletionResult.Success -> {
-                            subscription.cancel()
-                            callback(result)
-                        }
+                .transform { result ->
+                    if (result is CompletionResult.Failure && result.error is TangemSdkError.TagLost) {
+                        Log.session { "tag lost. Waiting for tag..." }
+                    } else {
+                        emit(result)
+                    }
+                }
+                .take(1)
+                .collect { finalResult ->
+                    when (finalResult) {
+                        is CompletionResult.Success -> callback(finalResult)
                         is CompletionResult.Failure -> {
-                            when (result.error) {
-                                is TangemSdkError.TagLost -> Log.session { "tag lost. Waiting for tag..." }
-                                else -> {
-                                    Log.error { "${result.error}" }
-                                    subscription.cancel()
-                                    callback(result)
-                                }
-                            }
+                            Log.error { "${finalResult.error}" }
+                            callback(finalResult)
                         }
                     }
                 }

@@ -35,7 +35,8 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
 
     private val onTagDiscoveredListeners: MutableList<VoidCallback> = mutableListOf()
     private var activity: Activity? = null
-    private var nfcAdapter: NfcAdapter? = null
+    var nfcAdapter: NfcAdapter? = null
+        private set
     private var isReaderModeEnabled: Boolean = false
 
     private val mBroadcastReceiver = object : BroadcastReceiver() {

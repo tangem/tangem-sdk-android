@@ -3,6 +3,8 @@ package com.tangem.common.core
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.EncryptionMode
 import com.tangem.operations.PreflightReadMode
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 /**
  * Basic interface for running tasks and [com.tangem.operations.Command] in a [CardSession]
@@ -42,3 +44,13 @@ interface CardSessionRunnable<T> {
 }
 
 typealias CompletionCallback<R> = (result: CompletionResult<R>) -> Unit
+
+suspend fun <T> CardSessionRunnable<T>.prepare(session: CardSession): CompletionResult<Unit> =
+    suspendCancellableCoroutine { continuation ->
+        prepare(session) { result -> if (continuation.isActive) continuation.resume(result) }
+    }
+
+suspend fun <T> CardSessionRunnable<T>.run(session: CardSession): CompletionResult<T> =
+    suspendCancellableCoroutine { continuation ->
+        run(session) { result -> if (continuation.isActive) continuation.resume(result) }
+    }
