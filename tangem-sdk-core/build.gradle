@@ -1,45 +1,38 @@
 apply plugin: "kotlin"
 apply plugin: 'org.jetbrains.dokka'
 apply plugin: 'kotlin-kapt'
-apply plugin: 'com.squareup.sqldelight'
 apply from: '../dependencies.gradle'
 apply from: '../artifactConfig.gradle'
 apply from: '../upload-github.gradle'
 
 dependencies {
     // kotlin
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$versions.kotlin"
-    implementation "org.jetbrains.kotlin:kotlin-reflect:$versions.kotlin"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$versions.coroutines"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$versions.coroutines"
+    implementation libraries.kotlinStdlib
+    implementation libraries.kotlinReflect
+    implementation libraries.coroutinesCore
+    implementation libraries.coroutinesCoreJvm
 
     // crypto
-    implementation "com.madgag.spongycastle:core:1.58.0.0"
-    implementation "com.madgag.spongycastle:prov:1.58.0.0"
-    implementation 'net.i2p.crypto:eddsa:0.3.0'
-    implementation("org.chiachat:kbls:1.0.3")
-    implementation("com.ionspin.kotlin:bignum:0.3.8")
+    implementation libraries.spongyCastleCore
+    implementation libraries.spongyCastleProv
+    implementation libraries.eddsa
+    implementation libraries.kbls
+    implementation libraries.bignum
 
     //network
-    implementation 'com.squareup.retrofit2:retrofit:2.8.1'
-    implementation 'com.squareup.retrofit2:converter-moshi:2.6.0'
-    implementation 'com.squareup.moshi:moshi:1.15.1'
-    implementation "com.squareup.moshi:moshi-kotlin:1.15.1"
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.2.2'
+    implementation libraries.retrofit
+    implementation libraries.retrofitMoshi
+    implementation libraries.moshi
+    implementation libraries.moshiKotlin
+    kapt(libraries.moshiCodegen)
+    implementation libraries.okhttpLogging
 
     // tests
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
-    testImplementation "com.google.truth:truth:1.1.3"
-    testImplementation "org.jetbrains.kotlin:kotlin-test:$versions.kotlin"
-    testImplementation("io.mockk:mockk:1.13.4")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutines")
-}
-
-sqldelight {
-    Database {
-        packageName = "com.tangem"
-    }
+    testImplementation libraries.junit5
+    testImplementation libraries.truth
+    testImplementation libraries.kotlinTest
+    testImplementation libraries.mockk
+    testImplementation libraries.coroutinesTest
 }
 
 sourceCompatibility = "8"
