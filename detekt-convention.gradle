@@ -42,6 +42,6 @@ tasks.withType(io.gitlab.arturbosch.detekt.DetektCreateBaselineTask) {
 }
 
 dependencies {
-    detektPlugins(libraries.formattingDetektRules)
-    detektPlugins(libraries.composeDetektRules)
+    detektPlugins(libraries.detektFormatting)
+    detektPlugins(libraries.detektCompose)
 }

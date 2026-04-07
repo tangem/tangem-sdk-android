@@ -46,29 +46,29 @@ dependencies {
     implementation project(':tangem-sdk-core')
 
     // kotlin
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$versions.kotlin"
-    implementation "org.jetbrains.kotlin:kotlin-reflect:$versions.kotlin"
+    implementation libraries.kotlinStdlib
+    implementation libraries.kotlinReflect
 
     // coroutines
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$versions.coroutines"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$versions.coroutines"
+    implementation libraries.coroutinesCore
+    implementation libraries.coroutinesCoreJvm
 
     // android
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.9.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    implementation 'androidx.core:core-ktx:1.13.1'
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.7.0"
-    implementation "androidx.biometric:biometric:1.1.0"
-    implementation "androidx.activity:activity-ktx:1.8.2"
-    implementation "androidx.fragment:fragment-ktx:1.6.2"
+    implementation libraries.appcompat
+    implementation libraries.material
+    implementation libraries.constraintlayout
+    implementation libraries.coreKtx
+    implementation libraries.lifecycleRuntime
+    implementation libraries.biometric
+    implementation libraries.activityKtx
+    implementation libraries.fragmentKtx
 
     // misc
-    implementation 'com.skyfishjy.ripplebackground:library:1.0.1'
-    implementation 'at.favre.lib:armadillo:1.0.0'
+    implementation libraries.rippleBackground
+    implementation libraries.armadillo
 
     // testing
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test:runner:1.5.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    testImplementation libraries.junit4
+    androidTestImplementation libraries.testRunner
+    androidTestImplementation libraries.espresso
 }
