@@ -1,0 +1,108 @@
+[versions]
+# AndroidX
+activity = "1.8.2"
+appcompat = "1.6.1"
+biometric = "1.1.0"
+constraintlayout = "2.0.4"
+coreKtx = "1.13.1"
+fragment = "1.6.2"
+lifecycle = "2.7.0"
+material = "1.9.0"
+preference = "1.1.1"
+viewpager2 = "1.0.0"
+
+# Crypto
+bignum = "0.3.8"
+eddsa = "0.3.0"
+kbls = "1.0.3"
+spongycastle = "1.58.0.0"
+
+# Build
+agp = "8.10.1"
+detekt = "1.23.8"
+detektCompose = "1.4.0"
+
+# Kotlin
+coroutines = "1.10.2"
+kotlin = "2.1.10"
+
+# Misc
+armadillo = "1.0.0"
+rippleBackground = "1.0.1"
+
+# Network
+moshi = "1.15.1"
+okhttp = "4.2.2"
+retrofit = "2.8.1"
+retrofitMoshi = "2.6.0"
+
+# Testing
+espresso = "3.5.1"
+junit4 = "4.13.2"
+junit5 = "5.7.2"
+mockk = "1.13.4"
+testExtJunit = "1.1.5"
+testRunner = "1.5.2"
+truth = "1.1.3"
+
+[libraries]
+# AndroidX
+androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
+androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragment" }
+androidx-lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-material = { module = "com.google.android.material:material", version.ref = "material" }
+androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preference" }
+androidx-viewpager2 = { module = "androidx.viewpager2:viewpager2", version.ref = "viewpager2" }
+
+# Crypto
+crypto-bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum" }
+crypto-eddsa = { module = "net.i2p.crypto:eddsa", version.ref = "eddsa" }
+crypto-kbls = { module = "org.chiachat:kbls", version.ref = "kbls" }
+crypto-spongycastle-core = { module = "com.madgag.spongycastle:core", version.ref = "spongycastle" }
+crypto-spongycastle-prov = { module = "com.madgag.spongycastle:prov", version.ref = "spongycastle" }
+
+# Detekt
+detekt-compose = { module = "ru.kode:detekt-rules-compose", version.ref = "detektCompose" }
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
+
+# Kotlin
+kotlin-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlin-coroutines-coreJvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "coroutines" }
+kotlin-coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "coroutines" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+
+# Misc
+armadillo = { module = "at.favre.lib:armadillo", version.ref = "armadillo" }
+rippleBackground = { module = "com.skyfishjy.ripplebackground:library", version.ref = "rippleBackground" }
+
+# Network
+network-moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
+network-moshi-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshi" }
+network-moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
+network-okhttp-logging = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
+network-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+network-retrofit-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofitMoshi" }
+
+# Testing
+test-androidx-espresso = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso" }
+test-androidx-extJunit = { module = "androidx.test.ext:junit", version.ref = "testExtJunit" }
+test-androidx-runner = { module = "androidx.test:runner", version.ref = "testRunner" }
+test-junit4 = { module = "junit:junit", version.ref = "junit4" }
+test-junit5 = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit5" }
+test-kotlin = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+test-kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+test-mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+test-truth = { module = "com.google.truth:truth", version.ref = "truth" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+
