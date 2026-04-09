@@ -24,18 +24,18 @@ abstract class TapAnimator(
 
     var animatorCallback: Animator.AnimatorListener? = null
         set(value) {
-            tapAnimator?.removeListener(field)
-            tapAnimator?.addListener(value)
+            animatorSet?.removeListener(field)
+            animatorSet?.addListener(value)
             field = value
         }
 
-    private var tapAnimator: AnimatorSet? = null
+    private var animatorSet: AnimatorSet? = null
     private var repeatedCount = 0
 
     fun animate() {
-        tapAnimator?.cancel()
-        tapAnimator = AnimatorSet()
-        tapAnimator?.playSequentially(
+        animatorSet?.cancel()
+        animatorSet = AnimatorSet()
+        animatorSet?.playSequentially(
             tapInAnimation(),
             downTime(properties.tapInDownTimeDuration),
             tapOutAnimation(),
@@ -43,14 +43,14 @@ abstract class TapAnimator(
         )
 
         var isCancelled = false
-        animatorCallback?.let { tapAnimator?.addListener(it) }
-        tapAnimator?.addListener(
+        animatorCallback?.let { animatorSet?.addListener(it) }
+        animatorSet?.addListener(
             onStart = { isCancelled = false },
             onEnd = {
                 repeatedCount++
                 if (!isCancelled) {
                     if (properties.repeatCount == -1 || repeatedCount < properties.repeatCount) {
-                        tapAnimator?.start()
+                        animatorSet?.start()
                     } else {
                         onAnimationEnd?.invoke()
                     }
@@ -59,13 +59,13 @@ abstract class TapAnimator(
             onCancel = { isCancelled = true },
             onRepeat = { isCancelled = false },
         )
-        tapAnimator?.start()
+        animatorSet?.start()
     }
 
     fun cancel() {
-        tapAnimator?.cancel()
-        tapAnimator?.removeListener(animatorCallback)
-        tapAnimator = null
+        animatorSet?.cancel()
+        animatorSet?.removeListener(animatorCallback)
+        animatorSet = null
 
         view.scaleX = 1f
         view.scaleY = 1f
