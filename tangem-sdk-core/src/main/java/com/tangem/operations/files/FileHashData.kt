@@ -17,11 +17,15 @@ data class FileHashData(
         if (startingSignature != null) {
             if (other.startingSignature == null) return false
             if (!startingSignature.contentEquals(other.startingSignature)) return false
-        } else if (other.startingSignature != null) return false
+        } else if (other.startingSignature != null) {
+            return false
+        }
         if (finalizingSignature != null) {
             if (other.finalizingSignature == null) return false
             if (!finalizingSignature.contentEquals(other.finalizingSignature)) return false
-        } else if (other.finalizingSignature != null) return false
+        } else if (other.finalizingSignature != null) {
+            return false
+        }
 
         return true
     }
