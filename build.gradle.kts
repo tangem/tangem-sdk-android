@@ -13,7 +13,6 @@ configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
     autoCorrect = true
     buildUponDefaultConfig = true
     config.setFrom(rootProject.files("tangem-android-tools/detekt-config.yml"))
-    baseline = rootProject.file("detekt-baseline.xml")
 }
 
 tasks.withType<io.gitlab.arturbosch.detekt.Detekt> {

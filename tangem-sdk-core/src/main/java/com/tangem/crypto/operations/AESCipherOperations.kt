@@ -95,13 +95,13 @@ object AESCipherOperations {
      */
     fun generateKey(keySize: Int = 256): SecretKey {
         return KeyGenerator.getInstance(KEY_ALGORITHM)
-            .also { it.init(keySize) }
+            .apply { this.init(keySize) }
             .generateKey()
     }
 
     fun generateKey(keyStoreProvider: String, keyGetSpec: AlgorithmParameterSpec): SecretKey {
         return KeyGenerator.getInstance(KEY_ALGORITHM, keyStoreProvider)
-            .also { it.init(keyGetSpec) }
+            .apply { this.init(keyGetSpec) }
             .generateKey()
     }
 }
