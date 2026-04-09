@@ -1,12 +1,6 @@
 package com.tangem.common
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 /**
 [REDACTED_AUTHOR]
@@ -16,7 +10,7 @@ class Timer(
     val step: Long,
     val delayMs: Long = 1000L,
     private val withInitialDelay: Boolean = true,
-    private val dispatcher: CoroutineDispatcher,
+    dispatcher: CoroutineDispatcher,
 ) {
 
     var onTick: ((Long) -> Unit)? = null
@@ -35,7 +29,7 @@ class Timer(
     private val job = SupervisorJob()
 
     private val scope = CoroutineScope(Dispatchers.Default + job)
-    private val timer: Job = scope.launch(dispatcher) {
+    private val timerJob: Job = scope.launch(dispatcher) {
         if (withInitialDelay) delay(delayMs)
 
         while (!isCompleted) {
@@ -55,14 +49,14 @@ class Timer(
     fun start() {
         if (isCompleted) return
 
-        timer.start()
+        timerJob.start()
     }
 
     fun cancel() {
         if (isCompleted) return
 
         isInterrupted = true
-        timer.cancel()
+        timerJob.cancel()
         onCancel?.invoke()
     }
 }
