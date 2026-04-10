@@ -91,6 +91,7 @@
     <string name="reset_codes_scan_to_reset">Відскануйте картку або кільце щоб скинути код</string>
     <string name="reset_codes_success_message">Код успішно скинуто</string>
     <string name="sign_multiple_chunks_part">Підпис частини %1$d з %2$d</string>
+    <string name="tangem_never_pregenerate_access_code_alert">Tangem never sells wallets along with the pre‑generated access code.</string>
     <string name="tangem_never_pregenerate_code_alert">Tangem ніколи не продає гаманці разом з кодом доступу</string>
     <string name="view_delegate_delay">Операція в процесі</string>
     <string name="view_delegate_header_card">Картка</string>
