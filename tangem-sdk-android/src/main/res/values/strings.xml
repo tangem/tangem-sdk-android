@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-    <string name="already_activated_btn_confirm">This is my wallet</string>
-    <string name="already_activated_btn_just_bought">I\'ve just bought it</string>
-    <string name="already_activated_message">This wallet has already been activated, and we would like to confirm that it was activated by you.</string>
-    <string name="already_activated_title">Welcome back</string>
-    <string name="attestation_failed_card">This card may be production sample or counterfeit. You can continue at your own risk.</string>
+    <string name="already_activated_btn_confirm">I activated it earlier</string>
+    <string name="already_activated_btn_just_bought">Yes, this is a new wallet</string>
+    <string name="already_activated_message">This wallet has already been activated before. If that wasn’t you, please contact support.</string>
+    <string name="already_activated_title">This Wallet\nis Already Activated</string>
+    <string name="attestation_failed_card">This device may be production sample or counterfeit. You can continue at your own risk.</string>
     <string name="attestation_failed_card_title">Card verification failed</string>
     <string name="attestation_failed_dev_card">This is a development card. Its authenticity cannot be verified. Do not accept this card as a means of payment.</string>
     <string name="attestation_online_failed_body">At the moment, online attestation of the card cannot be performed. You can continue at your own risk or try again later.</string>
@@ -91,7 +91,8 @@
     <string name="reset_codes_scan_to_reset">Scan card or ring to reset user codes</string>
     <string name="reset_codes_success_message">Code was reset successfully</string>
     <string name="sign_multiple_chunks_part">Signing part %1$d of %2$d</string>
-    <string name="tangem_never_pregenerate_code_alert">Tangem never sells wallets along with the pre-generated access code</string>
+    <string name="tangem_never_pregenerate_access_code_alert">Tangem never sells wallets along with the pre‑generated access code.</string>
+    <string name="tangem_never_pregenerate_code_alert">If, during the first use of the wallet, you are prompted to enter or change the access code, do not use it — this is a scam. Are you activating it for the first time?</string>
     <string name="view_delegate_delay">Operation is in progress</string>
     <string name="view_delegate_header_card">Card</string>
     <string name="view_delegate_scan">Ready to scan</string>
