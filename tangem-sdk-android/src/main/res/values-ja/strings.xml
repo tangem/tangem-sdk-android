@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-    <string name="already_activated_btn_confirm">これは私のウォレットです</string>
-    <string name="already_activated_btn_just_bought">今購入したばかりです</string>
-    <string name="already_activated_message">このウォレットはすでに有効化されています。この操作を行ったのがご本人であることを確認してください。</string>
-    <string name="already_activated_title">おかえりなさい</string>
-    <string name="attestation_failed_card">このカードは、製造サンプルまたは偽造品である可能性があります。自己責任で続行してください。</string>
+    <string name="already_activated_btn_confirm">先ほど有効化しました</string>
+    <string name="already_activated_btn_just_bought">はい、これは新しいウォレットです</string>
+    <string name="already_activated_message">このウォレットはすでに有効化されています。操作を行ったのがご自身でない場合は、サポートまでご連絡ください。</string>
+    <string name="already_activated_title">このウォレットはすでに有効化されています</string>
+    <string name="attestation_failed_card">このデバイスは、製造サンプルまたは偽造品である可能性があります。自己責任で続行してください。</string>
     <string name="attestation_failed_card_title">カード認証に失敗しました</string>
     <string name="attestation_failed_dev_card">これは開発カードです。真正性は確認できません。このカードを支払い手段として使用しないでください。</string>
     <string name="attestation_online_failed_body">現在、カードのオンライン認証は実行できません。自己責任で続行するか、後でもう一度お試しください。</string>
@@ -18,7 +18,7 @@
     <string name="backup_prepare_primary_card_message">スマートフォンとプライマリカードを上記のとおりに接続してください。</string>
     <string name="backup_prepare_primary_card_message_format">お使いのスマートフォンと番号%sのプライマリカードを、上記のように接続してください。</string>
     <string name="biometric_prompt_title">金庫のロック解除</string>
-    <string name="card_health_warning">Tangemカードに問題が発生しています。Tangemサポートまでお問い合わせください。</string>
+    <string name="card_health_warning">Tangemカードに問題があります。サポートが必要な場合は、Tangemサポートまでご連絡ください。</string>
     <string name="common_cancel">キャンセル</string>
     <string name="common_card">カード</string>
     <string name="common_card_or_ring">カードまたはリング</string>
@@ -91,7 +91,8 @@
     <string name="reset_codes_scan_to_reset">カードまたはリングをスキャンして、ユーザーコードをリセットします</string>
     <string name="reset_codes_success_message">コードは正常にリセットされました</string>
     <string name="sign_multiple_chunks_part">%2$dのうち%1$d部分に署名しています</string>
-    <string name="tangem_never_pregenerate_code_alert">Tangemは、事前に生成されたアクセスコードと一緒にウォレットを販売することはありません</string>
+    <string name="tangem_never_pregenerate_access_code_alert">Tangemは、事前生成されたアクセスコード付きでウォレットを販売することはありません。</string>
+    <string name="tangem_never_pregenerate_code_alert">ウォレットの初回利用時にアクセスコードの入力や変更を求められた場合は、使用しないでください。不正なカードである可能性があります。今回が初回の有効化ですか？</string>
     <string name="view_delegate_delay">操作が進行中です</string>
     <string name="view_delegate_header_card">カード</string>
     <string name="view_delegate_scan">スキャン準備完了</string>

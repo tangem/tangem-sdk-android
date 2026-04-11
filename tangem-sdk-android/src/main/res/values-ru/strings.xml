@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-    <string name="already_activated_btn_confirm">Это мой кошелек</string>
-    <string name="already_activated_btn_just_bought">Я только его купил</string>
-    <string name="already_activated_message">Этот кошелёк уже был активирован ранее, и мы хотели бы подтвердить, что его активировали именно вы.</string>
-    <string name="already_activated_title">С возвращением!</string>
-    <string name="attestation_failed_card">Эта карта – тестовый образец или подделка. Вы можете продолжать на свой страх и риск.</string>
+    <string name="already_activated_btn_confirm">Я его активировал ранее</string>
+    <string name="already_activated_btn_just_bought">Да, это новый кошелек</string>
+    <string name="already_activated_message">Этот кошелек уже был активирован ранее. Если это сделали не вы, свяжитесь со службой поддержки.</string>
+    <string name="already_activated_title">Этот кошелек\nуже активирован</string>
+    <string name="attestation_failed_card">Этот девайс – тестовый образец или подделка. Вы можете продолжать на свой страх и риск.</string>
     <string name="attestation_failed_card_title">Ошибка проверки карты</string>
     <string name="attestation_failed_dev_card">Это карта предназначена для тестовых целей. Её подлинность не может быть проверена. Не принимайте эту карту как средство оплаты.</string>
     <string name="attestation_online_failed_body">В настоящее время онлайн аттестация карты не может быть выполнена. Вы можете продолжить на свой страх и риск или повторить попытку.</string>
@@ -91,7 +91,8 @@
     <string name="reset_codes_scan_to_reset">Отсканируйте карту или кольцо для сброса кода</string>
     <string name="reset_codes_success_message">Код успешно сброшен</string>
     <string name="sign_multiple_chunks_part">Подпись части %1$d из %2$d</string>
-    <string name="tangem_never_pregenerate_code_alert">Tangem никогда не продаёт кошельки с заранее сгенерированным кодом доступа.</string>
+    <string name="tangem_never_pregenerate_access_code_alert">Tangem никогда не продаёт кошельки с заранее сгенерированным кодом доступа.</string>
+    <string name="tangem_never_pregenerate_code_alert">Если при первом использовании кошелька предлагается ввести или изменить код доступа, не используйте его — это мошенничество! Вы активируете его впервые?</string>
     <string name="view_delegate_delay">Операция в процессе</string>
     <string name="view_delegate_header_card">Карта</string>
     <string name="view_delegate_scan">Готово к сканированию</string>
