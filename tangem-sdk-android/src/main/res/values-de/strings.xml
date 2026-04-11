@@ -4,7 +4,7 @@
     <string name="already_activated_btn_just_bought">Gerade gekauft.</string>
     <string name="already_activated_message">Diese Wallet wurde bereits aktiviert, und wir möchten bestätigen, dass sie von Ihnen aktiviert wurde.</string>
     <string name="already_activated_title">Willkommen zurück</string>
-    <string name="attestation_failed_card">Diese Karte könnte ein Produktionsmuster oder eine Fälschung sein. Du kannst auf eigenem Risiko fortfahren.</string>
+    <string name="attestation_failed_card">Dieses Gerät könnte ein Produktionsmuster oder eine Fälschung sein. Du kannst auf eigenem Risiko fortfahren.</string>
     <string name="attestation_failed_card_title">Kartenprüfung fehlgeschlagen</string>
     <string name="attestation_failed_dev_card">Dies ist eine Entwicklungskarte. Ihre Authentizität kann nicht überprüft werden. Akzeptiere diese Karte nicht als Zahlungsmittel.</string>
     <string name="attestation_online_failed_body">Der Online-Nachweis/ Prüfung der Karte kann derzeit nicht durchgeführt werden. Du kannst auf eigenem Risiko fortfahren oder es später erneut versuchen.</string>
@@ -91,6 +91,7 @@
     <string name="reset_codes_scan_to_reset">Scanne die Karte oder den Ring, um Benutzercodes zurückzusetzen</string>
     <string name="reset_codes_success_message">Code wurde erfolgreich zurückgesetzt</string>
     <string name="sign_multiple_chunks_part">Unterzeichnung von Teil %1$d von %2$d</string>
+    <string name="tangem_never_pregenerate_access_code_alert">Tangem never sells wallets along with the pre‑generated access code.</string>
     <string name="tangem_never_pregenerate_code_alert">Tangem verkauft niemals Geldbörsen zusammen mit dem vorgenerierten Zugangscode</string>
     <string name="view_delegate_delay">Der Vorgang läuft</string>
     <string name="view_delegate_header_card">Karte</string>
