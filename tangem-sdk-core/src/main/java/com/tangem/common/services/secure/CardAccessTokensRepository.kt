@@ -1,0 +1,186 @@
+package com.tangem.common.services.secure
+
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.tangem.Log
+import com.tangem.common.authentication.keystore.KeystoreManager
+import com.tangem.common.authentication.storage.AuthenticatedStorage
+import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.toHexString
+import com.tangem.common.json.MoshiJsonConverter
+import com.tangem.common.v8.CardAccessTokens
+import java.util.concurrent.ConcurrentHashMap
+
+class CardAccessTokensRepository(
+    keystoreManager: KeystoreManager,
+    private val secureStorage: SecureStorage,
+) {
+    val isEmpty: Boolean
+        get() {
+            val cards = runCatching { getSavedCardIds() }.getOrNull()
+            return cards?.isEmpty() ?: true
+        }
+
+    private val authenticatedStorage = AuthenticatedStorage(
+        secureStorage = secureStorage,
+        keystoreManager = keystoreManager,
+    )
+
+    private val moshi: Moshi = MoshiJsonConverter.INSTANCE.moshi
+    private val cardsIdsAdapter: JsonAdapter<Set<String>> = moshi.adapter(
+        Types.newParameterizedType(Set::class.java, String::class.java),
+    )
+
+    private val tokens: ConcurrentHashMap<String, CardAccessTokens> = ConcurrentHashMap()
+
+    suspend fun save(cardAccessTokens: CardAccessTokens, cardIds: List<String>) {
+        val savedCardIds = getSavedCardIds().toMutableSet()
+
+        for (cardId in cardIds) {
+            try {
+                val storageKey = StorageKey.CardAccessTokens(cardId).name
+                authenticatedStorage.delete(storageKey)
+
+                val data = cardAccessTokens.encode()
+                try {
+                    authenticatedStorage.store(storageKey, data)
+                } finally {
+                    data.fill(0)
+                }
+
+                savedCardIds.add(cardId)
+                tokens[cardId] = cardAccessTokens
+            } catch (e: Exception) {
+                Log.debug { "Card access tokens error for cardId: $cardId" }
+            }
+        }
+
+        saveCardIds(savedCardIds)
+        Log.debug { "Card access tokens saved successfully" }
+    }
+
+    suspend fun save(cardAccessTokens: CardAccessTokens, cardId: String) {
+        save(cardAccessTokens, listOf(cardId))
+    }
+
+    fun deleteTokens(cardIds: Collection<String>) {
+        if (cardIds.isEmpty()) return
+
+        val savedCardIds = getSavedCardIds().toMutableSet()
+
+        for (cardId in cardIds) {
+            if (!savedCardIds.contains(cardId)) continue
+
+            val storageKey = StorageKey.CardAccessTokens(cardId).name
+            authenticatedStorage.delete(storageKey)
+            savedCardIds.remove(cardId)
+            tokens.remove(cardId)
+        }
+
+        saveCardIds(savedCardIds)
+        Log.debug { "Card access tokens deletion completed successfully" }
+    }
+
+    suspend fun clear() {
+        Log.debug { "Clear CardAccessTokensRepository" }
+        try {
+            val cardIds = getSavedCardIds()
+            deleteTokens(cardIds)
+        } catch (e: Exception) {
+            Log.error { e.toString() }
+        }
+    }
+
+    fun contains(cardId: String): Boolean {
+        return try {
+            getSavedCardIds().contains(cardId)
+        } catch (e: Exception) {
+            Log.error { e.toString() }
+            false
+        }
+    }
+
+    suspend fun unlock() {
+        tokens.clear()
+        Log.debug { "Start unlocking card access tokens" }
+
+        val fetchedTokens = hashMapOf<String, CardAccessTokens>()
+
+        for (cardId in getSavedCardIds()) {
+            try {
+                val storageKey = StorageKey.CardAccessTokens(cardId).name
+                val data = authenticatedStorage.get(storageKey) ?: continue
+                try {
+                    val cardAccessTokens = decodeCardAccessTokens(data)
+                    fetchedTokens[cardId] = cardAccessTokens
+                } finally {
+                    data.fill(0)
+                }
+            } catch (e: Exception) {
+                Log.debug { "Failed to unlock card access tokens for cardId: $cardId. Error: $e" }
+            }
+        }
+
+        tokens.putAll(fetchedTokens)
+        saveCardIds(fetchedTokens.keys)
+        Log.debug { "Card access tokens unlocked successfully" }
+    }
+
+    fun lock() {
+        Log.debug { "Lock the card access tokens repo" }
+        tokens.clear()
+    }
+
+    fun fetch(cardId: String): CardAccessTokens? {
+        return tokens[cardId]
+    }
+
+    private fun getSavedCardIds(): Set<String> {
+        val data = secureStorage.get(StorageKey.CardsWithSavedAccessTokens.name)
+            ?: return emptySet()
+        return data.decodeToString(throwOnInvalidSequence = true)
+            .let(cardsIdsAdapter::fromJson)
+            .orEmpty()
+    }
+
+    private fun saveCardIds(cardIds: Collection<String>) {
+        val data = cardIds.toSet()
+            .let(cardsIdsAdapter::toJson)
+            .encodeToByteArray(throwOnInvalidSequence = true)
+        secureStorage.store(data, StorageKey.CardsWithSavedAccessTokens.name)
+    }
+
+    private sealed interface StorageKey {
+        val name: String
+
+        class CardAccessTokens(cardId: String) : StorageKey {
+            override val name: String = PREFIX + cardId
+
+            companion object {
+                const val PREFIX = "card_access_tokens_"
+            }
+        }
+
+        object CardsWithSavedAccessTokens : StorageKey {
+            override val name: String = "cards_with_saved_access_tokens"
+        }
+    }
+}
+
+private const val TOKEN_SEPARATOR = "|"
+
+private fun CardAccessTokens.encode(): ByteArray {
+    return (accessToken.toHexString() + TOKEN_SEPARATOR + identifyToken.toHexString())
+        .encodeToByteArray(throwOnInvalidSequence = true)
+}
+
+private fun decodeCardAccessTokens(data: ByteArray): CardAccessTokens {
+    val str = data.decodeToString(throwOnInvalidSequence = true)
+    val separatorIndex = str.indexOf(TOKEN_SEPARATOR)
+    require(separatorIndex > 0 && separatorIndex < str.length - 1) { "Invalid CardAccessTokens data" }
+    return CardAccessTokens(
+        accessToken = str.substring(0, separatorIndex).hexToBytes(),
+        identifyToken = str.substring(separatorIndex + 1).hexToBytes(),
+    )
+}

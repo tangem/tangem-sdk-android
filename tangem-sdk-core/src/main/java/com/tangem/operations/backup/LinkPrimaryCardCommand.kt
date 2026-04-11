@@ -15,7 +15,6 @@ import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.guard
 import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 import com.tangem.operations.CommandResponse
@@ -103,19 +102,29 @@ class LinkPrimaryCardCommand(
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
-        tlvBuilder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
-        tlvBuilder.appendPinIfNeeded(TlvTag.Pin2, environment.passcode, environment.card)
+        val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
+
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.PrimaryCardLinkingKey, primaryCard.linkingKey)
         tlvBuilder.append(TlvTag.Certificate, primaryCard.certificate)
         tlvBuilder.append(TlvTag.BackupAttestSignature, attestSignature)
         tlvBuilder.append(TlvTag.NewPin, accessCode)
-        tlvBuilder.append(TlvTag.NewPin2, passcode)
+        if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+        }
+
+        if (shouldAddPin(environment.passcode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
+        }
+
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+            tlvBuilder.append(TlvTag.NewPin2, passcode)
+        }
 
         backupCards
             .mapIndexed { index, card ->
-                TlvBuilder().apply {
+                createTlvBuilder(environment.legacyMode).apply {
                     append(TlvTag.FileIndex, index)
                     append(TlvTag.BackupCardLinkingKey, card.linkingKey)
                 }.serialize()
@@ -126,11 +135,7 @@ class LinkPrimaryCardCommand(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): LinkPrimaryCardResponse {
-        val tlvData = apdu.getTlvData()
-            ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
-
+        val decoder = createTlvDecoder(environment, apdu)
         return LinkPrimaryCardResponse(
             cardId = decoder.decode(TlvTag.CardId),
             backupStatus = decoder.decode(TlvTag.BackupStatus),

@@ -2,23 +2,26 @@ package com.tangem.operations
 
 import com.tangem.Log
 import com.tangem.common.CompletionResult
+import com.tangem.common.CompletionResult.Failure
 import com.tangem.common.UserCode
 import com.tangem.common.UserCodeType
 import com.tangem.common.apdu.CommandApdu
+import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.apdu.StatusWord
 import com.tangem.common.apdu.toTangemSdkError
 import com.tangem.common.card.Card
-import com.tangem.common.card.EncryptionMode
-import com.tangem.common.core.CardSession
-import com.tangem.common.core.CardSessionRunnable
-import com.tangem.common.core.CompletionCallback
-import com.tangem.common.core.SessionEnvironment
-import com.tangem.common.core.TangemError
-import com.tangem.common.core.TangemSdkError
+import com.tangem.common.card.FirmwareVersion
+import com.tangem.common.core.*
+import com.tangem.common.core.TangemSdkError.DeserializeApduFailed
+import com.tangem.common.core.TangemSdkError.NeedEncryption
+import com.tangem.common.encryption.EncryptionMode
+import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import com.tangem.common.extensions.toInt
 import com.tangem.common.tlv.Tlv
+import com.tangem.common.tlv.TlvBuilder
+import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 
 /**
@@ -44,6 +47,43 @@ interface ApduSerializable<T : CommandResponse> {
      * @return Card response converted to a [CommandResponse] of a type [T]
      */
     fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): T
+
+    fun createTlvDecoder(environment: SessionEnvironment, apdu: ResponseApdu): TlvDecoder {
+        val tlvData = apdu.getTlvData()?.toMutableList() ?: throw DeserializeApduFailed()
+
+        // V8 protocol requires no cardId in response for all commands.
+        // Add it manually for compatibility.
+        val card = environment.card
+        if (card != null && card.firmwareVersion >= FirmwareVersion.v8) {
+            tlvData.add(Tlv(TlvTag.CardId, card.cardId.hexToBytes()))
+        }
+
+        return TlvDecoder(tlvData)
+    }
+
+    /**
+     * Fix nfc issues with long-running commands and security delay for iPhone 7/7+. Card firmware 2.39
+     *     4 - Timeout setting for ping nfc-module
+     */
+    fun createTlvBuilder(legacyMode: Boolean): TlvBuilder {
+        val builder = TlvBuilder()
+        if (legacyMode) {
+            builder.append(tag = TlvTag.LegacyMode, value = 4)
+        }
+        return builder
+    }
+
+    fun shouldAddPin(value: UserCode, firmwareVersion: FirmwareVersion): Boolean {
+        if (firmwareVersion >= FirmwareVersion.v8) {
+            return false
+        }
+
+        if (firmwareVersion >= FirmwareVersion.isDefaultPinsOptional && value.isDefault()) {
+            return false
+        }
+
+        return true
+    }
 }
 
 /**
@@ -74,6 +114,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                 return
             }
         }
+
         if (session.environment.passcode.value == null && requiresPasscode()) {
             requestPin(UserCodeType.Passcode, session, callback)
         } else {
@@ -83,6 +124,8 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
 
     @Suppress("ComplexMethod")
     private fun transceiveInternal(session: CardSession, callback: CompletionCallback<T>) {
+        session.rememberTag()
+
         Log.apduCommand { "C-APDU serialization..." }
         val apdu = serialize(session.environment)
         Log.apduCommand { "C-APDU serialization complete" }
@@ -94,6 +137,30 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                     if (result.error is TangemSdkError.ExtendedLengthNotSupported && environment.terminalKeys != null) {
                         environment.terminalKeys = null
                         transceiveInternal(session, callback)
+                        return@transceiveApdu
+                    }
+
+                    val firmwareVersion = environment.card?.firmwareVersion
+                    if (firmwareVersion != null && firmwareVersion >= FirmwareVersion.v8) {
+                        when (result.error) {
+                            is TangemSdkError.RetrySecureChannelNeeded -> {
+                                session.secureChannelSession?.reset()
+                                if (apdu.ins == Instruction.Authorize.code ||
+                                    apdu.ins == Instruction.OpenSession.code
+                                ) {
+                                    Log.debug { "Fail secure channel command to restart the full flow" }
+                                    session.releaseTag()
+                                    callback(CompletionResult.Failure(result.error))
+                                } else {
+                                    Log.debug { "Retry command with new secure channel session" }
+                                    transceiveInternal(session, callback)
+                                }
+                            }
+                            else -> {
+                                session.releaseTag()
+                                callback(CompletionResult.Failure(result.error))
+                            }
+                        }
                         return@transceiveApdu
                     }
 
@@ -109,18 +176,29 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                                 // Addition check for COS v4 and newer to prevent false-positive pin2 request
                                 val isPasscodeSet = environment.card?.isPasscodeSet == false
                                 if (isPasscodeSet && !environment.isUserCodeSet(UserCodeType.Passcode)) {
+                                    session.releaseTag()
                                     callback(CompletionResult.Failure(error))
                                 } else {
                                     requestPin(UserCodeType.Passcode, session, callback)
                                 }
                             } else {
+                                session.releaseTag()
                                 callback(CompletionResult.Failure(error))
                             }
                         }
-                        else -> callback(CompletionResult.Failure(error))
+                        else -> {
+                            session.releaseTag()
+                            callback(CompletionResult.Failure(error))
+                        }
                     }
                 }
                 is CompletionResult.Success -> {
+                    session.releaseTag()
+                    session.secureChannelSession?.incrementPacketCounter()
+                    // Should be incremented only for success responses. Do not increment on security delay responses.
+                    session.secureChannelSession?.packetCounter?.let {
+                        Log.session { "Current packet counter is $it" }
+                    }
                     try {
                         Log.apduCommand { "R-APDU deserialization..." }
                         val response = deserialize(session.environment, result.data)
@@ -136,71 +214,120 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
 
     @Suppress("LongMethod", "ComplexMethod")
     private fun transceiveApdu(apdu: CommandApdu, session: CardSession, callback: CompletionCallback<ResponseApdu>) {
-        session.send(apdu) { result ->
-            when (result) {
+        session.establishEncryptionIfNeeded(
+            cardSessionEncryption = cardSessionEncryption,
+            shouldAskForAccessCode = shouldAskForAccessCode,
+        ) { encryptionResult ->
+            when (encryptionResult) {
                 is CompletionResult.Success -> {
-                    val responseApdu = result.data
+                    Log.session { "Encryption established successfully" }
+                    session.send(apdu) { result ->
+                        when (result) {
+                            is CompletionResult.Success -> {
+                                val responseApdu = result.data
 
-                    when (responseApdu.statusWord) {
-                        StatusWord.ProcessCompleted,
-                        StatusWord.Pin1Changed, StatusWord.Pin2Changed, StatusWord.Pins12Changed,
-                        StatusWord.Pin3Changed, StatusWord.Pins13Changed, StatusWord.Pins23Changed,
-                        StatusWord.Pins123Changed,
-                        -> {
-                            callback(CompletionResult.Success(responseApdu))
-                        }
-                        StatusWord.NeedPause -> {
-                            // NeedPause is returned from the card whenever security delay is triggered.
-                            val remainingTime = deserializeSecurityDelay(responseApdu)
-                            if (remainingTime != null) {
-                                session.viewDelegate.onSecurityDelay(
-                                    ms = remainingTime,
-                                    totalDurationSeconds = session.environment.card?.settings?.securityDelay ?: 0,
-                                    productType = session.environment.config.productType,
-                                )
-                            }
-                            transceiveApdu(apdu, session, callback)
-                        }
-                        StatusWord.NeedEncryption -> {
-                            when (session.environment.encryptionMode) {
-                                EncryptionMode.None -> {
-                                    Log.session { "Try change to fast encryption" }
-                                    session.environment.encryptionKey = null
-                                    session.environment.encryptionMode = EncryptionMode.Fast
+                                when (responseApdu.statusWord) {
+                                    StatusWord.ProcessCompleted,
+                                    StatusWord.Pin1Changed, StatusWord.Pin2Changed, StatusWord.Pins12Changed,
+                                    StatusWord.Pin3Changed, StatusWord.Pins13Changed, StatusWord.Pins23Changed,
+                                    StatusWord.Pins123Changed,
+                                    -> {
+                                        if (session.environment.currentSecurityDelay != null) {
+                                            session.environment.currentSecurityDelay = null
+                                        }
+                                        callback(CompletionResult.Success(responseApdu))
+                                    }
+                                    StatusWord.NeedPause -> {
+                                        // NeedPause is returned from the card whenever security delay is triggered.
+                                        val securityDelayResponse = deserializeSecurityDelay(responseApdu)
+                                        if (securityDelayResponse != null) {
+                                            if (session.environment.currentSecurityDelay == null) {
+                                                val fw = session.environment.card?.firmwareVersion
+                                                val isInstantSecurityDelay =
+                                                    fw?.let { it >= FirmwareVersion.BackupAvailable } ?: false
+                                                session.environment.currentSecurityDelay = if (isInstantSecurityDelay) {
+                                                    securityDelayResponse.remainingSeconds
+                                                } else {
+                                                    securityDelayResponse.remainingSeconds + 1f
+                                                }
+                                            }
+                                            val totalSd = session.environment.currentSecurityDelay!!
+                                            if (totalSd > 0) {
+                                                session.viewDelegate.onSecurityDelay(
+                                                    ms = (securityDelayResponse.remainingSeconds * CENTISECONDS_TO_MS)
+                                                        .toInt(),
+                                                    totalDurationSeconds = totalSd.toInt(),
+                                                    productType = session.environment.config.productType,
+                                                )
+                                            }
+                                            if (securityDelayResponse.saveToFlash &&
+                                                session.environment.encryptionMode == EncryptionMode.None
+                                            ) {
+                                                session.pause()
+                                                session.resume()
+                                            }
+                                        }
+                                        transceiveApdu(apdu, session, callback)
+                                    }
+                                    StatusWord.NeedEncryption -> {
+                                        when (session.environment.encryptionMode) {
+                                            EncryptionMode.None -> {
+                                                Log.session { "Try change to fast encryption" }
+                                                session.environment.encryptionKey = null
+                                                session.environment.encryptionMode = EncryptionMode.Fast
+                                            }
+                                            EncryptionMode.Fast -> {
+                                                Log.session { "Try change to strong encryption" }
+                                                session.environment.encryptionKey = null
+                                                session.environment.encryptionMode = EncryptionMode.Strong
+                                            }
+                                            EncryptionMode.Strong -> {
+                                                callback(Failure(NeedEncryption()))
+                                                return@send
+                                            }
+                                            EncryptionMode.CcmWithSecurityDelay,
+                                            EncryptionMode.CcmWithAccessToken,
+                                            EncryptionMode.CcmWithAsymmetricKeys,
+                                            -> {
+                                                // Should not happen
+                                                callback(Failure(NeedEncryption()))
+                                                return@send
+                                            }
+                                        }
+                                        transceiveApdu(apdu, session, callback)
+                                    }
+                                    StatusWord.Unknown -> {
+                                        callback(
+                                            CompletionResult.Failure(
+                                                TangemSdkError.UnknownStatus(responseApdu.sw.toHexString()),
+                                            ),
+                                        )
+                                    }
+                                    StatusWord.AccessDenied -> {
+                                        callback(CompletionResult.Failure(TangemSdkError.AccessDenied()))
+                                    }
+                                    else -> {
+                                        val error = responseApdu.statusWord.toTangemSdkError()
+                                        if (error != null) {
+                                            callback(CompletionResult.Failure(error))
+                                        } else {
+                                            callback(CompletionResult.Failure(TangemSdkError.UnknownError()))
+                                        }
+                                    }
                                 }
-                                EncryptionMode.Fast -> {
-                                    Log.session { "Try change to strong encryption" }
-                                    session.environment.encryptionKey = null
-                                    session.environment.encryptionMode = EncryptionMode.Strong
-                                }
-                                EncryptionMode.Strong -> {
-                                    callback(CompletionResult.Failure(TangemSdkError.NeedEncryption()))
-                                    return@send
-                                }
                             }
-                            transceiveApdu(apdu, session, callback)
-                        }
-                        StatusWord.Unknown -> {
-                            callback(
-                                CompletionResult.Failure(TangemSdkError.UnknownStatus(responseApdu.sw.toHexString())),
-                            )
-                        }
-                        else -> {
-                            val error = responseApdu.statusWord.toTangemSdkError()
-                            if (error != null) {
-                                callback(CompletionResult.Failure(error))
-                            } else {
-                                callback(CompletionResult.Failure(TangemSdkError.UnknownError()))
-                            }
+                            is CompletionResult.Failure ->
+                                if (result.error is TangemSdkError.TagLost) {
+                                    session.viewDelegate.onTagLost(session.environment.config.productType)
+                                } else {
+                                    callback(CompletionResult.Failure(result.error))
+                                }
                         }
                     }
                 }
-                is CompletionResult.Failure ->
-                    if (result.error is TangemSdkError.TagLost) {
-                        session.viewDelegate.onTagLost(session.environment.config.productType)
-                    } else {
-                        callback(CompletionResult.Failure(result.error))
-                    }
+                is CompletionResult.Failure -> {
+                    callback(CompletionResult.Failure(encryptionResult.error))
+                }
             }
         }
     }
@@ -221,34 +348,36 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
     /**
      * Helper method to parse security delay information received from a card.
      *
-     * @return Remaining security delay in milliseconds.
+     * @return Security delay response with remaining seconds and save-to-flash flag.
      */
-    private fun deserializeSecurityDelay(responseApdu: ResponseApdu): Int? {
-        val tlv = responseApdu.getTlvData()
-        return tlv?.find { it.tag == TlvTag.Pause }?.value?.toInt()
+    private fun deserializeSecurityDelay(responseApdu: ResponseApdu): SecurityDelayResponse? {
+        val tlv = responseApdu.getTlvData() ?: return null
+        val remainingCs = tlv.find { it.tag == TlvTag.Pause }?.value?.toInt() ?: return null
+        val seconds = remainingCs / CENTISECONDS_IN_SECOND
+        val saveToFlash = tlv.any { it.tag == TlvTag.Flash }
+        return SecurityDelayResponse(seconds, saveToFlash)
     }
 
     private fun requestPin(type: UserCodeType, session: CardSession, callback: CompletionCallback<T>) {
-        session.pause()
-        val isFirstAttempt = type.isWrongPinEntered(session.environment)
-        when (type) {
-            UserCodeType.AccessCode -> session.environment.accessCode = UserCode(UserCodeType.AccessCode, null)
-            UserCodeType.Passcode -> session.environment.passcode = UserCode(UserCodeType.Passcode, null)
-        }
-
-        session.requestUserCodeIfNeeded(
-            type = type,
-            isFirstAttempt = isFirstAttempt,
-            showWelcomeBackWarning = false,
-        ) { result ->
+        session.handleWrongUserCode(type) { result ->
             when (result) {
-                is CompletionResult.Success -> session.resume { transceiveInternal(session, callback) }
+                is CompletionResult.Success -> transceiveInternal(session, callback)
                 is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
             }
         }
     }
 
     protected fun deserializeApdu(environment: SessionEnvironment, apdu: ResponseApdu): List<Tlv> {
-        return apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
+        return createTlvDecoder(environment, apdu).tlvList
+    }
+
+    private data class SecurityDelayResponse(
+        val remainingSeconds: Float,
+        val saveToFlash: Boolean,
+    )
+
+    private companion object {
+        const val CENTISECONDS_IN_SECOND = 100f
+        const val CENTISECONDS_TO_MS = 10
     }
 }

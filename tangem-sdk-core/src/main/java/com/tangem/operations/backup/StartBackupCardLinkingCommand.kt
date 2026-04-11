@@ -7,8 +7,6 @@ import com.tangem.common.card.Card
 import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 
@@ -40,21 +38,26 @@ class StartBackupCardLinkingCommand(
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
-        tlvBuilder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+        val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
+
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.PrimaryCardLinkingKey, primaryCardLinkingKey)
+
+        if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+        }
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+        }
 
         return CommandApdu(Instruction.StartBackupCardLinking, tlvBuilder.serialize())
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): BackupCard {
-        val tlvData = apdu.getTlvData()
-            ?: throw TangemSdkError.DeserializeApduFailed()
 
         val card = environment.card ?: throw TangemSdkError.UnknownError()
 
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         return BackupCard(
             cardId = decoder.decode(TlvTag.CardId),
             cardPublicKey = card.cardPublicKey,
