@@ -33,7 +33,7 @@ class PinCodeRequestWidget(mainView: View) : BaseSessionDelegateStateWidget(main
 
     init {
         tilPinCode.hint = getString(R.string.pin1)
-        tvWarningMessage.setText(R.string.tangem_never_pregenerate_code_alert)
+        tvWarningMessage.setText(R.string.tangem_never_pregenerate_access_code_alert)
 
         etPinCode.setupImeActionDone(btnContinue::performClick)
     }
