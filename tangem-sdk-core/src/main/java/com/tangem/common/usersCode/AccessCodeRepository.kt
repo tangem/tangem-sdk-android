@@ -7,7 +7,9 @@ import com.tangem.common.CompletionResult
 import com.tangem.common.UserCode
 import com.tangem.common.authentication.keystore.KeystoreManager
 import com.tangem.common.authentication.storage.AuthenticatedStorage
+import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.catching
+import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.mapNotNullValues
 import com.tangem.common.flatMap
@@ -18,7 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Suppress("unused")
-class UserCodeRepository(
+class AccessCodeRepository(
     keystoreManager: KeystoreManager,
     private val secureStorage: SecureStorage,
 ) {
@@ -36,6 +38,20 @@ class UserCodeRepository(
     )
 
     private val cardIdToUserCode: HashMap<String, UserCode> = hashMapOf()
+
+    val isEmpty: Boolean
+        get() {
+            val cards = runCatching { getSavedCardsIdsSync() }.getOrNull()
+            return cards?.isEmpty() ?: true
+        }
+
+    fun contains(cardId: String): Boolean {
+        return try {
+            getSavedCardsIdsSync().contains(cardId)
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     suspend fun unlock(): CompletionResult<Unit> = withContext(Dispatchers.IO) {
         catching {
@@ -60,11 +76,15 @@ class UserCodeRepository(
         cardIdToUserCode.clear()
     }
 
-    suspend fun save(cardId: String, userCode: UserCode): CompletionResult<Unit> {
-        return save(setOf(cardId), userCode)
+    suspend fun save(cardId: String, userCode: UserCode, firmwareVersion: FirmwareVersion): CompletionResult<Unit> {
+        return save(setOf(cardId), userCode, firmwareVersion)
     }
 
-    suspend fun save(cardsIds: Set<String>, userCode: UserCode): CompletionResult<Unit> {
+    suspend fun save(cardsIds: Set<String>, userCode: UserCode, firmwareVersion: FirmwareVersion): CompletionResult<Unit> {
+        if (firmwareVersion >= FirmwareVersion.v8) {
+            return CompletionResult.Failure(TangemSdkError.NotSupportedFirmwareVersion())
+        }
+
         if (!updateCodesIfNeeded(cardsIds, userCode)) {
             return CompletionResult.Success(Unit) // Nothing changed. Return
         }
@@ -139,10 +159,14 @@ class UserCodeRepository(
         return authenticatedStorage.delete(StorageKey.UserCode(cardId).name)
     }
 
+    private fun getSavedCardsIdsSync(): Set<String> {
+        return secureStorage.get(StorageKey.CardsWithSavedUserCode.name)
+            .decodeToCardsIds()
+    }
+
     private suspend fun getSavedCardsIds(): Set<String> {
         return withContext(Dispatchers.IO) {
-            secureStorage.get(StorageKey.CardsWithSavedUserCode.name)
-                .decodeToCardsIds()
+            getSavedCardsIdsSync()
         }
     }
 
@@ -158,13 +182,6 @@ class UserCodeRepository(
         }
         val remainingCardsIds = getSavedCardsIds() - cardsIds
         saveCardsIds(remainingCardsIds)
-    }
-
-    private suspend fun clearSavedCardsIds() {
-        cardIdToUserCode.clear()
-        withContext(Dispatchers.IO) {
-            secureStorage.delete(StorageKey.CardsWithSavedUserCode.name)
-        }
     }
 
     private fun UserCode.encode(): ByteArray {

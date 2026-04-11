@@ -1,8 +1,10 @@
 package com.tangem.common.tlv
 
 import com.google.common.truth.Truth.assertThat
+import com.tangem.common.core.AccessLevel
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.toHexString
 import com.tangem.operations.files.FileSettings
 import com.tangem.operations.files.FileVisibility
 import org.junit.Test
@@ -135,5 +137,24 @@ class TlvTest {
         assertThat(settings).isNotNull()
         assertThat(settings!!.isPermanent).isTrue()
         assertThat(settings.visibility).isEqualTo(FileVisibility.Public)
+    }
+
+    @Test
+    fun testAccessLevel() {
+        // Decode: "4A0110" -> TLV with tag AccessLevel (0x4A), length 1, value 0x10 (FileOwner)
+        val data = "4A0110".hexToBytes()
+        val tlvs = Tlv.deserialize(data)
+        assertThat(tlvs).isNotNull()
+        assertThat(tlvs).isNotEmpty()
+
+        val decoder = TlvDecoder(tlvs!!)
+        val accessLevel: AccessLevel = decoder.decode(TlvTag.AccessLevel)
+        assertThat(accessLevel).isEqualTo(AccessLevel.FileOwner)
+
+        // Encode: AccessLevel.FileOwner -> "4A0110"
+        val builder = TlvBuilder()
+        builder.append(TlvTag.AccessLevel, AccessLevel.FileOwner)
+        val encoded = builder.serialize()
+        assertThat(encoded.toHexString()).isEqualTo("4A0110")
     }
 }

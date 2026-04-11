@@ -61,7 +61,7 @@ enum class FileVisibility {
 
     @Suppress("MagicNumber")
     fun serializeValue(fwVersion: FirmwareVersion): ByteArray {
-        return if (fwVersion.doubleValue < 4) {
+        return if (fwVersion < FirmwareVersion.MultiWalletAvailable) {
             byteArrayOf(0x00, permissionsRawValue)
         } else {
             byteArrayOf(permissionsRawValue)

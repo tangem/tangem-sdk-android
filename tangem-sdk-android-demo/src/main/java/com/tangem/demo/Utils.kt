@@ -1,10 +1,11 @@
 package com.tangem.demo
 
 import com.tangem.common.json.MoshiJsonConverter
-import com.tangem.operations.personalization.entities.Acquirer
-import com.tangem.operations.personalization.entities.CardConfig
-import com.tangem.operations.personalization.entities.Issuer
-import com.tangem.operations.personalization.entities.Manufacturer
+import com.tangem.operations.personalization.config.Acquirer
+import com.tangem.operations.personalization.config.CardConfig
+import com.tangem.operations.personalization.config.CardConfigV8
+import com.tangem.operations.personalization.config.Issuer
+import com.tangem.operations.personalization.config.Manufacturer
 
 object Utils {
 
@@ -231,9 +232,117 @@ object Backup {
     }
     """
 
+    private const val configJsonPrimaryV8 =
+        """
+     {
+        "releaseVersion": false,
+        "issuerName": "TANGEM",
+        "series": "AAAA",
+        "startNumber": 0,
+        "count": 10,
+        "numberFormat": "0NNNNNNNNNN",
+        "PIN": "000000",
+        "curveID": "secp256k1",
+        "SigningMethod": 0,
+        "allowSwapPIN": false,
+        "useActivation": false,
+        "useNDEF": true,
+        "useBlock": false,
+        "forbidPurgeWallet": false,
+        "forbidDefaultPIN": true,
+        "disableFiles": false,
+        "allowHDWallets": true,
+        "allowBackup": true,
+        "allowKeysImport": true,
+        "createWallet": 0,
+        "NDEF": [],
+        "walletsCount": 10,
+        "securityDelay": 5000,
+        "requireBackup": true,
+        "cardData": {
+            "date": "2026-01-01",
+            "batch": "FFFA"
+        }
+    }
+    """
+
+    private const val configJsonBackup1V8 =
+        """
+     {
+        "releaseVersion": false,
+        "issuerName": "TANGEM",
+        "series": "AAAA",
+        "startNumber": 0,
+        "count": 10,
+        "numberFormat": "0NNNNNNNNNN",
+        "PIN": "000000",
+        "curveID": "secp256k1",
+        "SigningMethod": 0,
+        "allowSwapPIN": false,
+        "useActivation": false,
+        "useNDEF": true,
+        "useBlock": false,
+        "forbidPurgeWallet": false,
+        "forbidDefaultPIN": true,
+        "disableFiles": false,
+        "allowHDWallets": true,
+        "allowBackup": true,
+        "allowKeysImport": true,
+        "createWallet": 0,
+        "NDEF": [],
+        "walletsCount": 10,
+        "securityDelay": 5000,
+        "requireBackup": true,
+        "cardData": {
+            "date": "2026-01-01",
+            "batch": "FFFA"
+        }
+    }
+    """
+
+    private const val configJsonBackup2V8 =
+        """
+     {
+        "releaseVersion": false,
+        "issuerName": "TANGEM",
+        "series": "AAAA",
+        "startNumber": 0,
+        "count": 10,
+        "numberFormat": "0NNNNNNNNNN",
+        "PIN": "000000",
+        "curveID": "secp256k1",
+        "SigningMethod": 0,
+        "allowSwapPIN": false,
+        "useActivation": false,
+        "useNDEF": true,
+        "useBlock": false,
+        "forbidPurgeWallet": false,
+        "forbidDefaultPIN": true,
+        "disableFiles": false,
+        "allowHDWallets": true,
+        "allowBackup": true,
+        "allowKeysImport": true,
+        "createWallet": 0,
+        "NDEF": [],
+        "walletsCount": 10,
+        "securityDelay": 5000,
+        "requireBackup": true,
+        "cardData": {
+            "date": "2026-01-01",
+            "batch": "FFFA"
+        }
+    }
+    """
+
     fun primaryCardConfig(): CardConfig = MoshiJsonConverter.INSTANCE.fromJson(configJsonPrimary)!!
 
     fun backup1Config(): CardConfig = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup1)!!
 
     fun backup2Config(): CardConfig = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup2)!!
+
+    fun primaryCardConfigV8(): CardConfigV8 = MoshiJsonConverter.INSTANCE.fromJson(configJsonPrimaryV8)!!
+
+    fun backup1ConfigV8(): CardConfigV8 = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup1V8)!!
+
+    fun backup2ConfigV8(): CardConfigV8 = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup2V8)!!
 }

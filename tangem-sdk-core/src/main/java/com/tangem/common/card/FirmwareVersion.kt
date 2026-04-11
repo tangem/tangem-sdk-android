@@ -94,7 +94,7 @@ class FirmwareVersion : Comparable<FirmwareVersion> {
         /**
          * Field on card that describes is passcode is default value or not
          */
-        val IsPasscodeStatusAvailable = FirmwareVersion(4, 1)
+        val PasscodeStatusAvailable = FirmwareVersion(4, 1)
 
         /**
          * Is create wallet command answers with the whole wallet
@@ -104,7 +104,7 @@ class FirmwareVersion : Comparable<FirmwareVersion> {
         /**
          * Field on card that describes is accessCode is default value or not
          */
-        val IsAccessCodeStatusAvailable = FirmwareVersion(4, 33)
+        val UserCodeStatusesAvailable = FirmwareVersion(4, 33)
 
         /**
          * Determines when default PINs are optional in commands
@@ -130,6 +130,11 @@ class FirmwareVersion : Comparable<FirmwareVersion> {
          * Ed25519Slip support
          */
         val Ed25519Slip0010Available = FirmwareVersion(6, 33)
+
+        /**
+         * main secret
+         */
+        val v8 = FirmwareVersion(8, 53)
 
         /**
          * Temporary range for visa cards

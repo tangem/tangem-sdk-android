@@ -1,5 +1,6 @@
-package com.tangem.operations.personalization.entities
+package com.tangem.operations.personalization.config
 
+import com.tangem.operations.personalization.entities.ProductMask
 import java.util.Date
 
 /**
@@ -17,7 +18,7 @@ import java.util.Date
 internal class CardData(
     val batchId: String,
     val manufactureDateTime: Date,
-    val blockchainName: String,
+    val blockchainName: String?,
     val productMask: ProductMask?,
     val tokenSymbol: String?,
     val tokenContractAddress: String?,
