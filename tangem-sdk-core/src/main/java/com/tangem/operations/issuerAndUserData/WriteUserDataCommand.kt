@@ -8,7 +8,6 @@ import com.tangem.common.card.Card
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 
@@ -47,7 +46,7 @@ class WriteUserDataCommand(
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val builder = TlvBuilder()
+        val builder = createTlvBuilder(environment.legacyMode)
         builder.append(TlvTag.CardId, environment.card?.cardId)
         builder.append(TlvTag.Pin, environment.accessCode.value)
         builder.append(TlvTag.UserData, userData)
@@ -62,9 +61,8 @@ class WriteUserDataCommand(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): SuccessResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        return SuccessResponse(TlvDecoder(tlvData).decode(TlvTag.CardId))
+        val decoder = createTlvDecoder(environment, apdu)
+        return SuccessResponse(decoder.decode(TlvTag.CardId))
     }
 
     companion object {

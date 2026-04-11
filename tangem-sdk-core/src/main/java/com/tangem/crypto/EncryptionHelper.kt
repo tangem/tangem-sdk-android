@@ -1,6 +1,6 @@
 package com.tangem.crypto
 
-import com.tangem.common.card.EncryptionMode
+import com.tangem.common.encryption.EncryptionMode
 import org.spongycastle.jce.interfaces.ECPublicKey
 import java.security.KeyPair
 import java.security.KeyPairGenerator
@@ -19,6 +19,9 @@ interface EncryptionHelper {
                 EncryptionMode.None -> null
                 EncryptionMode.Fast -> FastEncryptionHelper()
                 EncryptionMode.Strong -> StrongEncryptionHelper()
+                EncryptionMode.CcmWithSecurityDelay -> error("These modes are not supported by the old encryption mechanism")
+                EncryptionMode.CcmWithAccessToken -> error("These modes are not supported by the old encryption mechanism")
+                EncryptionMode.CcmWithAsymmetricKeys -> error("These modes are not supported by the old encryption mechanism")
             }
         }
     }

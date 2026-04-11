@@ -1,10 +1,6 @@
 package com.tangem.operations.pins
 
-import com.tangem.common.CardIdFormatter
-import com.tangem.common.CompletionResult
-import com.tangem.common.SuccessResponse
-import com.tangem.common.UserCode
-import com.tangem.common.UserCodeType
+import com.tangem.common.*
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
@@ -14,11 +10,7 @@ import com.tangem.common.core.CardSession
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
-import com.tangem.common.doOnFailure
-import com.tangem.common.doOnSuccess
 import com.tangem.common.extensions.calculateSha256
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 
@@ -104,33 +96,54 @@ class SetUserCodeCommand private constructor() : Command<SuccessResponse>() {
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
+        val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
+
         val accessCodeValue = codes[UserCodeType.AccessCode]?.value ?: environment.accessCode.value
-        val passcodeValue = codes[UserCodeType.Passcode]?.value ?: environment.passcode.value
-        if (accessCodeValue == null || passcodeValue == null) {
+        // val passcodeValue = codes[UserCodeType.Passcode]?.value ?: environment.passcode.value
+        if (accessCodeValue == null) {
             throw TangemSdkError.SerializeCommandError()
         }
 
-        val tlvBuilder = TlvBuilder()
-        tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
-        tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
-        tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
-        tlvBuilder.append(TlvTag.NewPin2, passcodeValue)
-        tlvBuilder.append(TlvTag.Cvc, environment.cvc)
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
 
-        val firmwareVersion = environment.card?.firmwareVersion
-        if (firmwareVersion != null && firmwareVersion >= FirmwareVersion.BackupAvailable) {
-            val hash = (accessCodeValue + passcodeValue).calculateSha256()
-            tlvBuilder.append(TlvTag.CodeHash, hash)
+        when {
+            card.firmwareVersion >= FirmwareVersion.v8 -> {
+                tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
+                tlvBuilder.append(TlvTag.Hash, accessCodeValue.calculateSha256())
+            }
+            card.firmwareVersion >= FirmwareVersion.BackupAvailable -> {
+                val passcodeValue = codes[UserCodeType.Passcode]?.value ?: environment.passcode.value
+                ?: throw TangemSdkError.SerializeCommandError()
+
+                tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+                tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
+                tlvBuilder.append(TlvTag.NewPin2, passcodeValue)
+                tlvBuilder.append(TlvTag.Hash, (accessCodeValue + passcodeValue).calculateSha256())
+            }
+            else -> {
+                val passcodeValue = codes[UserCodeType.Passcode]?.value ?: environment.passcode.value
+                ?: throw TangemSdkError.SerializeCommandError()
+
+                tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+                tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
+                tlvBuilder.append(TlvTag.NewPin2, passcodeValue)
+            }
         }
+
+        if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+        }
+
+        if (shouldAddPin(environment.passcode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
+        }
+
 
         return CommandApdu(Instruction.SetPin, tlvBuilder.serialize())
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): SuccessResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         return SuccessResponse(decoder.decode(TlvTag.CardId))
     }
 

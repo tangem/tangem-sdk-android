@@ -6,6 +6,7 @@ import com.tangem.common.card.CardWallet
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.card.SigningMethod
 import com.tangem.common.card.UserSettingsMask
+import com.tangem.common.core.AccessLevel
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
@@ -144,6 +145,10 @@ class TlvEncoder {
             TlvValueType.DerivationPath -> {
                 typeCheck<T, DerivationPath>(tag)
                 return (value as DerivationPath).nodes.map { it.serialize() }.reduce { acc, bytes -> acc + bytes }
+            }
+            TlvValueType.AccessLevel -> {
+                typeCheck<T, AccessLevel>(tag)
+                (value as AccessLevel).code.toByteArray(1)
             }
         }
     }

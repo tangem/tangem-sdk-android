@@ -4,6 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.extensions.calculateSha256
+import com.tangem.crypto.secureCompare
 
 @JsonClass(generateAdapter = true)
 class UserCode constructor(
@@ -15,6 +16,15 @@ class UserCode constructor(
     constructor(type: UserCodeType) : this(type, type.defaultValue)
 
     constructor(type: UserCodeType, stringValue: String) : this(type, stringValue.calculateSha256())
+
+    fun isDefault(): Boolean {
+        if (value == null) return false
+        return value.secureCompare(type.defaultValue.calculateSha256())
+    }
+
+    fun isNonDefault(): Boolean {
+        return !isDefault()
+    }
 
     companion object {
         const val DefaultAccessCode = "000000"
