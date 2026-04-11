@@ -25,6 +25,6 @@
         android:letterSpacing="0.033"
         android:lineHeight="16dp"
         android:textStyle="normal"
-        tools:text="@string/tangem_never_pregenerate_code_alert" />
+        tools:text="@string/tangem_never_pregenerate_access_code_alert" />
 
 </LinearLayout>
