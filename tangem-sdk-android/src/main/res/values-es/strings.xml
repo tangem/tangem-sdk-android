@@ -91,6 +91,7 @@
     <string name="reset_codes_scan_to_reset">Escanee la tarjeta/anillo para restablecer los códigos de usuario</string>
     <string name="reset_codes_success_message">El código se restableció correctamente</string>
     <string name="sign_multiple_chunks_part">Parte de firma %1$d de %2$d</string>
+    <string name="tangem_never_pregenerate_access_code_alert">Tangem never sells wallets along with the pre‑generated access code.</string>
     <string name="tangem_never_pregenerate_code_alert">Tangem nunca vende billeteras con un código de acceso generado previamente</string>
     <string name="view_delegate_delay">La operación está en curso</string>
     <string name="view_delegate_header_card">Tarjeta</string>

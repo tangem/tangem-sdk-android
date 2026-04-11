@@ -40,6 +40,12 @@
         <item name="android:letterSpacing">0</item>
     </style>
 
+    <style name="Widget.Sdk.Button.Notification" parent="Widget.Sdk.Button">
+        <item name="android:textColor">@color/sdk_button_notification_text_selector</item>
+        <item name="backgroundTint">@color/sdk_button_notification_bg_selector</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
     <style name="Widget.Sdk.Button.Secondary" parent="Widget.Sdk.Button">
         <item name="android:textColor">@color/sdk_button_secondary_text_selector</item>
         <item name="backgroundTint">@color/sdk_button_secondary_bg_selector</item>
