@@ -49,6 +49,8 @@
     <color name="sdk_button_secondary_text">#FFFFFF</color>
     <color name="sdk_button_disabled_bg">#303030</color>
     <color name="sdk_button_disabled_text">#5A5A5A</color>
+    <color name="sdk_button_notification_text">#FFFFFF</color>
+    <color name="sdk_button_notification_bg">#33FFFFFF</color>
 
     <color name="sdk_warning_background">#1AFFB71B</color>
     <color name="sdk_warning_text">#FFFFFF</color>
