@@ -7,7 +7,7 @@ data class WalletData(
     /**
      * Name of the blockchain.
      */
-    val blockchain: String,
+    val blockchain: String?,
     /**
      * Token of the specified blockchain.
      */

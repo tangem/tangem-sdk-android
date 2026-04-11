@@ -4,10 +4,9 @@ import com.squareup.moshi.JsonClass
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
+import com.tangem.common.core.CardSessionEncryption
 import com.tangem.common.core.SessionEnvironment
-import com.tangem.common.core.TangemSdkError
 import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 
 @JsonClass(generateAdapter = true)
@@ -25,8 +24,11 @@ class OpenSessionCommand(
     private val sessionKeyA: ByteArray,
 ) : ApduSerializable<OpenSessionResponse> {
 
+    var preflightReadMode: PreflightReadMode = PreflightReadMode.None
+    var cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.NONE
+
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.SessionKeyA, sessionKeyA)
         val p2 = environment.encryptionMode.byteValue
 
@@ -34,9 +36,7 @@ class OpenSessionCommand(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): OpenSessionResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         return OpenSessionResponse(decoder.decode(TlvTag.SessionKeyB), decoder.decode(TlvTag.Uid))
     }
 }

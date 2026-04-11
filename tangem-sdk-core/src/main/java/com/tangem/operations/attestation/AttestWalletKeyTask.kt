@@ -8,15 +8,9 @@ import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.Card
 import com.tangem.common.card.CardWallet
 import com.tangem.common.card.FirmwareVersion
-import com.tangem.common.core.CardSession
-import com.tangem.common.core.CompletionCallback
-import com.tangem.common.core.SessionEnvironment
-import com.tangem.common.core.TangemError
-import com.tangem.common.core.TangemSdkError
+import com.tangem.common.core.*
 import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.toByteArray
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.hdWallet.DerivationPath
@@ -73,6 +67,11 @@ class AttestWalletKeyTask(
     private val challenge = challenge ?: CryptoUtils.generateRandomBytes(16)
 
     override fun performPreCheck(card: Card): TangemError? {
+        val error = card.assertWalletsAccess()
+        if (error != null) {
+            return error
+        }
+
         val wallet = card.wallet(publicKey).guard {
             return TangemSdkError.WalletNotFound()
         }
@@ -125,15 +124,20 @@ class AttestWalletKeyTask(
                         return@run
                     }
 
-                    val isWalletSignatureValid = verifyWalletSignature(response = checkWalletResponse, wallet = wallet)
-                    val isCardSignatureValid = verifyCardSignature(
-                        response = checkWalletResponse,
-                        cardPublicKey = card.cardPublicKey,
-                    )
-                    if (isWalletSignatureValid && isCardSignatureValid) {
-                        callback(CompletionResult.Success(checkWalletResponse))
-                    } else {
-                        callback(CompletionResult.Failure(TangemSdkError.CardVerificationFailed()))
+                    try {
+                        val isWalletSignatureValid =
+                            verifyWalletSignature(response = checkWalletResponse, wallet = wallet)
+                        val isCardSignatureValid = verifyCardSignature(
+                            response = checkWalletResponse,
+                            cardPublicKey = card.cardPublicKey,
+                        )
+                        if (isWalletSignatureValid && isCardSignatureValid) {
+                            callback(CompletionResult.Success(checkWalletResponse))
+                        } else {
+                            callback(CompletionResult.Failure(TangemSdkError.CardVerificationFailed()))
+                        }
+                    } catch (error: TangemSdkError) {
+                        callback(CompletionResult.Failure(error))
                     }
                 }
                 is CompletionResult.Failure -> callback(result)
@@ -145,11 +149,16 @@ class AttestWalletKeyTask(
         val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
         val walletIndex = card.wallet(publicKey)?.index ?: throw TangemSdkError.WalletNotFound()
 
-        val builder = TlvBuilder()
-        builder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, card)
-        builder.append(TlvTag.CardId, card.cardId)
+        val builder = createTlvBuilder(environment.legacyMode)
+
         builder.append(TlvTag.Challenge, challenge)
         builder.append(TlvTag.WalletIndex, walletIndex)
+        if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
+            builder.append(TlvTag.Pin, environment.accessCode.value)
+        }
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            builder.append(TlvTag.CardId, environment.card?.cardId)
+        }
 
         // Otherwise, static confirmation will fail with the "invalidParams" error.
         if (card.firmwareVersion >= FirmwareVersion.WalletOwnershipConfirmationAvailable) {
@@ -168,8 +177,7 @@ class AttestWalletKeyTask(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): AttestWalletKeyResponse {
-        val tlv = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-        val decoder = TlvDecoder(tlv)
+        val decoder = createTlvDecoder(environment, apdu)
         return AttestWalletKeyResponse(
             cardId = decoder.decode(TlvTag.CardId),
             salt = decoder.decode(TlvTag.Salt),
@@ -183,7 +191,10 @@ class AttestWalletKeyTask(
     }
 
     private fun verifyWalletSignature(response: AttestWalletKeyResponse, wallet: CardWallet): Boolean {
-        if (wallet.publicKey != publicKey) {
+        val currentWalletPublicKey = wallet.publicKey
+            ?: throw TangemSdkError.WalletUnavailableBackupRequired()
+
+        if (!currentWalletPublicKey.contentEquals(publicKey)) {
             return false
         }
 
@@ -193,7 +204,7 @@ class AttestWalletKeyTask(
             }
             derivedKey.publicKey
         } else {
-            wallet.publicKey
+            currentWalletPublicKey
         }
 
         return CryptoUtils.verify(

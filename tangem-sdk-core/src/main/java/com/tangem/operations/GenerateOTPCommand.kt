@@ -5,11 +5,10 @@ import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.Card
+import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 
 /**
@@ -32,11 +31,16 @@ class GenerateOTPCommand : Command<GenerateOTPResponse>() {
     override fun performPreCheck(card: Card): TangemError? {
         if (card.wallets.isEmpty()) return TangemSdkError.WalletNotFound()
 
+        if (!FirmwareVersion.visaRange.contains(card.firmwareVersion.doubleValue)) {
+            return TangemSdkError.NotSupportedFirmwareVersion()
+        }
+
+
         return null
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
         tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
@@ -45,12 +49,10 @@ class GenerateOTPCommand : Command<GenerateOTPResponse>() {
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): GenerateOTPResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         return GenerateOTPResponse(
             decoder.decode(TlvTag.CardId),
-            decoder.decode(TlvTag.CodeHash),
+            decoder.decode(TlvTag.Hash),
             decoder.decode(TlvTag.FileIndex),
             decoder.decode(TlvTag.WalletPublicKey),
         )

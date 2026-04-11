@@ -30,15 +30,15 @@ class CheckUserCodesCommand : CardSessionRunnable<CheckUserCodesResponse> {
             when (result) {
                 is CompletionResult.Success -> {
                     val response = CheckUserCodesResponse(
-                        session.environment.isUserCodeSet(UserCodeType.AccessCode),
-                        session.environment.isUserCodeSet(UserCodeType.Passcode),
+                        session.environment.accessCode.isNonDefault(),
+                        session.environment.passcode.isNonDefault(),
                     )
                     callback(CompletionResult.Success(response))
                 }
                 is CompletionResult.Failure -> {
                     if (result.error is TangemSdkError.InvalidParams) {
                         val response = CheckUserCodesResponse(
-                            session.environment.isUserCodeSet(UserCodeType.AccessCode),
+                            session.environment.accessCode.isNonDefault(),
                             true,
                         )
                         callback(CompletionResult.Success(response))

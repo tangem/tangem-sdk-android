@@ -38,6 +38,10 @@ enum class Instruction(var code: Int) {
     GetEntropy(code = 0xE7),
     SetUserSettings(code = 0xD5),
     FinalizeReadBackupData(code = 0xEF),
+
+    // COS v8+
+    ManageAccessTokens(0xD6),
+    ManageMasterSecret(0xE6),
     ;
 
     companion object {

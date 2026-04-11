@@ -19,8 +19,6 @@ import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.toByteArray
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.hdWallet.DerivationPath
@@ -174,6 +172,8 @@ internal class SignCommand(
      */
     @Suppress("MagicNumber")
     override fun serialize(environment: SessionEnvironment): CommandApdu {
+        val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
+
         val walletIndex = environment.card?.wallet(walletPublicKey)?.index ?: throw TangemSdkError.WalletNotFound()
 
         val chunk = chunkHashesHelper.getCurrentChunk()
@@ -181,15 +181,22 @@ internal class SignCommand(
         val hashSizeData = if (hashSize > 255) hashSize.toByteArray(2) else hashSize.toByteArray(1)
         val flattedHashes = chunk.hashes.map { it.data }.reduce { arr1, arr2 -> arr1 + arr2 }
 
-        val tlvBuilder = TlvBuilder()
-        tlvBuilder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
-        tlvBuilder.appendPinIfNeeded(TlvTag.Pin2, environment.passcode, environment.card)
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.TransactionOutHashSize, hashSizeData)
         tlvBuilder.append(TlvTag.TransactionOutHash, flattedHashes)
         tlvBuilder.append(TlvTag.Cvc, environment.cvc)
         // Wallet index works only on COS v. 4.0 and higher. For previous version index will be ignored
         tlvBuilder.append(TlvTag.WalletIndex, walletIndex)
+        if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+        }
+        if (shouldAddPin(environment.passcode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin2, environment.accessCode.value)
+        }
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+        }
 
         terminalKeys?.let {
             val signedData = flattedHashes.sign(it.privateKey)
@@ -202,9 +209,7 @@ internal class SignCommand(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): SignResponse.PartialSignResponse {
-        val tlvData = deserializeApdu(environment, apdu)
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
 
         val chunk = chunkHashesHelper.getCurrentChunk()
         val signatureBLOB: ByteArray = decoder.decode(TlvTag.WalletSignature)

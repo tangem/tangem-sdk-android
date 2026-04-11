@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clipToPadding="false"
+    android:paddingStart="@dimen/box_padding_horizontal"
+    android:paddingTop="@dimen/box_padding_vertical"
+    android:paddingEnd="@dimen/box_padding_horizontal"
+    android:paddingBottom="@dimen/box_padding_vertical">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/rounded_corner" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:text="User settings"
+        android:background="?android:windowBackground"
+        android:translationX="10dp"
+        android:translationY="-10dp" />
+
+    <FrameLayout
+        android:id="@+id/contentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="10dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical">
+
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupUserCodeRecoveryAllowed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:layout_marginTop="12dp"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:width="96dp"
+                    android:textAlignment="center"
+                    android:text="User code recovery"
+                    android:translationY="6dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipUserCodeRecoveryEnable"
+                    style="@style/TapChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="Allowed" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipUserCodeRecoveryDisable"
+                    style="@style/TapChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Forbidden" />
+
+
+            </com.google.android.material.chip.ChipGroup>
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupPinRequired"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:layout_marginTop="12dp"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:width="96dp"
+                    android:textAlignment="center"
+                    android:text="PIN required"
+                    android:translationY="16dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipPinRequiredEnable"
+                    style="@style/TapChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="Enabled" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipPinRequiredDisable"
+                    style="@style/TapChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Disabled" />
+
+
+            </com.google.android.material.chip.ChipGroup>
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupNdef"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:layout_marginTop="12dp"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:width="96dp"
+                    android:textAlignment="center"
+                    android:text="NDEF"
+                    android:translationY="16dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipNdefEnable"
+                    style="@style/TapChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="Enabled" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipNdefDisable"
+                    style="@style/TapChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Disabled" />
+
+
+            </com.google.android.material.chip.ChipGroup>
+
+            <Button
+                android:id="@+id/btnSetUserSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Set User Settings" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</FrameLayout>

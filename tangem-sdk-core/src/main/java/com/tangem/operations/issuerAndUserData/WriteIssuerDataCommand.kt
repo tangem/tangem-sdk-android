@@ -8,8 +8,6 @@ import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.Card
 import com.tangem.common.core.*
 import com.tangem.common.extensions.guard
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.DefaultIssuerDataVerifier
 import com.tangem.crypto.IssuerDataToVerify
@@ -73,10 +71,10 @@ class WriteIssuerDataCommand(
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
         tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
-        tlvBuilder.append(TlvTag.IssuerData, issuerData)
+        tlvBuilder.append(TlvTag.Data, issuerData)
         tlvBuilder.append(TlvTag.IssuerDataSignature, issuerDataSignature)
         tlvBuilder.append(TlvTag.IssuerDataCounter, issuerDataCounter)
 
@@ -84,9 +82,7 @@ class WriteIssuerDataCommand(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): SuccessResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         return SuccessResponse(decoder.decode(TlvTag.CardId))
     }
 

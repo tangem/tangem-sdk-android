@@ -88,6 +88,8 @@ interface SessionViewDelegate {
 
     fun dismiss()
 
+    fun showHealthAlert(onContinue: () -> Unit)
+
     fun attestationDidFail(isDevCard: Boolean, positive: VoidCallback, negative: VoidCallback)
 
     fun attestationCompletedOffline(positive: VoidCallback, negative: VoidCallback, retry: VoidCallback)

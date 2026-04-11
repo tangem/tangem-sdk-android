@@ -10,8 +10,6 @@ import com.tangem.common.card.CardWallet
 import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.*
 import com.tangem.common.deserialization.WalletDeserializer
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.operations.Command
@@ -55,21 +53,27 @@ class ReadWalletCommand(
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
-        tlvBuilder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+        val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
+
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.InteractionMode, ReadMode.Wallet)
         tlvBuilder.append(TlvTag.WalletIndex, walletIndex)
-        tlvBuilder.append(TlvTag.WalletHDPath, derivationPath)
+        if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+        }
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+        }
+        if (derivationPath != null) {
+            tlvBuilder.append(TlvTag.WalletHDPath, derivationPath)
+        }
 
         return CommandApdu(Instruction.Read, tlvBuilder.serialize())
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): ReadWalletResponse {
         val card = environment.card ?: throw TangemSdkError.UnknownError()
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         val wallet = try {
             WalletDeserializer(card.settings.isPermanentWallet).deserializeWallet(decoder)
         } catch (ex: Exception) {

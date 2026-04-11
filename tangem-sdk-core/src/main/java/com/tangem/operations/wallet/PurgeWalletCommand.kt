@@ -6,46 +6,44 @@ import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.Card
+import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.CardSession
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
-import com.tangem.common.extensions.guard
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 
 /**
  * This command deletes all wallet data and its private and public keys
- * @property walletPublicKey: Public key of the wallet to delete
+ * @property walletIndex: Index of the wallet to delete
  */
 class PurgeWalletCommand(
-    private val walletPublicKey: ByteArray,
+    private val walletIndex: Int,
 ) : Command<SuccessResponse>() {
 
     override fun requiresPasscode(): Boolean = true
 
     override fun performPreCheck(card: Card): TangemSdkError? {
-        val wallet = card.wallet(walletPublicKey)
+        val wallet = card.wallets.firstOrNull { it.index == walletIndex }
+            ?: return TangemSdkError.WalletNotFound()
 
-        return when {
-            wallet == null -> TangemSdkError.WalletNotFound()
-            wallet.settings.isPermanent -> TangemSdkError.PurgeWalletProhibited()
-            else -> null
+        if (wallet.settings.isPermanent) {
+            return TangemSdkError.PurgeWalletProhibited()
         }
+
+        return null
     }
 
     override fun run(session: CardSession, callback: CompletionCallback<SuccessResponse>) {
-        val card = session.environment.card.guard {
-            callback(CompletionResult.Failure(TangemSdkError.CardError()))
-            return
-        }
-
         super.run(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
-                    session.environment.card = card.removeWallet(walletPublicKey)
+                    session.environment.card?.wallets?.let { wallets ->
+                        session.environment.card = session.environment.card?.setWallets(
+                            wallets.filter { it.index != walletIndex },
+                        )
+                    }
                     callback(CompletionResult.Success(result.data))
                 }
                 is CompletionResult.Failure -> callback(result)
@@ -54,21 +52,25 @@ class PurgeWalletCommand(
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val walletIndex = environment.card?.wallet(walletPublicKey)?.index ?: throw TangemSdkError.WalletNotFound()
+        val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
 
-        val tlvBuilder = TlvBuilder()
-        tlvBuilder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
-        tlvBuilder.appendPinIfNeeded(TlvTag.Pin2, environment.passcode, environment.card)
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.WalletIndex, walletIndex)
+        if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+        }
+        if (shouldAddPin(environment.passcode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin2, environment.accessCode.value)
+        }
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+        }
 
         return CommandApdu(Instruction.PurgeWallet, tlvBuilder.serialize())
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): SuccessResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         return SuccessResponse(decoder.decode(TlvTag.CardId))
     }
 }

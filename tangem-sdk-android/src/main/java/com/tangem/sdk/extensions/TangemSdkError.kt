@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.annotation.StringRes
 import com.tangem.common.core.TangemSdkError
 import com.tangem.sdk.R
+import com.tangem.sdk.extensions.TangemSdkErrorDescription.Type.*
 
 /**
  * Model to store localized error description
@@ -85,6 +86,7 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
         is TangemSdkError.DataSizeTooLarge,
         is TangemSdkError.EmptyHashes,
         is TangemSdkError.InvalidResponse,
+        is TangemSdkError.FailedToDecryptApdu,
         is TangemSdkError.MissingCounter,
         is TangemSdkError.MaxNumberOfWalletsCreated,
         is TangemSdkError.NotPersonalized,
@@ -98,6 +100,12 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
         is TangemSdkError.NonHardenedDerivationNotSupported,
         is TangemSdkError.AuthenticationNotInitialized,
         is TangemSdkError.NfcFeatureIsUnavailable,
+        is TangemSdkError.FailedToEncryptApdu,
+        is TangemSdkError.InvalidAccessToken,
+        is TangemSdkError.MissingAccessTokens,
+        is TangemSdkError.NeedReset,
+        is TangemSdkError.RetrySecureChannelNeeded,
+        is TangemSdkError.WalletUnavailableBackupRequired,
         -> TangemSdkErrorDescription()
 
         is TangemSdkError.CardVerificationFailed -> {
@@ -117,7 +125,7 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
 
         -> TangemSdkErrorDescription(
             resId = R.string.error_backup_wrong_card,
-            args = listOf(TangemSdkErrorDescription.Type.StringType(code.toString())),
+            args = listOf(StringType(code.toString())),
         )
 
         is TangemSdkError.BackupFailedAlreadyCreated -> {
@@ -139,23 +147,26 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
 
         is TangemSdkError.AccessCodeCannotBeChanged -> TangemSdkErrorDescription(
             resId = R.string.error_pin_cannot_be_changed_format,
-            args = listOf(TangemSdkErrorDescription.Type.StringResId(R.string.pin1)),
+            args = listOf(StringResId(R.string.pin1)),
         )
 
         is TangemSdkError.PasscodeCannotBeChanged -> TangemSdkErrorDescription(
             resId = R.string.error_pin_cannot_be_changed_format,
-            args = listOf(TangemSdkErrorDescription.Type.StringResId(R.string.pin2)),
+            args = listOf(StringResId(R.string.pin2)),
         )
 
         is TangemSdkError.WrongPasscode -> TangemSdkErrorDescription(
             resId = R.string.error_wrong_pin_format,
-            args = listOf(TangemSdkErrorDescription.Type.StringResId(R.string.pin2)),
+            args = listOf(StringResId(R.string.pin2)),
         )
 
         is TangemSdkError.WrongAccessCode -> TangemSdkErrorDescription(
             resId = R.string.error_wrong_pin_format,
-            args = listOf(TangemSdkErrorDescription.Type.StringResId(R.string.pin1)),
+            args = listOf(StringResId(R.string.pin1)),
         )
+
+        is TangemSdkError.InvalidAccessTokens -> TangemSdkErrorDescription() //TODO error description
+        is TangemSdkError.AccessDenied -> TangemSdkErrorDescription() //TODO error description
 
         is TangemSdkError.BackupCardAlreadyAdded,
         is TangemSdkError.BackupCardRequired,
@@ -164,7 +175,7 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
         is TangemSdkError.AccessCodeCannotBeDefault ->
             TangemSdkErrorDescription(
                 resId = R.string.error_pin_cannot_be_default_format,
-                args = listOf(TangemSdkErrorDescription.Type.StringResId(R.string.pin1)),
+                args = listOf(StringResId(R.string.pin1)),
             )
 
         is TangemSdkError.NoRemainingSignatures ->
@@ -178,7 +189,7 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
 
         is TangemSdkError.WrongCardNumber -> TangemSdkErrorDescription(
             resId = R.string.error_wrong_card_number_with_card_id,
-            args = listOf(TangemSdkErrorDescription.Type.StringType(cardId)),
+            args = listOf(StringType(cardId)),
         )
 
         is TangemSdkError.WrongCardType ->
@@ -196,7 +207,7 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
         is TangemSdkError.ResetPinWrongCard ->
             TangemSdkErrorDescription(
                 resId = R.string.error_reset_wrong_card,
-                args = listOf(TangemSdkErrorDescription.Type.StringType(code.toString())),
+                args = listOf(StringType(code.toString())),
             )
 
         is TangemSdkError.UserCodeRecoveryDisabled ->
@@ -209,12 +220,12 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
 
         is TangemSdkError.AccessCodeRequired -> TangemSdkErrorDescription(
             resId = R.string.error_pin_required_format,
-            args = listOf(TangemSdkErrorDescription.Type.StringResId(R.string.pin1)),
+            args = listOf(StringResId(R.string.pin1)),
         )
 
         is TangemSdkError.PasscodeRequired -> TangemSdkErrorDescription(
             resId = R.string.error_pin_required_format,
-            args = listOf(TangemSdkErrorDescription.Type.StringResId(R.string.pin2)),
+            args = listOf(StringResId(R.string.pin2)),
         )
     }
 }

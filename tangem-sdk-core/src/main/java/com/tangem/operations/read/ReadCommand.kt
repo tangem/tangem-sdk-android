@@ -2,20 +2,14 @@ package com.tangem.operations.read
 
 import com.squareup.moshi.JsonClass
 import com.tangem.common.CompletionResult
-import com.tangem.common.UserCodeType
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.Card
 import com.tangem.common.card.WalletData
-import com.tangem.common.core.CardSession
-import com.tangem.common.core.CompletionCallback
-import com.tangem.common.core.SessionEnvironment
-import com.tangem.common.core.TangemError
-import com.tangem.common.core.TangemSdkError
+import com.tangem.common.core.*
 import com.tangem.common.deserialization.CardDeserializer
 import com.tangem.common.deserialization.WalletDataDeserializer
-import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 import com.tangem.operations.CommandResponse
@@ -33,6 +27,7 @@ data class ReadResponse(
  */
 class ReadCommand : Command<ReadResponse>() {
 
+    override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.NONE
     override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun run(session: CardSession, callback: CompletionCallback<ReadResponse>) {
@@ -63,7 +58,7 @@ class ReadCommand : Command<ReadResponse>() {
      *  The card will not respond if wrong pin1 has been submitted.
      */
     override fun serialize(environment: SessionEnvironment): CommandApdu {
-        val tlvBuilder = TlvBuilder()
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
         tlvBuilder.append(TlvTag.InteractionMode, ReadMode.Card)
         tlvBuilder.append(TlvTag.TerminalPublicKey, environment.terminalKeys?.publicKey)
@@ -72,10 +67,10 @@ class ReadCommand : Command<ReadResponse>() {
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): ReadResponse {
-        val decoder = CardDeserializer.getDecoder(apdu)
+        val decoder = createTlvDecoder(environment, apdu)
         val cardDataDecoder = CardDeserializer.getCardDataDecoder(decoder.tlvList)
 
-        val isAccessCodeSetLegacy = environment.isUserCodeSet(UserCodeType.AccessCode)
+        val isAccessCodeSetLegacy = environment.accessCode.isNonDefault()
         val card = CardDeserializer.deserialize(isAccessCodeSetLegacy, decoder, cardDataDecoder)
         val walletData = cardDataDecoder?.let { WalletDataDeserializer.deserialize(it) }
 

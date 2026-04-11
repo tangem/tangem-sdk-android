@@ -13,8 +13,6 @@ import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.guard
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 import com.tangem.operations.CommandResponse
@@ -143,7 +141,7 @@ internal class ReadFileCommand(
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
 
-        val tlvBuilder = TlvBuilder()
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.CardId, card.cardId)
         tlvBuilder.append(TlvTag.FileIndex, fileIndex)
         tlvBuilder.append(TlvTag.FileTypeName, fileName)
@@ -161,16 +159,14 @@ internal class ReadFileCommand(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): ReadFileResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         val settings: FileSettings? = decoder.decodeOptional<ByteArray>(TlvTag.FileSettings)?.let { FileSettings(it) }
 
         return ReadFileResponse(
             cardId = decoder.decode(TlvTag.CardId),
             size = decoder.decodeOptional(TlvTag.Size),
             offset = decoder.decodeOptional(TlvTag.Offset),
-            fileData = decoder.decodeOptional(TlvTag.IssuerData) ?: byteArrayOf(),
+            fileData = decoder.decodeOptional(TlvTag.Data) ?: byteArrayOf(),
             fileIndex = decoder.decodeOptional(TlvTag.FileIndex) ?: 0,
             settings = settings,
             ownerIndex = decoder.decodeOptional(TlvTag.FileOwnerIndex),

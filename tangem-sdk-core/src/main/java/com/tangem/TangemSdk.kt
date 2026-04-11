@@ -14,8 +14,9 @@ import com.tangem.common.core.*
 import com.tangem.common.json.*
 import com.tangem.common.nfc.CardReader
 import com.tangem.common.nfc.NfcAvailabilityProvider
+import com.tangem.common.services.secure.CardAccessTokensRepository
 import com.tangem.common.services.secure.SecureStorage
-import com.tangem.common.usersCode.UserCodeRepository
+import com.tangem.common.usersCode.AccessCodeRepository
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.bip39.DefaultMnemonic
 import com.tangem.crypto.bip39.Wordlist
@@ -33,10 +34,12 @@ import com.tangem.operations.issuerAndUserData.*
 import com.tangem.operations.personalization.DepersonalizeCommand
 import com.tangem.operations.personalization.DepersonalizeResponse
 import com.tangem.operations.personalization.PersonalizeCommand
-import com.tangem.operations.personalization.entities.Acquirer
-import com.tangem.operations.personalization.entities.CardConfig
-import com.tangem.operations.personalization.entities.Issuer
-import com.tangem.operations.personalization.entities.Manufacturer
+import com.tangem.operations.personalization.PersonalizeCommandV8
+import com.tangem.operations.personalization.config.Acquirer
+import com.tangem.operations.personalization.config.CardConfig
+import com.tangem.operations.personalization.config.CardConfigV8
+import com.tangem.operations.personalization.config.Issuer
+import com.tangem.operations.personalization.config.Manufacturer
 import com.tangem.operations.pins.SetUserCodeCommand
 import com.tangem.operations.preflightread.CardIdPreflightReadFilter
 import com.tangem.operations.preflightread.PreflightReadFilter
@@ -114,7 +117,7 @@ class TangemSdk(
      *
      * @param initialMessage A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
-     * @param allowRequestUserCodeFromRepository Allow access code or password request from [UserCodeRepository],
+     * @param allowRequestUserCodeFromRepository Allow access code or password request from [AccessCodeRepository],
      * If [Config.userCodeRequestPolicy] is set to [UserCodeRequestPolicy.AlwaysWithBiometrics], the code will still be saved
      * @param callback is triggered on the completion of the [ScanTask] and provides card response
      * in the form of [Card] if the task was performed successfully or [TangemSdkError] in case of an error.
@@ -415,7 +418,7 @@ class TangemSdk(
      *
      * This command deletes all wallet data. If IsReusable flag is enabled during personalization.
      *
-     * @param walletPublicKey: Public key of wallet that should be purged.
+     * @param walletIndex: Index of the wallet to delete.
      * @param cardId: CID, Unique Tangem card ID number.
      * @param initialMessage: A custom description that shows at the beginning of the NFC session.
      * If null, default message will be used.
@@ -424,13 +427,13 @@ class TangemSdk(
      * or [TangemSdkError] in case of an error.
      */
     fun purgeWallet(
-        walletPublicKey: ByteArray,
+        walletIndex: Int,
         cardId: String,
         initialMessage: Message? = null,
         callback: CompletionCallback<SuccessResponse>,
     ) {
         startSessionWithRunnable(
-            runnable = PurgeWalletCommand(walletPublicKey),
+            runnable = PurgeWalletCommand(walletIndex),
             cardId = cardId,
             initialMessage = initialMessage,
             accessCode = null,
@@ -467,6 +470,23 @@ class TangemSdk(
         callback: CompletionCallback<Card>,
     ) {
         val command = PersonalizeCommand(config, issuer, manufacturer, acquirer)
+        startSessionWithRunnable(
+            runnable = command,
+            cardId = null,
+            initialMessage = initialMessage,
+            accessCode = null,
+            callback = callback,
+        )
+    }
+
+    fun personalizeV8(
+        config: CardConfigV8,
+        issuer: Issuer,
+        manufacturer: Manufacturer,
+        initialMessage: Message? = null,
+        callback: CompletionCallback<Card>,
+    ) {
+        val command = PersonalizeCommandV8(config, issuer, manufacturer)
         startSessionWithRunnable(
             runnable = command,
             cardId = null,
@@ -1226,11 +1246,11 @@ class TangemSdk(
         keystoreManager: KeystoreManager,
         secureStorage: SecureStorage,
         config: Config,
-    ): UserCodeRepository? = runCatching {
+    ): AccessCodeRepository? = runCatching {
         if (authenticationManager.canAuthenticate &&
             config.userCodeRequestPolicy is UserCodeRequestPolicy.AlwaysWithBiometrics
         ) {
-            UserCodeRepository(
+            AccessCodeRepository(
                 keystoreManager = keystoreManager,
                 secureStorage = secureStorage,
             )
@@ -1238,6 +1258,25 @@ class TangemSdk(
             null
         }
     }.getOrNull()
+
+    private fun createCardAccessTokensRepository(
+        authenticationManager: AuthenticationManager,
+        keystoreManager: KeystoreManager,
+        secureStorage: SecureStorage,
+        config: Config,
+    ): CardAccessTokensRepository? {
+        if (authenticationManager.canAuthenticate &&
+            config.userCodeRequestPolicy is UserCodeRequestPolicy.AlwaysWithBiometrics
+        ) {
+            return CardAccessTokensRepository(
+                keystoreManager = keystoreManager,
+                secureStorage = secureStorage,
+            )
+        }
+
+        Log.debug { "Failed to initialize CardAccessTokensRepository. Biometrics is unavailable." }
+        return null
+    }
 
     private fun makeSession(
         cardId: String? = null,
@@ -1262,11 +1301,17 @@ class TangemSdk(
                 secureStorage = secureStorage,
                 config = config,
             ),
+            preflightReadFilter = preflightReadFilter,
+            cardAccessTokensRepository = createCardAccessTokensRepository(
+                authenticationManager = authenticationManager,
+                keystoreManager = keystoreManager,
+                secureStorage = secureStorage,
+                config = config,
+            ),
             reader = reader,
             jsonRpcConverter = jsonRpcConverter,
             secureStorage = secureStorage,
             initialMessage = initialMessage,
-            preflightReadFilter = preflightReadFilter,
         )
     }
 

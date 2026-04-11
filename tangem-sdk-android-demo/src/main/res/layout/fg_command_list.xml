@@ -23,6 +23,10 @@
             layout="@layout/wallet" />
 
         <include
+            android:id="@+id/masterSecret"
+            layout="@layout/master_secret" />
+
+        <include
             android:id="@+id/signView"
             layout="@layout/sign" />
 
@@ -31,20 +35,12 @@
             layout="@layout/hd_wallet" />
 
         <include
+            android:id="@+id/deterministicEntropy"
+            layout="@layout/deterministic_entropy" />
+
+        <include
             android:id="@+id/backupView"
             layout="@layout/backup" />
-
-        <include
-            android:id="@+id/issuerDataView"
-            layout="@layout/issuer_data" />
-
-        <include
-            android:id="@+id/issuerExDataView"
-            layout="@layout/issuer_ex_data" />
-
-        <include
-            android:id="@+id/userDataView"
-            layout="@layout/user_data" />
 
         <include
             android:id="@+id/setPinView"
@@ -59,12 +55,21 @@
             layout="@layout/json_rpc" />
 
         <include
+            android:id="@+id/userSettings"
+            layout="@layout/user_settings" />
+
+        <include
             android:id="@+id/utilsView"
             layout="@layout/utils" />
 
         <include
+            android:id="@+id/deprecated"
+            layout="@layout/deprecated" />
+
+        <include
             android:id="@+id/themeView"
             layout="@layout/theme" />
+
 
     </LinearLayout>
 

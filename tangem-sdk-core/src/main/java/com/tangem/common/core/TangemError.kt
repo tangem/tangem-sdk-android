@@ -3,6 +3,7 @@ package com.tangem.common.core
 import com.tangem.common.UserCodeType
 import com.tangem.common.apdu.StatusWord
 import com.tangem.common.card.Card
+import com.tangem.common.card.FirmwareVersion
 import com.tangem.crypto.bip39.MnemonicErrorResult
 import com.tangem.operations.ScanTask
 import com.tangem.operations.read.ReadCommand
@@ -46,6 +47,7 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
      * This error is returned when NFC driver on an Android device does not support sending more than 261 bytes.
      */
     class ExtendedLengthNotSupported : TangemSdkError(code = 10002)
+    class RetrySecureChannelNeeded : TangemSdkError(code = 10009)
 
     class SerializeCommandError : TangemSdkError(code = 20001)
     class DeserializeApduFailed : TangemSdkError(code = 20002)
@@ -55,6 +57,8 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
     class DecodingFailedTypeMismatch(override var customMessage: String) : TangemSdkError(code = 20006)
     class DecodingFailed(override var customMessage: String) : TangemSdkError(code = 20007)
     class InvalidResponse : TangemSdkError(code = 20008)
+    class FailedToEncryptApdu : TangemSdkError(code = 20009)
+    class FailedToDecryptApdu : TangemSdkError(code = 20010)
 
     /**
      * This error is returned when unknown [StatusWord] is received from a card.
@@ -95,9 +99,11 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
     class NeedEncryption : TangemSdkError(code = 30006)
     class FileNotFound : TangemSdkError(code = 30007)
     class WalletNotFound : TangemSdkError(code = 30008)
+    class AccessDenied : TangemSdkError(code = 30009)
+    class NeedReset : TangemSdkError(code = 30010)
 
     // General Errors
-    class NotPersonalized : TangemSdkError(code = 40001)
+    class NotPersonalized(val firmware: FirmwareVersion) : TangemSdkError(code = 40001)
     class NotActivated : TangemSdkError(code = 40002)
     class WalletIsPurged : TangemSdkError(code = 40003)
     class PasscodeRequired : TangemSdkError(code = 40004)
@@ -127,6 +133,8 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
      * User entered wrong Passcode
      */
     class WrongPasscode : TangemSdkError(code = 40013)
+    class InvalidAccessToken : TangemSdkError(code = 40014)
+    class InvalidAccessTokens : TangemSdkError(code = 4001)
 
     // Personalization Errors
     class AlreadyPersonalized : TangemSdkError(code = 40101)
@@ -196,6 +204,7 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
     class BackupFailedIncompatibleFirmware : TangemSdkError(code = 41232)
     class BackupFailedKeysImportSettings : TangemSdkError(code = 41233)
     class BackupFailedAlreadyCreated : TangemSdkError(code = 41234)
+    class WalletUnavailableBackupRequired : TangemSdkError(code = 41235)
 
     class ResetPinNoCardsToReset : TangemSdkError(code = 41300)
 
@@ -255,6 +264,7 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
      * This error is returned when the [Command] requires a different firmware version than that of the card.
      */
     class NotSupportedFirmwareVersion : TangemSdkError(code = 50008)
+    class MissingAccessTokens : TangemSdkError(code = 50009)
 
     class CryptoUtilsError(override var customMessage: String) : TangemSdkError(code = 50011)
 
@@ -333,11 +343,15 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
      */
     companion object {
         fun from(userCodeType: UserCodeType, environment: SessionEnvironment?): TangemSdkError {
-            val isCodeSet = environment?.isUserCodeSet(userCodeType) == true
-
             return when (userCodeType) {
-                UserCodeType.AccessCode -> if (isCodeSet) WrongAccessCode() else AccessCodeRequired()
-                UserCodeType.Passcode -> if (isCodeSet) WrongPasscode() else PasscodeRequired()
+                UserCodeType.AccessCode -> {
+                    val isCodeSet = environment?.accessCode?.isNonDefault() ?: false
+                    if (isCodeSet) WrongAccessCode() else AccessCodeRequired()
+                }
+                UserCodeType.Passcode -> {
+                    val isCodeSet = environment?.passcode?.isNonDefault() ?: false
+                    if (isCodeSet) WrongPasscode() else PasscodeRequired()
+                }
             }
         }
     }

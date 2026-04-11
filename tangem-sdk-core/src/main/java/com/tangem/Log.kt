@@ -102,7 +102,7 @@ object Log {
     enum class Config(val levels: List<Level>) {
         Release(listOf(Level.Error)),
         Debug(listOf(Level.Warning, Level.Error)),
-        Verbose(Level.values().toList()),
+        Verbose(Level.entries),
     }
 }
 

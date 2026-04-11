@@ -124,6 +124,7 @@ class JSONRPCTests {
             index = 1,
             isImported = false,
             hasBackup = false,
+            status = CardWallet.Status.Loaded,
         )
         val response = CreateWalletResponse("c000111122223333", wallet)
         testMethod("CreateWallet", response)
@@ -141,6 +142,7 @@ class JSONRPCTests {
             index = 1,
             isImported = false,
             hasBackup = false,
+            status = CardWallet.Status.Loaded,
         )
         val response = CreateWalletResponse(cardId = "c000111122223333", wallet = wallet)
         testMethod(name = "ImportWalletMnemonic", response = response)

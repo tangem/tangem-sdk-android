@@ -165,6 +165,11 @@ class DefaultSessionViewDelegate(
         dialog.show(SessionViewDelegateState.PinChangeRequested(type, cardId, callback), ::onDialogShown)
     }
 
+    override fun showHealthAlert(onContinue: () -> Unit) {
+        // TODO: Implement health alert UI dialog
+        onContinue()
+    }
+
     override fun dismiss() {
         readingDialog?.dismissInternal()
     }
