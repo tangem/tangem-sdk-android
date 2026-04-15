@@ -171,7 +171,7 @@ object CardDeserializer {
         firmware: FirmwareVersion,
     ) {
         when {
-            status == Card.Status.NotPersonalized || !allowNotPersonalized -> throw TangemSdkError.NotPersonalized(
+            status == Card.Status.NotPersonalized && !allowNotPersonalized -> throw TangemSdkError.NotPersonalized(
                 firmware = firmware,
             )
             status == Card.Status.Purged -> throw TangemSdkError.WalletIsPurged()
