@@ -16,6 +16,7 @@ import com.tangem.common.UserCodeType
 import com.tangem.common.card.Card
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.card.FirmwareVersion
+import com.tangem.common.card.UserSettings
 import com.tangem.common.core.Config
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.core.UserCodeRequestPolicy
@@ -33,6 +34,7 @@ import com.tangem.demo.ui.separtedCommands.task.ResetToFactorySettingsTask
 import com.tangem.operations.GetEntropyCommand
 import com.tangem.operations.attestation.AttestationTask
 import com.tangem.operations.files.FileVisibility
+import com.tangem.operations.usersetttings.SetUserSettingsCommand
 import com.tangem.tangem_demo.R
 import com.tangem.tangem_demo.databinding.FgCommandListBinding
 
@@ -132,9 +134,9 @@ class CommandListFragment : BaseFragment() {
         binding.backupView.btnPersonalizeBackup1.setOnClickListener { personalize(Backup.backup1Config()) }
         binding.backupView.btnPersonalizeBackup2.setOnClickListener { personalize(Backup.backup2Config()) }
         binding.backupView.btnDepersonalize.setOnClickListener { depersonalize() }
-        binding.backupView.btnPersonalizePrimaryV7.setOnClickListener { personalize(Backup.primaryCardConfigV8()) }
-        binding.backupView.btnPersonalizeBackup1V7.setOnClickListener { personalize(Backup.backup1ConfigV8()) }
-        binding.backupView.btnPersonalizeBackup2V7.setOnClickListener { personalize(Backup.backup2ConfigV8()) }
+        binding.backupView.btnPersonalizePrimaryV8.setOnClickListener { personalize(Backup.primaryCardConfigV8()) }
+        binding.backupView.btnPersonalizeBackup1V8.setOnClickListener { personalize(Backup.backup1ConfigV8()) }
+        binding.backupView.btnPersonalizeBackup2V8.setOnClickListener { personalize(Backup.backup2ConfigV8()) }
         binding.backupView.btnDepersonalize.setOnClickListener { depersonalize() }
 
         binding.backupView.btnStartBackup.setOnClickListener {
@@ -214,6 +216,9 @@ class CommandListFragment : BaseFragment() {
             createOrImportMasterSecret(
                 binding.masterSecret.etMasterSecretMnemonic.text?.toString(),
             )
+        }
+        binding.masterSecret.btnPurgeMasterSecret.setOnClickListener {
+            purgeMasterSecret()
         }
         binding.masterSecret.btnPasteMasterSecretMnemonic.setOnClickListener {
             binding.masterSecret.etMasterSecretMnemonic
@@ -297,7 +302,7 @@ class CommandListFragment : BaseFragment() {
             }
         }
         binding.utilsView.btnGetEntropy.setOnClickListener {
-            sdk.startSessionWithRunnable(GetEntropyCommand(mode = GetEntropyMode.Random)) {
+            sdk.startSessionWithRunnable(GetEntropyCommand()) {
                 postUi { handleCommandResult(it) }
             }
         }
@@ -318,7 +323,7 @@ class CommandListFragment : BaseFragment() {
                     else -> false
                 }
             } else null
-            val isNdefDisabled = if (card == null || card!!.firmwareVersion >= FirmwareVersion.v7) {
+            val isNdefDisabled = if (card == null || card!!.firmwareVersion >= FirmwareVersion.v8) {
                 when (binding.userSettings.chipGroupNdef.checkedChipId) {
                     R.id.chipNdefDisable -> true
                     R.id.chipNdefEnable -> false
@@ -327,10 +332,12 @@ class CommandListFragment : BaseFragment() {
             } else null
 
             sdk.startSessionWithRunnable(
-                SetUserSettingsTask(
-                    isUserCodeRecoveryAllowed,
-                    isPinRequired,
-                    isNdefDisabled
+                SetUserSettingsCommand(
+                    UserSettings(
+                        isUserCodeRecoveryAllowed = isUserCodeRecoveryAllowed,
+                        isPINRequired = isPinRequired ?: false,
+                        isNDEFDisabled = isNdefDisabled ?: false,
+                    )
                 )
             ) {
                 postUi { handleCommandResult(it) }

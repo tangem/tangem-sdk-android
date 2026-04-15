@@ -106,6 +106,7 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
         is TangemSdkError.NeedReset,
         is TangemSdkError.RetrySecureChannelNeeded,
         is TangemSdkError.WalletUnavailableBackupRequired,
+        is TangemSdkError.InvalidTokensResponseData
         -> TangemSdkErrorDescription()
 
         is TangemSdkError.CardVerificationFailed -> {

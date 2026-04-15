@@ -132,6 +132,14 @@ class CardAccessTokensRepository(
         tokens.clear()
     }
 
+    fun hasSavedCardTokens(cardId: String): Boolean {
+        return tokens.containsKey(cardId)
+    }
+
+    fun hasSavedCardTokens(): Boolean {
+        return tokens.isNotEmpty()
+    }
+
     fun fetch(cardId: String): CardAccessTokens? {
         return tokens[cardId]
     }
@@ -180,7 +188,7 @@ private fun decodeCardAccessTokens(data: ByteArray): CardAccessTokens {
     val separatorIndex = str.indexOf(TOKEN_SEPARATOR)
     require(separatorIndex > 0 && separatorIndex < str.length - 1) { "Invalid CardAccessTokens data" }
     return CardAccessTokens(
-        accessToken = str.substring(0, separatorIndex).hexToBytes(),
+        accessToken = str.take(separatorIndex).hexToBytes(),
         identifyToken = str.substring(separatorIndex + 1).hexToBytes(),
     )
 }

@@ -336,6 +336,12 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
     class NfcFeatureIsUnavailable : TangemSdkError(code = 50027)
 
     /**
+     * This error is returned when a [Task] receives a response from the card,
+     * but the response data is invalid or cannot be processed.
+     * Android specific
+     */
+    class InvalidTokensResponseData : TangemSdkError(code = 70001)
+    /**
      * Get error according to the pin type
      * @param userCodeType: Specific user code type
      * @param environment: optional environment. If set, a more specific error will be returned based on previous

@@ -124,19 +124,19 @@
                     android:padding="8dp">
 
                     <Button
-                        android:id="@+id/btnPersonalizePrimaryV7"
+                        android:id="@+id/btnPersonalizePrimaryV8"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Personalize Primary" />
 
                     <Button
-                        android:id="@+id/btnPersonalizeBackup1V7"
+                        android:id="@+id/btnPersonalizeBackup1V8"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Personalize 1 backup card" />
 
                     <Button
-                        android:id="@+id/btnPersonalizeBackup2V7"
+                        android:id="@+id/btnPersonalizeBackup2V8"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Personalize 2 backup card" />

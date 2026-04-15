@@ -482,11 +482,10 @@ class TangemSdk(
     fun personalizeV8(
         config: CardConfigV8,
         issuer: Issuer,
-        manufacturer: Manufacturer,
         initialMessage: Message? = null,
         callback: CompletionCallback<Card>,
     ) {
-        val command = PersonalizeCommandV8(config, issuer, manufacturer)
+        val command = PersonalizeCommandV8(config, issuer)
         startSessionWithRunnable(
             runnable = command,
             cardId = null,

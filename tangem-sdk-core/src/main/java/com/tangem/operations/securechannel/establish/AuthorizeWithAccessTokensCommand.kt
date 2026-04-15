@@ -21,10 +21,12 @@ import com.tangem.operations.CommandResponse
 import com.tangem.operations.PreflightReadMode
 import com.tangem.operations.resetcode.AuthorizeMode
 
+interface AuthorizeWithAccessTokenModel : CommandResponse
+
 data class AuthorizeWithAccessTokenResponse(
     val challengeA: ByteArray,
     val hmacAttestA: ByteArray,
-) : CommandResponse {
+) : AuthorizeWithAccessTokenModel {
 
     fun verify(identifyToken: ByteArray): Boolean {
         val key = identifyToken.xorWith(challengeA)
@@ -58,7 +60,7 @@ data class AuthorizeWithAccessTokenResponse(
 data class AuthorizeWithAccessTokenResponseDTO(
     val challengeWithXor: ByteArray,
     val hmacAttestA: ByteArray,
-) : CommandResponse {
+) : AuthorizeWithAccessTokenModel {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -81,7 +83,7 @@ data class AuthorizeWithAccessTokenResponseDTO(
  * Sends an authorize command with [AuthorizeMode.AccessToken] interaction mode.
  * Returns a challenge and HMAC attestation from the card.
  */
-class AuthorizeWithAccessTokensCommand : Command<AuthorizeWithAccessTokenResponseDTO>() {
+class AuthorizeWithAccessTokensCommand : Command<AuthorizeWithAccessTokenModel>() {
 
     override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
     override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.NONE
@@ -96,12 +98,15 @@ class AuthorizeWithAccessTokensCommand : Command<AuthorizeWithAccessTokenRespons
         return null
     }
 
-    fun run(session: CardSession, callback: CompletionCallback<AuthorizeWithAccessTokenResponse>) {
+    override fun run(session: CardSession, callback: CompletionCallback<AuthorizeWithAccessTokenModel>) {
         Log.command(this)
         transceive(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
-                    val dto = result.data
+                    val dto = result.data as? AuthorizeWithAccessTokenResponseDTO ?: run {
+                        callback(CompletionResult.Failure(TangemSdkError.InvalidTokensResponseData()))
+                        return@transceive
+                    }
                     val accessTokens = session.environment.cardAccessTokens
                     if (accessTokens == null) {
                         callback(CompletionResult.Failure(TangemSdkError.MissingAccessTokens()))
