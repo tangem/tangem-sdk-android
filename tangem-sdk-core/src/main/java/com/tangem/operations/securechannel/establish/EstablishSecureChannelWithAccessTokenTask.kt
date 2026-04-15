@@ -12,6 +12,7 @@ import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.hmacSha256
 import com.tangem.crypto.pbkdf2Hash
 import com.tangem.crypto.xorWith
+import com.tangem.operations.CommandResponse
 import com.tangem.operations.PreflightReadMode
 
 /**
@@ -39,7 +40,7 @@ class EstablishSecureChannelWithAccessTokenTask : CardSessionRunnable<Unit> {
                 is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
             }
         }
-        command.run(session, completionCallback)
+        command.run(session, completionCallback as CompletionCallback<AuthorizeWithAccessTokenModel>)
     }
 
     @Suppress("MagicNumber")

@@ -37,14 +37,12 @@ import com.tangem.operations.personalization.config.Manufacturer
  * @property config is a configuration file with all the card settings that are written on the card
  * during personalization.
  * @property issuer Issuer is a third-party team or company wishing to use Tangem cards.
- * @property manufacturer Tangem Card Manufacturer.
  *
  * Warning: Command available only for cards with COS v8 and higher.
  */
 class PersonalizeCommandV8(
     private val config: CardConfigV8,
     private val issuer: Issuer,
-    private val manufacturer: Manufacturer,
 ) : Command<Card>() {
 
     override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
