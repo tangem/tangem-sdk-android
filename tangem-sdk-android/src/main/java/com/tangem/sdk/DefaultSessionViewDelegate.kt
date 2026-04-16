@@ -240,7 +240,7 @@ class DefaultSessionViewDelegate(
     private fun createReadingDialog(activity: Activity, iconScanRes: Int? = null): NfcSessionDialog {
         Log.view { "createReadingDialog" }
         val compositeProvider = CompositeNfcLocationProvider(
-            nfcAdapter = requireNotNull(nfcManager.nfcAdapter),
+            nfcAdapter = nfcManager.nfcAdapter,
             deviceLocationProvider = NfcAntennaLocationProvider(Build.DEVICE),
         )
         return NfcSessionDialog(
