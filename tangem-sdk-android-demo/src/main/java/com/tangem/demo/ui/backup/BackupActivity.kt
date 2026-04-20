@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.tangem.TangemSdk
 import com.tangem.common.CompletionResult
+import com.tangem.demo.DemoApplication
 import com.tangem.demo.asFlow
 import com.tangem.demo.postUi
 import com.tangem.operations.backup.BackupService
@@ -50,7 +51,7 @@ class BackupActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
-        tangemSdk = TangemSdk.init(this)
+        tangemSdk = (application as DemoApplication).dependencyContainer.getSdk(this)
         backupService = BackupService.init(tangemSdk, this)
         backupService.discardSavedBackup()
 

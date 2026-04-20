@@ -286,8 +286,8 @@ class CardSession(
 
         val hasCardAccessTokens = when {
             cardAccessTokensRepository == null -> false
-            cardId != null -> cardAccessTokensRepository.contains(cardId!!)
-            else -> !cardAccessTokensRepository.isEmpty
+            cardId != null -> cardAccessTokensRepository.hasSavedCardTokens(cardId!!)
+            else -> !cardAccessTokensRepository.hasSavedCardTokens()
         }
 
         return hasAccessCodes || hasCardAccessTokens
@@ -330,6 +330,7 @@ class CardSession(
             is UserCodeRequestPolicy.AlwaysWithBiometrics -> {
                 scope.launch(Dispatchers.Main) {
                     if (shouldRequestBiometrics()) {
+                        cardAccessTokensRepository?.unlock()
                         userCodeRepository?.unlock()
                             ?.doOnSuccess { runnable.prepare(this@CardSession, callback) }
                             ?.doOnFailure { e ->
