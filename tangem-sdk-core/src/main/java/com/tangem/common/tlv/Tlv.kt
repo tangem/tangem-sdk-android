@@ -89,7 +89,10 @@ inline fun <reified T> Tlv.sendToLog(value: T) {
     Log.tlv { tlvString }
 }
 
-fun List<Tlv>.serialize(): ByteArray = this.map { it.serialize() }.reduce { arr1, arr2 -> arr1 + arr2 }
+fun List<Tlv>.serialize(): ByteArray {
+    if (isEmpty()) return byteArrayOf()
+    return this.map { it.serialize() }.reduce { arr1, arr2 -> arr1 + arr2 }
+}
 
 fun Tlv.serialize(): ByteArray {
     val tag = byteArrayOf(this.tag.code.toByte())

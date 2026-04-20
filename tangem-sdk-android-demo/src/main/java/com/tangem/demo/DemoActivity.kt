@@ -8,27 +8,19 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import com.tangem.Log
-import com.tangem.LogFormat
 import com.tangem.SessionViewDelegate
 import com.tangem.TangemSdk
-import com.tangem.common.card.EllipticCurve
-import com.tangem.common.card.FirmwareVersion
-import com.tangem.common.core.Config
-import com.tangem.common.services.secure.SecureStorage
-import com.tangem.crypto.bip39.Wordlist
-import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.demo.ui.separtedCommands.CommandListFragment
 import com.tangem.demo.ui.settings.SettingsFragment
 import com.tangem.demo.ui.viewDelegate.ViewDelegateFragment
-import com.tangem.sdk.DefaultSessionViewDelegate
-import com.tangem.sdk.extensions.*
-import com.tangem.sdk.nfc.AndroidNfcAvailabilityProvider
-import com.tangem.sdk.storage.create
 import com.tangem.tangem_demo.databinding.ActivityDemoBinding
 
 class DemoActivity : AppCompatActivity() {
 
-    val logger = TangemSdk.createLogger(LogFormat.StairsFormatter())
+    private val container: DependencyContainer
+        get() = (application as DemoApplication).dependencyContainer
+
+    val logger get() = container.logger
 
     lateinit var sdk: TangemSdk
         private set
@@ -45,7 +37,9 @@ class DemoActivity : AppCompatActivity() {
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        sdk = initSdk()
+        sdk = container.getSdk(this)
+        viewDelegate = container.viewDelegate
+
         super.onCreate(savedInstanceState)
         binding = ActivityDemoBinding.inflate(layoutInflater)
         val view = binding.root
@@ -71,38 +65,6 @@ class DemoActivity : AppCompatActivity() {
 
     fun enableSwipe(enable: Boolean) {
         binding.viewPager.isUserInputEnabled = enable
-    }
-
-    private fun initSdk(): TangemSdk {
-        val config = Config().apply {
-            linkedTerminal = false
-            filter.allowedCardTypes = FirmwareVersion.FirmwareType.values().toList()
-            defaultDerivationPaths = mutableMapOf(
-                EllipticCurve.Secp256k1 to listOf(
-                    DerivationPath(rawPath = "m/44/0"),
-                    DerivationPath(rawPath = "m/44/1"),
-                ),
-            )
-        }
-        val secureStorage = SecureStorage.create(this)
-        val nfcManager = TangemSdk.initNfcManager(this)
-        val authenticationManager = TangemSdk.initAuthenticationManager(this)
-
-        val viewDelegate = DefaultSessionViewDelegate(nfcManager, this)
-        viewDelegate.sdkConfig = config
-        this.viewDelegate = viewDelegate
-
-        val nfcAvailabilityProvider = AndroidNfcAvailabilityProvider(this)
-        return TangemSdk(
-            reader = nfcManager.reader,
-            viewDelegate = viewDelegate,
-            nfcAvailabilityProvider = nfcAvailabilityProvider,
-            secureStorage = secureStorage,
-            wordlist = Wordlist.getWordlist(),
-            config = config,
-            authenticationManager = authenticationManager,
-            keystoreManager = TangemSdk.initKeystoreManager(authenticationManager, secureStorage),
-        )
     }
 
     class ViewPagerAdapter(
