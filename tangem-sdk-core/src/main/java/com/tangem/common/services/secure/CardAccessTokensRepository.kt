@@ -10,17 +10,14 @@ import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toHexString
 import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.v8.CardAccessTokens
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
 class CardAccessTokensRepository(
     keystoreManager: KeystoreManager,
     private val secureStorage: SecureStorage,
 ) {
-    val isEmpty: Boolean
-        get() {
-            val cards = runCatching { getSavedCardIds() }.getOrNull()
-            return cards?.isEmpty() ?: true
-        }
 
     private val authenticatedStorage = AuthenticatedStorage(
         secureStorage = secureStorage,
@@ -34,7 +31,8 @@ class CardAccessTokensRepository(
 
     private val tokens: ConcurrentHashMap<String, CardAccessTokens> = ConcurrentHashMap()
 
-    suspend fun save(cardAccessTokens: CardAccessTokens, cardIds: List<String>) {
+    suspend fun save(cardAccessTokens: CardAccessTokens, cardIds: List<String>) = withContext(Dispatchers.IO) {
+        if (cardIds.isEmpty()) return@withContext
         val savedCardIds = getSavedCardIds().toMutableSet()
 
         for (cardId in cardIds) {
@@ -133,11 +131,11 @@ class CardAccessTokensRepository(
     }
 
     fun hasSavedCardTokens(cardId: String): Boolean {
-        return tokens.containsKey(cardId)
+        return getSavedCardIds().contains(cardId)
     }
 
     fun hasSavedCardTokens(): Boolean {
-        return tokens.isNotEmpty()
+        return getSavedCardIds().isNotEmpty()
     }
 
     fun fetch(cardId: String): CardAccessTokens? {
