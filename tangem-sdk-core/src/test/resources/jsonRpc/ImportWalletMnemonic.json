@@ -25,6 +25,7 @@
                 "index": 1,
                 "hasBackup" : false,
                 "isImported": false,
+                "status": "loaded",
                 "derivedKeys" : {}
             }
         },
