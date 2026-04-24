@@ -10,7 +10,7 @@ class ResponseApduTest {
     @Test
     fun `get StatusWord returns Unknown`() {
         val corruptData = byteArrayOf(0, 0, 0, 0)
-        val responseApdu = ResponseApdu(corruptData)
+        val responseApdu = ResponseApdu.fromRawBytes(corruptData)
         assertThat(responseApdu.statusWord)
             .isEqualTo(StatusWord.Unknown)
     }
@@ -18,7 +18,7 @@ class ResponseApduTest {
     @Test
     fun `get StatusWord returns ProcessCompleted`() {
         val data = byteArrayOf(0, 0, 0, 0, -112, 0)
-        val responseApdu = ResponseApdu(data)
+        val responseApdu = ResponseApdu.fromRawBytes(data)
         assertThat(responseApdu.statusWord)
             .isEqualTo(StatusWord.ProcessCompleted)
     }
@@ -26,7 +26,7 @@ class ResponseApduTest {
     @Test
     fun `corrupt response, getTlvData returns null`() {
         val corruptData = byteArrayOf(0, 0, 0)
-        val responseApdu = ResponseApdu(corruptData)
+        val responseApdu = ResponseApdu.fromRawBytes(corruptData)
         assertThat(responseApdu.getTlvData())
             .isNull()
     }
@@ -411,7 +411,7 @@ class ResponseApduTest {
             -112,
             0,
         )
-        val responseApdu = ResponseApdu(data)
+        val responseApdu = ResponseApdu.fromRawBytes(data)
         assertThat(responseApdu.getTlvData())
             .isNotNull()
         assertThat(responseApdu.getTlvData())
