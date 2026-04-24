@@ -218,7 +218,7 @@ class ApduTest {
     fun `ResponseApdu parses status word from last 2 bytes`() {
         // 0x90, 0x00 = ProcessCompleted
         val data = byteArrayOf(0x90.toByte(), 0x00.toByte())
-        val response = ResponseApdu(data)
+        val response = ResponseApdu.fromRawBytes(data)
         assertThat(response.sw).isEqualTo(0x9000)
         assertThat(response.statusWord).isEqualTo(StatusWord.ProcessCompleted)
     }
@@ -226,7 +226,7 @@ class ApduTest {
     @Test
     fun `ResponseApdu with payload and status word`() {
         val data = byteArrayOf(0x01, 0x02, 0x03, 0x90.toByte(), 0x00.toByte())
-        val response = ResponseApdu(data)
+        val response = ResponseApdu.fromRawBytes(data)
         assertThat(response.sw).isEqualTo(0x9000)
         assertThat(response.statusWord).isEqualTo(StatusWord.ProcessCompleted)
     }
@@ -234,8 +234,8 @@ class ApduTest {
     @Test
     fun `ResponseApdu getTlvData returns null when only status word`() {
         val data = byteArrayOf(0x90.toByte(), 0x00.toByte())
-        val response = ResponseApdu(data)
-        assertThat(response.getTlvData()).isNull()
+        val response = ResponseApdu.fromRawBytes(data)
+        assertThat(response.getTlvData()).isEmpty()
     }
 
     @Test
@@ -245,7 +245,7 @@ class ApduTest {
             0x01, 0x02, 0xAB.toByte(), 0xCD.toByte(),
             0x90.toByte(), 0x00.toByte(),
         )
-        val response = ResponseApdu(data)
+        val response = ResponseApdu.fromRawBytes(data)
         val tlvs = response.getTlvData()
         assertThat(tlvs).isNotNull()
         assertThat(tlvs).hasSize(1)
@@ -256,28 +256,28 @@ class ApduTest {
     @Test
     fun `ResponseApdu InvalidParams status word`() {
         val data = byteArrayOf(0x6A.toByte(), 0x86.toByte())
-        val response = ResponseApdu(data)
+        val response = ResponseApdu.fromRawBytes(data)
         assertThat(response.statusWord).isEqualTo(StatusWord.InvalidParams)
     }
 
     @Test
     fun `ResponseApdu NeedEncryption status word`() {
         val data = byteArrayOf(0x69.toByte(), 0x82.toByte())
-        val response = ResponseApdu(data)
+        val response = ResponseApdu.fromRawBytes(data)
         assertThat(response.statusWord).isEqualTo(StatusWord.NeedEncryption)
     }
 
     @Test
     fun `ResponseApdu unknown status word`() {
         val data = byteArrayOf(0x12.toByte(), 0x34.toByte())
-        val response = ResponseApdu(data)
+        val response = ResponseApdu.fromRawBytes(data)
         assertThat(response.statusWord).isEqualTo(StatusWord.Unknown)
     }
 
     @Test
     fun `ResponseApdu decrypt with null key returns same data`() {
         val data = byteArrayOf(0x01, 0x02, 0x90.toByte(), 0x00.toByte())
-        val response = ResponseApdu(data)
+        val response = ResponseApdu.fromRawBytes(data)
         val decrypted = response.decrypt(
             encryptionMode = com.tangem.common.encryption.EncryptionMode.None,
             encryptionKey = null,
@@ -289,7 +289,7 @@ class ApduTest {
     @Test
     fun `ResponseApdu toString contains status word`() {
         val data = byteArrayOf(0x90.toByte(), 0x00.toByte())
-        val response = ResponseApdu(data)
+        val response = ResponseApdu.fromRawBytes(data)
         val str = response.toString()
         assertThat(str).contains("ProcessCompleted")
         assertThat(str).contains("bytes")
@@ -434,7 +434,7 @@ class ApduTest {
             0x3A, 0x01, 0x01,
             0x90.toByte(), 0x00.toByte(),
         )
-        val response = ResponseApdu(data)
+        val response = ResponseApdu.fromRawBytes(data)
         assertThat(response.statusWord).isEqualTo(StatusWord.ProcessCompleted)
 
         val tlvs = response.getTlvData()

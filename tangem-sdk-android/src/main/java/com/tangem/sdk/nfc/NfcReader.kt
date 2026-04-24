@@ -131,7 +131,7 @@ class NfcReader : CardReader {
             when (result) {
                 is CompletionResult.Success -> {
                     result.data?.let {
-                        val rApdu = ResponseApdu(it)
+                        val rApdu = ResponseApdu.fromRawBytes(it)
                         Log.nfc { rApdu.toString() }
                         callback.invoke(CompletionResult.Success(rApdu))
                     }
@@ -198,7 +198,7 @@ class NfcReader : CardReader {
 
             is SlixReadResult.Success -> {
                 Log.nfc { "read Slix tag succeed" }
-                callback.invoke(CompletionResult.Success(ResponseApdu(response.data)))
+                callback.invoke(CompletionResult.Success(ResponseApdu.fromRawBytes(response.data)))
             }
         }
     }

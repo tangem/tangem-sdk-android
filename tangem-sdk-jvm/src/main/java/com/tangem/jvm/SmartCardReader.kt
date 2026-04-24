@@ -104,7 +104,7 @@ class SmartCardReader(private var terminal: CardTerminal?) : CardReader {
                     result.data?.let {
                         Log.nfc { "data from the card was received" }
                         Log.nfc { "raw data that was received from the card: ${it.toHexString()}" }
-                        val rApdu = ResponseApdu(it)
+                        val rApdu = ResponseApdu.fromRawBytes(it)
                         Log.nfc { rApdu.toString() }
                         callback.invoke(CompletionResult.Success(rApdu))
                     }

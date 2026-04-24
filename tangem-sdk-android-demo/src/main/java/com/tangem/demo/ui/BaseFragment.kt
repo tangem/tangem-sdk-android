@@ -26,7 +26,10 @@ import com.tangem.common.tlv.Tlv
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.usersCode.AccessCodeRepository
 import com.tangem.crypto.CryptoUtils
+import com.tangem.crypto.bip39.DefaultMnemonic
+import com.tangem.crypto.bip39.Wordlist
 import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.crypto.hdWallet.masterkey.AnyMasterKeyFactory
 import com.tangem.crypto.sign
 import com.tangem.demo.*
 import com.tangem.demo.ui.extension.copyToClipboard
@@ -44,6 +47,7 @@ import com.tangem.operations.masterSecret.PurgeMasterSecretCommand
 import com.tangem.operations.personalization.config.CardConfig
 import com.tangem.operations.personalization.config.CardConfigV8
 import com.tangem.operations.preflightread.CardIdPreflightReadFilter
+import com.tangem.sdk.extensions.getWordlist
 import com.tangem.tangem_demo.R
 import kotlinx.coroutines.runBlocking
 
@@ -225,7 +229,11 @@ abstract class BaseFragment : Fragment() {
         sdk.sign(hashes, publicKey, cardId, path, initialMessage) { handleResult(it) }
     }
 
-    protected fun createOrImportWallet(curve: EllipticCurve, mnemonic: String? = null) {
+    protected fun createOrImportWallet(
+        curve: EllipticCurve,
+        mnemonic: String? = null,
+        passphrase: String? = null,
+    ) {
         val cardId = card?.cardId.guard {
             showToast("CardId & walletPublicKey required. Scan your card before proceeding")
             return
@@ -237,6 +245,7 @@ abstract class BaseFragment : Fragment() {
                 curve = curve,
                 cardId = cardId,
                 mnemonic = mnemonic,
+                passphrase = passphrase ?: "",
                 initialMessage = initialMessage,
             ) {
                 handleResult(
@@ -247,7 +256,10 @@ abstract class BaseFragment : Fragment() {
         }
     }
 
-    protected fun createOrImportMasterSecret(mnemonic: String? = null) {
+    protected fun createOrImportMasterSecret(
+        mnemonic: String? = null,
+        passphrase: String? = null,
+    ) {
         val cardId = card?.cardId.guard {
             showToast("CardId & walletPublicKey required. Scan your card before proceeding")
             return
@@ -261,17 +273,18 @@ abstract class BaseFragment : Fragment() {
                 callback = { handleResult(it, it is CompletionResult.Success) },
             )
         } else {
-            // TODO: uncomment when importMasterSecret command will be implemented
-            // sdk.importMasterSecret(
-            //     cardId = cardId,
-            //     mnemonic = mnemonic,
-            //     initialMessage = initialMessage,
-            // ) {
-            //     handleResult(
-            //         it,
-            //         it is CompletionResult.Success,
-            //     )
-            // }
+            val defaultMnemonic = DefaultMnemonic(mnemonic, Wordlist.getWordlist())
+            val factory = AnyMasterKeyFactory(defaultMnemonic, passphrase ?: "")
+            val privateKey = factory.makeMasterKey(EllipticCurve.Secp256k1)
+            sdk.startSessionWithRunnable(
+                runnable = CreateMasterSecretCommand(
+                    privateKey = privateKey,
+                ),
+                cardId = cardId,
+                initialMessage = initialMessage,
+                accessCode = null,
+                callback = { handleResult(it, it is CompletionResult.Success) },
+            )
         }
     }
 
