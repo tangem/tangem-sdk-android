@@ -464,7 +464,7 @@ class CardSession(
                         true
                     }
                 }
-                .map { establishLegacyEncryptionIfNeeded() }
+                // .map { establishLegacyEncryptionIfNeeded() }
                 .map {
                     apdu.encrypt(
                         environment.encryptionMode,
@@ -852,6 +852,7 @@ class CardSession(
     private suspend fun establishLegacyEncryptionIfNeeded(): CompletionResult<Boolean> {
         Log.session { "establish legacy encryption if needed" }
         if (environment.encryptionMode == EncryptionMode.None || environment.encryptionKey != null) {
+            Log.session { "establish legacy encryption not needed" }
             return CompletionResult.Success(true)
         }
 

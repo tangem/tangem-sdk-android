@@ -196,13 +196,14 @@ class CommandListFragment : BaseFragment() {
         val spinnerAdapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_list_item_1,
-            EllipticCurve.values(),
+            EllipticCurve.entries.toTypedArray(),
         )
         binding.walletView.spinnerCurves.adapter = spinnerAdapter
         binding.walletView.btnCreateWallet.setOnClickListener {
             createOrImportWallet(
-                binding.walletView.spinnerCurves.selectedItem as EllipticCurve,
-                binding.walletView.etMnemonic.text?.toString(),
+                curve = binding.walletView.spinnerCurves.selectedItem as EllipticCurve,
+                mnemonic = binding.walletView.etMnemonic.text?.toString(),
+                passphrase = binding.walletView.etPassphrase.text?.toString()
             )
         }
         binding.walletView.btnPasteMnemonic.setOnClickListener { binding.walletView.etMnemonic.setTextFromClipboard() }
@@ -214,7 +215,8 @@ class CommandListFragment : BaseFragment() {
         binding.deprecated.issuerDataView.btnWriteIssuerData.setOnClickListener { writeIssuerData() }
         binding.masterSecret.btnCreateMasterSecret.setOnClickListener {
             createOrImportMasterSecret(
-                binding.masterSecret.etMasterSecretMnemonic.text?.toString(),
+                mnemonic = binding.masterSecret.etMasterSecretMnemonic.text?.toString(),
+                passphrase = binding.masterSecret.etPassphrase.text?.toString(),
             )
         }
         binding.masterSecret.btnPurgeMasterSecret.setOnClickListener {
@@ -297,12 +299,18 @@ class CommandListFragment : BaseFragment() {
         }
 
         binding.utilsView.btnResetToFactory.setOnClickListener {
-            sdk.startSessionWithRunnable(ResetToFactorySettingsTask()) {
+            sdk.startSessionWithRunnable(
+                runnable = ResetToFactorySettingsTask(),
+                cardId = card?.cardId,
+                ) {
                 postUi { handleCommandResult(it) }
             }
         }
         binding.utilsView.btnGetEntropy.setOnClickListener {
-            sdk.startSessionWithRunnable(GetEntropyCommand()) {
+            sdk.startSessionWithRunnable(
+                runnable = GetEntropyCommand(),
+                cardId = card?.cardId,
+                ) {
                 postUi { handleCommandResult(it) }
             }
         }
@@ -332,7 +340,8 @@ class CommandListFragment : BaseFragment() {
             } else null
 
             sdk.startSessionWithRunnable(
-                SetUserSettingsCommand(
+                cardId = card?.cardId,
+                runnable = SetUserSettingsCommand(
                     UserSettings(
                         isUserCodeRecoveryAllowed = isUserCodeRecoveryAllowed,
                         isPINRequired = isPinRequired ?: false,

@@ -43,6 +43,7 @@ class CardAccessTokensRepository(
                 val data = cardAccessTokens.encode()
                 try {
                     authenticatedStorage.store(storageKey, data)
+                    Log.info { "saved cardAccessTokens: ${data.size}" }
                 } finally {
                     data.fill(0)
                 }
@@ -143,14 +144,20 @@ class CardAccessTokensRepository(
     }
 
     private fun getSavedCardIds(): Set<String> {
+        Log.info { "getSavedCardIds size" }
         val data = secureStorage.get(StorageKey.CardsWithSavedAccessTokens.name)
             ?: return emptySet()
         return data.decodeToString(throwOnInvalidSequence = true)
-            .let(cardsIdsAdapter::fromJson)
+            .let {
+                cardsIdsAdapter.fromJson(it).also { cardIds ->
+                    Log.info { "getSavedCardIds size: ${cardIds?.size}" }
+                }
+            }
             .orEmpty()
     }
 
     private fun saveCardIds(cardIds: Collection<String>) {
+        Log.info { "saveCardIds size: ${cardIds.size}" }
         val data = cardIds.toSet()
             .let(cardsIdsAdapter::toJson)
             .encodeToByteArray(throwOnInvalidSequence = true)
