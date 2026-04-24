@@ -1,6 +1,5 @@
 package com.tangem.operations.securechannel.manageAccessTokens
 
-import com.tangem.Log
 import com.tangem.common.CompletionResult
 import com.tangem.common.core.CardSession
 import com.tangem.common.core.CardSessionRunnable

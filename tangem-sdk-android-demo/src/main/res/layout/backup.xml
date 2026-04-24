@@ -113,7 +113,7 @@
                     android:background="?android:windowBackground"
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"
-                    android:text="Personalize V7"
+                    android:text="Personalize V8"
                     android:translationX="10dp"
                     android:translationY="-10dp" />
 
