@@ -3,7 +3,7 @@
     <string name="already_activated_btn_confirm">先ほど有効化しました</string>
     <string name="already_activated_btn_just_bought">はい、これは新しいウォレットです</string>
     <string name="already_activated_message">このウォレットはすでに有効化されています。操作を行ったのがご自身でない場合は、サポートまでご連絡ください。</string>
-    <string name="already_activated_title">このウォレットはすでに有効化されています</string>
+    <string name="already_activated_title">このウォレット\nはすでに有効化されています</string>
     <string name="attestation_failed_card">このデバイスは、製造サンプルまたは偽造品である可能性があります。自己責任で続行してください。</string>
     <string name="attestation_failed_card_title">カード認証に失敗しました</string>
     <string name="attestation_failed_dev_card">これは開発カードです。真正性は確認できません。このカードを支払い手段として使用しないでください。</string>
