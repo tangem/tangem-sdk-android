@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-    <string name="already_activated_btn_confirm">Це мій гаманець</string>
-    <string name="already_activated_btn_just_bought">Я щойно його придбав</string>
-    <string name="already_activated_message">Цей гаманець уже активовано, і ми хочемо переконатися, що це зробили саме ви.</string>
-    <string name="already_activated_title">З поверненням</string>
+    <string name="already_activated_btn_confirm">Я активував раніше</string>
+    <string name="already_activated_btn_just_bought">Так, це новий гаманець</string>
+    <string name="already_activated_message">Цей гаманець уже було активовано раніше. Якщо це зробили не ви, зверніться до служби підтримки</string>
+    <string name="already_activated_title">Цей гаманець вже активовано</string>
     <string name="attestation_failed_card">Ця картка – тестовий зразок або підробка. Ви можете продовжувати на свій страх і ризик.</string>
     <string name="attestation_failed_card_title">Помилка перевірки картки</string>
     <string name="attestation_failed_dev_card">Ця картка призначена для тестових цілей. Її автентичність не може бути перевірена. Не приймайте цю карту як засіб оплати.</string>
@@ -91,7 +91,7 @@
     <string name="reset_codes_scan_to_reset">Відскануйте картку або кільце щоб скинути код</string>
     <string name="reset_codes_success_message">Код успішно скинуто</string>
     <string name="sign_multiple_chunks_part">Підпис частини %1$d з %2$d</string>
-    <string name="tangem_never_pregenerate_access_code_alert">Tangem never sells wallets along with the pre‑generated access code.</string>
+    <string name="tangem_never_pregenerate_access_code_alert">Tangem ніколи не продає гаманці з попередньо згенерованим кодом доступу</string>
     <string name="tangem_never_pregenerate_code_alert">Tangem ніколи не продає гаманці разом з кодом доступу</string>
     <string name="view_delegate_delay">Операція в процесі</string>
     <string name="view_delegate_header_card">Картка</string>
