@@ -5,17 +5,17 @@ val artifactConfig = mapOf(
     "version" to if (project.hasProperty("artifactVersion")) project.property("artifactVersion") as String else "0.0.1",
 )
 
-val artifactId: String by project
+val publishArtifactId = project.property("artifactId") as String
 
 afterEvaluate {
     configure<PublishingExtension> {
         publications {
             create<MavenPublication>("maven") {
                 groupId = artifactConfig["group"]
-                this.artifactId = artifactId
+                this.artifactId = publishArtifactId
                 version = artifactConfig["version"]
 
-                if (artifactId == "android") {
+                if (publishArtifactId == "android") {
                     from(components["release"])
 
                     pom.withXml {
@@ -45,7 +45,7 @@ afterEvaluate {
                                 }
                         }
                     }
-                } else if (artifactId == "core") {
+                } else if (publishArtifactId == "core") {
                     from(components["java"])
                 }
             }
