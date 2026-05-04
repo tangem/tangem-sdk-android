@@ -6,7 +6,7 @@ import com.tangem.sdk.ui.NfcLocationData
 
 class CompositeNfcLocationProvider(
     private val deviceLocationProvider: NfcLocationProvider,
-    nfcAdapter: NfcAdapter,
+    nfcAdapter: NfcAdapter?,
 ) {
 
     private val calculator: NfcAntennaCalculator = NfcAntennaCalculator(nfcAdapter)
