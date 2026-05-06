@@ -34,6 +34,8 @@ import com.tangem.crypto.sign
 import com.tangem.demo.*
 import com.tangem.demo.ui.extension.copyToClipboard
 import com.tangem.demo.ui.settings.SettingsFragment
+import com.tangem.operations.GetEntropyCommand
+import com.tangem.operations.GetEntropyMode
 import com.tangem.operations.PreflightReadMode
 import com.tangem.operations.PreflightReadTask
 import com.tangem.operations.attestation.AttestCardKeyCommand
@@ -47,6 +49,7 @@ import com.tangem.operations.masterSecret.PurgeMasterSecretCommand
 import com.tangem.operations.personalization.config.CardConfig
 import com.tangem.operations.personalization.config.CardConfigV8
 import com.tangem.operations.preflightread.CardIdPreflightReadFilter
+import com.tangem.operations.read.ReadMasterSecretCommand
 import com.tangem.sdk.extensions.getWordlist
 import com.tangem.tangem_demo.R
 import kotlinx.coroutines.runBlocking
@@ -182,17 +185,21 @@ abstract class BaseFragment : Fragment() {
     }
 
     protected fun deriveEntropy(entropyDerivationPath: String?) {
-        showToast("Unavailable")
-        // val card = card.guard {
-        //     showToast("CardId required. Scan your card before proceeding")
-        //     return
-        // }
-        // val path = createEntropyDerivationPath(entropyDerivationPath).guard {
-        //     showToast("Failed to parse hd path")
-        //     return
-        // }
+        val card = card.guard {
+            showToast("CardId required. Scan your card before proceeding")
+            return
+        }
+        val path = createEntropyDerivationPath(entropyDerivationPath).guard {
+            showToast("Failed to parse hd path")
+            return
+        }
 
-        // sdk.deriveEntropy(card.cardId, path) { handleResult(it) }
+        sdk.startSessionWithRunnable(
+            runnable = GetEntropyCommand(mode = GetEntropyMode.Deterministic(path)),
+            cardId = card.cardId,
+        ) {
+            postUi { handleCommandResult(it) }
+        }
     }
 
     protected fun signHash(hash: ByteArray) {
@@ -295,6 +302,20 @@ abstract class BaseFragment : Fragment() {
         }
         sdk.startSessionWithRunnable(
             runnable = PurgeMasterSecretCommand(),
+            cardId = cardId,
+            initialMessage = initialMessage,
+            accessCode = null,
+            callback = { handleResult(it, it is CompletionResult.Success) },
+        )
+    }
+
+    protected fun readMasterSecret() {
+        val cardId = card?.cardId.guard {
+            showToast("CardId required. Scan your card before proceeding")
+            return
+        }
+        sdk.startSessionWithRunnable(
+            runnable = ReadMasterSecretCommand(),
             cardId = cardId,
             initialMessage = initialMessage,
             accessCode = null,
