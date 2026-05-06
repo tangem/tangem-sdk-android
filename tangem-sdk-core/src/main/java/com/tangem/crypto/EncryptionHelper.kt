@@ -19,9 +19,15 @@ interface EncryptionHelper {
                 EncryptionMode.None -> null
                 EncryptionMode.Fast -> FastEncryptionHelper()
                 EncryptionMode.Strong -> StrongEncryptionHelper()
-                EncryptionMode.CcmWithSecurityDelay -> error("These modes are not supported by the old encryption mechanism")
-                EncryptionMode.CcmWithAccessToken -> error("These modes are not supported by the old encryption mechanism")
-                EncryptionMode.CcmWithAsymmetricKeys -> error("These modes are not supported by the old encryption mechanism")
+                EncryptionMode.CcmWithSecurityDelay -> error(
+                    "These modes are not supported by the old encryption mechanism",
+                )
+                EncryptionMode.CcmWithAccessToken -> error(
+                    "These modes are not supported by the old encryption mechanism",
+                )
+                EncryptionMode.CcmWithAsymmetricKeys -> error(
+                    "These modes are not supported by the old encryption mechanism",
+                )
             }
         }
     }

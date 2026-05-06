@@ -54,7 +54,7 @@ enum class ManageAccessTokensMode : InteractionMode {
     RESET {
         override val rawValue: Byte
             get() = 0x02
-    }
+    },
 }
 
 class ManageAccessTokensCommand(private val mode: ManageAccessTokensMode) : Command<ManageAccessTokensResponse>() {
@@ -66,8 +66,8 @@ class ManageAccessTokensCommand(private val mode: ManageAccessTokensMode) : Comm
             return TangemSdkError.NotSupportedFirmwareVersion()
         }
 
-        if (card.settings.isBackupRequired
-            && card.backupStatus?.isActive == false
+        if (card.settings.isBackupRequired &&
+            card.backupStatus?.isActive == false
         ) {
             return TangemSdkError.NoActiveBackup()
         }
@@ -94,10 +94,7 @@ class ManageAccessTokensCommand(private val mode: ManageAccessTokensMode) : Comm
         return CommandApdu(instruction = Instruction.ManageAccessTokens, tlvs = tlvBuilder.serialize())
     }
 
-    override fun deserialize(
-        environment: SessionEnvironment,
-        apdu: ResponseApdu,
-    ): ManageAccessTokensResponse {
+    override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): ManageAccessTokensResponse {
         val decoder = createTlvDecoder(environment, apdu)
         return ManageAccessTokensResponse(
             accessToken = decoder.decode(TlvTag.AccessToken),

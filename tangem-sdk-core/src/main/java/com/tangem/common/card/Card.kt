@@ -13,6 +13,7 @@ import java.util.Date
 /**
  * Response for [ReadCommand]. Contains detailed card information.
  */
+@Suppress("MagicNumber")
 @JsonClass(generateAdapter = true)
 data class Card internal constructor(
     /**
@@ -145,7 +146,8 @@ data class Card internal constructor(
         return this.copy(wallets = sortedWallets.toList())
     }
 
-    fun wallet(publicKey: ByteArray): CardWallet? = wallets.firstOrNull { it.publicKey?.contentEquals(publicKey) == true }
+    fun wallet(publicKey: ByteArray): CardWallet? =
+        wallets.firstOrNull { it.publicKey?.contentEquals(publicKey) == true }
 
     fun addWallet(wallet: CardWallet): Card {
         val sortedWallets = wallets.toMutableList().apply {

@@ -190,7 +190,9 @@ enum class TlvTag(val code: Int, val shouldMask: Boolean = false) {
             Offset,
             Size,
             -> TlvValueType.Uint16
-            LegacyMode, FileIndex, WalletIndex, FileOwnerIndex, WalletsCount, CheckWalletCounter, FileCounter, BackupCount ->
+            LegacyMode, FileIndex, WalletIndex, FileOwnerIndex, WalletsCount,
+            CheckWalletCounter, FileCounter, BackupCount,
+            ->
                 TlvValueType.Uint8
             MaxSignatures, UserCounter, UserProtectedCounter, IssuerDataCounter -> TlvValueType.Uint32
             IsActivated, TerminalIsLinked, CreateWalletAtPersonalize,

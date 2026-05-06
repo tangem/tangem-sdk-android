@@ -5,7 +5,6 @@ import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.core.SessionEnvironment
-import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 import com.tangem.operations.CommandResponse
@@ -37,7 +36,7 @@ class ReadUserDataResponse(
      */
     val userProtectedCounter: Int,
 
-    ) : CommandResponse
+) : CommandResponse
 
 /**
  * This command returns two up to 512-byte User_Data, User_Protected_Data and two counters User_Counter and

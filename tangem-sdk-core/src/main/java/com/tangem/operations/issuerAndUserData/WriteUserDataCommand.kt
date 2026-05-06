@@ -7,7 +7,6 @@ import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.Card
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
-import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 

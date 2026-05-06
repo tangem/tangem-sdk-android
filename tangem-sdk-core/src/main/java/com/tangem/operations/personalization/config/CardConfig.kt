@@ -84,5 +84,4 @@ data class CardConfig(
     fun pinSha256(): ByteArray = pin.calculateSha256()
     fun pin2Sha256(): ByteArray = pin2.calculateSha256()
     fun pin3Sha256(): ByteArray? = pin3?.calculateSha256()
-
 }

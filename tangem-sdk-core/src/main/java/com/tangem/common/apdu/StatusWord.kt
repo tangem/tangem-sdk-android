@@ -32,7 +32,7 @@ enum class StatusWord(val code: Int) {
     WalletAlreadyExists(code = 0x6A89),
     NeedReset(code = 0x6983),
     // COS v8+
-    AccessDenied(code=0x6AF3),
+    AccessDenied(code = 0x6AF3),
 
     Unknown(code = 0x0000),
     ;
@@ -43,6 +43,7 @@ enum class StatusWord(val code: Int) {
     }
 }
 
+@Suppress("CyclomaticComplexMethod")
 fun StatusWord.toTangemSdkError(): TangemSdkError? {
     return when (this) {
         StatusWord.ProcessCompleted, StatusWord.Pin1Changed,
