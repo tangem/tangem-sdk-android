@@ -122,7 +122,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
         }
     }
 
-    @Suppress("ComplexMethod")
+    @Suppress("ComplexMethod", "LongMethod")
     private fun transceiveInternal(session: CardSession, callback: CompletionCallback<T>) {
         session.rememberTag()
 

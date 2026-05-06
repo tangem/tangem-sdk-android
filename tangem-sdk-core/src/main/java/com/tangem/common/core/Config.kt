@@ -9,11 +9,11 @@ import com.tangem.operations.attestation.AttestationTask
 class Config(
 
     /**
-    This feature forces low-level NFC communication between the Tangem card and the particular device. If it’s set to true, Tangem Card will send low-level packets to the device’s NFC chip every about 50ms. It will prevent some chip’s firmware bugs on iPhone 7/7+, when iOS is stoping NFC session due to losing the tag. Also, it will make NFC interaction slower. Change this setting only if you understand what you do.
+     This feature forces low-level NFC communication between the Tangem card and the particular device. If it’s set to true, Tangem Card will send low-level packets to the device’s NFC chip every about 50ms. It will prevent some chip’s firmware bugs on iPhone 7/7+, when iOS is stoping NFC session due to losing the tag. Also, it will make NFC interaction slower. Change this setting only if you understand what you do.
 
-    If nil, TangemSdk will turn on this feature automatically according to iPhone model
+     If nil, TangemSdk will turn on this feature automatically according to iPhone model
 
-    Tangem card supports this setting from firmware v.2.39. Otherwise, it would be ignored.
+     Tangem card supports this setting from firmware v.2.39. Otherwise, it would be ignored.
      */
     var legacyMode: Boolean? = null,
 

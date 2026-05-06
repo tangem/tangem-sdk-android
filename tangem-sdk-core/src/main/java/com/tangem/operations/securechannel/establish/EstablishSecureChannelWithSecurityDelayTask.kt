@@ -17,10 +17,10 @@ import com.tangem.operations.PreflightReadMode
  */
 class EstablishSecureChannelWithSecurityDelayTask : CardSessionRunnable<Unit> {
 
-    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
-
     override val cardSessionEncryption: CardSessionEncryption
         get() = CardSessionEncryption.NONE
+
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun run(session: CardSession, callback: CompletionCallback<Unit>) {
         AuthorizeWithSecurityDelayCommand().run(session) { result ->
@@ -73,6 +73,9 @@ class EstablishSecureChannelWithSecurityDelayTask : CardSessionRunnable<Unit> {
 }
 
 private fun Throwable.toTangemSdkError(): com.tangem.common.core.TangemSdkError {
-    return if (this is com.tangem.common.core.TangemSdkError) this
-    else com.tangem.common.core.TangemSdkError.CryptoUtilsError(message ?: "Unknown error")
+    return if (this is com.tangem.common.core.TangemSdkError) {
+        this
+    } else {
+        com.tangem.common.core.TangemSdkError.CryptoUtilsError(message ?: "Unknown error")
+    }
 }

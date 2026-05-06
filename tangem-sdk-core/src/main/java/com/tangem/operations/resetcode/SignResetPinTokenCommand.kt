@@ -9,7 +9,6 @@ import com.tangem.common.core.CardSessionEncryption
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
-import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 import com.tangem.operations.PreflightReadMode

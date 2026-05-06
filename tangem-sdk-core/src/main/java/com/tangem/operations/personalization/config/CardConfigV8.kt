@@ -52,5 +52,4 @@ data class CardConfigV8(
 ) {
 
     fun pinSha256(): ByteArray = pin.calculateSha256()
-
 }

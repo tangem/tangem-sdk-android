@@ -80,7 +80,11 @@ class AccessCodeRepository(
         return save(setOf(cardId), userCode, firmwareVersion)
     }
 
-    suspend fun save(cardsIds: Set<String>, userCode: UserCode, firmwareVersion: FirmwareVersion): CompletionResult<Unit> {
+    suspend fun save(
+        cardsIds: Set<String>,
+        userCode: UserCode,
+        firmwareVersion: FirmwareVersion,
+    ): CompletionResult<Unit> {
         if (firmwareVersion >= FirmwareVersion.v8) {
             return CompletionResult.Failure(TangemSdkError.NotSupportedFirmwareVersion())
         }

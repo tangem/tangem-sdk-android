@@ -9,7 +9,7 @@ data class CardAccessTokens(
 
     constructor(manageAccessTokensResponse: ManageAccessTokensResponse) : this(
         manageAccessTokensResponse.accessToken,
-        manageAccessTokensResponse.identifyToken
+        manageAccessTokensResponse.identifyToken,
     )
 
     override fun equals(other: Any?): Boolean {

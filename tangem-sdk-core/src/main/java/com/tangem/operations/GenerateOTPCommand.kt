@@ -35,7 +35,6 @@ class GenerateOTPCommand : Command<GenerateOTPResponse>() {
             return TangemSdkError.NotSupportedFirmwareVersion()
         }
 
-
         return null
     }
 

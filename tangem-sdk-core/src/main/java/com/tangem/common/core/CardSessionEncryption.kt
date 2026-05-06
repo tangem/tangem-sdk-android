@@ -19,5 +19,5 @@ enum class CardSessionEncryption {
      * COS v8+. Old cards use legacy encryption.
      * This mode is used for commands that require a PIN code and have a higher security level than the previous one.
      */
-    SECURE_CHANNEL_WITH_PIN;
+    SECURE_CHANNEL_WITH_PIN,
 }
