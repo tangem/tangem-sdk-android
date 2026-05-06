@@ -85,8 +85,9 @@ data class AuthorizeWithAccessTokenResponseDTO(
  */
 class AuthorizeWithAccessTokensCommand : Command<AuthorizeWithAccessTokenModel>() {
 
-    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
     override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.NONE
+
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.firmwareVersion < FirmwareVersion.v8) {

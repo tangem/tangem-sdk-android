@@ -23,13 +23,10 @@ internal object CardIdBuilder {
         )
     }
 
-    fun createCardId(
-        series: String?,
-        startNumber: Long,
-        cardNumber: Long = 0,
-        numberFormat: String = "",
-    ): String? {
-        if (series == null || startNumber < 0 || cardNumber < 0 || !checkSeries(series)) {
+    fun createCardId(series: String?, startNumber: Long, cardNumber: Long = 0, numberFormat: String = ""): String? {
+        val checkNumber = startNumber < 0 || cardNumber < 0
+        val checkSeries = series == null || !checkSeries(series)
+        if (checkSeries || checkNumber) {
             return null
         }
 
@@ -53,7 +50,8 @@ internal object CardIdBuilder {
         cardNumber: Long,
         numberFormat: String,
     ): String? {
-        if (numberFormat.isNotEmpty() && !numberFormat.all { it == 'N' || it == 'R' || ALF.contains(it) }) {
+        val letterCondition = fun(char: Char) = char == 'N' || char == 'R' || ALF.contains(char)
+        if (numberFormat.isNotEmpty() && !numberFormat.all { letterCondition(it) }) {
             return null
         }
 

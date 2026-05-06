@@ -12,7 +12,6 @@ import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.hmacSha256
 import com.tangem.crypto.pbkdf2Hash
 import com.tangem.crypto.xorWith
-import com.tangem.operations.CommandResponse
 import com.tangem.operations.PreflightReadMode
 
 /**
@@ -21,10 +20,10 @@ import com.tangem.operations.PreflightReadMode
  */
 class EstablishSecureChannelWithAccessTokenTask : CardSessionRunnable<Unit> {
 
-    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
-
     override val cardSessionEncryption: CardSessionEncryption
         get() = CardSessionEncryption.NONE
+
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun run(session: CardSession, callback: CompletionCallback<Unit>) {
         val command = AuthorizeWithAccessTokensCommand()
@@ -80,10 +79,12 @@ class EstablishSecureChannelWithAccessTokenTask : CardSessionRunnable<Unit> {
                 }
             }
         } catch (error: Throwable) {
-            val sdkError = if (error is TangemSdkError) error
-            else TangemSdkError.CryptoUtilsError(error.message ?: "Unknown error")
+            val sdkError = if (error is TangemSdkError) {
+                error
+            } else {
+                TangemSdkError.CryptoUtilsError(error.message ?: "Unknown error")
+            }
             callback(CompletionResult.Failure(sdkError))
         }
     }
-
 }

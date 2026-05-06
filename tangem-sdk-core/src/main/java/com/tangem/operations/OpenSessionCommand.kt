@@ -6,7 +6,6 @@ import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.core.CardSessionEncryption
 import com.tangem.common.core.SessionEnvironment
-import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvTag
 
 @JsonClass(generateAdapter = true)

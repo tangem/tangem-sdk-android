@@ -54,7 +54,6 @@ class StartBackupCardLinkingCommand(
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): BackupCard {
-
         val card = environment.card ?: throw TangemSdkError.UnknownError()
 
         val decoder = createTlvDecoder(environment, apdu)

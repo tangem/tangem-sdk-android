@@ -33,9 +33,9 @@ data class AuthorizeWithPinChallengeResponse(
  */
 class AuthorizeWithPinChallengeCommand : Command<AuthorizeWithPinChallengeResponse>() {
 
-    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
-
     override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.PUBLIC_SECURE_CHANNEL
+
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.firmwareVersion < FirmwareVersion.v8) {
@@ -50,10 +50,7 @@ class AuthorizeWithPinChallengeCommand : Command<AuthorizeWithPinChallengeRespon
         return CommandApdu(instruction = Instruction.Authorize, tlvs = tlvBuilder.serialize())
     }
 
-    override fun deserialize(
-        environment: SessionEnvironment,
-        apdu: ResponseApdu,
-    ): AuthorizeWithPinChallengeResponse {
+    override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): AuthorizeWithPinChallengeResponse {
         val decoder = createTlvDecoder(environment, apdu)
         return AuthorizeWithPinChallengeResponse(
             challengeWithXor = decoder.decode(TlvTag.Challenge),

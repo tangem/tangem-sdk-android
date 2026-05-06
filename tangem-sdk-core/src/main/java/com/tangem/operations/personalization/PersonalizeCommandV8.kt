@@ -26,7 +26,6 @@ import com.tangem.operations.personalization.config.CardData
 import com.tangem.operations.personalization.config.CardIdBuilder
 import com.tangem.operations.personalization.config.CardSettingsMaskBuilderV8
 import com.tangem.operations.personalization.config.Issuer
-import com.tangem.operations.personalization.config.Manufacturer
 
 /**
  * Command available on SDK cards only
@@ -45,9 +44,10 @@ class PersonalizeCommandV8(
     private val issuer: Issuer,
 ) : Command<Card>() {
 
+    override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.NONE
+
     override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
     override fun requiresPasscode(): Boolean = false
-    override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.NONE
 
     override fun run(session: CardSession, callback: CompletionCallback<Card>) {
         Log.command(this)
@@ -144,7 +144,7 @@ class PersonalizeCommandV8(
         val tlvBuilder = createTlvBuilder(environment.legacyMode)
         tlvBuilder.append(TlvTag.CardId, cardId)
         tlvBuilder.append(TlvTag.SettingsMask, CardSettingsMaskBuilderV8.createSettingsMask(config))
-        tlvBuilder.append(TlvTag.PauseBeforePin2, config.securityDelay / 10)
+        tlvBuilder.append(TlvTag.PauseBeforePin2, config.securityDelay / SD_DIVIDER)
         tlvBuilder.append(TlvTag.CreateWalletAtPersonalize, createWallet)
         tlvBuilder.append(TlvTag.NewPin, config.pinSha256())
         tlvBuilder.append(TlvTag.IssuerPublicKey, issuer.dataKeyPair.publicKey)
@@ -185,6 +185,7 @@ class PersonalizeCommandV8(
 
     companion object {
         private const val NONCE_LENGTH = 12
+        private const val SD_DIVIDER = 10
         private val devPersonalizationKey = "1234".calculateSha256().copyOf(32)
     }
 }

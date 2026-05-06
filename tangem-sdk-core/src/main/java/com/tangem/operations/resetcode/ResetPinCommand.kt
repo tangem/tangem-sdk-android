@@ -25,9 +25,10 @@ class ResetPinCommand(
     private val passcode: ByteArray,
 ) : Command<SuccessResponse>() {
 
+    override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.PUBLIC_SECURE_CHANNEL
+
     override fun requiresPasscode(): Boolean = false
     override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.ReadCardOnly
-    override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.PUBLIC_SECURE_CHANNEL
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.firmwareVersion < FirmwareVersion.BackupAvailable) {

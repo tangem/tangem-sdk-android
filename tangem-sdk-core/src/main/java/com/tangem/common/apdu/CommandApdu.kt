@@ -46,6 +46,7 @@ class CommandApdu(
      * Serialize as an extended APDU.
      * @return Data to send
      */
+    @Suppress("MagicNumber")
     fun serialize(): ByteArray {
         val data = tlvs
 
@@ -69,12 +70,6 @@ class CommandApdu(
         return byteStream.toByteArray()
     }
 
-    private fun ByteArrayOutputStream.writeLength(lc: Int) {
-        this.write(0)
-        this.write(lc.shr(bitCount = 8))
-        this.write(lc.and(other = 0xFF))
-    }
-
     /**
      * Encrypt APDU.
      *
@@ -90,10 +85,16 @@ class CommandApdu(
         }
 
         return when (encryptionMode) {
-            EncryptionMode.None, EncryptionMode.Fast, EncryptionMode.Strong -> {
+            EncryptionMode.None,
+            EncryptionMode.Fast,
+            EncryptionMode.Strong,
+            -> {
                 encryptLegacy(encryptionKey, encryptionMode.byteValue)
             }
-            EncryptionMode.CcmWithSecurityDelay, EncryptionMode.CcmWithAccessToken, EncryptionMode.CcmWithAsymmetricKeys -> {
+            EncryptionMode.CcmWithSecurityDelay,
+            EncryptionMode.CcmWithAccessToken,
+            EncryptionMode.CcmWithAsymmetricKeys,
+            -> {
                 val ccmNonce = nonce ?: throw TangemSdkError.FailedToEncryptApdu()
                 encryptCcm(encryptionKey, ccmNonce)
             }

@@ -224,11 +224,7 @@ fun ByteArray.decrypt(key: ByteArray, usePkcs7: Boolean = true): ByteArray {
  * @return encrypted data with appended authentication tag (8 bytes)
  */
 @Suppress("MagicNumber")
-fun ByteArray.encryptAesCcm(
-    key: ByteArray,
-    nonce: ByteArray,
-    associatedData: ByteArray,
-): ByteArray {
+fun ByteArray.encryptAesCcm(key: ByteArray, nonce: ByteArray, associatedData: ByteArray): ByteArray {
     val keySpec = SecretKeySpec(key, "AES/CCM/NoPadding")
     val ivSpec = IvParameterSpec(nonce)
     val cipher = Cipher.getInstance("AES/CCM/NoPadding", BouncyCastleProvider.PROVIDER_NAME)
@@ -247,14 +243,10 @@ fun ByteArray.encryptAesCcm(
  * @return decrypted data
  */
 @Suppress("MagicNumber")
-fun ByteArray.decryptAesCcm(
-    key: ByteArray,
-    nonce: ByteArray,
-    associatedData: ByteArray,
-): ByteArray {
+fun ByteArray.decryptAesCcm(key: ByteArray, nonce: ByteArray, associatedData: ByteArray): ByteArray {
     val keySpec = SecretKeySpec(key, "AES/CCM/NoPadding")
     val ivSpec = IvParameterSpec(nonce)
-    val cipher = Cipher.getInstance("AES/CCM/NoPadding",  BouncyCastleProvider.PROVIDER_NAME)
+    val cipher = Cipher.getInstance("AES/CCM/NoPadding", BouncyCastleProvider.PROVIDER_NAME)
     cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec)
     cipher.updateAAD(associatedData)
     return cipher.doFinal(this.copyOfRange(0, this.size))

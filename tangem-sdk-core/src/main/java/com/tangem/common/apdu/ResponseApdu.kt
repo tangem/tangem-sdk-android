@@ -15,6 +15,7 @@ import java.io.ByteArrayInputStream
  * @property sw Status word code, reflecting the status of the response.
  * @property statusWord Parsed status word.
  */
+@Suppress("MagicNumber")
 class ResponseApdu(val data: ByteArray, val sw1: Int, val sw2: Int) {
 
     val sw: Int = sw1 shl 8 or sw2

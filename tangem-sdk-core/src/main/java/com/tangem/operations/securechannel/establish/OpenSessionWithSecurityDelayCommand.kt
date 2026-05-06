@@ -28,8 +28,9 @@ class OpenSessionWithSecurityDelayCommand(
     private val sessionKeyB: ByteArray,
 ) : Command<OpenSessionWithSecurityDelayResponse>() {
 
-    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
     override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.NONE
+
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun performPreCheck(card: Card): TangemError? {
         if (card.firmwareVersion < FirmwareVersion.v8) {

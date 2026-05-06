@@ -6,7 +6,6 @@ import com.tangem.common.UserCodeType
 import com.tangem.common.card.Card
 import com.tangem.common.encryption.EncryptionMode
 import com.tangem.common.card.WalletData
-import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.services.secure.SecureStorage
 import com.tangem.common.services.secure.TerminalKeysService
 import com.tangem.common.services.secure.TerminalKeysStorage
@@ -31,7 +30,7 @@ class SessionEnvironment(
     var encryptionMode: EncryptionMode = EncryptionMode.None
     var encryptionKey: ByteArray? = null
     var cvc: ByteArray? = null
-    /// COS v8+
+    // / COS v8+
     var cardAccessTokens: CardAccessTokens? = null
     var accessCode: UserCode = UserCode(UserCodeType.AccessCode)
     var passcode: UserCode = UserCode(UserCodeType.Passcode)

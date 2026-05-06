@@ -236,11 +236,7 @@ abstract class BaseFragment : Fragment() {
         sdk.sign(hashes, publicKey, cardId, path, initialMessage) { handleResult(it) }
     }
 
-    protected fun createOrImportWallet(
-        curve: EllipticCurve,
-        mnemonic: String? = null,
-        passphrase: String? = null,
-    ) {
+    protected fun createOrImportWallet(curve: EllipticCurve, mnemonic: String? = null, passphrase: String? = null) {
         val cardId = card?.cardId.guard {
             showToast("CardId & walletPublicKey required. Scan your card before proceeding")
             return
@@ -263,10 +259,7 @@ abstract class BaseFragment : Fragment() {
         }
     }
 
-    protected fun createOrImportMasterSecret(
-        mnemonic: String? = null,
-        passphrase: String? = null,
-    ) {
+    protected fun createOrImportMasterSecret(mnemonic: String? = null, passphrase: String? = null) {
         val cardId = card?.cardId.guard {
             showToast("CardId & walletPublicKey required. Scan your card before proceeding")
             return

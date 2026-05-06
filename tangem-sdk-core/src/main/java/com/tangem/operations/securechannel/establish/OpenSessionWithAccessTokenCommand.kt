@@ -56,8 +56,9 @@ class OpenSessionWithAccessTokenCommand(
     private val sessionKey: ByteArray,
 ) : Command<OpenSessionWithAccessTokenResponse>() {
 
-    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
     override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.NONE
+
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.firmwareVersion < FirmwareVersion.v8) {
@@ -107,10 +108,7 @@ class OpenSessionWithAccessTokenCommand(
         )
     }
 
-    override fun deserialize(
-        environment: SessionEnvironment,
-        apdu: ResponseApdu,
-    ): OpenSessionWithAccessTokenResponse {
+    override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): OpenSessionWithAccessTokenResponse {
         val decoder = createTlvDecoder(environment, apdu)
         return OpenSessionWithAccessTokenResponse(
             accessLevel = decoder.decode(TlvTag.AccessLevel),

@@ -7,10 +7,8 @@ import com.tangem.common.core.CompletionCallback
 
 class ManageAccessTokensTask : CardSessionRunnable<Unit> {
 
-    override fun run(
-        session: CardSession,
-        callback: CompletionCallback<Unit>,
-    ) {
+    @Suppress("NestedBlockDepth")
+    override fun run(session: CardSession, callback: CompletionCallback<Unit>) {
         val getCommand = ManageAccessTokensCommand(ManageAccessTokensMode.GET)
         getCommand.run(session) { result ->
             when (result) {

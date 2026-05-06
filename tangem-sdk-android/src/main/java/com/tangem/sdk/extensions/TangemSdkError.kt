@@ -106,7 +106,7 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
         is TangemSdkError.NeedReset,
         is TangemSdkError.RetrySecureChannelNeeded,
         is TangemSdkError.WalletUnavailableBackupRequired,
-        is TangemSdkError.InvalidTokensResponseData
+        is TangemSdkError.InvalidTokensResponseData,
         -> TangemSdkErrorDescription()
 
         is TangemSdkError.CardVerificationFailed -> {
@@ -166,8 +166,8 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
             args = listOf(StringResId(R.string.pin1)),
         )
 
-        is TangemSdkError.InvalidAccessTokens -> TangemSdkErrorDescription() //TODO error description
-        is TangemSdkError.AccessDenied -> TangemSdkErrorDescription() //TODO error description
+        is TangemSdkError.InvalidAccessTokens -> TangemSdkErrorDescription() // TODO error description
+        is TangemSdkError.AccessDenied -> TangemSdkErrorDescription() // TODO error description
 
         is TangemSdkError.BackupCardAlreadyAdded,
         is TangemSdkError.BackupCardRequired,

@@ -36,7 +36,7 @@ data class MasterSecret(
      */
     val status: CardWallet.Status,
 
-    ) {
+) {
 
     val extendedPublicKey: ExtendedPublicKey?
         get() = initExtendedPublicKey(publicKey, chainCode)

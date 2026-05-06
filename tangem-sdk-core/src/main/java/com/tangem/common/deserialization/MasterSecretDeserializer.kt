@@ -20,7 +20,6 @@ internal object MasterSecretDeserializer {
     }
 
     private fun deserialize(decoder: TlvDecoder, status: CardWallet.Status): MasterSecret {
-
         return MasterSecret(
             publicKey = decoder.decodeOptional(TlvTag.WalletPublicKey),
             chainCode = decoder.decodeOptional(TlvTag.WalletHDChain),

@@ -1,6 +1,5 @@
 package com.tangem.common.deserialization
 
-import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.card.*
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.tlv.Tlv
@@ -165,11 +164,7 @@ object CardDeserializer {
         return if (cardDataValue.isNullOrEmpty()) null else TlvDecoder(cardDataValue)
     }
 
-    private fun assertStatus(
-        allowNotPersonalized: Boolean,
-        status: Card.Status,
-        firmware: FirmwareVersion,
-    ) {
+    private fun assertStatus(allowNotPersonalized: Boolean, status: Card.Status, firmware: FirmwareVersion) {
         when {
             status == Card.Status.NotPersonalized && !allowNotPersonalized -> throw TangemSdkError.NotPersonalized(
                 firmware = firmware,

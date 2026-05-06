@@ -41,6 +41,7 @@ import com.tangem.tangem_demo.databinding.FgCommandListBinding
 /**
 [REDACTED_AUTHOR]
  */
+@Suppress("LargeClass")
 class CommandListFragment : BaseFragment() {
 
     private var jsonRpcSingleCommandTemplate: String = """
@@ -183,13 +184,13 @@ class CommandListFragment : BaseFragment() {
                     "bip39: m/83696968'/39'/{language}'/{words}'/{index}'",
                     "xprv: m/83696968'/32'/{index}",
                     "hex: m/83696968'/128169'/{num_bytes}'/{index}'",
-                    "PWD BASE 64: m/83696968'/707764'/{pwd_len}'/{index}'"
+                    "PWD BASE 64: m/83696968'/707764'/{pwd_len}'/{index}'",
                 ),
-            )
+            ),
         )
         binding.deterministicEntropy.btnDeriveEntropy.setOnClickListener {
             deriveEntropy(
-                binding.deterministicEntropy.etDeterministicEntropyPath.text.toString()
+                binding.deterministicEntropy.etDeterministicEntropyPath.text.toString(),
             )
         }
 
@@ -203,7 +204,7 @@ class CommandListFragment : BaseFragment() {
             createOrImportWallet(
                 curve = binding.walletView.spinnerCurves.selectedItem as EllipticCurve,
                 mnemonic = binding.walletView.etMnemonic.text?.toString(),
-                passphrase = binding.walletView.etPassphrase.text?.toString()
+                passphrase = binding.walletView.etPassphrase.text?.toString(),
             )
         }
         binding.walletView.btnPasteMnemonic.setOnClickListener { binding.walletView.etMnemonic.setTextFromClipboard() }
@@ -333,14 +334,18 @@ class CommandListFragment : BaseFragment() {
                     R.id.chipPinRequiredDisable -> false
                     else -> false
                 }
-            } else null
+            } else {
+                null
+            }
             val isNdefDisabled = if (card == null || card!!.firmwareVersion >= FirmwareVersion.v8) {
                 when (binding.userSettings.chipGroupNdef.checkedChipId) {
                     R.id.chipNdefDisable -> true
                     R.id.chipNdefEnable -> false
                     else -> false
                 }
-            } else null
+            } else {
+                null
+            }
 
             sdk.startSessionWithRunnable(
                 cardId = card?.cardId,
@@ -349,8 +354,8 @@ class CommandListFragment : BaseFragment() {
                         isUserCodeRecoveryAllowed = isUserCodeRecoveryAllowed,
                         isPINRequired = isPinRequired ?: false,
                         isNDEFDisabled = isNdefDisabled ?: false,
-                    )
-                )
+                    ),
+                ),
             ) {
                 postUi { handleCommandResult(it) }
             }

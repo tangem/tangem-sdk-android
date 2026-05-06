@@ -113,7 +113,7 @@ class SetUserCodeCommand private constructor() : Command<SuccessResponse>() {
             }
             card.firmwareVersion >= FirmwareVersion.BackupAvailable -> {
                 val passcodeValue = codes[UserCodeType.Passcode]?.value ?: environment.passcode.value
-                ?: throw TangemSdkError.SerializeCommandError()
+                    ?: throw TangemSdkError.SerializeCommandError()
 
                 tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
                 tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
@@ -122,7 +122,7 @@ class SetUserCodeCommand private constructor() : Command<SuccessResponse>() {
             }
             else -> {
                 val passcodeValue = codes[UserCodeType.Passcode]?.value ?: environment.passcode.value
-                ?: throw TangemSdkError.SerializeCommandError()
+                    ?: throw TangemSdkError.SerializeCommandError()
 
                 tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
                 tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
@@ -137,7 +137,6 @@ class SetUserCodeCommand private constructor() : Command<SuccessResponse>() {
         if (shouldAddPin(environment.passcode, card.firmwareVersion)) {
             tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
         }
-
 
         return CommandApdu(Instruction.SetPin, tlvBuilder.serialize())
     }

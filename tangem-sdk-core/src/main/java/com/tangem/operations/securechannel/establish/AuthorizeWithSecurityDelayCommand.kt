@@ -52,8 +52,9 @@ data class AuthorizeWithSecurityDelayResponse(
  */
 class AuthorizeWithSecurityDelayCommand : Command<AuthorizeWithSecurityDelayResponse>() {
 
-    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
     override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.NONE
+
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.firmwareVersion < FirmwareVersion.v8) {
@@ -92,10 +93,7 @@ class AuthorizeWithSecurityDelayCommand : Command<AuthorizeWithSecurityDelayResp
         return CommandApdu(instruction = Instruction.Authorize, tlvs = tlvBuilder.serialize())
     }
 
-    override fun deserialize(
-        environment: SessionEnvironment,
-        apdu: ResponseApdu,
-    ): AuthorizeWithSecurityDelayResponse {
+    override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): AuthorizeWithSecurityDelayResponse {
         val decoder = createTlvDecoder(environment, apdu)
         return AuthorizeWithSecurityDelayResponse(
             pubSessionKeyA = decoder.decode(TlvTag.SessionKeyA),

@@ -464,7 +464,7 @@ class CardSession(
                         true
                     }
                 }
-                // .map { establishLegacyEncryptionIfNeeded() }
+                // .map { establishLegacyEncryptionIfNeeded() } // TODO check if we nee use this
                 .map {
                     apdu.encrypt(
                         environment.encryptionMode,
@@ -522,6 +522,7 @@ class CardSession(
      * @param shouldAskForAccessCode whether the session should handle access code prompting
      * @param callback completion callback
      */
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     fun establishEncryptionIfNeeded(
         cardSessionEncryption: CardSessionEncryption,
         shouldAskForAccessCode: Boolean,
@@ -593,7 +594,10 @@ class CardSession(
                             return@establishSecureChannel
                         }
 
-                        Log.session { "SecureChannel established successfully. Current access level is ${session.accessLevel}" }
+                        Log.session {
+                            "SecureChannel established successfully. " +
+                                "Current access level is ${session.accessLevel}"
+                        }
 
                         if (!needsAuthorizationWithAccessCode && !session.isElevationRequired(cardSessionEncryption)) {
                             Log.session { "Authorization with PIN is not needed" }
@@ -671,8 +675,11 @@ class CardSession(
                         Log.session { "The legacy encryption established" }
                         callback(CompletionResult.Success(Unit))
                     } catch (error: Throwable) {
-                        val sdkError = if (error is TangemSdkError) error
-                        else TangemSdkError.CryptoUtilsError("Failed to establish encryption")
+                        val sdkError = if (error is TangemSdkError) {
+                            error
+                        } else {
+                            TangemSdkError.CryptoUtilsError("Failed to establish encryption")
+                        }
                         callback(CompletionResult.Failure(sdkError))
                     }
                 }
@@ -849,50 +856,50 @@ class CardSession(
         return reader.transceiveRaw(Apdu.build(Apdu.SELECT, Apdu.TANGEM_WALLET_AID))
     }
 
-    private suspend fun establishLegacyEncryptionIfNeeded(): CompletionResult<Boolean> {
-        Log.session { "establish legacy encryption if needed" }
-        if (environment.encryptionMode == EncryptionMode.None || environment.encryptionKey != null) {
-            Log.session { "establish legacy encryption not needed" }
-            return CompletionResult.Success(true)
-        }
-
-        val encryptionHelper = EncryptionHelper.create(environment.encryptionMode)
-            ?: return CompletionResult.Failure(
-                TangemSdkError.CryptoUtilsError("Failed to establish encryption"),
-            )
-
-        val openSessionCommand = OpenSessionCommand(encryptionHelper.keyA)
-        val apdu = openSessionCommand.serialize(environment)
-
-        when (val response = reader.transceiveApdu(apdu)) {
-            is CompletionResult.Success -> {
-                val result = try {
-                    openSessionCommand.deserialize(environment, response.data)
-                } catch (error: TangemSdkError) {
-                    return CompletionResult.Failure(error)
-                }
-
-                val uid = result.uid
-                val protocolKey = environment.accessCode.value?.pbkdf2Hash(uid, iterations = 50)
-                    ?: return CompletionResult.Failure(
-                        TangemSdkError.CryptoUtilsError(
-                            "Failed to establish encryption",
-                        ),
-                    )
-
-                val secret = encryptionHelper.generateSecret(result.sessionKeyB)
-                val sessionKey = (secret + protocolKey).calculateSha256()
-                environment.encryptionKey = sessionKey
-
-                Log.session { "The encryption established" }
-                return CompletionResult.Success(true)
-            }
-            is CompletionResult.Failure -> {
-                Log.session { "establish encryption Failure ${response.error}" }
-                return CompletionResult.Failure(response.error)
-            }
-        }
-    }
+    // private suspend fun establishLegacyEncryptionIfNeeded(): CompletionResult<Boolean> {
+    //     Log.session { "establish legacy encryption if needed" }
+    //     if (environment.encryptionMode == EncryptionMode.None || environment.encryptionKey != null) {
+    //         Log.session { "establish legacy encryption not needed" }
+    //         return CompletionResult.Success(true)
+    //     }
+    //
+    //     val encryptionHelper = EncryptionHelper.create(environment.encryptionMode)
+    //         ?: return CompletionResult.Failure(
+    //             TangemSdkError.CryptoUtilsError("Failed to establish encryption"),
+    //         )
+    //
+    //     val openSessionCommand = OpenSessionCommand(encryptionHelper.keyA)
+    //     val apdu = openSessionCommand.serialize(environment)
+    //
+    //     when (val response = reader.transceiveApdu(apdu)) {
+    //         is CompletionResult.Success -> {
+    //             val result = try {
+    //                 openSessionCommand.deserialize(environment, response.data)
+    //             } catch (error: TangemSdkError) {
+    //                 return CompletionResult.Failure(error)
+    //             }
+    //
+    //             val uid = result.uid
+    //             val protocolKey = environment.accessCode.value?.pbkdf2Hash(uid, iterations = 50)
+    //                 ?: return CompletionResult.Failure(
+    //                     TangemSdkError.CryptoUtilsError(
+    //                         "Failed to establish encryption",
+    //                     ),
+    //                 )
+    //
+    //             val secret = encryptionHelper.generateSecret(result.sessionKeyB)
+    //             val sessionKey = (secret + protocolKey).calculateSha256()
+    //             environment.encryptionKey = sessionKey
+    //
+    //             Log.session { "The encryption established" }
+    //             return CompletionResult.Success(true)
+    //         }
+    //         is CompletionResult.Failure -> {
+    //             Log.session { "establish encryption Failure ${response.error}" }
+    //             return CompletionResult.Failure(response.error)
+    //         }
+    //     }
+    // }
 
     private fun decrypt(
         result: CompletionResult<ResponseApdu>,
@@ -1099,6 +1106,7 @@ enum class TagType {
     Slix,
 }
 
+@Suppress("LongParameterList")
 class SessionBuilder(
     private val viewDelegate: SessionViewDelegate,
     private val secureStorage: SecureStorage,

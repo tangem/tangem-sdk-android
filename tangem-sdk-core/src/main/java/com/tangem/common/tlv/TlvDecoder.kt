@@ -218,8 +218,7 @@ class TlvDecoder(val tlvList: List<Tlv>) {
     }
 }
 
-fun provideDecodingFailedMessage(tag: TlvTag): String =
-    "Decoding failed. Failed to convert $tag to ${tag.valueType()}"
+fun provideDecodingFailedMessage(tag: TlvTag): String = "Decoding failed. Failed to convert $tag to ${tag.valueType()}"
 
 fun logException(tag: TlvTag, value: String, exception: Exception) {
     Log.error { "Unknown ${tag.name} with value of: $value, \n${exception.message}" }

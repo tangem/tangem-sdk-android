@@ -16,11 +16,12 @@ class ResetPinTask(
     private val passcode: ByteArray,
 ) : CardSessionRunnable<SuccessResponse> {
 
-    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.ReadCardOnly
-
     override val shouldAskForAccessCode: Boolean
         get() = false
 
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.ReadCardOnly
+
+    @Suppress("NestedBlockDepth")
     override fun run(session: CardSession, callback: CompletionCallback<SuccessResponse>) {
         AuthorizeResetPinTokenCommand(confirmationCard).run(session) { result ->
             when (result) {

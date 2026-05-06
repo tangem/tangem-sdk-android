@@ -30,6 +30,7 @@ import com.tangem.sdk.nfc.NfcManager
 import com.tangem.sdk.storage.create
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+
 class DependencyContainer(context: Context) {
 
     val config: Config = Config().apply {
@@ -161,11 +162,7 @@ class DependencyContainer(context: Context) {
             delegate?.showWelcomeBackWarning(callback)
         }
 
-        override fun requestUserCodeChange(
-            type: UserCodeType,
-            cardId: String?,
-            callback: CompletionCallback<String>,
-        ) {
+        override fun requestUserCodeChange(type: UserCodeType, cardId: String?, callback: CompletionCallback<String>) {
             delegate?.requestUserCodeChange(type, cardId, callback)
         }
 
