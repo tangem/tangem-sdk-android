@@ -10,7 +10,6 @@ import com.tangem.common.card.CardWallet
 import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.*
 import com.tangem.common.deserialization.WalletDeserializer
-import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 import com.tangem.operations.CommandResponse

@@ -3,11 +3,9 @@ package com.tangem.common.apdu
 import com.google.common.truth.Truth.assertThat
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.hexToBytes
-import com.tangem.common.extensions.toHexString
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvTag
 import org.junit.Test
-import org.junit.jupiter.api.assertThrows
 
 class ApduTest {
 
@@ -242,8 +240,12 @@ class ApduTest {
     fun `ResponseApdu getTlvData parses TLV payload`() {
         // TLV: tag=0x01(CardId), len=2, value=0xABCD + SW=0x9000
         val data = byteArrayOf(
-            0x01, 0x02, 0xAB.toByte(), 0xCD.toByte(),
-            0x90.toByte(), 0x00.toByte(),
+            0x01,
+            0x02,
+            0xAB.toByte(),
+            0xCD.toByte(),
+            0x90.toByte(),
+            0x00.toByte(),
         )
         val response = ResponseApdu.fromRawBytes(data)
         val tlvs = response.getTlvData()

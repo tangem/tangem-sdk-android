@@ -1,7 +1,6 @@
 package com.tangem.operations.pins
 
 import com.tangem.common.CompletionResult
-import com.tangem.common.UserCodeType
 import com.tangem.common.core.CardSession
 import com.tangem.common.core.CardSessionRunnable
 import com.tangem.common.core.CompletionCallback

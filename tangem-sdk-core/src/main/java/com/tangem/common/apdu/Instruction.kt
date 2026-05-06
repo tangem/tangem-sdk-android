@@ -4,6 +4,7 @@ package com.tangem.common.apdu
  * Instruction code that determines the type of the command that is sent to the Tangem card.
  * It is used in the construction of [com.tangem.common.apdu.CommandApdu].
  */
+@Suppress("MagicNumber")
 enum class Instruction(var code: Int) {
     Unknown(code = 0x00),
     Personalize(code = 0xF1),

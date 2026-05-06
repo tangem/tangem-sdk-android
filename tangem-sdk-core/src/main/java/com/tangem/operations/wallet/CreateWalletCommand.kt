@@ -9,7 +9,6 @@ import com.tangem.common.card.*
 import com.tangem.common.core.*
 import com.tangem.common.deserialization.WalletDeserializer
 import com.tangem.common.extensions.guard
-import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.hdWallet.bip32.ExtendedPrivateKey
@@ -121,7 +120,6 @@ internal class CreateWalletCommand @Throws constructor(
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
-
 
         val tlvBuilder = createTlvBuilder(environment.legacyMode)
         if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {

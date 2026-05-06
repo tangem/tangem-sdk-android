@@ -51,9 +51,10 @@ class PersonalizeCommand(
     private val acquirer: Acquirer? = null,
 ) : Command<Card>() {
 
+    override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.NONE
+
     override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
     override fun requiresPasscode(): Boolean = false
-    override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.NONE
 
     override fun run(session: CardSession, callback: CompletionCallback<Card>) {
         Log.command(this)
@@ -70,8 +71,8 @@ class PersonalizeCommand(
                         if (result.error.firmware >= FirmwareVersion.v8) {
                             callback(
                                 CompletionResult.Failure(
-                                    error = TangemSdkError.NotSupportedFirmwareVersion()
-                                )
+                                    error = TangemSdkError.NotSupportedFirmwareVersion(),
+                                ),
                             )
                         } else {
                             runPersonalize(session, callback)
@@ -108,10 +109,7 @@ class PersonalizeCommand(
         return CardDeserializer.deserialize(isAccessCodeSet, decoder, cardDataDecoder, true)
     }
 
-    private fun serializePersonalizationData(
-        config: CardConfig,
-        environment: SessionEnvironment,
-    ): ByteArray {
+    private fun serializePersonalizationData(config: CardConfig, environment: SessionEnvironment): ByteArray {
         val cardId = CardIdBuilder.createCardId(config) ?: throw TangemSdkError.SerializeCommandError()
 
         val cardData = config.cardData.createPersonalizationCardData()
@@ -148,10 +146,7 @@ class PersonalizeCommand(
         }
     }
 
-    private fun serializeCardData(
-        cardData: CardData,
-        cardId: String, environment: SessionEnvironment,
-    ): ByteArray {
+    private fun serializeCardData(cardData: CardData, cardId: String, environment: SessionEnvironment): ByteArray {
         val signature = cardId.toByteArray().sign(manufacturer.keyPair.privateKey)
 
         val tlvBuilder = createTlvBuilder(environment.legacyMode)

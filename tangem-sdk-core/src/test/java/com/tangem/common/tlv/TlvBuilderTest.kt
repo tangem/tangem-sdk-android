@@ -1,9 +1,12 @@
 package com.tangem.common.tlv
 
 import com.google.common.truth.Truth.assertThat
-import com.tangem.common.card.*
+import com.tangem.common.card.Card
 import com.tangem.common.card.Card.SettingsMask
 import com.tangem.common.card.Card.SettingsMask.Code
+import com.tangem.common.card.EllipticCurve
+import com.tangem.common.card.SigningMethod
+import com.tangem.common.card.UserSettingsMask
 import com.tangem.common.core.AccessLevel
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.hexToBytes
@@ -117,7 +120,7 @@ internal class TlvBuilderTest {
 
         val tlvs = Tlv.deserialize(bytes)!!
         assertThat(tlvs[0].value).hasLength(2)
-        val decoded = (tlvs[0].value[0].toInt() and 0xFF shl 8) or (tlvs[0].value[1].toInt() and 0xFF)
+        val decoded = tlvs[0].value[0].toInt() and 0xFF shl 8 or (tlvs[0].value[1].toInt() and 0xFF)
         assertThat(decoded).isEqualTo(300)
     }
 
@@ -223,7 +226,7 @@ internal class TlvBuilderTest {
         val value = tlvs[0].value
         // DateTime = year(2 bytes) + month(1 byte) + day(1 byte)
         assertThat(value).hasLength(4)
-        val year = (value[0].toInt() and 0xFF shl 8) or (value[1].toInt() and 0xFF)
+        val year = value[0].toInt() and 0xFF shl 8 or (value[1].toInt() and 0xFF)
         val month = value[2].toInt() and 0xFF
         val day = value[3].toInt() and 0xFF
         assertThat(year).isEqualTo(2023)
@@ -484,52 +487,4 @@ internal class TlvBuilderTest {
     }
 
     // endregion
-
-    private companion object {
-        private val emptyCardSetting = Card.Settings(
-            securityDelay = 0,
-            maxWalletsCount = 0,
-            mask = SettingsMask(Code.AllowHDWallets.value),
-        )
-
-        private val emptyCardFV433 = Card(
-            cardId = "1",
-            batchId = "",
-            cardPublicKey = ByteArray(0),
-            firmwareVersion = FirmwareVersion(4, 33),
-            manufacturer = Card.Manufacturer("", Date(), null),
-            issuer = Card.Issuer("", ByteArray(0)),
-            settings = emptyCardSetting,
-            userSettings = UserSettings(
-                isUserCodeRecoveryAllowed = false,
-                isPINRequired = false,
-                isNDEFDisabled = false,
-            ),
-            linkedTerminalStatus = Card.LinkedTerminalStatus.None,
-            isAccessCodeSet = false,
-            isPasscodeSet = false,
-            supportedCurves = emptyList(),
-            wallets = emptyList(),
-        )
-
-        private val emptyCardFV434 = Card(
-            cardId = "1",
-            batchId = "",
-            cardPublicKey = ByteArray(0),
-            firmwareVersion = FirmwareVersion(4, 34),
-            manufacturer = Card.Manufacturer("", Date(), null),
-            issuer = Card.Issuer("", ByteArray(0)),
-            settings = emptyCardSetting,
-            userSettings = UserSettings(
-                isUserCodeRecoveryAllowed = false,
-                isPINRequired = false,
-                isNDEFDisabled = false,
-            ),
-            linkedTerminalStatus = Card.LinkedTerminalStatus.None,
-            isAccessCodeSet = false,
-            isPasscodeSet = false,
-            supportedCurves = emptyList(),
-            wallets = emptyList(),
-        )
-    }
 }
