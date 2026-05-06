@@ -10,7 +10,9 @@ import com.tangem.common.core.CardSessionEncryption
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
+import com.tangem.common.tlv.InteractionMode
 import com.tangem.common.tlv.TlvTag
+import com.tangem.crypto.hdWallet.DerivationPath
 
 @JsonClass(generateAdapter = true)
 class GetEntropyResponse(
@@ -18,7 +20,14 @@ class GetEntropyResponse(
     val data: ByteArray,
 ) : CommandResponse
 
-class GetEntropyCommand : Command<GetEntropyResponse>() {
+sealed class GetEntropyMode(override val rawValue: Byte) : InteractionMode {
+    object Random : GetEntropyMode(0x00)
+    class Deterministic(val derivationPath: DerivationPath) : GetEntropyMode(0x01)
+}
+
+class GetEntropyCommand(
+    private val mode: GetEntropyMode = GetEntropyMode.Random,
+) : Command<GetEntropyResponse>() {
 
     override var cardSessionEncryption = CardSessionEncryption.PUBLIC_SECURE_CHANNEL
 
@@ -28,6 +37,24 @@ class GetEntropyCommand : Command<GetEntropyResponse>() {
         if (card.firmwareVersion < FirmwareVersion.KeysImportAvailable) {
             return TangemSdkError.NotSupportedFirmwareVersion()
         }
+
+        when (mode) {
+            is GetEntropyMode.Random -> Unit
+            is GetEntropyMode.Deterministic -> {
+                if (card.firmwareVersion < FirmwareVersion.v8) {
+                    return TangemSdkError.NotSupportedFirmwareVersion()
+                }
+
+                if (card.settings.isBackupRequired && card.backupStatus?.isActive != true) {
+                    return TangemSdkError.NoActiveBackup()
+                }
+
+                if (mode.derivationPath.nodes.any { !it.isHardened }) {
+                    return TangemSdkError.NonHardenedDerivationNotSupported()
+                }
+            }
+        }
+
         return null
     }
 
@@ -38,8 +65,14 @@ class GetEntropyCommand : Command<GetEntropyResponse>() {
         if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
             tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
         }
+
         if (card.firmwareVersion < FirmwareVersion.v8) {
-            tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+            tlvBuilder.append(TlvTag.CardId, card.cardId)
+        } else {
+            tlvBuilder.append(TlvTag.InteractionMode, mode)
+            if (mode is GetEntropyMode.Deterministic) {
+                tlvBuilder.append(TlvTag.WalletHDPath, mode.derivationPath)
+            }
         }
 
         return CommandApdu(Instruction.GetEntropy, tlvBuilder.serialize())

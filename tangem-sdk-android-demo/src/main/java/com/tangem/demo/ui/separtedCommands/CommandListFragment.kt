@@ -222,6 +222,9 @@ class CommandListFragment : BaseFragment() {
         binding.masterSecret.btnPurgeMasterSecret.setOnClickListener {
             purgeMasterSecret()
         }
+        binding.masterSecret.btnReadMasterSecret.setOnClickListener {
+            readMasterSecret()
+        }
         binding.masterSecret.btnPasteMasterSecretMnemonic.setOnClickListener {
             binding.masterSecret.etMasterSecretMnemonic
                 .setTextFromClipboard()
@@ -302,7 +305,7 @@ class CommandListFragment : BaseFragment() {
             sdk.startSessionWithRunnable(
                 runnable = ResetToFactorySettingsTask(),
                 cardId = card?.cardId,
-                ) {
+            ) {
                 postUi { handleCommandResult(it) }
             }
         }
@@ -310,7 +313,7 @@ class CommandListFragment : BaseFragment() {
             sdk.startSessionWithRunnable(
                 runnable = GetEntropyCommand(),
                 cardId = card?.cardId,
-                ) {
+            ) {
                 postUi { handleCommandResult(it) }
             }
         }
