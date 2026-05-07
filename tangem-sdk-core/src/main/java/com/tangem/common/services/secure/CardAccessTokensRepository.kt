@@ -7,6 +7,7 @@ import com.tangem.Log
 import com.tangem.common.authentication.keystore.KeystoreManager
 import com.tangem.common.authentication.storage.AuthenticatedStorage
 import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.mapNotNullValues
 import com.tangem.common.extensions.toHexString
 import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.v8.CardAccessTokens
@@ -106,23 +107,29 @@ class CardAccessTokensRepository(
 
         val fetchedTokens = hashMapOf<String, CardAccessTokens>()
 
-        for (cardId in getSavedCardIds()) {
-            try {
-                val storageKey = StorageKey.CardAccessTokens(cardId).name
-                val data = authenticatedStorage.get(storageKey) ?: continue
-                try {
-                    val cardAccessTokens = decodeCardAccessTokens(data)
-                    fetchedTokens[cardId] = cardAccessTokens
-                } finally {
-                    data.fill(0)
-                }
-            } catch (e: Exception) {
-                Log.debug { "Failed to unlock card access tokens for cardId: $cardId. Error: $e" }
+        val savedCardIds = getSavedCardIds()
+        val keys = savedCardIds.map {
+            StorageKey.CardAccessTokens(it).name
+        }
+        val encodedData = authenticatedStorage.get(keys)
+
+        try {
+            val cardTokens = encodedData.mapKeys { (key, _) -> key.removePrefix(StorageKey.CardAccessTokens.PREFIX) }
+                .mapNotNullValues { (_, value) -> decodeCardAccessTokens(value) }
+            fetchedTokens.putAll(cardTokens)
+        } catch (e: Exception) {
+            Log.debug {
+                "Failed to unlock card access tokens for cardIds: ${
+                    savedCardIds.joinToString(";") { it }
+                }. Error: $e"
             }
+        } finally {
+            encodedData.values.forEach { it.fill(0) }
         }
 
-        tokens.putAll(fetchedTokens)
         saveCardIds(fetchedTokens.keys)
+        tokens.putAll(fetchedTokens)
+
         Log.debug { "Card access tokens unlocked successfully" }
     }
 
