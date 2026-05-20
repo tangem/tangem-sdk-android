@@ -115,7 +115,15 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
                 disableReaderMode()
                 Thread.sleep(DELAY_BEFORE_ENABLE)
             }
-            nfcAdapter?.enableReaderMode(activity, this, READER_FLAGS, Bundle())
+            val extras = Bundle().apply {
+                // Workaround for aggressive Android NFC presence-check on some devices
+                // (notably Samsung Galaxy A-series on Android 13+): default 125 ms polling
+                // interrupts long IsoDep transceive calls while the card's secure element
+                // is still computing, surfacing as TagLostException (TangemSdkError.TagLost = 10001).
+                // 1000 ms is the value used by Governikus AusweisApp for the same class of issue.
+                putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, READER_PRESENCE_CHECK_DELAY_MS)
+            }
+            nfcAdapter?.enableReaderMode(activity, this, READER_FLAGS, extras)
             isReaderModeEnabled = true
         }
     }
@@ -147,5 +155,6 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
 
         const val IGNORE_DEBOUNCE_MS = 1_500
         private const val DELAY_BEFORE_ENABLE = 300L
+        private const val READER_PRESENCE_CHECK_DELAY_MS = 1_000
     }
 }
