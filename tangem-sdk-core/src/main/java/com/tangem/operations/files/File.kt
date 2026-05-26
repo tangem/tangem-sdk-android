@@ -34,7 +34,9 @@ data class File(
         if (signature != null) {
             if (other.signature == null) return false
             if (!signature.contentEquals(other.signature)) return false
-        } else if (other.signature != null) return false
+        } else if (other.signature != null) {
+            return false
+        }
 
         return true
     }
@@ -123,7 +125,7 @@ data class NamedFile(
                 val signature = decoder.decodeOptional<ByteArray>(TlvTag.FileSignature)
 
                 NamedFile(name, payload, counter, signature)
-            } catch (ex: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }

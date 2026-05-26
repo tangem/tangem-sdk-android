@@ -91,7 +91,7 @@
     <string name="reset_codes_scan_to_reset">Scanne die Karte oder den Ring, um Benutzercodes zurückzusetzen</string>
     <string name="reset_codes_success_message">Code wurde erfolgreich zurückgesetzt</string>
     <string name="sign_multiple_chunks_part">Unterzeichnung von Teil %1$d von %2$d</string>
-    <string name="tangem_never_pregenerate_access_code_alert">Tangem never sells wallets along with the pre‑generated access code.</string>
+    <string name="tangem_never_pregenerate_access_code_alert">Tangem verkauft niemals Wallets zusammen mit dem vorab generierten Zugangscode.</string>
     <string name="tangem_never_pregenerate_code_alert">Tangem verkauft niemals Geldbörsen zusammen mit dem vorgenerierten Zugangscode</string>
     <string name="view_delegate_delay">Der Vorgang läuft</string>
     <string name="view_delegate_header_card">Karte</string>
