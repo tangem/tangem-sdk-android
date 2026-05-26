@@ -91,7 +91,7 @@ object RSACipherOperations {
         Log.debug { "$TAG - Generating a key pair" }
 
         return KeyPairGenerator.getInstance(KEY_ALGORITHM, keyStoreProvider)
-            .also { it.initialize(keyGenSpec) }
+            .apply { this.initialize(keyGenSpec) }
             .generateKeyPair()
     }
 }
