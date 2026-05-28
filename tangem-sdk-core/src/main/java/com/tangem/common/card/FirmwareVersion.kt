@@ -134,7 +134,7 @@ class FirmwareVersion : Comparable<FirmwareVersion> {
         /**
          * main secret
          */
-        val v8 = FirmwareVersion(8, 56)
+        val v8 = FirmwareVersion(8, 58)
 
         /**
          * Temporary range for visa cards
