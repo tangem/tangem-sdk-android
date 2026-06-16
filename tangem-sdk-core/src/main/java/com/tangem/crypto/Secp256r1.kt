@@ -92,7 +92,7 @@ object Secp256r1 {
     private fun createECSpec(): ECParameterSpec = ECNamedCurveTable.getParameterSpec("secp256r1")
 
     @Suppress("MagicNumber")
-    private fun toByte64(enc: ByteArray): ByteArray {
+    fun toByte64(enc: ByteArray): ByteArray {
         var rLength = enc[3].toInt()
         var sLength = enc[5 + rLength].toInt()
 
