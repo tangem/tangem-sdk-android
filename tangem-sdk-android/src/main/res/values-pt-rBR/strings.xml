@@ -52,7 +52,7 @@
     <string name="error_reset_wrong_card">Este cartão não pode ser usado para recuperação de código. Código de erro: %s.</string>
     <string name="error_user_cancelled">O usuário cancelou a operação.</string>
     <string name="error_user_code_recovery_disabled">Não foi possível redefinir o código de acesso usando este cartão.</string>
-    <string name="error_wrong_card_number_with_card_id">Você tocou em um cartão diferente. Por favor, toque neste cartão. %s.</string>
+    <string name="error_wrong_card_number_with_card_id">Você tocou em um cartão diferente. Por favor, toque neste cartão %s.</string>
     <string name="error_wrong_card_number_without_card_id">Você tocou em um cartão diferente.</string>
     <string name="error_wrong_card_type">Este aplicativo não foi projetado para funcionar com este cartão ou precisa ser atualizado.</string>
     <string name="error_wrong_pin_format">Errado %s</string>
