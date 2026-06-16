@@ -409,7 +409,7 @@ class NfcSessionDialog(
             defaultLanguage
         }
         val deviceLang = currentLanguage.uppercase()
-        return "https://tangem.com/$actualLanguage/blog/post/preactivated-wallets/" +
+        return "https://tangem.com/embed/$actualLanguage/blog/post/preactivated-wallets/" +
             "?utm_source=tangem-app&utm_medium=app" +
             "&utm_campaign=articles-sdk-$actualLanguage&utm_content=devicelang-$deviceLang"
     }
