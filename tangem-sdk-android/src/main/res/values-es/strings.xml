@@ -3,7 +3,7 @@
     <string name="already_activated_btn_confirm">La activé anteriormente</string>
     <string name="already_activated_btn_just_bought">Sí, es una billetera nueva</string>
     <string name="already_activated_message">Esta billetera ya ha sido activada anteriormente. Si no fue usted quien la activó, comuníquese con el soporte.</string>
-    <string name="already_activated_title">Esta billetera\n ya está activada.</string>
+    <string name="already_activated_title">Esta billetera\nya está activada.</string>
     <string name="attestation_failed_card">Esta tarjeta puede ser una muestra de producción o una falsificación. Puede continuar usándola bajo su propio riesgo.</string>
     <string name="attestation_failed_card_title">Error de validación de tarjeta</string>
     <string name="attestation_failed_dev_card">Esta es una tarjeta en desarrollo. No se puede verificar su autenticidad. No acepte esta tarjeta como medio de pago.</string>
