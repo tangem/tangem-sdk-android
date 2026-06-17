@@ -27,6 +27,7 @@ import com.tangem.operations.derivation.DeriveWalletPublicKeyTask
  * @property challenge       challenge, used to check wallet
  * @property cardSignature   confirmation signature of the wallet ownership. COS: 2.01+.
  * And a wallet's status for COS: 6+.
+ * The signed public key is the attested one: the derived key, if a derivation path is passed.
  * ConfirmationMode.none   : No signature will be returned.
  * ConfirmationMode.static : Wallet's public key and wallet's status (COS 6+) signed with the card's private key.
  * ConfirmationMode.dynamic: Wallet's public key, wallet's status (COS 6+), `challenge`, and `publicKeySalt`,
@@ -52,10 +53,10 @@ class AttestWalletKeyResponse(
 /**
  * This task proves that the wallet private key from the card corresponds to the wallet public key.
  * Standard challenge/response scheme is used.
- * @property publicKey Public key of the wallet to check
- * @property derivationPath Optional derivation path of the wallet. COS v. 4.28 and higher,
+ * @property publicKey: Seed public key of the wallet to check
+ * @property derivationPath: Optional derivation path of the wallet. COS v. 4.28 and higher,
 
- * @property confirmationMode Additional confirmation of the wallet ownership.  The card will return the `cardSignature` (a wallet's public key signed by the card's private key)  in response.  COS: 2.01+.
+ * @property confirmationMode: Additional confirmation of the wallet ownership.  The card will return the `cardSignature` (the attested wallet's public key — the derived one, if a derivation path is passed — signed by the card's private key)  in response.  COS: 2.01+.
  */
 class AttestWalletKeyTask(
     private val publicKey: ByteArray,
@@ -125,11 +126,17 @@ class AttestWalletKeyTask(
                     }
 
                     try {
-                        val isWalletSignatureValid =
-                            verifyWalletSignature(response = checkWalletResponse, wallet = wallet)
+                        val walletPublicKey = getPublicKey(wallet)
+                        val isWalletSignatureValid = verifyWalletSignature(
+                            response = checkWalletResponse,
+                            wallet = wallet,
+                            walletPublicKey = walletPublicKey,
+                        )
                         val isCardSignatureValid = verifyCardSignature(
                             response = checkWalletResponse,
                             cardPublicKey = card.cardPublicKey,
+                            firmwareVersion = card.firmwareVersion,
+                            walletPublicKey = walletPublicKey,
                         )
                         if (isWalletSignatureValid && isCardSignatureValid) {
                             callback(CompletionResult.Success(checkWalletResponse))
@@ -190,7 +197,12 @@ class AttestWalletKeyTask(
         )
     }
 
-    private fun verifyWalletSignature(response: AttestWalletKeyResponse, wallet: CardWallet): Boolean {
+    private fun verifyWalletSignature(
+        response: AttestWalletKeyResponse,
+        wallet: CardWallet,
+        walletPublicKey: ByteArray,
+    ): Boolean {
+        // Impossible case because of precheck
         val currentWalletPublicKey = wallet.publicKey
             ?: throw TangemSdkError.WalletUnavailableBackupRequired()
 
@@ -215,19 +227,24 @@ class AttestWalletKeyTask(
         )
     }
 
-    private fun verifyCardSignature(response: AttestWalletKeyResponse, card: Card): Boolean {
+    internal fun verifyCardSignature(
+        response: AttestWalletKeyResponse,
+        cardPublicKey: ByteArray,
+        firmwareVersion: FirmwareVersion,
+        walletPublicKey: ByteArray,
+    ): Boolean {
         val cardSignature = response.cardSignature
         if (cardSignature == null) {
-            // The card signature is requested only on COS 2.1+ when a confirmation mode other than `None` is used
+            // The card signature is requested only on COS: 2.01+ when a confirmation mode other than `None` is used
             // (see the matching gate in `serialize`). When it was requested but the card returned no `CardSignature`
             // TLV, fail closed instead of accepting the response — otherwise an emulated card or a tampered response
             // could pass wallet-ownership verification by simply omitting the signature.
             val isCardSignatureExpected = confirmationMode != ConfirmationMode.None &&
-                card.firmwareVersion >= FirmwareVersion.WalletOwnershipConfirmationAvailable
+                firmwareVersion >= FirmwareVersion.WalletOwnershipConfirmationAvailable
             return !isCardSignatureExpected
         }
 
-        // Dynamic confirmation was requested, so the response must contain `publicKeySalt`. If it is absent,
+        // If dynamic confirmation was requested, the response must contain `publicKeySalt`. If it is absent,
         // the signature covers a static message without the challenge — a previously recorded static
         // signature would pass verification (downgrade to static). Fail closed.
         if (confirmationMode == ConfirmationMode.Dynamic && response.publicKeySalt == null) {
@@ -235,7 +252,7 @@ class AttestWalletKeyTask(
         }
 
         // Dynamic verification
-        var message = publicKey
+        var message = walletPublicKey
         if (response.publicKeySalt != null) message += challenge + response.publicKeySalt
         // The card signs (and transmits, see TLV TAG_Status length 01) walletStatus as a single
         // byte, so the verification message must append that one byte — not the 4-byte big-endian
@@ -243,11 +260,21 @@ class AttestWalletKeyTask(
         if (response.walletStatus != null) message += response.walletStatus.code.toByte()
 
         return CryptoUtils.verify(
-            publicKey = card.cardPublicKey,
+            publicKey = cardPublicKey,
             message = message,
             signature = cardSignature,
             curve = EllipticCurve.Secp256k1,
         )
+    }
+
+    private fun getPublicKey(wallet: CardWallet): ByteArray {
+        return if (derivationPath != null) {
+            val derivedKey = wallet.derivedKeys[derivationPath]
+                ?: throw TangemSdkError.WalletNotFound()
+            derivedKey.publicKey
+        } else {
+            wallet.publicKey ?: throw TangemSdkError.WalletUnavailableBackupRequired()
+        }
     }
 
     enum class ConfirmationMode {
