@@ -236,32 +236,40 @@ object Backup {
         """
      {
         "releaseVersion": false,
-        "issuerName": "TANGEM",
-        "series": "AAAA",
+        "issuerName": "TANGEM SDK",
+        "series": "DD000000",
         "startNumber": 0,
-        "count": 10,
+        "count": 100,
         "numberFormat": "88000000001",
         "PIN": "000000",
-        "curveID": "secp256k1",
-        "SigningMethod": 0,
+        "signingMethod": 0,
         "allowSwapPIN": false,
         "useActivation": false,
         "useNDEF": true,
-        "useBlock": false,
+        "useBlock": true,
         "forbidPurgeWallet": false,
         "forbidDefaultPIN": true,
         "disableFiles": false,
         "allowHDWallets": true,
         "allowBackup": true,
-        "allowKeysImport": true,
+        "allowExternalWallets": true,
         "createWallet": 0,
-        "NDEF": [],
+        "NDEF": [
+                {
+                    "type": "URI",
+                    "value": "https://tangem.com/ndef/DD000000"
+                },
+                {
+                    "type": "AAR",
+                    "value": "com.tangem.wallet"
+                }
+        ],
         "walletsCount": 10,
         "securityDelay": 5000,
         "requireBackup": true,
         "cardData": {
-            "date": "2026-01-01",
-            "batch": "FFFA"
+            "date": "2026-06-05",
+            "batch": "DD000000"
         }
     }
     """
@@ -270,32 +278,41 @@ object Backup {
         """
      {
         "releaseVersion": false,
-        "issuerName": "TANGEM",
-        "series": "AAAA",
+        "issuerName": "TANGEM SDK",
+        "series": "DD000000",
         "startNumber": 0,
-        "count": 10,
+        "count": 100,
         "numberFormat": "88000000002",
         "PIN": "000000",
         "curveID": "secp256k1",
-        "SigningMethod": 0,
+        "signingMethod": 0,
         "allowSwapPIN": false,
         "useActivation": false,
         "useNDEF": true,
-        "useBlock": false,
+        "useBlock": true,
         "forbidPurgeWallet": false,
         "forbidDefaultPIN": true,
         "disableFiles": false,
         "allowHDWallets": true,
         "allowBackup": true,
-        "allowKeysImport": true,
+        "allowExternalWallets": true,
         "createWallet": 0,
-        "NDEF": [],
+        "NDEF": [
+                {
+                    "type": "URI",
+                    "value": "https://tangem.com/ndef/DD000000"
+                },
+                {
+                    "type": "AAR",
+                    "value": "com.tangem.wallet"
+                }
+        ],
         "walletsCount": 10,
         "securityDelay": 5000,
         "requireBackup": true,
         "cardData": {
-            "date": "2026-01-01",
-            "batch": "FFFA"
+            "date": "2026-06-05",
+            "batch": "DD000000"
         }
     }
     """
@@ -304,32 +321,41 @@ object Backup {
         """
      {
         "releaseVersion": false,
-        "issuerName": "TANGEM",
-        "series": "AAAA",
+        "issuerName": "TANGEM SDK",
+        "series": "DD000000",
         "startNumber": 0,
-        "count": 10,
+        "count": 100,
         "numberFormat": "88000000003",
         "PIN": "000000",
         "curveID": "secp256k1",
-        "SigningMethod": 0,
+        "signingMethod": 0,
         "allowSwapPIN": false,
         "useActivation": false,
         "useNDEF": true,
-        "useBlock": false,
+        "useBlock": true,
         "forbidPurgeWallet": false,
         "forbidDefaultPIN": true,
         "disableFiles": false,
         "allowHDWallets": true,
         "allowBackup": true,
-        "allowKeysImport": true,
+        "allowExternalWallets": true,
         "createWallet": 0,
-        "NDEF": [],
+        "NDEF": [
+                {
+                    "type": "URI",
+                    "value": "https://tangem.com/ndef/DD000000"
+                },
+                {
+                    "type": "AAR",
+                    "value": "com.tangem.wallet"
+                }
+        ],
         "walletsCount": 10,
         "securityDelay": 5000,
         "requireBackup": true,
         "cardData": {
-            "date": "2026-01-01",
-            "batch": "FFFA"
+            "date": "2026-06-05",
+            "batch": "DD000000"
         }
     }
     """

@@ -18,7 +18,7 @@ internal object CardSettingsMaskBuilderV8 {
         builder.addIf(config.disableFiles, Card.SettingsMask.Code.DisableFiles)
         builder.addIf(config.allowHDWallets, Card.SettingsMask.Code.AllowHDWallets)
         builder.addIf(config.allowBackup, Card.SettingsMask.Code.AllowBackup)
-        builder.addIf(config.allowKeysImport, Card.SettingsMask.Code.AllowKeysImport)
+        builder.addIf(config.allowExternalWallets, Card.SettingsMask.Code.AllowKeysImport)
         builder.addIf(config.requireBackup, Card.SettingsMask.Code.RequireBackup)
 
         return builder.build()

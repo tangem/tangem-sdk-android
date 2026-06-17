@@ -101,20 +101,20 @@ class CardIdBuilderTest {
     }
 
     @Test
-    fun invalidSeriesLength1ReturnsNull() {
-        val cardId = CardIdBuilder.createCardId(series = "C", startNumber = 1)
-        assertThat(cardId).isNull()
+    fun oneCharSeriesStartNumber0() {
+        val cardId = CardIdBuilder.createCardId(series = "A", startNumber = 0)
+        assertThat(cardId).isEqualTo("A000000000000000")
     }
 
     @Test
-    fun invalidSeriesLength3ReturnsNull() {
-        val cardId = CardIdBuilder.createCardId(series = "CB7", startNumber = 1)
-        assertThat(cardId).isNull()
+    fun eightCharSeriesStartNumber5() {
+        val cardId = CardIdBuilder.createCardId(series = "DD000000", startNumber = 5)
+        assertThat(cardId).isEqualTo("DD00000000000050")
     }
 
     @Test
-    fun invalidSeriesLength5ReturnsNull() {
-        val cardId = CardIdBuilder.createCardId(series = "CB790", startNumber = 1)
+    fun tooLongSeriesReturnsNull() {
+        val cardId = CardIdBuilder.createCardId(series = "AAAAAAAAAAAAAAA", startNumber = 0)
         assertThat(cardId).isNull()
     }
 
@@ -271,6 +271,79 @@ class CardIdBuilderTest {
         )
         assertThat(cardId).isNotNull()
         assertThat(cardId!!.substring(4, 15)).isEqualTo("00000000105")
+    }
+
+    @Test
+    fun formattedCardIdAllN8CharSeries() {
+        val cardId = CardIdBuilder.createCardId(series = "DD000000", startNumber = 0, numberFormat = "NNNNNNN")
+        assertThat(cardId).isEqualTo("DD00000000000001")
+    }
+
+    @Test
+    fun formattedCardIdAllN8CharSeriesWithCardNumber() {
+        val cardId = CardIdBuilder.createCardId(
+            series = "DD000000",
+            startNumber = 100,
+            cardNumber = 5,
+            numberFormat = "NNNNNNN",
+        )
+        assertThat(cardId).isEqualTo("DD00000000001058")
+    }
+
+    @Test
+    fun formattedCardId3CharSeries() {
+        val cardId = CardIdBuilder.createCardId(series = "AAA", startNumber = 0, numberFormat = "NNNNNNNNNNNN")
+        assertThat(cardId).isEqualTo("AAA0000000000000")
+    }
+
+    @Test
+    fun formattedCardIdInvalidSeriesCharsReturnsNull() {
+        val cardId = CardIdBuilder.createCardId(series = "ZZZZ", startNumber = 0, numberFormat = "NNNNNNNNNNN")
+        assertThat(cardId).isNull()
+    }
+
+    // endregion
+
+    // region No Luhn
+
+    @Test
+    fun noLuhnSimplePath8CharSeries() {
+        val cardId = CardIdBuilder.createCardId(series = "DD000000", startNumber = 5, useLuhn = false)
+        assertThat(cardId).isEqualTo("DD00000000000005")
+    }
+
+    @Test
+    fun noLuhnNumberFormat8CharSeries() {
+        val cardId = CardIdBuilder.createCardId(
+            series = "DD000000",
+            startNumber = 0,
+            numberFormat = "NNNNNNNN",
+            useLuhn = false,
+        )
+        assertThat(cardId).isEqualTo("DD00000000000000")
+    }
+
+    @Test
+    fun noLuhnNumberFormatWithCardNumber() {
+        val cardId = CardIdBuilder.createCardId(
+            series = "DD000000",
+            startNumber = 100,
+            cardNumber = 5,
+            numberFormat = "NNNNNNNN",
+            useLuhn = false,
+        )
+        assertThat(cardId).isEqualTo("DD00000000000105")
+    }
+
+    @Test
+    fun noLuhnNumberFormatInvalidLengthReturnsNull() {
+        val cardId = CardIdBuilder.createCardId(
+            series = "DD000000",
+            startNumber = 0,
+            numberFormat = "NNNNNNN",
+            useLuhn = false,
+        )
+        assertThat(cardId).isNull()
     }
 
     // endregion
