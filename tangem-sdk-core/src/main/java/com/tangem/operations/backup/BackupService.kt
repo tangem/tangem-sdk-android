@@ -42,7 +42,7 @@ class BackupService(
     val currentStateAsFlow: StateFlow<State> get() = _currentStateFlow
 
     val canAddBackupCards: Boolean
-        get() = addedBackupCardsCount < MAX_BACKUP_CARDS_COUNT && repo.data.primaryCard?.linkingKey != null
+        get() = addedBackupCardsCount < maxBackupCardsCount() && repo.data.primaryCard?.linkingKey != null
 
     val hasIncompletedBackup: Boolean
         get() = when (currentState) {
@@ -100,7 +100,7 @@ class BackupService(
             callback(CompletionResult.Failure(TangemSdkError.MissingPrimaryCard()))
             return
         }
-        if (handleErrors && addedBackupCardsCount >= MAX_BACKUP_CARDS_COUNT) {
+        if (handleErrors && addedBackupCardsCount >= maxBackupCardsCount()) {
             callback(CompletionResult.Failure(TangemSdkError.TooMuchBackupCards()))
             return
         }
@@ -348,7 +348,7 @@ class BackupService(
 
             if (handleErrors) {
                 if (repo.data.backupCards.isEmpty()) throw TangemSdkError.EmptyBackupCards()
-                if (repo.data.backupCards.size > MAX_BACKUP_CARDS_COUNT) throw TangemSdkError.TooMuchBackupCards()
+                if (repo.data.backupCards.size > maxBackupCardsCount()) throw TangemSdkError.TooMuchBackupCards()
             }
 
             val task = FinalizePrimaryCardTask(
@@ -422,7 +422,7 @@ class BackupService(
 
             val cardIndex = index - 1
 
-            if (handleErrors && repo.data.backupCards.size > MAX_BACKUP_CARDS_COUNT) {
+            if (handleErrors && repo.data.backupCards.size > maxBackupCardsCount()) {
                 throw TangemSdkError.TooMuchBackupCards()
             }
 
@@ -491,6 +491,10 @@ class BackupService(
         backupScope.coroutineContext.cancelChildren()
     }
 
+    private fun maxBackupCardsCount(): Int {
+        return if (sdk.config.extendedBackup) EXTENDED_MAX_BACKUP_CARDS_COUNT else DEFAULT_MAX_BACKUP_CARDS_COUNT
+    }
+
     sealed class State {
         object Preparing : State()
         object FinalizingPrimaryCard : State()
@@ -498,8 +502,9 @@ class BackupService(
         object Finished : State()
     }
 
-    companion object {
-        const val MAX_BACKUP_CARDS_COUNT = 2
+    private companion object {
+        const val DEFAULT_MAX_BACKUP_CARDS_COUNT = 2
+        const val EXTENDED_MAX_BACKUP_CARDS_COUNT = 3
     }
 }
 
