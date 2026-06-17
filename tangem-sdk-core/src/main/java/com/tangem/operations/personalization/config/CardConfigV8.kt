@@ -15,13 +15,13 @@ data class CardConfigV8(
     internal val startNumber: Long,
     internal val count: Int,
     internal val numberFormat: String,
+    internal val useLuhn: Boolean?,
     @Json(name = "PIN")
     internal val pin: String,
 
     internal val securityDelay: Int,
 
     internal val curveID: EllipticCurve?,
-    @Json(name = "SigningMethod")
     internal val signingMethod: SigningMethod?,
     @Json(name = "allowSwapPIN")
     internal val allowSetPIN: Boolean,
@@ -39,7 +39,7 @@ data class CardConfigV8(
     internal val disableFiles: Boolean?,
     internal val allowHDWallets: Boolean?,
     internal val allowBackup: Boolean?,
-    internal val allowKeysImport: Boolean?,
+    internal val allowExternalWallets: Boolean?,
     internal val requireBackup: Boolean?,
     internal val createWallet: Int,
     internal val cardData: CardConfigData,

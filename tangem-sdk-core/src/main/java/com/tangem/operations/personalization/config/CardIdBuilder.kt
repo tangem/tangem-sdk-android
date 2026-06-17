@@ -1,6 +1,6 @@
 package com.tangem.operations.personalization.config
 
-@Suppress("ComplexMethod", "ImplicitDefaultLocale", "MagicNumber")
+@Suppress("ComplexMethod", "ImplicitDefaultLocale", "MagicNumber", "LongParameterList")
 internal object CardIdBuilder {
 
     private const val ALF = "ABCDEF0123456789"
@@ -20,28 +20,39 @@ internal object CardIdBuilder {
             startNumber = config.startNumber,
             cardNumber = cardNumber,
             numberFormat = config.numberFormat,
+            useLuhn = config.useLuhn ?: true,
         )
     }
 
-    fun createCardId(series: String?, startNumber: Long, cardNumber: Long = 0, numberFormat: String = ""): String? {
+    fun createCardId(
+        series: String?,
+        startNumber: Long,
+        cardNumber: Long = 0,
+        numberFormat: String = "",
+        useLuhn: Boolean = true,
+    ): String? {
+        // With Luhn the 16th CID character is the appended check digit, so the body is 15 characters.
+        // Without Luhn the body occupies the entire 16-character CID.
+        val bodyLength = if (useLuhn) 15 else 16
+
         val checkNumber = startNumber < 0 || cardNumber < 0
-        val checkSeries = series == null || !checkSeries(series)
+        val checkSeries = series == null || !checkSeries(series, bodyLength)
         if (checkSeries || checkNumber) {
             return null
         }
 
         return if (numberFormat.isEmpty()) {
-            createSimpleCardId(series, startNumber + cardNumber)
+            createSimpleCardId(series, startNumber + cardNumber, bodyLength, useLuhn)
         } else {
-            createFormattedCardId(series, startNumber, cardNumber, numberFormat)
+            createFormattedCardId(series, startNumber, cardNumber, numberFormat, bodyLength, useLuhn)
         }
     }
 
-    private fun createSimpleCardId(series: String, startNumber: Long): String? {
-        val minDigits = if (series.length == 2) 13 else 11
+    private fun createSimpleCardId(series: String, startNumber: Long, bodyLength: Int, useLuhn: Boolean): String? {
+        val minDigits = bodyLength - series.length
         val tail = startNumber.toString().padStart(minDigits, '0')
         val cardId = series + tail
-        return completeCardId(cardId)
+        return completeCardId(cardId, useLuhn)
     }
 
     private fun createFormattedCardId(
@@ -49,13 +60,15 @@ internal object CardIdBuilder {
         startNumber: Long,
         cardNumber: Long,
         numberFormat: String,
+        bodyLength: Int,
+        useLuhn: Boolean,
     ): String? {
         val letterCondition = fun(char: Char) = char == 'N' || char == 'R' || ALF.contains(char)
         if (numberFormat.isNotEmpty() && !numberFormat.all { letterCondition(it) }) {
             return null
         }
 
-        val tailLength = 15 - series.length
+        val tailLength = bodyLength - series.length
         if (numberFormat.length != tailLength) return null
 
         val actualNumber = startNumber + cardNumber
@@ -75,12 +88,14 @@ internal object CardIdBuilder {
             }
         }.reversed().joinToString("")
 
-        return completeCardId(series + tail)
+        return completeCardId(series + tail, useLuhn)
     }
 
-    private fun completeCardId(cardId: String): String? {
-        if (cardId.length != 15) return null
+    private fun completeCardId(cardId: String, useLuhn: Boolean): String? {
+        if (cardId.length != (if (useLuhn) 15 else 16)) return null
         if (ALF.indexOf(cardId[0]) == -1 || ALF.indexOf(cardId[1]) == -1) return null
+
+        if (!useLuhn) return cardId
 
         val withZero = cardId + "0"
         val length = withZero.length
@@ -95,8 +110,9 @@ internal object CardIdBuilder {
         return cardId + luhn.toString()
     }
 
-    private fun checkSeries(series: String): Boolean {
-        if (series.length != 2 && series.length != 4) return false
+    private fun checkSeries(series: String, bodyLength: Int): Boolean {
+        // The series must leave room for at least one number digit in the CID body
+        if (series.length !in 1 until bodyLength) return false
         return series.all { ALF.contains(it) }
     }
 }
