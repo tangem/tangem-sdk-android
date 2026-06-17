@@ -83,6 +83,11 @@ class Config(
 
     var handleHealth: Boolean = false,
 
+    /**
+     * Enables 4-card backup (1 primary + 3 backup cards) for COS v8+
+     */
+    var extendedBackup: Boolean = false,
+
     var tangemApiBaseUrl: String = "",
 ) {
 
