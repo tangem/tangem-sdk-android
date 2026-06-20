@@ -141,6 +141,12 @@
                         android:layout_height="wrap_content"
                         android:text="Personalize 2 backup card" />
 
+                    <Button
+                        android:id="@+id/btnPersonalizeBackup3V8"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Personalize 3 backup card" />
+
                 </LinearLayout>
 
             </FrameLayout>
