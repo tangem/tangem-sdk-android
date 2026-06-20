@@ -156,6 +156,20 @@ class CommandListFragment : BaseFragment() {
             attest(mode)
         }
         binding.attestationView.btnAttestCardKey.setOnClickListener { attestCardKey() }
+        binding.attestationView.etAttestWalletKeyPath.setAdapter(
+            ArrayAdapter(
+                view.context,
+                android.R.layout.simple_dropdown_item_1line,
+                listOf(
+                    "m/0/1",
+                    "m/0'/1'/2",
+                    "m/44'/0'/0'/1/0",
+                ),
+            ),
+        )
+        binding.attestationView.btnAttestWalletKey.setOnClickListener {
+            attestWalletKey(binding.attestationView.etAttestWalletKeyPath.text?.toString())
+        }
 
         val adapter = ArrayAdapter(
             view.context,
