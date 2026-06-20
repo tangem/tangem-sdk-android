@@ -40,6 +40,7 @@ import com.tangem.operations.GetEntropyMode
 import com.tangem.operations.PreflightReadMode
 import com.tangem.operations.PreflightReadTask
 import com.tangem.operations.attestation.AttestCardKeyCommand
+import com.tangem.operations.attestation.AttestWalletKeyTask
 import com.tangem.operations.attestation.AttestationTask
 import com.tangem.operations.files.FileHashHelper
 import com.tangem.operations.files.FileToWrite
@@ -165,6 +166,26 @@ abstract class BaseFragment : Fragment() {
 
     protected fun attestCardKey() {
         val command = AttestCardKeyCommand(AttestCardKeyCommand.Mode.Full)
+        sdk.startSessionWithRunnable(command, card?.cardId, initialMessage) { handleResult(it) }
+    }
+
+    protected fun attestWalletKey(attestDerivationPath: String?) {
+        val walletPublicKey = selectedWallet?.publicKey.guard {
+            showToast("Wallet publicKey required. Scan your card before proceeding")
+            return
+        }
+        val path = if (attestDerivationPath.isNullOrBlank()) {
+            null
+        } else {
+            try {
+                DerivationPath(attestDerivationPath)
+            } catch (_: Exception) {
+                showToast("Failed to parse hd path")
+                return
+            }
+        }
+
+        val command = AttestWalletKeyTask(publicKey = walletPublicKey, derivationPath = path)
         sdk.startSessionWithRunnable(command, card?.cardId, initialMessage) { handleResult(it) }
     }
 
