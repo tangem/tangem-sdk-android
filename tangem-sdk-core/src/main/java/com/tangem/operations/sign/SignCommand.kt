@@ -182,17 +182,15 @@ internal class SignCommand(
         val flattedHashes = chunk.hashes.map { it.data }.reduce { arr1, arr2 -> arr1 + arr2 }
 
         val tlvBuilder = createTlvBuilder(environment.legacyMode)
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
         tlvBuilder.append(TlvTag.TransactionOutHashSize, hashSizeData)
         tlvBuilder.append(TlvTag.TransactionOutHash, flattedHashes)
-        tlvBuilder.append(TlvTag.Cvc, environment.cvc)
         // Wallet index works only on COS v. 4.0 and higher. For previous version index will be ignored
         tlvBuilder.append(TlvTag.WalletIndex, walletIndex)
         if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
             tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
         }
         if (shouldAddPin(environment.passcode, card.firmwareVersion)) {
-            tlvBuilder.append(TlvTag.Pin2, environment.accessCode.value)
+            tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
         }
         if (card.firmwareVersion < FirmwareVersion.v8) {
             tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
