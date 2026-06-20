@@ -24,8 +24,8 @@ data class UserSettings(
         get() {
             val builder = MaskBuilder()
             if (!isUserCodeRecoveryAllowed) builder.add(UserSettingsMask.Code.ForbidResetPIN)
-            if (isPINRequired) builder.add(UserSettingsMask.Code.ForbidResetPIN)
-            if (isNDEFDisabled) builder.add(UserSettingsMask.Code.ForbidResetPIN)
+            if (isPINRequired) builder.add(UserSettingsMask.Code.RequirePin)
+            if (isNDEFDisabled) builder.add(UserSettingsMask.Code.DisableNFC)
             return builder.build()
         }
 
