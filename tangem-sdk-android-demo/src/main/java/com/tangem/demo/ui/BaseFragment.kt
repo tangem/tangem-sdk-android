@@ -2,6 +2,7 @@ package com.tangem.demo.ui
 
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -211,6 +212,7 @@ abstract class BaseFragment : Fragment() {
             showToast("Wallet not found")
             return
         }
+        Log.e("test---", "pubKey: " + publicKey.toHexString())
         val path = createDerivationPath()
         if (!derivationPath.isNullOrBlank() && path == null) {
             showToast("Failed to parse hd path")
