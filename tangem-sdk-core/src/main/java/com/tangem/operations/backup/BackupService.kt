@@ -502,7 +502,7 @@ class BackupService(
         object Finished : State()
     }
 
-    private companion object {
+    companion object {
         const val DEFAULT_MAX_BACKUP_CARDS_COUNT = 2
         const val EXTENDED_MAX_BACKUP_CARDS_COUNT = 3
     }

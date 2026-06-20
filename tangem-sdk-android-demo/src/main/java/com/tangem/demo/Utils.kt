@@ -240,7 +240,7 @@ object Backup {
         "series": "DD000000",
         "startNumber": 0,
         "count": 100,
-        "numberFormat": "88000000001",
+        "numberFormat": "0000001",
         "PIN": "000000",
         "signingMethod": 0,
         "allowSwapPIN": false,
@@ -282,7 +282,7 @@ object Backup {
         "series": "DD000000",
         "startNumber": 0,
         "count": 100,
-        "numberFormat": "88000000002",
+        "numberFormat": "0000002",
         "PIN": "000000",
         "curveID": "secp256k1",
         "signingMethod": 0,
@@ -325,7 +325,50 @@ object Backup {
         "series": "DD000000",
         "startNumber": 0,
         "count": 100,
-        "numberFormat": "88000000003",
+        "numberFormat": "0000003",
+        "PIN": "000000",
+        "curveID": "secp256k1",
+        "signingMethod": 0,
+        "allowSwapPIN": false,
+        "useActivation": false,
+        "useNDEF": true,
+        "useBlock": true,
+        "forbidPurgeWallet": false,
+        "forbidDefaultPIN": true,
+        "disableFiles": false,
+        "allowHDWallets": true,
+        "allowBackup": true,
+        "allowExternalWallets": true,
+        "createWallet": 0,
+        "NDEF": [
+                {
+                    "type": "URI",
+                    "value": "https://tangem.com/ndef/DD000000"
+                },
+                {
+                    "type": "AAR",
+                    "value": "com.tangem.wallet"
+                }
+        ],
+        "walletsCount": 10,
+        "securityDelay": 5000,
+        "requireBackup": true,
+        "cardData": {
+            "date": "2026-06-05",
+            "batch": "DD000000"
+        }
+    }
+    """
+
+    private const val configJsonBackup3V8 =
+        """
+     {
+        "releaseVersion": false,
+        "issuerName": "TANGEM SDK",
+        "series": "DD000000",
+        "startNumber": 0,
+        "count": 100,
+        "numberFormat": "0000004",
         "PIN": "000000",
         "curveID": "secp256k1",
         "signingMethod": 0,
@@ -371,4 +414,6 @@ object Backup {
     fun backup1ConfigV8(): CardConfigV8 = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup1V8)!!
 
     fun backup2ConfigV8(): CardConfigV8 = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup2V8)!!
+
+    fun backup3ConfigV8(): CardConfigV8 = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup3V8)!!
 }
