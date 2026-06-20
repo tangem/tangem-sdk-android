@@ -60,7 +60,7 @@ class PurgeWalletCommand(
             tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
         }
         if (shouldAddPin(environment.passcode, card.firmwareVersion)) {
-            tlvBuilder.append(TlvTag.Pin2, environment.accessCode.value)
+            tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
         }
         if (card.firmwareVersion < FirmwareVersion.v8) {
             tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)

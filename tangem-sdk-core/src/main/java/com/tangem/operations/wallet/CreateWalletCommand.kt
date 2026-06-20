@@ -126,7 +126,7 @@ internal class CreateWalletCommand @Throws constructor(
             tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
         }
         if (shouldAddPin(environment.passcode, card.firmwareVersion)) {
-            tlvBuilder.append(TlvTag.Pin2, environment.accessCode.value)
+            tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
         }
         if (card.firmwareVersion < FirmwareVersion.v8) {
             tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
@@ -148,7 +148,9 @@ internal class CreateWalletCommand @Throws constructor(
 
         if (privateKey != null) {
             tlvBuilder.append(TlvTag.WalletPrivateKey, privateKey.privateKey)
-            tlvBuilder.append(TlvTag.WalletHDChain, privateKey.chainCode)
+            if (privateKey.chainCode.isNotEmpty()) {
+                tlvBuilder.append(TlvTag.WalletHDChain, privateKey.chainCode)
+            }
         }
 
         return CommandApdu(Instruction.CreateWallet, tlvBuilder.serialize())
@@ -167,7 +169,7 @@ internal class CreateWalletCommand @Throws constructor(
                 // We don't have a wallet response so we use to create it ourselves
                 makeWalletLegacy(
                     decoder,
-                    decoder.decodeOptional(TlvTag.WalletIndex) ?: walletIndex,
+                    decoder.decode(TlvTag.WalletIndex),
                     null, // deprecated
                     false, // We don't have a wallet response so we use to create it ourselves
                 )
