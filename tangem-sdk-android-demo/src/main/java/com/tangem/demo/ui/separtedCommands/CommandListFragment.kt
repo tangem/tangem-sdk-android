@@ -138,6 +138,7 @@ class CommandListFragment : BaseFragment() {
         binding.backupView.btnPersonalizePrimaryV8.setOnClickListener { personalize(Backup.primaryCardConfigV8()) }
         binding.backupView.btnPersonalizeBackup1V8.setOnClickListener { personalize(Backup.backup1ConfigV8()) }
         binding.backupView.btnPersonalizeBackup2V8.setOnClickListener { personalize(Backup.backup2ConfigV8()) }
+        binding.backupView.btnPersonalizeBackup3V8.setOnClickListener { personalize(Backup.backup3ConfigV8()) }
         binding.backupView.btnDepersonalize.setOnClickListener { depersonalize() }
 
         binding.backupView.btnStartBackup.setOnClickListener {
