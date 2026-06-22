@@ -7,6 +7,7 @@ import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.apdu.StatusWord
 import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.CardSession
+import com.tangem.common.core.CardSessionEncryption
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
@@ -15,6 +16,8 @@ import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
 
 class SetUserCodeCommand private constructor() : Command<SuccessResponse>() {
+
+    override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.SECURE_CHANNEL_WITH_PIN
 
     internal var shouldRestrictDefaultCodes = true
 
