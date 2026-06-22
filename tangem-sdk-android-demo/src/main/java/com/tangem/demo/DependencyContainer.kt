@@ -42,6 +42,7 @@ class DependencyContainer(context: Context) {
                 DerivationPath(rawPath = "m/44/1"),
             ),
         )
+        tangemApiBaseUrl = "https://api.tangem.org/"
     }
 
     val logger: TangemSdkLogger = TangemSdk.createLogger(LogFormat.StairsFormatter())
