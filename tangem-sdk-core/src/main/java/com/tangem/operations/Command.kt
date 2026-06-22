@@ -253,9 +253,10 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                                             }
                                             val totalSd = session.environment.currentSecurityDelay!!
                                             if (totalSd > 0) {
+                                                val sdMs = (securityDelayResponse.remainingSeconds
+                                                    * CENTISECONDS_IN_SECOND).toInt()
                                                 session.viewDelegate.onSecurityDelay(
-                                                    ms = (securityDelayResponse.remainingSeconds * CENTISECONDS_IN_SECOND)
-                                                        .toInt(),
+                                                    ms = sdMs,
                                                     totalDurationSeconds = totalSd.toInt(),
                                                     productType = session.environment.config.productType,
                                                 )

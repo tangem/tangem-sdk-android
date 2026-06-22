@@ -69,6 +69,7 @@ object Personalization {
     fun acquirer(): Acquirer = MoshiJsonConverter.INSTANCE.fromJson(acquirerJson)!!
 }
 
+@Suppress("LargeClass")
 object Backup {
 
     private const val configJsonPrimary =
