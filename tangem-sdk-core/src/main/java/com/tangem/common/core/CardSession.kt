@@ -317,7 +317,7 @@ class CardSession(
             }
             requestUserCodeIfNeeded(
                 type = codeType,
-                isFirstAttempt = true,
+                isFirstAttempt = isEnterCodeFirstAttempt(codeType),
                 showWelcomeBackWarning = false,
             ) { userCodeResult ->
                 userCodeResult
@@ -564,11 +564,12 @@ class CardSession(
             // Request Access Code as early as possible
             if (needsAuthorizationWithAccessCode && environment.accessCode.isDefault()) {
                 Log.session { "Access code is needed, request early" }
+                val isFirstAttempt = isEnterCodeFirstAttempt(UserCodeType.AccessCode)
                 environment.accessCode = UserCode(UserCodeType.AccessCode, null)
                 pause()
                 requestUserCodeIfNeeded(
                     type = UserCodeType.AccessCode,
-                    isFirstAttempt = true,
+                    isFirstAttempt = isFirstAttempt,
                     showWelcomeBackWarning = false,
                 ) { result ->
                     when (result) {
@@ -777,16 +778,8 @@ class CardSession(
     // MARK: - Wrong user code handling
 
     fun handleWrongUserCode(type: UserCodeType, callback: CompletionCallback<Unit>) {
-        val sdkError = TangemSdkError.from(type, environment)
-
-        when (sdkError) {
-            is TangemSdkError.AccessCodeRequired, is TangemSdkError.PasscodeRequired -> {
-                pause()
-                viewDelegate.setMessage(Message(body = sdkError.customMessage))
-            }
-            else -> pause()
-        }
-
+        pause()
+        val isFirstAttempt = isEnterCodeFirstAttempt(type)
         when (type) {
             UserCodeType.AccessCode -> environment.accessCode = UserCode(UserCodeType.AccessCode, null)
             UserCodeType.Passcode -> environment.passcode = UserCode(UserCodeType.Passcode, null)
@@ -794,7 +787,7 @@ class CardSession(
 
         requestUserCodeIfNeeded(
             type = type,
-            isFirstAttempt = false,
+            isFirstAttempt = isFirstAttempt,
             showWelcomeBackWarning = false,
         ) { result ->
             when (result) {
@@ -1029,6 +1022,13 @@ class CardSession(
             userCode?.type == UserCodeType.Passcode && card.isPasscodeSet == true -> {
                 environment.passcode = userCode
             }
+        }
+    }
+
+    private fun isEnterCodeFirstAttempt(type: UserCodeType): Boolean {
+        return when (type) {
+            UserCodeType.AccessCode -> environment.accessCode.value == null || environment.accessCode.isDefault()
+            UserCodeType.Passcode -> environment.passcode.value == null || environment.passcode.isDefault()
         }
     }
 
