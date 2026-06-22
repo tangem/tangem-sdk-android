@@ -10,6 +10,7 @@ import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.card.UserSettings
 import com.tangem.common.card.UserSettingsMask
 import com.tangem.common.core.CardSession
+import com.tangem.common.core.CardSessionEncryption
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
@@ -34,6 +35,8 @@ class SetUserSettingsCommandResponse(
 ) : CommandResponse
 
 class SetUserSettingsCommand(private val settings: UserSettings) : Command<SetUserSettingsCommandResponse>() {
+
+    override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.SECURE_CHANNEL_WITH_PIN
 
     override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.ReadCardOnly
 
