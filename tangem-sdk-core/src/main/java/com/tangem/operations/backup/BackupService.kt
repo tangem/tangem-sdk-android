@@ -170,7 +170,7 @@ class BackupService(
             }
         }
 
-        if (currentState != State.Preparing || currentState != State.FinalizingPrimaryCard) {
+        if (currentState != State.Preparing && currentState != State.FinalizingPrimaryCard) {
             return CompletionResult.Failure(TangemSdkError.PasscodeCannotBeChanged())
         }
         repo.data = repo.data.copy(passcode = code.calculateSha256())
@@ -492,7 +492,16 @@ class BackupService(
     }
 
     private fun maxBackupCardsCount(): Int {
-        return if (sdk.config.extendedBackup) EXTENDED_MAX_BACKUP_CARDS_COUNT else DEFAULT_MAX_BACKUP_CARDS_COUNT
+        if (!sdk.config.extendedBackup) {
+            return DEFAULT_MAX_BACKUP_CARDS_COUNT
+        }
+
+        val firmwareVersion = repo.data.primaryCard?.firmwareVersion
+        if (firmwareVersion != null && firmwareVersion >= FirmwareVersion.v8) {
+            return V8_MAX_BACKUP_CARDS_COUNT
+        }
+
+        return DEFAULT_MAX_BACKUP_CARDS_COUNT
     }
 
     sealed class State {
@@ -504,7 +513,7 @@ class BackupService(
 
     companion object {
         const val DEFAULT_MAX_BACKUP_CARDS_COUNT = 2
-        const val EXTENDED_MAX_BACKUP_CARDS_COUNT = 3
+        const val V8_MAX_BACKUP_CARDS_COUNT = 3
     }
 }
 
