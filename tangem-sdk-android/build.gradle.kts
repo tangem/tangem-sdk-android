@@ -7,7 +7,7 @@ apply(from = "$rootDir/upload-github.gradle.kts")
 
 android {
     namespace = "com.tangem.sdk"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
