@@ -43,6 +43,11 @@ class SecureChannelSession(cardId: String) {
     }
 
     fun incrementPacketCounter() {
+        if (accessLevel.isPublic()) {
+            // Do not increment the counter until the secure channel is established
+            return
+        }
+
         packetCounter += 1
     }
 
