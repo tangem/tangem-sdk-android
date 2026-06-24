@@ -308,6 +308,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                                         callback(CompletionResult.Failure(TangemSdkError.AccessDenied()))
                                     }
                                     else -> {
+                                        session.secureChannelSession?.incrementPacketCounter()
                                         val error = responseApdu.statusWord.toTangemSdkError()
                                         if (error != null) {
                                             callback(CompletionResult.Failure(error))
