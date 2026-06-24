@@ -194,7 +194,6 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                 }
                 is CompletionResult.Success -> {
                     session.releaseTag()
-                    session.secureChannelSession?.incrementPacketCounter()
                     // Should be incremented only for success responses. Do not increment on security delay responses.
                     session.secureChannelSession?.packetCounter?.let {
                         Log.session { "Current packet counter is $it" }
@@ -225,6 +224,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                         when (result) {
                             is CompletionResult.Success -> {
                                 val responseApdu = result.data
+                                session.secureChannelSession?.incrementPacketCounter()
 
                                 when (responseApdu.statusWord) {
                                     StatusWord.ProcessCompleted,
@@ -308,7 +308,6 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                                         callback(CompletionResult.Failure(TangemSdkError.AccessDenied()))
                                     }
                                     else -> {
-                                        session.secureChannelSession?.incrementPacketCounter()
                                         val error = responseApdu.statusWord.toTangemSdkError()
                                         if (error != null) {
                                             callback(CompletionResult.Failure(error))
