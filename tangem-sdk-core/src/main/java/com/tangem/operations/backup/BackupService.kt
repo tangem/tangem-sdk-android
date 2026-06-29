@@ -434,6 +434,11 @@ class BackupService(
                 throw TangemSdkError.NoBackupDataForCard()
             }
 
+            // For Wallet 3, the default derivations must be performed at the final step of the backup process.
+            val performDerivations = backupCard.firmwareVersion != null &&
+                backupCard.firmwareVersion >= FirmwareVersion.v8 &&
+                cardIndex == backupCards.size - 1
+
             val task = FinalizeBackupCardTask(
                 primaryCard = primaryCard,
                 backupCards = backupCards,
@@ -441,6 +446,7 @@ class BackupService(
                 attestSignature = attestSignature,
                 accessCode = accessCode,
                 passcode = passcode,
+                performDerivations = performDerivations,
             )
 
             val message = if (sdk.config.productType == ProductType.RING) {

@@ -2,11 +2,14 @@ package com.tangem.operations.backup
 
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.Card
+import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.CardSession
 import com.tangem.common.core.CardSessionRunnable
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.guard
+import com.tangem.common.extensions.toMapKey
+import com.tangem.operations.derivation.DeriveMultipleWalletPublicKeysTask
 import com.tangem.operations.read.ReadWalletsListCommand
 
 class FinalizeBackupCardTask(
@@ -16,6 +19,7 @@ class FinalizeBackupCardTask(
     private val attestSignature: ByteArray,
     private val accessCode: ByteArray,
     private val passcode: ByteArray,
+    private val performDerivations: Boolean,
 ) : CardSessionRunnable<Card> {
 
     override val allowsRequestAccessCodeFromRepository: Boolean
@@ -83,8 +87,58 @@ class FinalizeBackupCardTask(
     private fun readWallets(session: CardSession, callback: CompletionCallback<Card>) {
         ReadWalletsListCommand().run(session) { result ->
             when (result) {
-                is CompletionResult.Success ->
-                    callback(CompletionResult.Success(session.environment.card!!))
+                is CompletionResult.Success -> deriveKeysIfNeeded(session, callback)
+
+                is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+            }
+        }
+    }
+
+    private fun deriveKeysIfNeeded(session: CardSession, callback: CompletionCallback<Card>) {
+        val card = session.environment.card.guard {
+            callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
+            return
+        }
+
+        if (!performDerivations) {
+            callback(CompletionResult.Success(card))
+            return
+        }
+
+        if (card.assertWalletsAccess() != null) {
+            callback(CompletionResult.Success(card))
+            return
+        }
+
+        val defaultPaths = session.environment.config.defaultDerivationPaths
+
+        if (card.firmwareVersion < FirmwareVersion.HDWalletAvailable ||
+            !card.settings.isHDWalletAllowed || defaultPaths.isEmpty()
+        ) {
+            callback(CompletionResult.Success(card))
+            return
+        }
+
+        val derivations = card.wallets.mapNotNull { wallet ->
+            val paths = defaultPaths[wallet.curve]
+            val key = wallet.publicKey ?: return@mapNotNull null
+            if (!paths.isNullOrEmpty()) key.toMapKey() to paths else null
+        }.toMap()
+
+        if (derivations.isEmpty()) {
+            callback(CompletionResult.Success(card))
+            return
+        }
+
+        DeriveMultipleWalletPublicKeysTask(derivations).run(session) { result ->
+            when (result) {
+                is CompletionResult.Success -> {
+                    val derivedCard = session.environment.card.guard {
+                        callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
+                        return@run
+                    }
+                    callback(CompletionResult.Success(derivedCard))
+                }
 
                 is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
             }
