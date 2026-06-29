@@ -744,18 +744,18 @@ class CardSession(
         // Some commands handle PIN by themselves
         if (!shouldAskForAccessCode) return false
 
-        // Authorization is mandatory by command
-        if (cardSessionEncryption == CardSessionEncryption.SECURE_CHANNEL_WITH_PIN &&
-            environment.card?.isAccessCodeSet == true
-        ) {
-            return true
+        // Access code is set
+        val card = environment.card
+        if (card != null && card.isAccessCodeSet) {
+            // Authorization is mandatory by command
+            if (cardSessionEncryption == CardSessionEncryption.SECURE_CHANNEL_WITH_PIN) return true
+
+            // Authorization is mandatory by user settings
+            if (card.userSettings.isPINRequired) return true
+
+            // No access tokens, PIN must be entered
+            if (environment.cardAccessTokens == null) return true
         }
-
-        // Authorization is mandatory by user settings
-        if (environment.card?.userSettings?.isPINRequired == true) return true
-
-        // Access code is set, no access tokens → PIN must be entered
-        if (environment.card?.isAccessCodeSet == true && environment.cardAccessTokens == null) return true
 
         return false
     }
