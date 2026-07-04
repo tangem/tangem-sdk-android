@@ -18,6 +18,7 @@ import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.guard
 import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.services.secure.SecureStorage
+import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.operations.CommandResponse
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,6 +66,7 @@ class BackupService(
     val backupCardIds: List<String> get() = repo.data.backupCards.map { it.cardId }
     val primaryCardBatchId: String? get() = repo.data.primaryCard?.batchId
     val backupCardsBatchIds: List<String> get() = repo.data.backupCards.mapNotNull(BackupCard::batchId)
+    val primaryCreatedCurves: List<EllipticCurve> get() = repo.data.primaryCard?.walletCurves ?: emptyList()
 
     /**
      * Perform additional compatibility checks while adding backup cards. Change this setting only if you understand what you do.
@@ -178,13 +180,17 @@ class BackupService(
         return CompletionResult.Success(Unit)
     }
 
-    fun proceedBackup(iconScanRes: Int? = null, callback: CompletionCallback<Card>) {
+    fun proceedBackup(
+        iconScanRes: Int? = null,
+        defaultDerivations: Map<EllipticCurve, List<DerivationPath>> = emptyMap(),
+        callback: CompletionCallback<Card>,
+    ) {
         when (val currentState = currentState) {
             State.FinalizingPrimaryCard ->
                 handleFinalizePrimaryCard(iconScanRes = iconScanRes) { result -> handleCompletion(result, callback) }
 
             is State.FinalizingBackupCard ->
-                handleWriteBackupCard(currentState.index, iconScanRes) { result ->
+                handleWriteBackupCard(currentState.index, iconScanRes, defaultDerivations) { result ->
                     handleCompletion(result, callback)
                 }
 
@@ -404,8 +410,13 @@ class BackupService(
         }
     }
 
-    @Suppress("LongMethod")
-    private fun handleWriteBackupCard(index: Int, iconScanRes: Int?, callback: CompletionCallback<Card>) {
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
+    private fun handleWriteBackupCard(
+        index: Int,
+        iconScanRes: Int?,
+        defaultDerivations: Map<EllipticCurve, List<DerivationPath>>,
+        callback: CompletionCallback<Card>,
+    ) {
         try {
             if (handleErrors && repo.data.accessCode == null && repo.data.passcode == null) {
                 throw TangemSdkError.AccessCodeOrPasscodeRequired()
@@ -434,11 +445,6 @@ class BackupService(
                 throw TangemSdkError.NoBackupDataForCard()
             }
 
-            // For Wallet 3, the default derivations must be performed at the final step of the backup process.
-            val performDerivations = backupCard.firmwareVersion != null &&
-                backupCard.firmwareVersion >= FirmwareVersion.v8 &&
-                cardIndex == backupCards.size - 1
-
             val task = FinalizeBackupCardTask(
                 primaryCard = primaryCard,
                 backupCards = backupCards,
@@ -446,7 +452,7 @@ class BackupService(
                 attestSignature = attestSignature,
                 accessCode = accessCode,
                 passcode = passcode,
-                performDerivations = performDerivations,
+                defaultDerivations = defaultDerivations,
             )
 
             val message = if (sdk.config.productType == ProductType.RING) {

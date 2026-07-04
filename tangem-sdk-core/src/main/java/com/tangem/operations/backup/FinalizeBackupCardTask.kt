@@ -2,6 +2,7 @@ package com.tangem.operations.backup
 
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.Card
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.CardSession
 import com.tangem.common.core.CardSessionRunnable
@@ -9,9 +10,11 @@ import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.guard
 import com.tangem.common.extensions.toMapKey
+import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.operations.derivation.DeriveMultipleWalletPublicKeysTask
 import com.tangem.operations.read.ReadWalletsListCommand
 
+@Suppress("LongParameterList")
 class FinalizeBackupCardTask(
     private val primaryCard: PrimaryCard,
     private val backupCards: List<BackupCard>,
@@ -19,7 +22,7 @@ class FinalizeBackupCardTask(
     private val attestSignature: ByteArray,
     private val accessCode: ByteArray,
     private val passcode: ByteArray,
-    private val performDerivations: Boolean,
+    private val defaultDerivations: Map<EllipticCurve, List<DerivationPath>>,
 ) : CardSessionRunnable<Card> {
 
     override val allowsRequestAccessCodeFromRepository: Boolean
@@ -100,7 +103,7 @@ class FinalizeBackupCardTask(
             return
         }
 
-        if (!performDerivations) {
+        if (defaultDerivations.isEmpty()) {
             callback(CompletionResult.Success(card))
             return
         }
@@ -110,17 +113,15 @@ class FinalizeBackupCardTask(
             return
         }
 
-        val defaultPaths = session.environment.config.defaultDerivationPaths
-
         if (card.firmwareVersion < FirmwareVersion.HDWalletAvailable ||
-            !card.settings.isHDWalletAllowed || defaultPaths.isEmpty()
+            !card.settings.isHDWalletAllowed || defaultDerivations.isEmpty()
         ) {
             callback(CompletionResult.Success(card))
             return
         }
 
         val derivations = card.wallets.mapNotNull { wallet ->
-            val paths = defaultPaths[wallet.curve]
+            val paths = defaultDerivations[wallet.curve]
             val key = wallet.publicKey ?: return@mapNotNull null
             if (!paths.isNullOrEmpty()) key.toMapKey() to paths else null
         }.toMap()
