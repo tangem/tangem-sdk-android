@@ -6,7 +6,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.tangem.TangemSdk
 import com.tangem.common.CompletionResult
+import com.tangem.common.card.EllipticCurve
 import com.tangem.common.card.FirmwareVersion
+import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.demo.DemoApplication
 import com.tangem.demo.asFlow
 import com.tangem.demo.postUi
@@ -108,7 +110,9 @@ class BackupActivity : AppCompatActivity() {
 
         binding.btnStart.setOnClickListener {
             if (backupService.currentState != BackupService.State.Preparing) {
-                backupService.proceedBackup {
+                backupService.proceedBackup(
+                    defaultDerivations = mapOf(EllipticCurve.Secp256k1 to listOf(DerivationPath("m/44'/60'/0'/0/0"))),
+                ) {
                 }
             }
         }

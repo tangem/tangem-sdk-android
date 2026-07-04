@@ -173,8 +173,8 @@ object Secp256k1 {
         if (enc[5 + rLength].toInt() and 0x80 != 0) error("unsupported length encoding 3")
     }
 
-    @Suppress("MagicNumber")
-    private fun toByte64(enc: ByteArray): ByteArray {
+    @Suppress("MagicNumber", "RedundantVisibilityModifierRule")
+    public fun toByte64(enc: ByteArray): ByteArray {
         var rLength = enc[3].toInt()
         var sLength = enc[5 + rLength].toInt()
 
