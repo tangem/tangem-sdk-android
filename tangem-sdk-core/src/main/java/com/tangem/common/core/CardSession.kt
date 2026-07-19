@@ -287,7 +287,7 @@ class CardSession(
         val hasCardAccessTokens = when {
             cardAccessTokensRepository == null -> false
             cardId != null -> cardAccessTokensRepository.hasSavedCardTokens(cardId!!)
-            else -> !cardAccessTokensRepository.hasSavedCardTokens()
+            else -> cardAccessTokensRepository.hasSavedCardTokens()
         }
 
         return hasAccessCodes || hasCardAccessTokens
