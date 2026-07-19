@@ -20,7 +20,7 @@ class CardAccessTokensRepository(
     private val secureStorage: SecureStorage,
 ) {
 
-    private val authenticatedStorage = AuthenticatedStorage(
+    internal val authenticatedStorage = AuthenticatedStorage(
         secureStorage = secureStorage,
         keystoreManager = keystoreManager,
     )
@@ -101,36 +101,51 @@ class CardAccessTokensRepository(
         }
     }
 
-    suspend fun unlock() {
-        tokens.clear()
+    suspend fun unlock() = withContext(Dispatchers.IO) {
         Log.debug { "Start unlocking card access tokens" }
 
-        val fetchedTokens = hashMapOf<String, CardAccessTokens>()
-
-        val savedCardIds = getSavedCardIds()
-        val keys = savedCardIds.map {
-            StorageKey.CardAccessTokens(it).name
-        }
-        val encodedData = authenticatedStorage.get(keys)
-
+        val encodedData = authenticatedStorage.get(getUnlockKeys())
         try {
-            val cardTokens = encodedData.mapKeys { (key, _) -> key.removePrefix(StorageKey.CardAccessTokens.PREFIX) }
-                .mapNotNullValues { (_, value) -> decodeCardAccessTokens(value) }
-            fetchedTokens.putAll(cardTokens)
-        } catch (e: Exception) {
-            Log.debug {
-                "Failed to unlock card access tokens for cardIds: ${
-                    savedCardIds.joinToString(";") { it }
-                }. Error: $e"
-            }
+            proceedUnlock(encodedData)
         } finally {
             encodedData.values.forEach { it.fill(0) }
         }
 
+        Log.debug { "Card access tokens unlocked successfully" }
+    }
+
+    /**
+     * Collects the storage keys that need to be fetched to unlock the saved card access tokens.
+     *
+     * Used together with [proceedUnlock] to allow unlocking several repositories with a single
+     * [AuthenticatedStorage.get] call (see [AccessDataUnlocker]).
+     */
+    internal fun getUnlockKeys(): List<String> {
+        return getSavedCardIds().map { StorageKey.CardAccessTokens(it).name }
+    }
+
+    /**
+     * Decodes and stores in memory the card access tokens contained in the already fetched
+     * [decodedData]. Only the entries that belong to this repository (see
+     * [StorageKey.CardAccessTokens.PREFIX]) are used.
+     */
+    internal fun proceedUnlock(decodedData: Map<String, ByteArray>) {
+        tokens.clear()
+
+        val fetchedTokens = decodedData
+            .filterKeys { it.startsWith(StorageKey.CardAccessTokens.PREFIX) }
+            .mapKeys { (key, _) -> key.removePrefix(StorageKey.CardAccessTokens.PREFIX) }
+            .mapNotNullValues { (cardId, value) ->
+                try {
+                    decodeCardAccessTokens(value)
+                } catch (e: Exception) {
+                    Log.debug { "Failed to unlock card access tokens for cardId: $cardId. Error: $e" }
+                    null
+                }
+            }
+
         saveCardIds(fetchedTokens.keys)
         tokens.putAll(fetchedTokens)
-
-        Log.debug { "Card access tokens unlocked successfully" }
     }
 
     fun lock() {

@@ -1,4 +1,4 @@
-package com.tangem.common.usersCode
+package com.tangem.common.services.secure
 
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
@@ -15,7 +15,6 @@ import com.tangem.common.extensions.mapNotNullValues
 import com.tangem.common.flatMap
 import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.map
-import com.tangem.common.services.secure.SecureStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -24,12 +23,12 @@ class AccessCodeRepository(
     keystoreManager: KeystoreManager,
     private val secureStorage: SecureStorage,
 ) {
-    private val authenticatedStorage = AuthenticatedStorage(
+    internal val authenticatedStorage = AuthenticatedStorage(
         secureStorage = secureStorage,
         keystoreManager = keystoreManager,
     )
 
-    private val moshi: Moshi = MoshiJsonConverter.INSTANCE.moshi
+    private val moshi: Moshi = MoshiJsonConverter.Companion.INSTANCE.moshi
     private val cardsIdsAdapter: JsonAdapter<Set<String>> = moshi.adapter(
         Types.newParameterizedType(Set::class.java, String::class.java),
     )
@@ -55,21 +54,37 @@ class AccessCodeRepository(
 
     suspend fun unlock(): CompletionResult<Unit> = withContext(Dispatchers.IO) {
         catching {
-            val cardsIds = getSavedCardsIds()
-            val userCodes = getSavedUserCodes(cardsIds)
-
-            cardIdToUserCode.clear()
-            cardIdToUserCode.putAll(userCodes)
+            val encodedData = authenticatedStorage.get(getUnlockKeys())
+            try {
+                proceedUnlock(encodedData)
+            } finally {
+                encodedData.values.forEach { it.fill(0) }
+            }
         }
     }
 
-    private suspend fun getSavedUserCodes(cardsIds: Set<String>): Map<String, UserCode> {
-        val keys = cardsIds.map { StorageKey.UserCode(it).name }
-        val encodedData = authenticatedStorage.get(keys)
+    /**
+     * Collects the storage keys that need to be fetched to unlock the saved user codes.
+     *
+     * Used together with [proceedUnlock] to allow unlocking several repositories with a single
+     * [AuthenticatedStorage.get] call (see [AccessDataUnlocker]).
+     */
+    internal suspend fun getUnlockKeys(): List<String> {
+        return getSavedCardsIds().map { StorageKey.UserCode(it).name }
+    }
 
-        return encodedData
+    /**
+     * Decodes and stores in memory the user codes contained in the already fetched [decodedData].
+     * Only the entries that belong to this repository (see [StorageKey.UserCode.PREFIX]) are used.
+     */
+    internal fun proceedUnlock(decodedData: Map<String, ByteArray>) {
+        val userCodes = decodedData
+            .filterKeys { it.startsWith(StorageKey.UserCode.PREFIX) }
             .mapKeys { (key, _) -> key.removePrefix(StorageKey.UserCode.PREFIX) }
             .mapNotNullValues { (_, value) -> value.decodeToUserCode() }
+
+        cardIdToUserCode.clear()
+        cardIdToUserCode.putAll(userCodes)
     }
 
     fun lock() {
@@ -85,7 +100,7 @@ class AccessCodeRepository(
         userCode: UserCode,
         firmwareVersion: FirmwareVersion,
     ): CompletionResult<Unit> {
-        if (firmwareVersion >= FirmwareVersion.v8) {
+        if (firmwareVersion >= FirmwareVersion.Companion.v8) {
             return CompletionResult.Failure(TangemSdkError.NotSupportedFirmwareVersion())
         }
 

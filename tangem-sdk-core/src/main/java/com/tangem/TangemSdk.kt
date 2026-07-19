@@ -16,7 +16,7 @@ import com.tangem.common.nfc.CardReader
 import com.tangem.common.nfc.NfcAvailabilityProvider
 import com.tangem.common.services.secure.CardAccessTokensRepository
 import com.tangem.common.services.secure.SecureStorage
-import com.tangem.common.usersCode.AccessCodeRepository
+import com.tangem.common.services.secure.AccessCodeRepository
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.bip39.DefaultMnemonic
 import com.tangem.crypto.bip39.Wordlist
