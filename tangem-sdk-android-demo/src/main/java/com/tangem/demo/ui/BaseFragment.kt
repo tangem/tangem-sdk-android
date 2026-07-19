@@ -25,7 +25,7 @@ import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.services.secure.CardAccessTokensRepository
 import com.tangem.common.tlv.Tlv
 import com.tangem.common.tlv.TlvDecoder
-import com.tangem.common.usersCode.AccessCodeRepository
+import com.tangem.common.services.secure.AccessCodeRepository
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.bip39.DefaultMnemonic
 import com.tangem.crypto.bip39.Wordlist
