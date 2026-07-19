@@ -14,7 +14,8 @@ import com.tangem.common.json.JSONRPCLinker
 import com.tangem.common.nfc.CardReader
 import com.tangem.common.services.secure.CardAccessTokensRepository
 import com.tangem.common.services.secure.SecureStorage
-import com.tangem.common.usersCode.AccessCodeRepository
+import com.tangem.common.services.secure.AccessCodeRepository
+import com.tangem.common.services.secure.AccessDataUnlocker
 import com.tangem.common.v8.SecureChannelSession
 import com.tangem.crypto.EncryptionHelper
 import com.tangem.crypto.pbkdf2Hash
@@ -61,6 +62,11 @@ class CardSession(
     private val secureStorage: SecureStorage,
     private var initialMessage: ViewDelegateMessage? = null,
 ) {
+
+    val accessDataUnlocker = AccessDataUnlocker(
+        accessCodeRepository = userCodeRepository,
+        cardAccessTokensRepository = cardAccessTokensRepository,
+    )
 
     var cardId: String? = cardId
         private set
@@ -330,10 +336,9 @@ class CardSession(
             is UserCodeRequestPolicy.AlwaysWithBiometrics -> {
                 scope.launch(Dispatchers.Main) {
                     if (shouldRequestBiometrics()) {
-                        cardAccessTokensRepository?.unlock()
-                        userCodeRepository?.unlock()
-                            ?.doOnSuccess { runnable.prepare(this@CardSession, callback) }
-                            ?.doOnFailure { e ->
+                        accessDataUnlocker.unlockAll()
+                            .doOnSuccess { runnable.prepare(this@CardSession, callback) }
+                            .doOnFailure { e ->
                                 Log.error {
                                     """
                                         User codes storage could not be unlocked
