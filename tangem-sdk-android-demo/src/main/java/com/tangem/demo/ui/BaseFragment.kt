@@ -2,7 +2,6 @@ package com.tangem.demo.ui
 
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -22,13 +21,14 @@ import com.tangem.common.core.UserCodeRequestPolicy
 import com.tangem.common.deserialization.WalletDataDeserializer
 import com.tangem.common.extensions.*
 import com.tangem.common.json.MoshiJsonConverter
+import com.tangem.common.services.secure.AccessCodeRepository
 import com.tangem.common.services.secure.CardAccessTokensRepository
 import com.tangem.common.tlv.Tlv
 import com.tangem.common.tlv.TlvDecoder
-import com.tangem.common.services.secure.AccessCodeRepository
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.bip39.DefaultMnemonic
 import com.tangem.crypto.bip39.Wordlist
+import com.tangem.crypto.hdWallet.DerivationNode
 import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.crypto.hdWallet.masterkey.AnyMasterKeyFactory
 import com.tangem.crypto.sign
@@ -219,8 +219,22 @@ abstract class BaseFragment : Fragment() {
         sdk.startSessionWithRunnable(
             runnable = GetEntropyCommand(mode = GetEntropyMode.Deterministic(path)),
             cardId = card.cardId,
-        ) {
-            postUi { handleCommandResult(it) }
+        ) { result ->
+            postUi {
+                when (result) {
+                    is CompletionResult.Success -> {
+                        try {
+                            // 24-words, 256bit
+                            val entropy = result.data.data.copyOf(newSize = 32)
+                            val mnemonic = DefaultMnemonic(entropy, Wordlist.getWordlist())
+                            showDialog(mnemonic.mnemonicComponents.joinToString(separator = " "))
+                        } catch (e: Exception) {
+                            showToast(e.localizedMessage ?: e.toString())
+                        }
+                    }
+                    is CompletionResult.Failure -> handleCommandResult(result)
+                }
+            }
         }
     }
 
@@ -233,7 +247,6 @@ abstract class BaseFragment : Fragment() {
             showToast("Wallet not found")
             return
         }
-        Log.e("test---", "pubKey: " + publicKey.toHexString())
         val path = createDerivationPath()
         if (!derivationPath.isNullOrBlank() && path == null) {
             showToast("Failed to parse hd path")
@@ -299,9 +312,10 @@ abstract class BaseFragment : Fragment() {
             val defaultMnemonic = DefaultMnemonic(mnemonic, Wordlist.getWordlist())
             val factory = AnyMasterKeyFactory(defaultMnemonic, passphrase ?: "")
             val privateKey = factory.makeMasterKey(EllipticCurve.Secp256k1)
+            val bip85MasterKey = privateKey.derivePrivateKey(node = DerivationNode.Hardened(83696968))
             sdk.startSessionWithRunnable(
                 runnable = CreateMasterSecretCommand(
-                    privateKey = privateKey,
+                    privateKey = bip85MasterKey,
                 ),
                 cardId = cardId,
                 initialMessage = initialMessage,

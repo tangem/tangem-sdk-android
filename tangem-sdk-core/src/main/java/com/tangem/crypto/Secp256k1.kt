@@ -113,6 +113,47 @@ object Secp256k1 {
         key
     }
 
+    /**
+     * Computes `(privateKey + tweak) mod n`.
+     * Fails if the tweak is not below the curve order or the result is not a valid private key (ki = 0).
+     */
+    @Suppress("MagicNumber")
+    internal fun tweakAdd(privateKey: ByteArray, tweak: ByteArray): ByteArray {
+        if (privateKey.size != 32 || tweak.size != 32) error("Failed to tweak the private key")
+
+        val order = createECSpec().n
+        val tweakInt = BigInteger(1, tweak)
+
+        // BIP32: parse256(IL) ≥ n
+        if (tweakInt >= order) error("Failed to tweak the private key")
+
+        val result = BigInteger(1, privateKey).add(tweakInt).mod(order)
+
+        // BIP32: ki = 0
+        if (result.signum() == 0) error("Failed to tweak the private key")
+
+        return result.toFixedByteArray(32)
+    }
+
+    /**
+     * Computes `publicKey + tweak * G`.
+     * Fails if the tweak is not below the curve order or the result is the point at infinity.
+     */
+    @Suppress("MagicNumber")
+    internal fun tweakAddPublicKey(publicKey: ByteArray, tweak: ByteArray): ByteArray {
+        if (tweak.size != 32) error("Failed to tweak the public key")
+
+        // BIP32: parse256(IL) ≥ n
+        if (BigInteger(1, tweak) >= createECSpec().n) error("Failed to tweak the public key")
+
+        val point = gMultiplyAndAddPoint(tweak, publicKey)
+
+        // BIP32: Ki is the point at infinity
+        if (point.isInfinity) error("Failed to tweak the public key")
+
+        return point.getEncoded(true)
+    }
+
     internal fun gMultiplyAndAddPoint(key: ByteArray, encodedPoint: ByteArray): ECPoint {
         val ecSpec = createECSpec()
         val multiplied = multiply(key, ecSpec)
@@ -146,9 +187,24 @@ object Secp256k1 {
 
     @Suppress("MagicNumber")
     internal fun isPrivateKeyValid(privateKey: ByteArray): Boolean {
+        // A secp256k1 secret key is exactly 32 bytes
+        if (privateKey.size != 32) return false
+
         val spec = createECSpec()
         val ecPoint = multiply(privateKey, spec)
         return !(ecPoint.isInfinity || BigInteger(privateKey.toHexString(), 16) >= spec.n)
+    }
+
+    private fun BigInteger.toFixedByteArray(size: Int): ByteArray {
+        val bytes = toByteArray()
+        return when {
+            bytes.size == size -> bytes
+            // Drop the leading sign byte produced by BigInteger for positive values
+            bytes.size == size + 1 && bytes[0].toInt() == 0 -> bytes.copyOfRange(1, bytes.size)
+            // Left-pad with zeros to preserve leading zeros
+            bytes.size < size -> ByteArray(size - bytes.size) + bytes
+            else -> error("Value does not fit in $size bytes")
+        }
     }
 
     private fun createECSpec(): ECParameterSpec = ECNamedCurveTable.getParameterSpec("secp256k1")

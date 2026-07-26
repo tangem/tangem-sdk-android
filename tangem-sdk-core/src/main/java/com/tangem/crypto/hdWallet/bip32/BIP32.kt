@@ -36,6 +36,24 @@ object BIP32 {
         return ExtendedPrivateKey(privateKey = iL, chainCode = iR)
     }
 
+    /**
+     * BIP32: in case the derived child key is invalid, one should proceed with the next value for i.
+     */
+    @Throws(HDWalletError::class)
+    fun <Key> deriveWithRetry(index: Long, makeChildKey: (Long) -> Key): Key {
+        var index = index
+
+        while (true) {
+            try {
+                return makeChildKey(index)
+            } catch (e: HDWalletError.InvalidChildKey) {
+                if (index >= Constants.maxIndex) throw e
+
+                index += 1
+            }
+        }
+    }
+
     enum class HMACKey(val rawValue: String) {
         Secp256k1("Bitcoin seed"),
         Secp256r1("Nist256p1 seed"),
@@ -44,6 +62,9 @@ object BIP32 {
 
     object Constants {
         const val hardenedOffset: Long = 2147483648
+
+        /** The maximum derivation index (UInt32.max), used as the retry upper bound. */
+        const val maxIndex: Long = 4294967295
         const val hardenedSymbol: String = "'"
         const val alternativeHardenedSymbol: String = "’"
         const val masterKeySymbol: String = "m"
