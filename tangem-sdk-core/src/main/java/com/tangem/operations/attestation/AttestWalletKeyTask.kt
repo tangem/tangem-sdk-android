@@ -15,7 +15,6 @@ import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.guard
-import com.tangem.common.extensions.toByteArray
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
@@ -227,7 +226,10 @@ class AttestWalletKeyTask(
         // Dynamic verification
         var message = publicKey
         if (response.publicKeySalt != null) message += challenge + response.publicKeySalt
-        if (response.walletStatus != null) message += response.walletStatus.code.toByteArray()
+        // The card signs (and transmits, see TLV TAG_Status length 01) walletStatus as a single
+        // byte, so the verification message must append that one byte — not the 4-byte big-endian
+        // Int.toByteArray() default, which never matches the card signature on COS 6+.
+        if (response.walletStatus != null) message += response.walletStatus.code.toByte()
 
         return CryptoUtils.verify(
             publicKey = card.cardPublicKey,

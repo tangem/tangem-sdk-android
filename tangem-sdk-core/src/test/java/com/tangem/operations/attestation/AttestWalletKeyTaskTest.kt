@@ -12,7 +12,6 @@ import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemError
 import com.tangem.common.core.TangemSdkError
-import com.tangem.common.extensions.toByteArray
 import com.tangem.common.tlv.Tlv
 import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvTag
@@ -216,7 +215,7 @@ internal class AttestWalletKeyTaskTest {
     @Test
     fun verifyCardSignature_validDynamicSignatureWithWalletStatus_returnsTrue() {
         val status = CardWallet.Status.Loaded
-        val message = walletPublicKey + challenge + publicKeySalt + status.code.toByteArray()
+        val message = walletPublicKey + challenge + publicKeySalt + status.code.toByte()
         val response = response(
             walletSignature = byteArrayOf(),
             cardSignature = message.sign(cardPrivateKey, curve),
@@ -234,7 +233,7 @@ internal class AttestWalletKeyTaskTest {
     fun verifyCardSignature_tamperedWalletStatus_returnsFalse() {
         // The signature covers `Loaded`, but the response claims `Empty` — the recomputed message differs,
         // so a swapped status must fail verification.
-        val signedMessage = walletPublicKey + challenge + publicKeySalt + CardWallet.Status.Loaded.code.toByteArray()
+        val signedMessage = walletPublicKey + challenge + publicKeySalt + CardWallet.Status.Loaded.code.toByte()
         val response = response(
             walletSignature = byteArrayOf(),
             cardSignature = signedMessage.sign(cardPrivateKey, curve),
