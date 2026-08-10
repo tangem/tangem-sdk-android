@@ -27,6 +27,7 @@ import com.tangem.common.tlv.Tlv
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.bip39.DefaultMnemonic
+import com.tangem.crypto.bip39.EntropyLength
 import com.tangem.crypto.bip39.Wordlist
 import com.tangem.crypto.hdWallet.DerivationNode
 import com.tangem.crypto.hdWallet.DerivationPath
@@ -216,6 +217,7 @@ abstract class BaseFragment : Fragment() {
             return
         }
 
+        val wordsLength = path.nodes[2].getIndex(false).toInt()
         sdk.startSessionWithRunnable(
             runnable = GetEntropyCommand(mode = GetEntropyMode.Deterministic(path)),
             cardId = card.cardId,
@@ -225,7 +227,8 @@ abstract class BaseFragment : Fragment() {
                     is CompletionResult.Success -> {
                         try {
                             // 24-words, 256bit
-                            val entropy = result.data.data.copyOf(newSize = 32)
+                            val entropySizeBytes = EntropyLength.create(wordsLength).toBytes()
+                            val entropy = result.data.data.copyOf(newSize = entropySizeBytes)
                             val mnemonic = DefaultMnemonic(entropy, Wordlist.getWordlist())
                             showDialog(mnemonic.mnemonicComponents.joinToString(separator = " "))
                         } catch (e: Exception) {
