@@ -129,7 +129,17 @@ class AuthorizeWithAccessTokensCommand : Command<AuthorizeWithAccessTokenModel>(
                     }
                 }
                 is CompletionResult.Failure -> {
-                    callback(CompletionResult.Failure(result.error))
+                    when (result.error) {
+                        // The card has no token state matching the saved tokens (e.g. it was reset
+                        // while the phone kept its copy). Drop the tokens and report them as invalid,
+                        // so that CardSession retries with the security delay flow.
+                        is TangemSdkError.InvalidState, is TangemSdkError.AccessDenied -> {
+                            session.resetAccessTokens()
+                            session.secureChannelSession?.reset()
+                            callback(CompletionResult.Failure(TangemSdkError.InvalidAccessTokens()))
+                        }
+                        else -> callback(CompletionResult.Failure(result.error))
+                    }
                 }
             }
         }

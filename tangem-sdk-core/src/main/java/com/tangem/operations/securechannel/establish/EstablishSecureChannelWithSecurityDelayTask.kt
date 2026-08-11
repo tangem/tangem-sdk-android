@@ -6,6 +6,8 @@ import com.tangem.common.core.CardSession
 import com.tangem.common.core.CardSessionEncryption
 import com.tangem.common.core.CardSessionRunnable
 import com.tangem.common.core.CompletionCallback
+import com.tangem.common.core.TangemError
+import com.tangem.common.core.TangemSdkError
 import com.tangem.common.encryption.EncryptionMode
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.crypto.StrongEncryptionHelper
@@ -16,6 +18,8 @@ import com.tangem.operations.PreflightReadMode
  * Uses security delay-based authorization with card attestation verification.
  */
 class EstablishSecureChannelWithSecurityDelayTask : CardSessionRunnable<Unit> {
+
+    private var handshakeRetryCount = 0
 
     override val cardSessionEncryption: CardSessionEncryption
         get() = CardSessionEncryption.NONE
@@ -63,12 +67,39 @@ class EstablishSecureChannelWithSecurityDelayTask : CardSessionRunnable<Unit> {
                             callback(CompletionResult.Failure(error.toTangemSdkError()))
                         }
                     }
-                    is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+                    is CompletionResult.Failure -> {
+                        if (shouldRestartHandshake(result.error)) {
+                            handshakeRetryCount++
+                            Log.session {
+                                "Card lost handshake state (${result.error})," +
+                                    " restarting secure channel establishment, attempt $handshakeRetryCount"
+                            }
+                            session.secureChannelSession?.reset()
+                            run(session, callback)
+                        } else {
+                            callback(CompletionResult.Failure(result.error))
+                        }
+                    }
                 }
             }
         } catch (error: Throwable) {
             callback(CompletionResult.Failure(error.toTangemSdkError()))
         }
+    }
+
+    /**
+     * If the security delay lasts longer than the platform transceive timeout, the tag is reported as lost
+
+     * The re-sent [OpenSessionWithSecurityDelayCommand] then fails with [TangemSdkError.InvalidState].
+     * The remaining delay persists on the card, so each restart converges to a successful handshake.
+     */
+    private fun shouldRestartHandshake(error: TangemError): Boolean {
+        val isHandshakeStateLost = error is TangemSdkError.InvalidState || error is TangemSdkError.AccessDenied
+        return isHandshakeStateLost && handshakeRetryCount < MAX_HANDSHAKE_RETRIES
+    }
+
+    private companion object {
+        const val MAX_HANDSHAKE_RETRIES = 10
     }
 }
 

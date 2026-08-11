@@ -85,11 +85,15 @@ class OpenSessionWithAccessTokenCommand(
                 }
                 is CompletionResult.Failure -> {
                     when (result.error) {
+                        // The card lost the handshake state (e.g. it was reset by a tag reconnect).
+                        // Report the tokens as invalid, so that CardSession retries the token flow
+                        // from the Authorize step.
                         is TangemSdkError.AccessDenied, is TangemSdkError.InvalidState -> {
                             session.secureChannelSession?.reset()
+                            callback(CompletionResult.Failure(TangemSdkError.InvalidAccessTokens()))
                         }
+                        else -> callback(CompletionResult.Failure(result.error))
                     }
-                    callback(CompletionResult.Failure(result.error))
                 }
             }
         }
