@@ -315,7 +315,7 @@ abstract class BaseFragment : Fragment() {
             val defaultMnemonic = DefaultMnemonic(mnemonic, Wordlist.getWordlist())
             val factory = AnyMasterKeyFactory(defaultMnemonic, passphrase ?: "")
             val privateKey = factory.makeMasterKey(EllipticCurve.Secp256k1)
-            val bip85MasterKey = privateKey.derivePrivateKey(node = DerivationNode.Hardened(83696968))
+            val bip85MasterKey = privateKey.derivePrivateKey(node = DerivationNode.Hardened(index = 83696968))
             sdk.startSessionWithRunnable(
                 runnable = CreateMasterSecretCommand(
                     privateKey = bip85MasterKey,
