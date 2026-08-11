@@ -180,6 +180,19 @@ class AttestationTask(
         }
 
         session.scope.launch(Dispatchers.IO) {
+            // Development (SDK firmware) cards cannot pass online attestation. Route them to the
+            // dev-card warning dialog instead of silently treating them as verified.
+            val isDevelopmentCard = card.firmwareVersion.type == FirmwareVersion.FirmwareType.Sdk
+            if (isDevelopmentCard) {
+                currentAttestationStatus = currentAttestationStatus.copy(
+                    cardKeyAttestation = Attestation.Status.Failed,
+                )
+                launch(Dispatchers.Main) {
+                    processAttestationReport(session, callback)
+                }
+                return@launch
+            }
+
             val attestResult = onlineAttestationService.attestCard(
                 cardId = card.cardId,
                 cardPublicKey = card.cardPublicKey,
