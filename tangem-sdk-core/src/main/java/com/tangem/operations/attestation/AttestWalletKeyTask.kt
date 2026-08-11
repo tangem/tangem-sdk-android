@@ -130,7 +130,6 @@ class AttestWalletKeyTask(
                         val isWalletSignatureValid = verifyWalletSignature(
                             response = checkWalletResponse,
                             wallet = wallet,
-                            walletPublicKey = walletPublicKey,
                         )
                         val isCardSignatureValid = verifyCardSignature(
                             response = checkWalletResponse,
@@ -197,11 +196,7 @@ class AttestWalletKeyTask(
         )
     }
 
-    private fun verifyWalletSignature(
-        response: AttestWalletKeyResponse,
-        wallet: CardWallet,
-        walletPublicKey: ByteArray,
-    ): Boolean {
+    private fun verifyWalletSignature(response: AttestWalletKeyResponse, wallet: CardWallet): Boolean {
         // Impossible case because of precheck
         val currentWalletPublicKey = wallet.publicKey
             ?: throw TangemSdkError.WalletUnavailableBackupRequired()
