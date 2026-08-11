@@ -4,11 +4,9 @@ import com.google.common.truth.Truth.assertThat
 import com.tangem.common.KeyPair
 import com.tangem.common.card.CardWallet
 import com.tangem.common.card.FirmwareVersion
-import com.tangem.common.extensions.toByteArray
 import com.tangem.crypto.CryptoUtils
 import com.tangem.crypto.Secp256k1
 import com.tangem.crypto.generateKeyPair
-import com.tangem.crypto.sign
 import org.junit.Test
 
 /**
@@ -156,7 +154,9 @@ internal class AttestWalletKeyTaskTests {
     @Test
     fun validDynamicSignatureWithWalletStatusIsAccepted() {
         val status = CardWallet.Status.Loaded
-        val signature = sign(walletKeyPair.publicKey + challenge + publicKeySalt + status.code.toByteArray())
+        // The card transmits/signs walletStatus as a single byte (TAG_Status length 01), so the
+        // signed message must append one byte — matching AttestWalletKeyTask.verifyCardSignature.
+        val signature = sign(walletKeyPair.publicKey + challenge + publicKeySalt + byteArrayOf(status.code.toByte()))
 
         val isValid = makeTask(AttestWalletKeyTask.ConfirmationMode.Dynamic).verifyCardSignature(
             response = makeResponse(cardSignature = signature, publicKeySalt = publicKeySalt, walletStatus = status),
@@ -173,7 +173,8 @@ internal class AttestWalletKeyTaskTests {
         // The signature covers `Loaded`, but the response claims `Empty` — the recomputed message
         // differs, so a swapped status must fail verification.
         val signedStatus = CardWallet.Status.Loaded
-        val signature = sign(walletKeyPair.publicKey + challenge + publicKeySalt + signedStatus.code.toByteArray())
+        val signature =
+            sign(walletKeyPair.publicKey + challenge + publicKeySalt + byteArrayOf(signedStatus.code.toByte()))
 
         val isValid = makeTask(AttestWalletKeyTask.ConfirmationMode.Dynamic).verifyCardSignature(
             response = makeResponse(
