@@ -10,6 +10,7 @@ sealed class HDWalletError : Exception() {
     object WrongIndex : HDWalletError()
     object UnsupportedCurve : HDWalletError()
     object InvalidSeed : HDWalletError()
+    object InvalidChildKey : HDWalletError()
 
     override fun toString(): String = this::class.java.simpleName
 }

@@ -21,25 +21,39 @@ import com.tangem.common.core.UserCodeRequestPolicy
 import com.tangem.common.deserialization.WalletDataDeserializer
 import com.tangem.common.extensions.*
 import com.tangem.common.json.MoshiJsonConverter
+import com.tangem.common.services.secure.AccessCodeRepository
+import com.tangem.common.services.secure.CardAccessTokensRepository
 import com.tangem.common.tlv.Tlv
 import com.tangem.common.tlv.TlvDecoder
-import com.tangem.common.usersCode.UserCodeRepository
 import com.tangem.crypto.CryptoUtils
+import com.tangem.crypto.bip39.DefaultMnemonic
+import com.tangem.crypto.bip39.EntropyLength
+import com.tangem.crypto.bip39.Wordlist
+import com.tangem.crypto.hdWallet.DerivationNode
 import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.crypto.hdWallet.masterkey.AnyMasterKeyFactory
 import com.tangem.crypto.sign
 import com.tangem.demo.*
 import com.tangem.demo.ui.extension.copyToClipboard
 import com.tangem.demo.ui.settings.SettingsFragment
+import com.tangem.operations.GetEntropyCommand
+import com.tangem.operations.GetEntropyMode
 import com.tangem.operations.PreflightReadMode
 import com.tangem.operations.PreflightReadTask
 import com.tangem.operations.attestation.AttestCardKeyCommand
+import com.tangem.operations.attestation.AttestWalletKeyTask
 import com.tangem.operations.attestation.AttestationTask
 import com.tangem.operations.files.FileHashHelper
 import com.tangem.operations.files.FileToWrite
 import com.tangem.operations.files.FileVisibility
 import com.tangem.operations.issuerAndUserData.WriteIssuerExtraDataCommand
-import com.tangem.operations.personalization.entities.CardConfig
+import com.tangem.operations.masterSecret.CreateMasterSecretCommand
+import com.tangem.operations.masterSecret.PurgeMasterSecretCommand
+import com.tangem.operations.personalization.config.CardConfig
+import com.tangem.operations.personalization.config.CardConfigV8
 import com.tangem.operations.preflightread.CardIdPreflightReadFilter
+import com.tangem.operations.read.ReadMasterSecretCommand
+import com.tangem.sdk.extensions.getWordlist
 import com.tangem.tangem_demo.R
 import kotlinx.coroutines.runBlocking
 
@@ -72,8 +86,15 @@ abstract class BaseFragment : Fragment() {
     protected var initialMessage: Message? = null
         private set
 
-    private val userCodeRepository: UserCodeRepository by lazy {
-        UserCodeRepository(
+    private val accessCodeRepository: AccessCodeRepository by lazy {
+        AccessCodeRepository(
+            keystoreManager = sdk.keystoreManager,
+            secureStorage = sdk.secureStorage,
+        )
+    }
+
+    private val cardTokenRepository: CardAccessTokensRepository by lazy {
+        CardAccessTokensRepository(
             keystoreManager = sdk.keystoreManager,
             secureStorage = sdk.secureStorage,
         )
@@ -120,6 +141,12 @@ abstract class BaseFragment : Fragment() {
         }
     }
 
+    protected fun personalize(config: CardConfigV8) {
+        sdk.personalizeV8(config, Personalization.issuer()) {
+            handleResult(it)
+        }
+    }
+
     protected fun depersonalize() {
         sdk.depersonalize { handleResult(it) }
     }
@@ -143,6 +170,26 @@ abstract class BaseFragment : Fragment() {
         sdk.startSessionWithRunnable(command, card?.cardId, initialMessage) { handleResult(it) }
     }
 
+    protected fun attestWalletKey(attestDerivationPath: String?) {
+        val walletPublicKey = selectedWallet?.publicKey.guard {
+            showToast("Wallet publicKey required. Scan your card before proceeding")
+            return
+        }
+        val path = if (attestDerivationPath.isNullOrBlank()) {
+            null
+        } else {
+            try {
+                DerivationPath(attestDerivationPath)
+            } catch (_: Exception) {
+                showToast("Failed to parse hd path")
+                return
+            }
+        }
+
+        val command = AttestWalletKeyTask(publicKey = walletPublicKey, derivationPath = path)
+        sdk.startSessionWithRunnable(command, card?.cardId, initialMessage) { handleResult(it) }
+    }
+
     protected fun derivePublicKey() {
         val card = card.guard {
             showToast("CardId required. Scan your card before proceeding")
@@ -158,6 +205,40 @@ abstract class BaseFragment : Fragment() {
         }
 
         sdk.deriveWalletPublicKey(card.cardId, walletPublicKey, path) { handleResult(it) }
+    }
+
+    protected fun deriveEntropy(entropyDerivationPath: String?) {
+        val card = card.guard {
+            showToast("CardId required. Scan your card before proceeding")
+            return
+        }
+        val path = createEntropyDerivationPath(entropyDerivationPath).guard {
+            showToast("Failed to parse hd path")
+            return
+        }
+
+        val wordsLength = path.nodes[2].getIndex(false).toInt()
+        sdk.startSessionWithRunnable(
+            runnable = GetEntropyCommand(mode = GetEntropyMode.Deterministic(path)),
+            cardId = card.cardId,
+        ) { result ->
+            postUi {
+                when (result) {
+                    is CompletionResult.Success -> {
+                        try {
+                            // 24-words, 256bit
+                            val entropySizeBytes = EntropyLength.create(wordsLength).toBytes()
+                            val entropy = result.data.data.copyOf(newSize = entropySizeBytes)
+                            val mnemonic = DefaultMnemonic(entropy, Wordlist.getWordlist())
+                            showDialog(mnemonic.mnemonicComponents.joinToString(separator = " "))
+                        } catch (e: Exception) {
+                            showToast(e.localizedMessage ?: e.toString())
+                        }
+                    }
+                    is CompletionResult.Failure -> handleCommandResult(result)
+                }
+            }
+        }
     }
 
     protected fun signHash(hash: ByteArray) {
@@ -194,7 +275,7 @@ abstract class BaseFragment : Fragment() {
         sdk.sign(hashes, publicKey, cardId, path, initialMessage) { handleResult(it) }
     }
 
-    protected fun createOrImportWallet(curve: EllipticCurve, mnemonic: String? = null) {
+    protected fun createOrImportWallet(curve: EllipticCurve, mnemonic: String? = null, passphrase: String? = null) {
         val cardId = card?.cardId.guard {
             showToast("CardId & walletPublicKey required. Scan your card before proceeding")
             return
@@ -206,6 +287,7 @@ abstract class BaseFragment : Fragment() {
                 curve = curve,
                 cardId = cardId,
                 mnemonic = mnemonic,
+                passphrase = passphrase ?: "",
                 initialMessage = initialMessage,
             ) {
                 handleResult(
@@ -216,16 +298,78 @@ abstract class BaseFragment : Fragment() {
         }
     }
 
+    protected fun createOrImportMasterSecret(mnemonic: String? = null, passphrase: String? = null) {
+        val cardId = card?.cardId.guard {
+            showToast("CardId & walletPublicKey required. Scan your card before proceeding")
+            return
+        }
+        if (mnemonic.isNullOrBlank()) {
+            sdk.startSessionWithRunnable(
+                runnable = CreateMasterSecretCommand(),
+                cardId = cardId,
+                initialMessage = initialMessage,
+                accessCode = null,
+                callback = { handleResult(it, it is CompletionResult.Success) },
+            )
+        } else {
+            val defaultMnemonic = DefaultMnemonic(mnemonic, Wordlist.getWordlist())
+            val factory = AnyMasterKeyFactory(defaultMnemonic, passphrase ?: "")
+            val privateKey = factory.makeMasterKey(EllipticCurve.Secp256k1)
+            val bip85MasterKey = privateKey.derivePrivateKey(node = DerivationNode.Hardened(index = 83696968))
+            sdk.startSessionWithRunnable(
+                runnable = CreateMasterSecretCommand(
+                    privateKey = bip85MasterKey,
+                ),
+                cardId = cardId,
+                initialMessage = initialMessage,
+                accessCode = null,
+                callback = { handleResult(it, it is CompletionResult.Success) },
+            )
+        }
+    }
+
+    protected fun purgeMasterSecret() {
+        val cardId = card?.cardId.guard {
+            showToast("CardId required. Scan your card before proceeding")
+            return
+        }
+        sdk.startSessionWithRunnable(
+            runnable = PurgeMasterSecretCommand(),
+            cardId = cardId,
+            initialMessage = initialMessage,
+            accessCode = null,
+            callback = { handleResult(it, it is CompletionResult.Success) },
+        )
+    }
+
+    protected fun readMasterSecret() {
+        val cardId = card?.cardId.guard {
+            showToast("CardId required. Scan your card before proceeding")
+            return
+        }
+        sdk.startSessionWithRunnable(
+            runnable = ReadMasterSecretCommand(),
+            cardId = cardId,
+            initialMessage = initialMessage,
+            accessCode = null,
+            callback = { handleResult(it, it is CompletionResult.Success) },
+        )
+    }
+
     protected fun purgeWallet() {
         val cardId = card?.cardId.guard {
             showToast("CardId & walletPublicKey required. Scan your card before proceeding")
             return
         }
-        val publicKey = selectedWallet?.publicKey.guard {
-            showToast("Wallet not found")
+        if (selectedWallet == null) {
+            showToast("No wallet selected")
             return
         }
-        sdk.purgeWallet(publicKey, cardId, initialMessage) { handleResult(it, it is CompletionResult.Success) }
+        selectedWallet?.let { selectedWallet ->
+            sdk.purgeWallet(selectedWallet.index, cardId, initialMessage) {
+                handleResult(it, it is CompletionResult.Success)
+            }
+        }
     }
 
     protected fun purgeAllWallet() {
@@ -496,28 +640,57 @@ abstract class BaseFragment : Fragment() {
     protected fun hasSavedUserCodeForScannedCard(): Boolean {
         return card?.let {
             runBlocking {
-                userCodeRepository.hasSavedUserCode(it.cardId)
+                accessCodeRepository.hasSavedUserCode(it.cardId)
             }
         } == true
     }
 
     protected fun hasSavedUserCodes(): Boolean {
         return runBlocking {
-            userCodeRepository.hasSavedUserCodes()
+            accessCodeRepository.hasSavedUserCodes()
         }
     }
 
     protected fun deleteUserCodeForScannedCard() {
         card?.let {
             runBlocking {
-                userCodeRepository.delete(setOf(it.cardId))
+                accessCodeRepository.delete(setOf(it.cardId))
             }
         }
     }
 
     protected fun clearUserCodes() {
         runBlocking {
-            userCodeRepository.clear()
+            accessCodeRepository.clear()
+        }
+    }
+
+    protected fun hasSavedCardTokensForScannedCard(): Boolean {
+        return card?.let {
+            runBlocking {
+                cardTokenRepository.hasSavedCardTokens(it.cardId)
+            }
+        }
+            ?: false
+    }
+
+    protected fun hasSavedCardTokens(): Boolean {
+        return runBlocking {
+            cardTokenRepository.hasSavedCardTokens()
+        }
+    }
+
+    protected fun deleteCardTokensForScannedCard() {
+        card?.let {
+            runBlocking {
+                cardTokenRepository.deleteTokens(setOf(it.cardId))
+            }
+        }
+    }
+
+    protected fun clearCardTokens() {
+        runBlocking {
+            cardTokenRepository.clear()
         }
     }
 
@@ -528,6 +701,17 @@ abstract class BaseFragment : Fragment() {
         return try {
             DerivationPath(hdPath)
         } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun createEntropyDerivationPath(entropyDerivationPath: String?): DerivationPath? {
+        val hdPath = entropyDerivationPath ?: return null
+        if (hdPath.isEmpty() || hdPath.isBlank()) return null
+
+        return try {
+            DerivationPath(hdPath)
+        } catch (ex: Exception) {
             null
         }
     }
