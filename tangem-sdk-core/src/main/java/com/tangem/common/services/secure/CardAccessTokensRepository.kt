@@ -166,7 +166,6 @@ class CardAccessTokensRepository(
     }
 
     private fun getSavedCardIds(): Set<String> {
-        Log.info { "getSavedCardIds size" }
         val data = secureStorage.get(StorageKey.CardsWithSavedAccessTokens.name)
             ?: return emptySet()
         return data.decodeToString(throwOnInvalidSequence = true)

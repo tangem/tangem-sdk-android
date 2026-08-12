@@ -225,7 +225,7 @@ fun ByteArray.decrypt(key: ByteArray, usePkcs7: Boolean = true): ByteArray {
  */
 @Suppress("MagicNumber")
 fun ByteArray.encryptAesCcm(key: ByteArray, nonce: ByteArray, associatedData: ByteArray): ByteArray {
-    val keySpec = SecretKeySpec(key, "AES/CCM/NoPadding")
+    val keySpec = SecretKeySpec(key, "AES")
     val ivSpec = IvParameterSpec(nonce)
     val cipher = Cipher.getInstance("AES/CCM/NoPadding", BouncyCastleProvider.PROVIDER_NAME)
     cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
@@ -244,7 +244,7 @@ fun ByteArray.encryptAesCcm(key: ByteArray, nonce: ByteArray, associatedData: By
  */
 @Suppress("MagicNumber")
 fun ByteArray.decryptAesCcm(key: ByteArray, nonce: ByteArray, associatedData: ByteArray): ByteArray {
-    val keySpec = SecretKeySpec(key, "AES/CCM/NoPadding")
+    val keySpec = SecretKeySpec(key, "AES")
     val ivSpec = IvParameterSpec(nonce)
     val cipher = Cipher.getInstance("AES/CCM/NoPadding", BouncyCastleProvider.PROVIDER_NAME)
     cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec)
