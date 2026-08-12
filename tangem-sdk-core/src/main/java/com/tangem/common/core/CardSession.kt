@@ -484,18 +484,19 @@ class CardSession(
                         secureChannelSession?.makeResponseAPDUNonce(),
                     )
                 }
-                .catch {
-                    if (it is TangemSdkError) {
-                        Log.error { "$it" }
-                        callback(CompletionResult.Failure(it))
-                    }
-                }
                 .transform { result ->
                     if (result is CompletionResult.Failure && result.error is TangemSdkError.TagLost) {
                         Log.session { "tag lost. Waiting for tag..." }
                     } else {
                         emit(result)
                     }
+                }
+                .catch { error ->
+                    // Emit instead of swallowing, otherwise the flow completes empty
+                    // and the command callback is never invoked
+                    if (error is CancellationException) throw error
+                    val sdkError = error as? TangemSdkError ?: TangemSdkError.ExceptionError(error)
+                    emit(CompletionResult.Failure(sdkError))
                 }
                 .take(1)
                 .collect { finalResult ->
