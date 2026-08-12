@@ -27,11 +27,16 @@ class EstablishSecureChannelWithAccessTokenTask : CardSessionRunnable<Unit> {
 
     override fun run(session: CardSession, callback: CompletionCallback<Unit>) {
         val command = AuthorizeWithAccessTokensCommand()
-        val completionCallback: CompletionCallback<AuthorizeWithAccessTokenResponse> = { result ->
+        command.run(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
+                    val authorizeResponse = result.data
+                    if (authorizeResponse !is AuthorizeWithAccessTokenResponse) {
+                        callback(CompletionResult.Failure(TangemSdkError.InvalidTokensResponseData()))
+                        return@run
+                    }
                     completeEstablishment(
-                        authorizeResponse = result.data,
+                        authorizeResponse = authorizeResponse,
                         session = session,
                         callback = callback,
                     )
@@ -39,7 +44,6 @@ class EstablishSecureChannelWithAccessTokenTask : CardSessionRunnable<Unit> {
                 is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
             }
         }
-        command.run(session, completionCallback as CompletionCallback<AuthorizeWithAccessTokenModel>)
     }
 
     @Suppress("MagicNumber")
