@@ -455,6 +455,7 @@ internal class AttestWalletKeyTaskTest {
         curve: EllipticCurve = this.curve,
         index: Int = 0,
         derivedKeys: Map<DerivationPath, ExtendedPublicKey> = emptyMap(),
+        status: CardWallet.Status = CardWallet.Status.Loaded,
     ) = CardWallet(
         publicKey = publicKey,
         chainCode = null,
@@ -465,6 +466,7 @@ internal class AttestWalletKeyTaskTest {
         index = index,
         isImported = false,
         hasBackup = false,
+        status = status,
         derivedKeys = derivedKeys,
     )
 
@@ -477,6 +479,7 @@ internal class AttestWalletKeyTaskTest {
         every { settings.isHDWalletAllowed } returns isHdWalletAllowed
 
         val card = mockk<Card>()
+        every { card.assertWalletsAccess() } returns null
         every { card.wallet(any()) } returns wallet
         every { card.firmwareVersion } returns firmwareVersion
         every { card.settings } returns settings
@@ -495,6 +498,7 @@ internal class AttestWalletKeyTaskTest {
         val environment = mockk<SessionEnvironment>()
         every { environment.card } returns card
         every { environment.accessCode } returns UserCode(UserCodeType.AccessCode)
+        every { environment.legacyMode } returns false
         return environment
     }
 
@@ -513,7 +517,7 @@ internal class AttestWalletKeyTaskTest {
         builder.append(TlvTag.Status, walletStatus)
         builder.append(TlvTag.CheckWalletCounter, counter)
         // Append the "process completed" (0x9000) status word that ResponseApdu strips off.
-        return ResponseApdu(builder.serialize() + byteArrayOf(0x90.toByte(), 0x00))
+        return ResponseApdu.fromRawBytes(builder.serialize() + byteArrayOf(0x90.toByte(), 0x00))
     }
 
     private fun CommandApdu.parseTlvs(): List<Tlv> =
@@ -537,32 +541,28 @@ internal class AttestWalletKeyTaskTest {
         }
     }
 
+    // `verifyWalletSignature` is private, so it is exercised through reflection.
     private fun AttestWalletKeyTask.invokeVerifyWalletSignature(
         response: AttestWalletKeyResponse,
         wallet: CardWallet,
-    ): Boolean = invokePrivate(
-        "verifyWalletSignature",
-        AttestWalletKeyResponse::class.java to response,
-        CardWallet::class.java to wallet,
-    )
-
-    private fun AttestWalletKeyTask.invokeVerifyCardSignature(response: AttestWalletKeyResponse, card: Card): Boolean =
-        invokePrivate(
-            "verifyCardSignature",
-            AttestWalletKeyResponse::class.java to response,
-            Card::class.java to card,
-        )
-
-    private fun AttestWalletKeyTask.invokePrivate(name: String, vararg args: Pair<Class<*>, Any>): Boolean {
+    ): Boolean {
         val method = AttestWalletKeyTask::class.java
-            .getDeclaredMethod(name, *args.map { it.first }.toTypedArray())
+            .getDeclaredMethod("verifyWalletSignature", AttestWalletKeyResponse::class.java, CardWallet::class.java)
             .apply { isAccessible = true }
         return try {
-            method.invoke(this, *args.map { it.second }.toTypedArray()) as Boolean
+            method.invoke(this, response, wallet) as Boolean
         } catch (error: InvocationTargetException) {
             throw error.cause ?: error
         }
     }
+
+    private fun AttestWalletKeyTask.invokeVerifyCardSignature(response: AttestWalletKeyResponse, card: Card): Boolean =
+        verifyCardSignature(
+            response = response,
+            cardPublicKey = card.cardPublicKey,
+            firmwareVersion = card.firmwareVersion,
+            walletPublicKey = walletPublicKey,
+        )
 
     // endregion
 

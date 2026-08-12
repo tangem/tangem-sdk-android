@@ -18,6 +18,7 @@ import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.guard
 import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.services.secure.SecureStorage
+import com.tangem.crypto.hdWallet.DerivationPath
 import com.tangem.operations.CommandResponse
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,7 +43,7 @@ class BackupService(
     val currentStateAsFlow: StateFlow<State> get() = _currentStateFlow
 
     val canAddBackupCards: Boolean
-        get() = addedBackupCardsCount < MAX_BACKUP_CARDS_COUNT && repo.data.primaryCard?.linkingKey != null
+        get() = addedBackupCardsCount < maxBackupCardsCount() && repo.data.primaryCard?.linkingKey != null
 
     val hasIncompletedBackup: Boolean
         get() = when (currentState) {
@@ -65,6 +66,7 @@ class BackupService(
     val backupCardIds: List<String> get() = repo.data.backupCards.map { it.cardId }
     val primaryCardBatchId: String? get() = repo.data.primaryCard?.batchId
     val backupCardsBatchIds: List<String> get() = repo.data.backupCards.mapNotNull(BackupCard::batchId)
+    val primaryCreatedCurves: List<EllipticCurve> get() = repo.data.primaryCard?.walletCurves ?: emptyList()
 
     /**
      * Perform additional compatibility checks while adding backup cards. Change this setting only if you understand what you do.
@@ -100,7 +102,7 @@ class BackupService(
             callback(CompletionResult.Failure(TangemSdkError.MissingPrimaryCard()))
             return
         }
-        if (handleErrors && addedBackupCardsCount >= MAX_BACKUP_CARDS_COUNT) {
+        if (handleErrors && addedBackupCardsCount >= maxBackupCardsCount()) {
             callback(CompletionResult.Failure(TangemSdkError.TooMuchBackupCards()))
             return
         }
@@ -170,7 +172,7 @@ class BackupService(
             }
         }
 
-        if (currentState != State.Preparing || currentState != State.FinalizingPrimaryCard) {
+        if (currentState != State.Preparing && currentState != State.FinalizingPrimaryCard) {
             return CompletionResult.Failure(TangemSdkError.PasscodeCannotBeChanged())
         }
         repo.data = repo.data.copy(passcode = code.calculateSha256())
@@ -178,13 +180,17 @@ class BackupService(
         return CompletionResult.Success(Unit)
     }
 
-    fun proceedBackup(iconScanRes: Int? = null, callback: CompletionCallback<Card>) {
+    fun proceedBackup(
+        iconScanRes: Int? = null,
+        defaultDerivations: Map<EllipticCurve, List<DerivationPath>> = emptyMap(),
+        callback: CompletionCallback<Card>,
+    ) {
         when (val currentState = currentState) {
             State.FinalizingPrimaryCard ->
                 handleFinalizePrimaryCard(iconScanRes = iconScanRes) { result -> handleCompletion(result, callback) }
 
             is State.FinalizingBackupCard ->
-                handleWriteBackupCard(currentState.index, iconScanRes) { result ->
+                handleWriteBackupCard(currentState.index, iconScanRes, defaultDerivations) { result ->
                     handleCompletion(result, callback)
                 }
 
@@ -348,7 +354,7 @@ class BackupService(
 
             if (handleErrors) {
                 if (repo.data.backupCards.isEmpty()) throw TangemSdkError.EmptyBackupCards()
-                if (repo.data.backupCards.size > MAX_BACKUP_CARDS_COUNT) throw TangemSdkError.TooMuchBackupCards()
+                if (repo.data.backupCards.size > maxBackupCardsCount()) throw TangemSdkError.TooMuchBackupCards()
             }
 
             val task = FinalizePrimaryCardTask(
@@ -404,8 +410,13 @@ class BackupService(
         }
     }
 
-    @Suppress("LongMethod")
-    private fun handleWriteBackupCard(index: Int, iconScanRes: Int?, callback: CompletionCallback<Card>) {
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
+    private fun handleWriteBackupCard(
+        index: Int,
+        iconScanRes: Int?,
+        defaultDerivations: Map<EllipticCurve, List<DerivationPath>>,
+        callback: CompletionCallback<Card>,
+    ) {
         try {
             if (handleErrors && repo.data.accessCode == null && repo.data.passcode == null) {
                 throw TangemSdkError.AccessCodeOrPasscodeRequired()
@@ -422,7 +433,7 @@ class BackupService(
 
             val cardIndex = index - 1
 
-            if (handleErrors && repo.data.backupCards.size > MAX_BACKUP_CARDS_COUNT) {
+            if (handleErrors && repo.data.backupCards.size > maxBackupCardsCount()) {
                 throw TangemSdkError.TooMuchBackupCards()
             }
 
@@ -441,6 +452,7 @@ class BackupService(
                 attestSignature = attestSignature,
                 accessCode = accessCode,
                 passcode = passcode,
+                defaultDerivations = defaultDerivations,
             )
 
             val message = if (sdk.config.productType == ProductType.RING) {
@@ -491,6 +503,19 @@ class BackupService(
         backupScope.coroutineContext.cancelChildren()
     }
 
+    private fun maxBackupCardsCount(): Int {
+        if (!sdk.config.extendedBackup) {
+            return DEFAULT_MAX_BACKUP_CARDS_COUNT
+        }
+
+        val firmwareVersion = repo.data.primaryCard?.firmwareVersion
+        if (firmwareVersion != null && firmwareVersion >= FirmwareVersion.v8) {
+            return V8_MAX_BACKUP_CARDS_COUNT
+        }
+
+        return DEFAULT_MAX_BACKUP_CARDS_COUNT
+    }
+
     sealed class State {
         object Preparing : State()
         object FinalizingPrimaryCard : State()
@@ -499,7 +524,8 @@ class BackupService(
     }
 
     companion object {
-        const val MAX_BACKUP_CARDS_COUNT = 2
+        const val DEFAULT_MAX_BACKUP_CARDS_COUNT = 2
+        const val V8_MAX_BACKUP_CARDS_COUNT = 3
     }
 }
 
