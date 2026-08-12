@@ -45,7 +45,6 @@ internal object CardSettingsMaskBuilder {
         builder.addIf(config.allowHDWallets, Card.SettingsMask.Code.AllowHDWallets)
         builder.addIf(config.allowBackup, Card.SettingsMask.Code.AllowBackup)
         builder.addIf(config.allowKeysImport, Card.SettingsMask.Code.AllowKeysImport)
-        builder.addIf(isReusable, Card.SettingsMask.Code.IsReusable)
 
         return builder.build()
     }

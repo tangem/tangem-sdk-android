@@ -856,51 +856,6 @@ class CardSession(
         return reader.transceiveRaw(Apdu.build(Apdu.SELECT, Apdu.TANGEM_WALLET_AID))
     }
 
-    // private suspend fun establishLegacyEncryptionIfNeeded(): CompletionResult<Boolean> {
-    //     Log.session { "establish legacy encryption if needed" }
-    //     if (environment.encryptionMode == EncryptionMode.None || environment.encryptionKey != null) {
-    //         Log.session { "establish legacy encryption not needed" }
-    //         return CompletionResult.Success(true)
-    //     }
-    //
-    //     val encryptionHelper = EncryptionHelper.create(environment.encryptionMode)
-    //         ?: return CompletionResult.Failure(
-    //             TangemSdkError.CryptoUtilsError("Failed to establish encryption"),
-    //         )
-    //
-    //     val openSessionCommand = OpenSessionCommand(encryptionHelper.keyA)
-    //     val apdu = openSessionCommand.serialize(environment)
-    //
-    //     when (val response = reader.transceiveApdu(apdu)) {
-    //         is CompletionResult.Success -> {
-    //             val result = try {
-    //                 openSessionCommand.deserialize(environment, response.data)
-    //             } catch (error: TangemSdkError) {
-    //                 return CompletionResult.Failure(error)
-    //             }
-    //
-    //             val uid = result.uid
-    //             val protocolKey = environment.accessCode.value?.pbkdf2Hash(uid, iterations = 50)
-    //                 ?: return CompletionResult.Failure(
-    //                     TangemSdkError.CryptoUtilsError(
-    //                         "Failed to establish encryption",
-    //                     ),
-    //                 )
-    //
-    //             val secret = encryptionHelper.generateSecret(result.sessionKeyB)
-    //             val sessionKey = (secret + protocolKey).calculateSha256()
-    //             environment.encryptionKey = sessionKey
-    //
-    //             Log.session { "The encryption established" }
-    //             return CompletionResult.Success(true)
-    //         }
-    //         is CompletionResult.Failure -> {
-    //             Log.session { "establish encryption Failure ${response.error}" }
-    //             return CompletionResult.Failure(response.error)
-    //         }
-    //     }
-    // }
-
     private fun decrypt(
         result: CompletionResult<ResponseApdu>,
         nonce: ByteArray? = null,

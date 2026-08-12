@@ -23,7 +23,10 @@ class UserCode constructor(
     }
 
     fun isNonDefault(): Boolean {
-        return !isDefault()
+        // A null value means the code is unset/cleared (e.g. after DepersonalizeCommand), which is
+        // not a user-set non-default code — require a present value so callers reading this as
+        // "a non-default code is set" don't misclassify an unset code as set.
+        return value != null && !isDefault()
     }
 
     companion object {
