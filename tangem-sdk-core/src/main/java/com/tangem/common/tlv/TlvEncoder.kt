@@ -6,15 +6,18 @@ import com.tangem.common.card.CardWallet
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.card.SigningMethod
 import com.tangem.common.card.UserSettingsMask
+import com.tangem.common.core.AccessLevel
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.extensions.toByteArray
 import com.tangem.crypto.hdWallet.DerivationNode.Companion.serialize
 import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.operations.GetEntropyMode
 import com.tangem.operations.attestation.AttestCardKeyCommand
 import com.tangem.operations.files.FileDataMode
 import com.tangem.operations.issuerAndUserData.IssuerExtraDataMode
+import com.tangem.operations.masterSecret.ManageMasterSecretMode
 import com.tangem.operations.personalization.entities.ProductMask
 import com.tangem.operations.read.ReadMode
 import com.tangem.operations.resetcode.AuthorizeMode
@@ -131,9 +134,13 @@ class TlvEncoder {
                 when (T::class) {
                     IssuerExtraDataMode::class -> byteArrayOf((value as IssuerExtraDataMode).code)
                     ReadMode::class -> byteArrayOf((value as ReadMode).rawValue.toByte())
-                    AuthorizeMode::class -> byteArrayOf((value as AuthorizeMode).rawValue.toByte())
+                    AuthorizeMode::class -> byteArrayOf((value as AuthorizeMode).rawValue)
                     FileDataMode::class -> byteArrayOf((value as FileDataMode).rawValue.toByte())
+                    InteractionMode::class -> byteArrayOf((value as InteractionMode).rawValue)
+                    GetEntropyMode::class -> byteArrayOf((value as GetEntropyMode).rawValue)
                     AttestCardKeyCommand.RawMode::class -> byteArrayOf((value as AttestCardKeyCommand.RawMode).value)
+                    ManageMasterSecretMode::class -> byteArrayOf((value as ManageMasterSecretMode).rawValue.toByte())
+                    Byte::class -> byteArrayOf(value as Byte)
                     else -> {
                         val error = getEncodingError<T>(tag)
                         Log.error { error.customMessage }
@@ -144,6 +151,10 @@ class TlvEncoder {
             TlvValueType.DerivationPath -> {
                 typeCheck<T, DerivationPath>(tag)
                 return (value as DerivationPath).nodes.map { it.serialize() }.reduce { acc, bytes -> acc + bytes }
+            }
+            TlvValueType.AccessLevel -> {
+                typeCheck<T, AccessLevel>(tag)
+                (value as AccessLevel).code.toByteArray(1)
             }
         }
     }

@@ -218,6 +218,8 @@ class SdkTaskSpinnerFragment : BaseFragment() {
         override fun setConfig(config: Config) {}
         override fun setMessage(message: ViewDelegateMessage?) {}
         override fun dismiss() {}
+        override fun showHealthAlert(onContinue: () -> Unit) {}
+
         override fun attestationDidFail(isDevCard: Boolean, positive: VoidCallback, negative: VoidCallback) {}
         override fun attestationCompletedOffline(positive: VoidCallback, negative: VoidCallback, retry: VoidCallback) {}
         override fun attestationCompletedWithWarnings(positive: VoidCallback) {}

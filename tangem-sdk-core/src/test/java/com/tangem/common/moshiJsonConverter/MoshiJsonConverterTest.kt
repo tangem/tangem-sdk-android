@@ -1,7 +1,7 @@
 package com.tangem.common.moshiJsonConverter
 
 import com.tangem.Message
-import com.tangem.common.MaskBuilder
+import com.tangem.operations.personalization.config.MaskBuilder
 import com.tangem.common.card.Card
 import com.tangem.common.card.CardWallet
 import com.tangem.common.card.SigningMethod

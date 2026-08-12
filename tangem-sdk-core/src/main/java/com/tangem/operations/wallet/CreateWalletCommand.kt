@@ -2,7 +2,6 @@ package com.tangem.operations.wallet
 
 import com.squareup.moshi.JsonClass
 import com.tangem.common.CompletionResult
-import com.tangem.common.MaskBuilder
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
@@ -10,12 +9,12 @@ import com.tangem.common.card.*
 import com.tangem.common.core.*
 import com.tangem.common.deserialization.WalletDeserializer
 import com.tangem.common.extensions.guard
-import com.tangem.common.tlv.TlvBuilder
 import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.hdWallet.bip32.ExtendedPrivateKey
 import com.tangem.operations.Command
 import com.tangem.operations.CommandResponse
+import com.tangem.operations.personalization.config.MaskBuilder
 
 /**
  * Response from the Tangem card after [CreateWalletCommand].
@@ -111,7 +110,7 @@ internal class CreateWalletCommand @Throws constructor(
         if (error is TangemSdkError.InvalidParams) {
             val card = card ?: return error
 
-            if (card.firmwareVersion >= FirmwareVersion.IsPasscodeStatusAvailable && card.isPasscodeSet == false) {
+            if (card.firmwareVersion >= FirmwareVersion.PasscodeStatusAvailable && card.isPasscodeSet == false) {
                 return TangemSdkError.AlreadyCreated()
             }
         }
@@ -122,13 +121,18 @@ internal class CreateWalletCommand @Throws constructor(
     override fun serialize(environment: SessionEnvironment): CommandApdu {
         val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
 
-        walletIndex = calculateWalletIndex(card)
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
+        if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+        }
+        if (shouldAddPin(environment.passcode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
+        }
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+        }
 
-        val tlvBuilder = TlvBuilder()
-        tlvBuilder.appendPinIfNeeded(TlvTag.Pin, environment.accessCode, environment.card)
-        tlvBuilder.appendPinIfNeeded(TlvTag.Pin2, environment.passcode, environment.card)
-        tlvBuilder.append(TlvTag.CardId, card.cardId)
-        tlvBuilder.append(TlvTag.Cvc, environment.cvc)
+        walletIndex = calculateWalletIndex(card)
 
         if (card.firmwareVersion >= FirmwareVersion.MultiWalletAvailable) {
             val cardWalletSettingsMask = MaskBuilder().apply {
@@ -144,17 +148,18 @@ internal class CreateWalletCommand @Throws constructor(
 
         if (privateKey != null) {
             tlvBuilder.append(TlvTag.WalletPrivateKey, privateKey.privateKey)
-            tlvBuilder.append(TlvTag.WalletHDChain, privateKey.chainCode)
+            if (privateKey.chainCode.isNotEmpty()) {
+                tlvBuilder.append(TlvTag.WalletHDChain, privateKey.chainCode)
+            }
         }
 
         return CommandApdu(Instruction.CreateWallet, tlvBuilder.serialize())
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): CreateWalletResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
         val card = environment.card ?: throw TangemSdkError.UnknownError()
 
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         val wallet = when {
             card.firmwareVersion >= FirmwareVersion.CreateWalletResponseAvailable -> {
                 // Newest v4 cards don't have their own wallet settings, so we should take them from the card's settings
@@ -164,7 +169,7 @@ internal class CreateWalletCommand @Throws constructor(
                 // We don't have a wallet response so we use to create it ourselves
                 makeWalletLegacy(
                     decoder,
-                    decoder.decodeOptional(TlvTag.WalletIndex) ?: walletIndex,
+                    decoder.decode(TlvTag.WalletIndex),
                     null, // deprecated
                     false, // We don't have a wallet response so we use to create it ourselves
                 )
@@ -196,6 +201,7 @@ internal class CreateWalletCommand @Throws constructor(
             index = index,
             isImported = false,
             hasBackup = false,
+            status = CardWallet.Status.Loaded,
         )
     }
 
