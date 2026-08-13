@@ -163,6 +163,14 @@ class NfcReader : CardReader {
             nfcTag = null
             return
         }
+        // A missing tag handle or a response shorter than a status word means the tag
+        // died mid-exchange without TagLostException — treat it the same as a lost tag
+        if (rawResponse == null || rawResponse.size < MIN_RESPONSE_LENGTH) {
+            Log.nfc { "ERROR transceiving data: empty response, treating as tag lost" }
+            callback.invoke(CompletionResult.Failure(TangemSdkError.TagLost()))
+            nfcTag = null
+            return
+        }
         callback.invoke(CompletionResult.Success(rawResponse))
     }
 
@@ -226,5 +234,6 @@ class NfcReader : CardReader {
         const val ISO_DEP_TIMEOUT_MS = 240_000
         const val CONNECTION_DELAY = 100L
         const val FORCE_ENABLE_READER_MODE_DELAY = 500L
+        const val MIN_RESPONSE_LENGTH = 2 // status word
     }
 }
