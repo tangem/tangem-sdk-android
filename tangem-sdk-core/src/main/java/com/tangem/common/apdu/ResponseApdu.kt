@@ -138,6 +138,7 @@ class ResponseApdu(val data: ByteArray, val sw1: Int, val sw2: Int) {
 
     companion object {
         fun fromRawBytes(rawData: ByteArray): ResponseApdu {
+            if (rawData.size < 2) throw TangemSdkError.InvalidResponse()
             val sw1 = 0x00FF and rawData[rawData.size - 2].toInt()
             val sw2 = 0x00FF and rawData[rawData.size - 1].toInt()
             val data = rawData.copyOf(rawData.size - 2)
