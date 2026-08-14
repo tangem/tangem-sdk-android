@@ -16,6 +16,7 @@ import com.tangem.common.services.secure.CardAccessTokensRepository
 import com.tangem.common.services.secure.SecureStorage
 import com.tangem.common.services.secure.AccessCodeRepository
 import com.tangem.common.services.secure.AccessDataUnlocker
+import com.tangem.common.services.secure.RuntimeAccessDataCache
 import com.tangem.common.v8.SecureChannelSession
 import com.tangem.crypto.EncryptionHelper
 import com.tangem.crypto.pbkdf2Hash
@@ -49,7 +50,7 @@ import java.io.StringWriter
  * @property initialMessage A custom description that will be shown at the beginning of the NFC session.
  * If null, a default header and text body will be used.
  */
-@Suppress("LargeClass", "LongParameterList")
+@Suppress("LargeClass", "LongParameterList", "TooManyFunctions")
 class CardSession(
     cardId: String? = null,
     val viewDelegate: SessionViewDelegate,
@@ -61,6 +62,7 @@ class CardSession(
     private val jsonRpcConverter: JSONRPCConverter,
     private val secureStorage: SecureStorage,
     private var initialMessage: ViewDelegateMessage? = null,
+    private val runtimeAccessDataCache: RuntimeAccessDataCache,
 ) {
 
     val accessDataUnlocker = AccessDataUnlocker(
@@ -242,6 +244,7 @@ class CardSession(
         environment.cardAccessTokens = null
         val cardId = environment.card?.cardId ?: return
         if (cardId == environment.card?.cardId) {
+            runtimeAccessDataCache.removeCardAccessTokens(setOf(cardId))
             cardAccessTokensRepository?.deleteTokens(setOf(cardId))
         }
     }
@@ -335,6 +338,10 @@ class CardSession(
         when (val policy = environment.config.userCodeRequestPolicy) {
             is UserCodeRequestPolicy.AlwaysWithBiometrics -> {
                 scope.launch(Dispatchers.Main) {
+                    // Persist the access data collected in runtime while biometrics was disabled,
+                    // so that shouldRequestBiometrics() and unlockAll() below pick it up
+                    runtimeAccessDataCache.flushTo(userCodeRepository, cardAccessTokensRepository)
+
                     if (shouldRequestBiometrics()) {
                         accessDataUnlocker.unlockAll()
                             .doOnSuccess { runnable.prepare(this@CardSession, callback) }
@@ -852,6 +859,75 @@ class CardSession(
         }
     }
 
+    /**
+     * Remembers the access data of the card being backed up in the runtime cache, to persist it
+     * to the secure repositories once the user enables biometrics. Called at the finalize step of
+     * the backup process — the only place where access data is collected while biometrics
+     * is disabled.
+     *
+     * For cards with FW below v8 the access code itself is cached. For v8+ cards the credential
+     * is the card access tokens, which the card issues only in a PIN-authorized session with an
+     * active backup — they don't exist yet at this point, so they are requested from the card
+     * first: a silent PIN authorization with [accessCode] followed by [ManageAccessTokensTask].
+     *
+     * @param accessCode SHA-256 hash of the access code that was set on the card during backup.
+     * @param callback invoked when caching is finished. A token request failure is logged and
+     * does not fail the backup.
+     */
+    fun cacheBackupAccessDataIfNeeded(accessCode: ByteArray, callback: VoidCallback) {
+        val card = environment.card ?: run {
+            callback()
+            return
+        }
+
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            if (userCodeRepository == null) {
+                runtimeAccessDataCache.putUserCode(
+                    cardId = card.cardId,
+                    userCode = UserCode(UserCodeType.AccessCode, accessCode),
+                    firmwareVersion = card.firmwareVersion,
+                )
+            }
+            callback()
+            return
+        }
+
+        if (cardAccessTokensRepository != null) {
+            // Biometrics is enabled, the tokens are saved to the repository by the regular flow
+            callback()
+            return
+        }
+
+        val tokens = environment.cardAccessTokens
+        if (tokens != null) {
+            runtimeAccessDataCache.putCardAccessTokens(card.cardId, tokens)
+            callback()
+            return
+        }
+
+        // The card issues tokens only when its backup is active
+        if (card.backupStatus?.isActive != true) {
+            callback()
+            return
+        }
+
+        Log.session { "Request card access tokens to cache them in runtime" }
+        environment.accessCode = UserCode(UserCodeType.AccessCode, accessCode)
+        ManageAccessTokensTask().run(this) { result ->
+            when (result) {
+                is CompletionResult.Success -> {
+                    environment.cardAccessTokens?.let {
+                        runtimeAccessDataCache.putCardAccessTokens(card.cardId, it)
+                    }
+                }
+                is CompletionResult.Failure -> {
+                    Log.error { "Failed to fetch card access tokens after backup: ${result.error}" }
+                }
+            }
+            callback()
+        }
+    }
+
     private suspend fun selectApplet(): CompletionResult<ByteArray?> {
         Log.session { "select the Wallet applet" }
         return reader.transceiveRaw(Apdu.build(Apdu.SELECT, Apdu.TANGEM_WALLET_AID))
@@ -1027,6 +1103,7 @@ class CardSession(
             jsonRpcConverter = jsonRpcConverter,
             cardAccessTokensRepository = cardAccessTokensRepository,
             preflightReadFilter = null,
+            runtimeAccessDataCache = runtimeAccessDataCache,
         )
         val config = environment.config.apply {
             userCodeRequestPolicy = UserCodeRequestPolicy.Default
@@ -1075,6 +1152,7 @@ class SessionBuilder(
     private val reader: CardReader,
     private val jsonRpcConverter: JSONRPCConverter,
     private val preflightReadFilter: PreflightReadFilter?,
+    private val runtimeAccessDataCache: RuntimeAccessDataCache,
 ) {
     fun build(config: Config, cardId: String? = null, initialMessage: Message? = null): CardSession {
         return CardSession(
@@ -1088,6 +1166,7 @@ class SessionBuilder(
             initialMessage = initialMessage,
             preflightReadFilter = preflightReadFilter,
             cardAccessTokensRepository = cardAccessTokensRepository,
+            runtimeAccessDataCache = runtimeAccessDataCache,
         )
     }
 }

@@ -29,8 +29,16 @@ class FinalizeBackupCardTask(
         get() = false
 
     override fun run(session: CardSession, callback: CompletionCallback<Card>) {
+        val completion: CompletionCallback<Card> = { result ->
+            if (result is CompletionResult.Success) {
+                session.cacheBackupAccessDataIfNeeded(accessCode) { callback(result) }
+            } else {
+                callback(result)
+            }
+        }
+
         val card = session.environment.card.guard {
-            callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
+            completion(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
             return
         }
 
@@ -47,10 +55,10 @@ class FinalizeBackupCardTask(
                 command.run(session) { linkResult ->
                     when (linkResult) {
                         is CompletionResult.Success -> {
-                            writeBackupData(session, callback)
+                            writeBackupData(session, completion)
                         }
 
-                        is CompletionResult.Failure -> callback(CompletionResult.Failure(linkResult.error))
+                        is CompletionResult.Failure -> completion(CompletionResult.Failure(linkResult.error))
                     }
                 }
             }
@@ -58,12 +66,12 @@ class FinalizeBackupCardTask(
             is Card.BackupStatus.Active -> {
                 // Inconsistence case. The card status is ok, but sdk status is incompleted.
                 // We should check all wallets later on the app side.
-                readWallets(session, callback)
+                readWallets(session, completion)
             }
 
             else -> {
                 // only an interrupted case is possible
-                writeBackupData(session, callback)
+                writeBackupData(session, completion)
             }
         }
     }
