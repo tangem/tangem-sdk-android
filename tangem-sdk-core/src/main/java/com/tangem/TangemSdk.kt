@@ -15,6 +15,7 @@ import com.tangem.common.json.*
 import com.tangem.common.nfc.CardReader
 import com.tangem.common.nfc.NfcAvailabilityProvider
 import com.tangem.common.services.secure.CardAccessTokensRepository
+import com.tangem.common.services.secure.RuntimeAccessDataCache
 import com.tangem.common.services.secure.SecureStorage
 import com.tangem.common.services.secure.AccessCodeRepository
 import com.tangem.crypto.CryptoUtils
@@ -76,6 +77,14 @@ class TangemSdk(
     private var cardSession: CardSession? = null
 
     private val jsonRpcConverter: JSONRPCConverter by lazy { JSONRPCConverter.shared(wordlist, secureStorage) }
+
+    /**
+     * Keeps access data verified by the card while biometrics is disabled, to persist it to the
+     * secure repositories once [Config.userCodeRequestPolicy] becomes
+     * [UserCodeRequestPolicy.AlwaysWithBiometrics]. Must outlive card sessions, so it is owned
+     * by the SDK instance.
+     */
+    private val runtimeAccessDataCache = RuntimeAccessDataCache()
 
     init {
         CryptoUtils.initCrypto()
@@ -1236,6 +1245,15 @@ class TangemSdk(
         config.scanTagImage = scanTagImage
     }
 
+    /**
+     * Clears access data (user codes, card access tokens) collected in runtime while biometrics
+     * was disabled and not yet persisted to the secure repositories. Call it when the collected
+     * data becomes irrelevant, e.g. on sign out or when the user opts out of saving codes.
+     */
+    fun clearRuntimeCachedAccessData() {
+        runtimeAccessDataCache.clear()
+    }
+
     private fun configure() {
         viewDelegate.setConfig(config)
     }
@@ -1311,6 +1329,7 @@ class TangemSdk(
             jsonRpcConverter = jsonRpcConverter,
             secureStorage = secureStorage,
             initialMessage = initialMessage,
+            runtimeAccessDataCache = runtimeAccessDataCache,
         )
     }
 
