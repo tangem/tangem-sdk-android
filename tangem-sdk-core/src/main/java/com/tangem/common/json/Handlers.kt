@@ -71,7 +71,7 @@ class PreflightReadHandler(private val secureStorage: SecureStorage) : JSONRPCHa
     override fun makeRunnable(params: Map<String, Any?>): CardSessionRunnable<Card> {
         val readMode: PreflightReadMode = (params["readMode"] as? String)?.let {
             MoshiJsonConverter.INSTANCE.fromJson<PreflightReadMode>("\"$it\"")
-        } ?: PreflightReadMode.FullCardRead
+        } ?: PreflightReadMode.FullCardRead()
 
         return PreflightReadTask(readMode = readMode, secureStorage = secureStorage)
     }

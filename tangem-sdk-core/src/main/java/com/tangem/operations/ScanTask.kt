@@ -21,7 +21,13 @@ class ScanTask(
 
     override val shouldAskForAccessCode: Boolean = false
 
-    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardReadWithAccessCodeCheck
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardRead(
+        options = setOf(
+            PreflightReadMode.FullCardRead.Option.AccessCodeCheck,
+            PreflightReadMode.FullCardRead.Option.ReadMasterSecret,
+            PreflightReadMode.FullCardRead.Option.VerifyBackup,
+        ),
+    )
 
     override fun run(session: CardSession, callback: CompletionCallback<Card>) {
         val card = session.environment.card.guard {
