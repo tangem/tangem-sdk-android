@@ -37,7 +37,7 @@ interface CardSessionRunnable<T> {
     /**
      * Mode for preflight read. Change this property only if you understand what to do
      */
-    fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardRead
+    fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardRead()
 
     /**
      *  This method will be called before nfc session starts.

@@ -31,7 +31,7 @@ data class ResetBackupResponse(
 class ResetBackupCommand : Command<ResetBackupResponse>() {
 
     override fun requiresPasscode(): Boolean = true
-    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardRead
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardRead()
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.firmwareVersion < FirmwareVersion.BackupAvailable) {

@@ -16,6 +16,7 @@ import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.crypto.hdWallet.bip32.ExtendedPrivateKey
 import com.tangem.operations.Command
+import com.tangem.operations.PreflightReadMode
 import com.tangem.operations.read.ReadMasterSecretResponse
 
 /**
@@ -28,6 +29,18 @@ class CreateMasterSecretCommand(
 ) : Command<ReadMasterSecretResponse>() {
 
     override fun requiresPasscode(): Boolean = true
+
+    /**
+
+     * Only the top-level runnable's `preflightReadMode` is applied, so run this command directly via `startSession`.
+     * When wrapping it in a task, make the task's `preflightReadMode` include
+     * [PreflightReadMode.FullCardRead.Option.ReadMasterSecret]. Otherwise the pre-check still runs but cannot see
+
+     * the command with `InvalidState`.
+     */
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardRead(
+        options = setOf(PreflightReadMode.FullCardRead.Option.ReadMasterSecret),
+    )
 
     override fun performPreCheck(card: Card): TangemSdkError? {
         if (card.firmwareVersion < FirmwareVersion.v8) {
