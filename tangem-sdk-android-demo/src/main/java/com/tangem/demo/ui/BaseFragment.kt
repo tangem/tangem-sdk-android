@@ -592,7 +592,12 @@ abstract class BaseFragment : Fragment() {
                 showToast("Need rescan the card after Create/Purge wallet")
                 post(delay) {
                     val command = PreflightReadTask(
-                        readMode = PreflightReadMode.FullCardRead,
+                        readMode = PreflightReadMode.FullCardRead(
+                            options = setOf(
+                                PreflightReadMode.FullCardRead.Option.ReadMasterSecret,
+                                PreflightReadMode.FullCardRead.Option.VerifyBackup,
+                            ),
+                        ),
                         filter = card?.cardId?.let(::CardIdPreflightReadFilter),
                         secureStorage = sdk.secureStorage,
                     )
