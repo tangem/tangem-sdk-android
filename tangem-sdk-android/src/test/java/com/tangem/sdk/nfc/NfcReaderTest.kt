@@ -37,6 +37,17 @@ internal class NfcReaderTest {
     }
 
     @Test
+    fun `transceive IOException resolves to TagLost`() {
+        val reader = readerWithTransceive {
+            throw IOException("Transceive failed")
+        }
+
+        val result = runBlocking { reader.transceiveApdu(apdu) }
+
+        assertTrue((result as CompletionResult.Failure).error is TangemSdkError.TagLost)
+    }
+
+    @Test
     fun `extended length error resolves to ExtendedLengthNotSupported`() {
         val reader = readerWithTransceive {
             throw IOException("Transceive length exceeds supported maximum")
