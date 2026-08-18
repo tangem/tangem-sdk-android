@@ -707,7 +707,7 @@ class CardSession(
                         secureChannelRetryCount = 0
                         callback(CompletionResult.Success(Unit))
                     }
-                    is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+                    is CompletionResult.Failure -> retryAfterPowerCycleIfNeedReset(result.error, callback)
                 }
             }
         } else {
@@ -724,11 +724,31 @@ class CardSession(
                             secureChannelRetryCount++
                             establishSecureChannel(callback)
                         } else {
-                            callback(CompletionResult.Failure(result.error))
+                            retryAfterPowerCycleIfNeedReset(result.error, callback)
                         }
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * The card answers [TangemSdkError.NeedReset] when a new secure channel is requested while the
+     * previous one is still open on its side — e.g. retrying authorization after a wrong access
+     * code without the card ever leaving the field. Per the firmware team the applet state can only
+     * be reset by a power cycle, so prompt a re-tap and retry once the card is back in the field.
+     */
+    private fun retryAfterPowerCycleIfNeedReset(error: TangemError, callback: CompletionCallback<Unit>) {
+        if (error !is TangemSdkError.NeedReset) {
+            callback(CompletionResult.Failure(error))
+            return
+        }
+        Log.session { "Card requires a power cycle to reset the secure channel. Waiting for re-tap..." }
+        viewDelegate.onTagLost(productType = environment.config.productType)
+        scope.launch {
+            reader.tag.first { it == null }
+            reader.tag.first { it != null }
+            establishSecureChannel(callback)
         }
     }
 
