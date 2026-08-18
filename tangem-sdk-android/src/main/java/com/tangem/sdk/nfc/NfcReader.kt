@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
 
@@ -192,6 +193,11 @@ class NfcReader : CardReader {
             // the tag left the field or the activity was paused, e.g. behind a user code dialog) —
             // only a re-scan can recover, so treat it as tag lost and let the session wait for it
             exception is SecurityException -> TangemSdkError.TagLost()
+            // Removing the tag mid-exchange doesn't always produce TagLostException — the NFC stack
+            // may throw a plain IOException ("Transceive failed") instead, which is the same broken
+            // link recoverable only by a re-scan. Must stay below the "length" check: the extended
+            // length error is an IOException too
+            exception is IOException -> TangemSdkError.TagLost()
             else -> TangemSdkError.ExceptionError(exception)
         }
     }
