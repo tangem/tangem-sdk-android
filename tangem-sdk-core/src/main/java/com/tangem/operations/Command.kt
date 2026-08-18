@@ -224,7 +224,15 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                         when (result) {
                             is CompletionResult.Success -> {
                                 val responseApdu = result.data
-                                session.secureChannelSession?.incrementPacketCounter()
+                                // NeedPause/NeedEncryption come unencrypted outside the CCM sequence
+                                // (see ResponseApdu.decryptCcm) and are not counted by the card —
+                                // incrementing here desyncs the nonce and the command re-sent after
+                                // a security delay fails with NeedEncryption
+                                if (responseApdu.statusWord != StatusWord.NeedPause &&
+                                    responseApdu.statusWord != StatusWord.NeedEncryption
+                                ) {
+                                    session.secureChannelSession?.incrementPacketCounter()
+                                }
 
                                 when (responseApdu.statusWord) {
                                     StatusWord.ProcessCompleted,
