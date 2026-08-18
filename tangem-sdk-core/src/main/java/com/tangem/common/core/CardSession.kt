@@ -182,25 +182,7 @@ class CardSession(
             )
         }
 
-        scope.launch {
-            reader.tag
-                .filterNotNull()
-                .take(1)
-                .collect { tagType ->
-                    selectApplet()
-                        .doOnSuccess {
-                            if (tagType == TagType.Nfc && preflightReadMode != PreflightReadMode.None) {
-                                preflightCheck(onSessionStarted)
-                            } else {
-                                onSessionStarted(this@CardSession, null)
-                            }
-                        }
-                        .doOnFailure {
-                            onSessionStarted(this@CardSession, it)
-                            stopWithError(it, SessionErrorMoment.AppletSelection)
-                        }
-                }
-        }
+        scope.launch { selectAppletOnTagDiscovery(onSessionStarted) }
 
         scope.launch {
             reader.tag
@@ -725,7 +707,7 @@ class CardSession(
                         secureChannelRetryCount = 0
                         callback(CompletionResult.Success(Unit))
                     }
-                    is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+                    is CompletionResult.Failure -> retryAfterPowerCycleIfNeedReset(result.error, callback)
                 }
             }
         } else {
@@ -742,11 +724,31 @@ class CardSession(
                             secureChannelRetryCount++
                             establishSecureChannel(callback)
                         } else {
-                            callback(CompletionResult.Failure(result.error))
+                            retryAfterPowerCycleIfNeedReset(result.error, callback)
                         }
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * The card answers [TangemSdkError.NeedReset] when a new secure channel is requested while the
+     * previous one is still open on its side — e.g. retrying authorization after a wrong access
+     * code without the card ever leaving the field. Per the firmware team the applet state can only
+     * be reset by a power cycle, so prompt a re-tap and retry once the card is back in the field.
+     */
+    private fun retryAfterPowerCycleIfNeedReset(error: TangemError, callback: CompletionCallback<Unit>) {
+        if (error !is TangemSdkError.NeedReset) {
+            callback(CompletionResult.Failure(error))
+            return
+        }
+        Log.session { "Card requires a power cycle to reset the secure channel. Waiting for re-tap..." }
+        viewDelegate.onTagLost(productType = environment.config.productType)
+        scope.launch {
+            reader.tag.first { it == null }
+            reader.tag.first { it != null }
+            establishSecureChannel(callback)
         }
     }
 
@@ -926,6 +928,45 @@ class CardSession(
             }
             callback()
         }
+    }
+
+    private suspend fun selectAppletOnTagDiscovery(onSessionStarted: SessionStartedCallback) {
+        reader.tag
+            .filterNotNull()
+            .map { tagType ->
+                // Slix tags have no IsoDep interface, so there is no applet to select
+                val result = if (tagType == TagType.Nfc) {
+                    selectApplet()
+                } else {
+                    CompletionResult.Success<ByteArray?>(null)
+                }
+                tagType to result
+            }
+            .transform { (tagType, result) ->
+                // The flow can replay a tag that is already gone (e.g. scanned before a user
+                // code dialog), so the tag may drop right at applet selection — wait for the
+                // next discovery and retry instead of failing the whole session
+                if (result is CompletionResult.Failure && result.error is TangemSdkError.TagLost) {
+                    Log.session { "tag lost during applet selection. Waiting for tag..." }
+                } else {
+                    emit(tagType to result)
+                }
+            }
+            .take(1)
+            .collect { (tagType, result) ->
+                result
+                    .doOnSuccess {
+                        if (tagType == TagType.Nfc && preflightReadMode != PreflightReadMode.None) {
+                            preflightCheck(onSessionStarted)
+                        } else {
+                            onSessionStarted(this@CardSession, null)
+                        }
+                    }
+                    .doOnFailure {
+                        onSessionStarted(this@CardSession, it)
+                        stopWithError(it, SessionErrorMoment.AppletSelection)
+                    }
+            }
     }
 
     private suspend fun selectApplet(): CompletionResult<ByteArray?> {

@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
 
@@ -159,7 +160,7 @@ class NfcReader : CardReader {
             return
         } catch (exception: Exception) {
             Log.nfc { "ERROR transceiving data Exception: $exception" }
-            tryHandleNfcError(exception, callback)
+            callback.invoke(CompletionResult.Failure(mapTransceiveError(exception)))
             nfcTag = null
             return
         }
@@ -183,11 +184,21 @@ class NfcReader : CardReader {
         return rawResponse
     }
 
-    private fun tryHandleNfcError(exception: Exception, callback: (response: CompletionResult<ByteArray?>) -> Unit) {
-        // The messages of errors can vary on different Android devices,
-        // but we try to identify it by parsing the message.
-        if (exception.message?.contains("length") == true) {
-            callback.invoke(CompletionResult.Failure(TangemSdkError.ExtendedLengthNotSupported()))
+    private fun mapTransceiveError(exception: Exception): TangemSdkError {
+        return when {
+            // The messages of errors can vary on different Android devices,
+            // but we try to identify it by parsing the message.
+            exception.message?.contains("length") == true -> TangemSdkError.ExtendedLengthNotSupported()
+            // The system invalidated the tag handle (SecurityException "Tag is out of date" after
+            // the tag left the field or the activity was paused, e.g. behind a user code dialog) —
+            // only a re-scan can recover, so treat it as tag lost and let the session wait for it
+            exception is SecurityException -> TangemSdkError.TagLost()
+            // Removing the tag mid-exchange doesn't always produce TagLostException — the NFC stack
+            // may throw a plain IOException ("Transceive failed") instead, which is the same broken
+            // link recoverable only by a re-scan. Must stay below the "length" check: the extended
+            // length error is an IOException too
+            exception is IOException -> TangemSdkError.TagLost()
+            else -> TangemSdkError.ExceptionError(exception)
         }
     }
 
