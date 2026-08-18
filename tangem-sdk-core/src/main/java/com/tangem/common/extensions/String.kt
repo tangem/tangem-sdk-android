@@ -31,7 +31,9 @@ fun String.hexToBytesOrNull(): ByteArray? = runCatching(String::hexToBytes).getO
 fun String.toSnakeCase(): String = replace("(?<=.)(?=\\p{Upper})".toRegex(), "_")
 
 fun String.titleFormatted(symbol: String = "=", maxLength: Int = 50): String {
-    val quotesSize = (maxLength - this.length) / 2
+    // A title longer than maxLength must not crash String.repeat with a negative count —
+    // it is printed without the decoration instead
+    val quotesSize = ((maxLength - this.length) / 2).coerceAtLeast(0)
     val quote = symbol.repeat(quotesSize)
     return "$quote $this $quote"
 }
