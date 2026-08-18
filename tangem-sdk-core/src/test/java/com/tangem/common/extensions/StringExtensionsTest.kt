@@ -56,4 +56,20 @@ class StringExtensionsTest {
         assertThat(cardId.hexToBytes())
             .isEqualTo(expected)
     }
+
+    @Test
+    fun `titleFormatted pads short title to maxLength`() {
+        assertThat("title".titleFormatted(maxLength = 9))
+            .isEqualTo("== title ==")
+    }
+
+    @Test
+    fun `titleFormatted does not crash on title longer than maxLength`() {
+        // [REDACTED_TASK_KEY]: a negative padding count crashed String.repeat and failed the whole
+        // operation with ExceptionError (50000) from a single log line
+        val title = "run: SomeCommand with a long dynamic message".repeat(3)
+
+        assertThat(title.titleFormatted(maxLength = 80))
+            .isEqualTo(" $title ")
+    }
 }

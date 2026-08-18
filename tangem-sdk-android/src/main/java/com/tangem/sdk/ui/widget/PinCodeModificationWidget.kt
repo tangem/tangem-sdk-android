@@ -50,13 +50,16 @@ class PinCodeModificationWidget(
         setStateByMode()
         setupInnerLogic()
 
-        etPinCodeConfirm.setupImeActionDone(btnSave::performClick)
+        etPinCodeConfirm.setupImeActionDone {
+            if (btnSave.isEnabled) btnSave.performClick()
+        }
     }
 
     override fun setState(params: SessionViewDelegateState) {
         if (params is SessionViewDelegateState.PinChangeRequested) {
             userCodeType = params.type
             clearFields()
+            btnSave.isEnabled = false
             setStateByMode()
             postUI(msTime = 1000) { etPinCode.showSoftKeyboard() }
         }
@@ -89,6 +92,9 @@ class PinCodeModificationWidget(
 
         btnSave.isEnabled = false
         btnSave.setOnClickListener {
+            // guards against performClick() calls that bypass the isEnabled check
+            // and against taps within the validation debounce window
+            if (getInputFieldsState() != CheckCodesState.MATCH) return@setOnClickListener
             mainView.requestFocus()
             mainView.hideSoftKeyboard()
             onSave?.let { onSaveClicked ->
@@ -141,6 +147,7 @@ class PinCodeModificationWidget(
             else -> {
                 tilPinCodeConfirm.error = null
                 tilPinCodeConfirm.isErrorEnabled = false
+                btnSave.isEnabled = false
             }
         }
     }

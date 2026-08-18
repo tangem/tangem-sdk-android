@@ -224,7 +224,15 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                         when (result) {
                             is CompletionResult.Success -> {
                                 val responseApdu = result.data
-                                session.secureChannelSession?.incrementPacketCounter()
+                                // NeedPause/NeedEncryption come unencrypted outside the CCM sequence
+                                // (see ResponseApdu.decryptCcm) and are not counted by the card —
+                                // incrementing here desyncs the nonce and the command re-sent after
+                                // a security delay fails with NeedEncryption
+                                if (responseApdu.statusWord != StatusWord.NeedPause &&
+                                    responseApdu.statusWord != StatusWord.NeedEncryption
+                                ) {
+                                    session.secureChannelSession?.incrementPacketCounter()
+                                }
 
                                 when (responseApdu.statusWord) {
                                     StatusWord.ProcessCompleted,
@@ -305,7 +313,17 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                                         )
                                     }
                                     StatusWord.AccessDenied -> {
-                                        callback(CompletionResult.Failure(TangemSdkError.AccessDenied()))
+                                        // A re-tap power-cycles the card and kills its secure channel,
+                                        // while the session side is reset to Public on tag loss. AccessDenied
+                                        // on a Public-level channel means the command reached the card without
+                                        // its channel — re-establish and retry. A genuine AccessDenied arrives
+                                        // with an authorized access level and stays terminal.
+                                        val error = if (session.secureChannelSession?.accessLevel?.isPublic() == true) {
+                                            TangemSdkError.RetrySecureChannelNeeded()
+                                        } else {
+                                            TangemSdkError.AccessDenied()
+                                        }
+                                        callback(CompletionResult.Failure(error))
                                     }
                                     else -> {
                                         val error = responseApdu.statusWord.toTangemSdkError()
