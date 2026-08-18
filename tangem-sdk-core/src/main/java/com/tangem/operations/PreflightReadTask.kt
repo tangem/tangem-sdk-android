@@ -42,6 +42,12 @@ sealed class PreflightReadMode {
      */
     data class FullCardRead(val options: Set<Option> = emptySet()) : PreflightReadMode() {
 
+        // The generated data-class toString would shadow the sealed class's compact one
+        // and blow the Log.command banner past its width
+        override fun toString(): String {
+            return if (options.isEmpty()) "FullCardRead" else "FullCardRead(${options.joinToString()})"
+        }
+
         /**
          * Optional extras layered on top of a full card read
          */
