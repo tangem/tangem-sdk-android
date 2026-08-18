@@ -182,25 +182,7 @@ class CardSession(
             )
         }
 
-        scope.launch {
-            reader.tag
-                .filterNotNull()
-                .take(1)
-                .collect { tagType ->
-                    selectApplet()
-                        .doOnSuccess {
-                            if (tagType == TagType.Nfc && preflightReadMode != PreflightReadMode.None) {
-                                preflightCheck(onSessionStarted)
-                            } else {
-                                onSessionStarted(this@CardSession, null)
-                            }
-                        }
-                        .doOnFailure {
-                            onSessionStarted(this@CardSession, it)
-                            stopWithError(it, SessionErrorMoment.AppletSelection)
-                        }
-                }
-        }
+        scope.launch { selectAppletOnTagDiscovery(onSessionStarted) }
 
         scope.launch {
             reader.tag
@@ -926,6 +908,45 @@ class CardSession(
             }
             callback()
         }
+    }
+
+    private suspend fun selectAppletOnTagDiscovery(onSessionStarted: SessionStartedCallback) {
+        reader.tag
+            .filterNotNull()
+            .map { tagType ->
+                // Slix tags have no IsoDep interface, so there is no applet to select
+                val result = if (tagType == TagType.Nfc) {
+                    selectApplet()
+                } else {
+                    CompletionResult.Success<ByteArray?>(null)
+                }
+                tagType to result
+            }
+            .transform { (tagType, result) ->
+                // The flow can replay a tag that is already gone (e.g. scanned before a user
+                // code dialog), so the tag may drop right at applet selection — wait for the
+                // next discovery and retry instead of failing the whole session
+                if (result is CompletionResult.Failure && result.error is TangemSdkError.TagLost) {
+                    Log.session { "tag lost during applet selection. Waiting for tag..." }
+                } else {
+                    emit(tagType to result)
+                }
+            }
+            .take(1)
+            .collect { (tagType, result) ->
+                result
+                    .doOnSuccess {
+                        if (tagType == TagType.Nfc && preflightReadMode != PreflightReadMode.None) {
+                            preflightCheck(onSessionStarted)
+                        } else {
+                            onSessionStarted(this@CardSession, null)
+                        }
+                    }
+                    .doOnFailure {
+                        onSessionStarted(this@CardSession, it)
+                        stopWithError(it, SessionErrorMoment.AppletSelection)
+                    }
+            }
     }
 
     private suspend fun selectApplet(): CompletionResult<ByteArray?> {
