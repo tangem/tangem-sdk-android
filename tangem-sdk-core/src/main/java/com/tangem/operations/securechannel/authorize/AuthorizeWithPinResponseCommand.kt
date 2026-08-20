@@ -31,6 +31,8 @@ class AuthorizeWithPinResponseCommand(
 
     override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.PUBLIC_SECURE_CHANNEL
 
+    override val isSecureChannelHandshakeCommand: Boolean = true
+
     override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun performPreCheck(card: Card): TangemSdkError? {
