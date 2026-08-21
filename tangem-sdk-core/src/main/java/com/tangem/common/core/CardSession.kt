@@ -608,36 +608,71 @@ class CardSession(
                         }
 
                         Log.session { "Authorization with PIN is needed" }
-                        AuthorizeWithPINTask().run(this) { authorizeResult ->
-                            when (authorizeResult) {
-                                is CompletionResult.Success -> {
-                                    requestCardAccessTokensIfNeeded(callback)
-                                }
-                                is CompletionResult.Failure -> {
-                                    when (authorizeResult.error) {
-                                        is TangemSdkError.AccessCodeRequired -> {
-                                            handleWrongUserCode(UserCodeType.AccessCode) { pinResult ->
-                                                when (pinResult) {
-                                                    is CompletionResult.Success -> {
-                                                        establishEncryptionIfNeeded(
-                                                            cardSessionEncryption = cardSessionEncryption,
-                                                            shouldAskForAccessCode = shouldAskForAccessCode,
-                                                            callback = callback,
-                                                        )
-                                                    }
-                                                    is CompletionResult.Failure -> {
-                                                        callback(CompletionResult.Failure(pinResult.error))
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        else -> callback(CompletionResult.Failure(authorizeResult.error))
+                        authorizeWithPinOverEstablishedChannel(cardSessionEncryption, shouldAskForAccessCode, callback)
+                    }
+                    is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+                }
+            }
+        }
+    }
+
+    private fun authorizeWithPinOverEstablishedChannel(
+        cardSessionEncryption: CardSessionEncryption,
+        shouldAskForAccessCode: Boolean,
+        callback: CompletionCallback<Unit>,
+    ) {
+        // The access code may still be unset here: the early request runs only when authorization
+        // was known to be needed before establishing, but invalid access tokens are reset
+        // mid-establish and the retry falls back to a security-delay channel that does need PIN
+        // elevation. Ask for the code instead of burning a challenge doomed to InvalidAccessCode —
+        // and continue over the already established channel: re-entering establishEncryptionIfNeeded
+        // would re-open the channel and hit NeedReset on the card
+        if (environment.accessCode.isDefault()) {
+            Log.session { "Access code is not entered yet, request it before PIN authorization" }
+            val isFirstAttempt = isEnterCodeFirstAttempt(UserCodeType.AccessCode)
+            environment.accessCode = UserCode(UserCodeType.AccessCode, null)
+            pause()
+            requestUserCodeIfNeeded(
+                type = UserCodeType.AccessCode,
+                isFirstAttempt = isFirstAttempt,
+                showWelcomeBackWarning = false,
+            ) { result ->
+                when (result) {
+                    is CompletionResult.Success -> {
+                        resume()
+                        authorizeWithPinOverEstablishedChannel(cardSessionEncryption, shouldAskForAccessCode, callback)
+                    }
+                    is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+                }
+            }
+            return
+        }
+
+        AuthorizeWithPINTask().run(this) { authorizeResult ->
+            when (authorizeResult) {
+                is CompletionResult.Success -> {
+                    requestCardAccessTokensIfNeeded(callback)
+                }
+                is CompletionResult.Failure -> {
+                    when (authorizeResult.error) {
+                        is TangemSdkError.AccessCodeRequired -> {
+                            handleWrongUserCode(UserCodeType.AccessCode) { pinResult ->
+                                when (pinResult) {
+                                    is CompletionResult.Success -> {
+                                        establishEncryptionIfNeeded(
+                                            cardSessionEncryption = cardSessionEncryption,
+                                            shouldAskForAccessCode = shouldAskForAccessCode,
+                                            callback = callback,
+                                        )
+                                    }
+                                    is CompletionResult.Failure -> {
+                                        callback(CompletionResult.Failure(pinResult.error))
                                     }
                                 }
                             }
                         }
+                        else -> callback(CompletionResult.Failure(authorizeResult.error))
                     }
-                    is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
                 }
             }
         }
@@ -772,7 +807,9 @@ class CardSession(
         // Access code is set
         val card = environment.card
         if (card != null && card.isAccessCodeSet) {
-            // Authorization is mandatory by command
+            // Authorization is mandatory by command: the card rejects PIN-level commands over a
+            // token-established User channel with AccessDenied (intentional firmware behavior),
+            // so the code must be entered even when access tokens are available
             if (cardSessionEncryption == CardSessionEncryption.SECURE_CHANNEL_WITH_PIN) return true
 
             // Authorization is mandatory by user settings
