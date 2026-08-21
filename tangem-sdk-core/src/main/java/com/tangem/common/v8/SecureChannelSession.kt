@@ -14,6 +14,12 @@ class SecureChannelSession(cardId: String) {
     var accessLevel: AccessLevel = AccessLevel.Public
         private set
 
+    /**
+     * Whether the User level was reached via PIN challenge/response. The card distinguishes HOW
+     * User was reached: PIN-level commands (e.g. SET_PIN) are rejected with AccessDenied over a
+     * token-established User channel — intentional firmware behavior, changing the code requires
+     * proving knowledge of the current one.
+     */
     var isAuthorizedWithAccessCode: Boolean = false
         private set
 
@@ -56,6 +62,8 @@ class SecureChannelSession(cardId: String) {
             CardSessionEncryption.NONE -> false
             CardSessionEncryption.PUBLIC_SECURE_CHANNEL -> accessLevel.isPublic()
             CardSessionEncryption.SECURE_CHANNEL -> accessLevel.isPublic() || accessLevel.isPublicSecureChannel()
+            // The card accepts PIN-level commands only after an explicit PIN authorization:
+            // a token-established User channel is not enough (see isAuthorizedWithAccessCode)
             CardSessionEncryption.SECURE_CHANNEL_WITH_PIN ->
                 accessLevel.isPublic() || accessLevel.isPublicSecureChannel() || !isAuthorizedWithAccessCode
         }
