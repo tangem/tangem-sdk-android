@@ -474,6 +474,10 @@ class CardSession(
                     )
                 }
                 .transform { result ->
+                    // Swallowing the failure suspends the pipeline until reader.tag emits again:
+                    // the next discovery re-runs encrypt + transceive with the same apdu. This is
+                    // safe to wait on (unlike waiting for a null emission) because TagLost itself
+                    // proves a transceive noticed the loss, and recovery needs only the re-tap.
                     if (result is CompletionResult.Failure && result.error is TangemSdkError.TagLost) {
                         Log.session { "tag lost. Waiting for tag..." }
                     } else {
@@ -746,8 +750,14 @@ class CardSession(
         Log.session { "Card requires a power cycle to reset the secure channel. Waiting for re-tap..." }
         viewDelegate.onTagLost(productType = environment.config.productType)
         scope.launch {
-            reader.tag.first { it == null }
-            reader.tag.first { it != null }
+            // Wait for the next tag discovery, not for removal + arrival: removal alone is
+            // invisible to the SDK (a null tag is emitted only when a transceive fails or the
+            // session starts/stops — Android has no tag-left-the-field callback), so waiting for
+            // null would hang forever here where nothing is transceiving. A new discovery can
+            // only follow the tag leaving the field, so the power cycle is guaranteed. drop(1)
+            // skips the replayed still-connected tag. If the card comes back with the channel
+            // still open, the card answers NeedReset again and this handler simply re-arms.
+            reader.tag.drop(1).first { it != null }
             establishSecureChannel(callback)
         }
     }
