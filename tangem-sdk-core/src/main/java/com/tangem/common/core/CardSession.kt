@@ -414,6 +414,7 @@ class CardSession(
             viewDelegate.onError(error)
         } else {
             Log.session { "User cancelled NFC session" }
+            viewDelegate.dismiss()
         }
     }
 
