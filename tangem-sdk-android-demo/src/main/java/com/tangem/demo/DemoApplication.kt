@@ -14,10 +14,14 @@ class DemoApplication : Application() {
     lateinit var shPrefs: SharedPreferences
         private set
 
+    lateinit var dependencyContainer: DependencyContainer
+        private set
+
     override fun onCreate() {
         super.onCreate()
 
         shPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+        dependencyContainer = DependencyContainer(this)
         switchToNighMode(isNightModeActive())
     }
 

@@ -24,6 +24,11 @@ class DeriveWalletPublicKeyTask(
 ) : CardSessionRunnable<ExtendedPublicKey> {
 
     override fun run(session: CardSession, callback: CompletionCallback<ExtendedPublicKey>) {
+        session.environment.card?.assertWalletsAccess()?.let { error ->
+            callback(CompletionResult.Failure(error))
+            return
+        }
+
         val wallet = session.environment.card?.wallet(walletPublicKey).guard {
             callback(CompletionResult.Failure(TangemSdkError.WalletNotFound()))
             return
@@ -34,19 +39,24 @@ class DeriveWalletPublicKeyTask(
         }
         if (wallet.curve == EllipticCurve.Ed25519Slip0010 && derivationPath.nodes.any { !it.isHardened }) {
             callback(CompletionResult.Failure(TangemSdkError.NonHardenedDerivationNotSupported()))
+            return
         }
 
         val readWallet = ReadWalletCommand(wallet.index, derivationPath)
         readWallet.run(session) { result ->
             when (result) {
                 is CompletionResult.Success -> {
+                    val walletPublicKey = result.data.wallet.publicKey.guard {
+                        callback(CompletionResult.Failure(TangemSdkError.CardError()))
+                        return@run
+                    }
                     val chainCode = result.data.wallet.chainCode.guard {
                         callback(CompletionResult.Failure(TangemSdkError.CardError()))
                         return@run
                     }
 
                     val childKey = ExtendedPublicKey(
-                        publicKey = result.data.wallet.publicKey,
+                        publicKey = walletPublicKey,
                         chainCode = chainCode,
                     )
                     updateKeys(childKey, session)

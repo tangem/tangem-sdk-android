@@ -1,28 +1,25 @@
 package com.tangem.operations.pins
 
-import com.tangem.common.CardIdFormatter
-import com.tangem.common.CompletionResult
-import com.tangem.common.SuccessResponse
-import com.tangem.common.UserCode
-import com.tangem.common.UserCodeType
+import com.tangem.Log
+import com.tangem.common.*
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.apdu.StatusWord
 import com.tangem.common.card.FirmwareVersion
 import com.tangem.common.core.CardSession
+import com.tangem.common.core.CardSessionEncryption
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.SessionEnvironment
 import com.tangem.common.core.TangemSdkError
-import com.tangem.common.doOnFailure
-import com.tangem.common.doOnSuccess
 import com.tangem.common.extensions.calculateSha256
-import com.tangem.common.tlv.TlvBuilder
-import com.tangem.common.tlv.TlvDecoder
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
+import com.tangem.operations.securechannel.manageAccessTokens.ManageAccessTokensTask
 
 class SetUserCodeCommand private constructor() : Command<SuccessResponse>() {
+
+    override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.SECURE_CHANNEL_WITH_PIN
 
     internal var shouldRestrictDefaultCodes = true
 
@@ -93,9 +90,41 @@ class SetUserCodeCommand private constructor() : Command<SuccessResponse>() {
                         session.environment.passcode = UserCode(UserCodeType.Passcode, passcodeValue)
                     }
 
-                    callback(CompletionResult.Success(response))
+                    refreshAccessTokensIfNeeded(session) {
+                        callback(CompletionResult.Success(response))
+                    }
                 }
                 .doOnFailure { error -> callback(CompletionResult.Failure(error)) }
+        }
+    }
+
+    /**
+     * The card may invalidate previously issued access tokens when its access code changes, which
+     * would leave the tokens saved on the phone stale and force an access code prompt on the next
+     * scan. Verify the tokens with the card in the same session and renew them if they were reset.
+     * A failure is logged and does not fail the command — the user code is already changed.
+     */
+    private fun refreshAccessTokensIfNeeded(session: CardSession, callback: () -> Unit) {
+        val card = session.environment.card
+        val isAccessCodeChanged = codes[UserCodeType.AccessCode]?.value != null
+
+        if (card == null || card.firmwareVersion < FirmwareVersion.v8 || !isAccessCodeChanged) {
+            callback()
+            return
+        }
+
+        // The card issues tokens only when its backup is active
+        if (card.settings.isBackupRequired && card.backupStatus?.isActive != true) {
+            callback()
+            return
+        }
+
+        Log.session { "Refresh access tokens after access code change" }
+        ManageAccessTokensTask().run(session) { result ->
+            result.doOnFailure { error ->
+                Log.error { "Failed to refresh access tokens after access code change: $error" }
+            }
+            callback()
         }
     }
 
@@ -104,33 +133,53 @@ class SetUserCodeCommand private constructor() : Command<SuccessResponse>() {
     }
 
     override fun serialize(environment: SessionEnvironment): CommandApdu {
+        val card = environment.card ?: throw TangemSdkError.MissingPreflightRead()
+
         val accessCodeValue = codes[UserCodeType.AccessCode]?.value ?: environment.accessCode.value
-        val passcodeValue = codes[UserCodeType.Passcode]?.value ?: environment.passcode.value
-        if (accessCodeValue == null || passcodeValue == null) {
+        // val passcodeValue = codes[UserCodeType.Passcode]?.value ?: environment.passcode.value
+        if (accessCodeValue == null) {
             throw TangemSdkError.SerializeCommandError()
         }
 
-        val tlvBuilder = TlvBuilder()
-        tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
-        tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
-        tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
-        tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
-        tlvBuilder.append(TlvTag.NewPin2, passcodeValue)
-        tlvBuilder.append(TlvTag.Cvc, environment.cvc)
+        val tlvBuilder = createTlvBuilder(environment.legacyMode)
 
-        val firmwareVersion = environment.card?.firmwareVersion
-        if (firmwareVersion != null && firmwareVersion >= FirmwareVersion.BackupAvailable) {
-            val hash = (accessCodeValue + passcodeValue).calculateSha256()
-            tlvBuilder.append(TlvTag.CodeHash, hash)
+        when {
+            card.firmwareVersion >= FirmwareVersion.v8 -> {
+                tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
+                tlvBuilder.append(TlvTag.Hash, accessCodeValue.calculateSha256())
+            }
+            card.firmwareVersion >= FirmwareVersion.BackupAvailable -> {
+                val passcodeValue = codes[UserCodeType.Passcode]?.value ?: environment.passcode.value
+                    ?: throw TangemSdkError.SerializeCommandError()
+
+                tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+                tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
+                tlvBuilder.append(TlvTag.NewPin2, passcodeValue)
+                tlvBuilder.append(TlvTag.Hash, (accessCodeValue + passcodeValue).calculateSha256())
+            }
+            else -> {
+                val passcodeValue = codes[UserCodeType.Passcode]?.value ?: environment.passcode.value
+                    ?: throw TangemSdkError.SerializeCommandError()
+
+                tlvBuilder.append(TlvTag.CardId, environment.card?.cardId)
+                tlvBuilder.append(TlvTag.NewPin, accessCodeValue)
+                tlvBuilder.append(TlvTag.NewPin2, passcodeValue)
+            }
+        }
+
+        if (shouldAddPin(environment.accessCode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin, environment.accessCode.value)
+        }
+
+        if (shouldAddPin(environment.passcode, card.firmwareVersion)) {
+            tlvBuilder.append(TlvTag.Pin2, environment.passcode.value)
         }
 
         return CommandApdu(Instruction.SetPin, tlvBuilder.serialize())
     }
 
     override fun deserialize(environment: SessionEnvironment, apdu: ResponseApdu): SuccessResponse {
-        val tlvData = apdu.getTlvData() ?: throw TangemSdkError.DeserializeApduFailed()
-
-        val decoder = TlvDecoder(tlvData)
+        val decoder = createTlvDecoder(environment, apdu)
         return SuccessResponse(decoder.decode(TlvTag.CardId))
     }
 

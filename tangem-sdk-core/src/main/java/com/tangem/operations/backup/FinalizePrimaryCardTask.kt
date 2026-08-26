@@ -30,12 +30,20 @@ class FinalizePrimaryCardTask(
     private lateinit var card: Card
 
     override fun run(session: CardSession, callback: CompletionCallback<Card>) {
+        val completion: CompletionCallback<Card> = { result ->
+            if (result is CompletionResult.Success) {
+                session.cacheBackupAccessDataIfNeeded(accessCode) { callback(result) }
+            } else {
+                callback(result)
+            }
+        }
+
         card = session.environment.card.guard {
-            callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
+            completion(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
             return
         }
         val backupStatus = card.backupStatus.guard {
-            callback(CompletionResult.Failure(TangemSdkError.NotSupportedFirmwareVersion()))
+            completion(CompletionResult.Failure(TangemSdkError.NotSupportedFirmwareVersion()))
             return
         }
 
@@ -60,13 +68,13 @@ class FinalizePrimaryCardTask(
                 when (linkResult) {
                     is CompletionResult.Success -> {
                         onLink(linkResult.data.attestSignature)
-                        readBackupData(session = session, index = 0, callback = callback)
+                        readBackupData(session = session, index = 0, callback = completion)
                     }
-                    is CompletionResult.Failure -> callback(CompletionResult.Failure(linkResult.error))
+                    is CompletionResult.Failure -> completion(CompletionResult.Failure(linkResult.error))
                 }
             }
         } else {
-            readBackupData(session = session, index = readBackupStartIndex, callback = callback)
+            readBackupData(session = session, index = readBackupStartIndex, callback = completion)
         }
     }
 
@@ -109,6 +117,7 @@ class FinalizePrimaryCardTask(
                     if (result.error is TangemSdkError.InvalidState) {
                         Log.debug { "Got ${result.error}. Ignoring.." }
                         onFinalize()
+                        updateBackupStatusToActive(session)
                         callback(CompletionResult.Success(card))
                     } else {
                         callback(CompletionResult.Failure(result.error))
@@ -116,10 +125,22 @@ class FinalizePrimaryCardTask(
                 }
                 is CompletionResult.Success -> {
                     onFinalize()
+                    updateBackupStatusToActive(session)
                     callback(CompletionResult.Success(card))
                 }
             }
         }
+    }
+
+    /**
+     * The backup of the primary card is completed at this point, but the card object in the
+     * environment still holds the status read at preflight. Sync it, so that the completion of the
+     * task can request card access tokens (the card issues them only when its backup is active).
+     */
+    private fun updateBackupStatusToActive(session: CardSession) {
+        session.environment.card = session.environment.card?.copy(
+            backupStatus = Card.BackupStatus.Active(cardsCount = backupCards.size),
+        )
     }
 
     private fun getLinkAction(status: Card.BackupStatus): LinkAction {
