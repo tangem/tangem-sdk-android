@@ -30,6 +30,8 @@ class OpenSessionWithSecurityDelayCommand(
 
     override val cardSessionEncryption: CardSessionEncryption = CardSessionEncryption.NONE
 
+    override val isSecureChannelHandshakeCommand: Boolean = true
+
     override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.None
 
     override fun performPreCheck(card: Card): TangemError? {
