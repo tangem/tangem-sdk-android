@@ -414,6 +414,7 @@ class CardSession(
             viewDelegate.onError(error)
         } else {
             Log.session { "User cancelled NFC session" }
+            viewDelegate.dismiss()
         }
     }
 
@@ -474,6 +475,10 @@ class CardSession(
                     )
                 }
                 .transform { result ->
+                    // Swallowing the failure suspends the pipeline until reader.tag emits again:
+                    // the next discovery re-runs encrypt + transceive with the same apdu. This is
+                    // safe to wait on (unlike waiting for a null emission) because TagLost itself
+                    // proves a transceive noticed the loss, and recovery needs only the re-tap.
                     if (result is CompletionResult.Failure && result.error is TangemSdkError.TagLost) {
                         Log.session { "tag lost. Waiting for tag..." }
                     } else {
@@ -604,36 +609,71 @@ class CardSession(
                         }
 
                         Log.session { "Authorization with PIN is needed" }
-                        AuthorizeWithPINTask().run(this) { authorizeResult ->
-                            when (authorizeResult) {
-                                is CompletionResult.Success -> {
-                                    requestCardAccessTokensIfNeeded(callback)
-                                }
-                                is CompletionResult.Failure -> {
-                                    when (authorizeResult.error) {
-                                        is TangemSdkError.AccessCodeRequired -> {
-                                            handleWrongUserCode(UserCodeType.AccessCode) { pinResult ->
-                                                when (pinResult) {
-                                                    is CompletionResult.Success -> {
-                                                        establishEncryptionIfNeeded(
-                                                            cardSessionEncryption = cardSessionEncryption,
-                                                            shouldAskForAccessCode = shouldAskForAccessCode,
-                                                            callback = callback,
-                                                        )
-                                                    }
-                                                    is CompletionResult.Failure -> {
-                                                        callback(CompletionResult.Failure(pinResult.error))
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        else -> callback(CompletionResult.Failure(authorizeResult.error))
+                        authorizeWithPinOverEstablishedChannel(cardSessionEncryption, shouldAskForAccessCode, callback)
+                    }
+                    is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+                }
+            }
+        }
+    }
+
+    private fun authorizeWithPinOverEstablishedChannel(
+        cardSessionEncryption: CardSessionEncryption,
+        shouldAskForAccessCode: Boolean,
+        callback: CompletionCallback<Unit>,
+    ) {
+        // The access code may still be unset here: the early request runs only when authorization
+        // was known to be needed before establishing, but invalid access tokens are reset
+        // mid-establish and the retry falls back to a security-delay channel that does need PIN
+        // elevation. Ask for the code instead of burning a challenge doomed to InvalidAccessCode —
+        // and continue over the already established channel: re-entering establishEncryptionIfNeeded
+        // would re-open the channel and hit NeedReset on the card
+        if (environment.accessCode.isDefault()) {
+            Log.session { "Access code is not entered yet, request it before PIN authorization" }
+            val isFirstAttempt = isEnterCodeFirstAttempt(UserCodeType.AccessCode)
+            environment.accessCode = UserCode(UserCodeType.AccessCode, null)
+            pause()
+            requestUserCodeIfNeeded(
+                type = UserCodeType.AccessCode,
+                isFirstAttempt = isFirstAttempt,
+                showWelcomeBackWarning = false,
+            ) { result ->
+                when (result) {
+                    is CompletionResult.Success -> {
+                        resume()
+                        authorizeWithPinOverEstablishedChannel(cardSessionEncryption, shouldAskForAccessCode, callback)
+                    }
+                    is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+                }
+            }
+            return
+        }
+
+        AuthorizeWithPINTask().run(this) { authorizeResult ->
+            when (authorizeResult) {
+                is CompletionResult.Success -> {
+                    requestCardAccessTokensIfNeeded(callback)
+                }
+                is CompletionResult.Failure -> {
+                    when (authorizeResult.error) {
+                        is TangemSdkError.AccessCodeRequired -> {
+                            handleWrongUserCode(UserCodeType.AccessCode) { pinResult ->
+                                when (pinResult) {
+                                    is CompletionResult.Success -> {
+                                        establishEncryptionIfNeeded(
+                                            cardSessionEncryption = cardSessionEncryption,
+                                            shouldAskForAccessCode = shouldAskForAccessCode,
+                                            callback = callback,
+                                        )
+                                    }
+                                    is CompletionResult.Failure -> {
+                                        callback(CompletionResult.Failure(pinResult.error))
                                     }
                                 }
                             }
                         }
+                        else -> callback(CompletionResult.Failure(authorizeResult.error))
                     }
-                    is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
                 }
             }
         }
@@ -746,8 +786,14 @@ class CardSession(
         Log.session { "Card requires a power cycle to reset the secure channel. Waiting for re-tap..." }
         viewDelegate.onTagLost(productType = environment.config.productType)
         scope.launch {
-            reader.tag.first { it == null }
-            reader.tag.first { it != null }
+            // Wait for the next tag discovery, not for removal + arrival: removal alone is
+            // invisible to the SDK (a null tag is emitted only when a transceive fails or the
+            // session starts/stops — Android has no tag-left-the-field callback), so waiting for
+            // null would hang forever here where nothing is transceiving. A new discovery can
+            // only follow the tag leaving the field, so the power cycle is guaranteed. drop(1)
+            // skips the replayed still-connected tag. If the card comes back with the channel
+            // still open, the card answers NeedReset again and this handler simply re-arms.
+            reader.tag.drop(1).first { it != null }
             establishSecureChannel(callback)
         }
     }
@@ -762,7 +808,9 @@ class CardSession(
         // Access code is set
         val card = environment.card
         if (card != null && card.isAccessCodeSet) {
-            // Authorization is mandatory by command
+            // Authorization is mandatory by command: the card rejects PIN-level commands over a
+            // token-established User channel with AccessDenied (intentional firmware behavior),
+            // so the code must be entered even when access tokens are available
             if (cardSessionEncryption == CardSessionEncryption.SECURE_CHANNEL_WITH_PIN) return true
 
             // Authorization is mandatory by user settings

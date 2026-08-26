@@ -6,7 +6,6 @@ import com.tangem.common.CompletionResult.Failure
 import com.tangem.common.UserCode
 import com.tangem.common.UserCodeType
 import com.tangem.common.apdu.CommandApdu
-import com.tangem.common.apdu.Instruction
 import com.tangem.common.apdu.ResponseApdu
 import com.tangem.common.apdu.StatusWord
 import com.tangem.common.apdu.toTangemSdkError
@@ -91,6 +90,15 @@ interface ApduSerializable<T : CommandResponse> {
  */
 abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRunnable<T> {
 
+    /**
+     * True for the commands that establish or elevate the secure channel. On
+     * [TangemSdkError.RetrySecureChannelNeeded] they must fail so the whole establish flow
+     * restarts, while regular commands re-establish the channel and retry themselves.
+     * The APDU instruction can't tell them apart: application-level commands (e.g. the reset
+     * PIN token family) share [com.tangem.common.apdu.Instruction.Authorize] with the handshake.
+     */
+    protected open val isSecureChannelHandshakeCommand: Boolean = false
+
     open fun requiresPasscode(): Boolean = false
 
     override fun run(session: CardSession, callback: CompletionCallback<T>) {
@@ -145,9 +153,7 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
                         when (result.error) {
                             is TangemSdkError.RetrySecureChannelNeeded -> {
                                 session.secureChannelSession?.reset()
-                                if (apdu.ins == Instruction.Authorize.code ||
-                                    apdu.ins == Instruction.OpenSession.code
-                                ) {
+                                if (isSecureChannelHandshakeCommand) {
                                     Log.debug { "Fail secure channel command to restart the full flow" }
                                     session.releaseTag()
                                     callback(CompletionResult.Failure(result.error))

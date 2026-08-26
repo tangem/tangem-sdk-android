@@ -32,6 +32,16 @@ data class NfcTag(val type: TagType, val isoDep: IsoDep?, val nfcV: NfcV? = null
  * Provides NFC communication between an Android application and Tangem card.
  */
 class NfcReader : CardReader {
+    /**
+     * Emission semantics every subscriber must keep in mind:
+     * - a non-null value is emitted only from [onTagDiscovered], i.e. it always means a fresh
+     *   discovery, which on Android can only happen after the tag left the field (power cycle);
+     * - null is emitted only when a transceive fails, or on [startSession]/[stopSession] —
+     *   Android has NO tag-left-the-field callback, so removing an idle tag emits nothing.
+     *   Never wait for a null emission to detect removal; wait for the next discovery instead.
+     * - replay = 1: a new subscriber immediately receives the current (possibly stale) value —
+     *   drop(1) it when only future events matter.
+     */
     override val tag: MutableSharedFlow<TagType?> = MutableSharedFlow(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
