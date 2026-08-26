@@ -2,6 +2,7 @@ package com.tangem.crypto
 
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.extensions.hexToBytes
+import com.tangem.common.extensions.toByteArray
 import com.tangem.common.extensions.toHexString
 import com.tangem.common.successOrNull
 import com.tangem.crypto.bip39.BIP39Wordlist
@@ -9,6 +10,8 @@ import com.tangem.crypto.bip39.DefaultBIP39
 import com.tangem.crypto.bip39.DefaultMnemonic
 import com.tangem.crypto.bip39.Wordlist
 import com.tangem.crypto.hdWallet.DerivationNode
+import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.crypto.hdWallet.HDWalletError
 import com.tangem.crypto.hdWallet.bip32.BIP32
 import com.tangem.crypto.hdWallet.bip32.ExtendedPrivateKey
 import com.tangem.crypto.hdWallet.bip32.ExtendedPublicKey
@@ -24,6 +27,12 @@ internal class BIP32Test {
     init {
         CryptoUtils.initCrypto()
     }
+
+    // BIP32: "In case parse256(IL) >= n or ki = 0, the resulting key is invalid, and one should proceed with the next value for i."
+    // No real seed and path can hit this case on secp256k1 (the probability is lower than 1 in 2^127), so the digests are crafted:
+    // IL = n, and IL = n - kpar of the test vector 1 master key - the only value that gives ki = 0 and Ki = the point at infinity.
+    private val overflowedIL = "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141".hexToBytes()
+    private val zeroChildIL = "170cd18dc2130bfae5105371d36c3639089aabae977af021ab3da57507f2d60c".hexToBytes()
 
     @Suppress("LongMethod")
     @Test
@@ -514,6 +523,309 @@ internal class BIP32Test {
             "xpub661MyMwAqRbcEZVB4dScxMAdx6d4nFc9nvyvH3v4gJL378CSRZiYmhRoP7mBy6gSPSCYk6SzXPTf3ND1cZAceL7SfJ1Z" +
                 "3GC8vBgp2epUt13",
         )
+    }
+
+    // region: - Private child key derivation (CKDpriv), BIP32 test vectors 1-4
+
+    @Test
+    fun testPrivateDerivationVector1() {
+        val seed = "000102030405060708090a0b0c0d0e0f".hexToBytes()
+        val masterKey = BIP32.makeMasterKey(seed, EllipticCurve.Secp256k1)
+
+        // Chain m
+        assertExtendedKeys(
+            masterKey,
+            xprv = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
+            xpub = "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8",
+        )
+
+        // Chain m/0H
+        var derivedKey = masterKey.derivePrivateKey(DerivationNode.Hardened(0))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7",
+            xpub = "xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw",
+        )
+
+        // Chain m/0H/1
+        derivedKey = derivedKey.derivePrivateKey(DerivationNode.NonHardened(1))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs",
+            xpub = "xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ",
+        )
+
+        // Chain m/0H/1/2H
+        derivedKey = derivedKey.derivePrivateKey(DerivationNode.Hardened(2))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM",
+            xpub = "xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5",
+        )
+
+        // Chain m/0H/1/2H/2
+        derivedKey = derivedKey.derivePrivateKey(DerivationNode.NonHardened(2))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprvA2JDeKCSNNZky6uBCviVfJSKyQ1mDYahRjijr5idH2WwLsEd4Hsb2Tyh8RfQMuPh7f7RtyzTtdrbdqqsunu5Mm3wDvUAKRHSC34sJ7in334",
+            xpub = "xpub6FHa3pjLCk84BayeJxFW2SP4XRrFd1JYnxeLeU8EqN3vDfZmbqBqaGJAyiLjTAwm6ZLRQUMv1ZACTj37sR62cfN7fe5JnJ7dh8zL4fiyLHV",
+        )
+
+        // Chain m/0H/1/2H/2/1000000000
+        derivedKey = derivedKey.derivePrivateKey(DerivationNode.NonHardened(1000000000))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76",
+            xpub = "xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy",
+        )
+
+        val derivedByPath = masterKey.derivePrivateKey(DerivationPath("m/0'/1/2'/2/1000000000"))
+        assertEquals(derivedKey, derivedByPath)
+    }
+
+    @Test
+    fun testPrivateDerivationVector2() {
+        val seed = "fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542".hexToBytes()
+        val masterKey = BIP32.makeMasterKey(seed, EllipticCurve.Secp256k1)
+
+        // Chain m
+        assertExtendedKeys(
+            masterKey,
+            xprv = "xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U",
+            xpub = "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB",
+        )
+
+        // Chain m/0
+        var derivedKey = masterKey.derivePrivateKey(DerivationNode.NonHardened(0))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprv9vHkqa6EV4sPZHYqZznhT2NPtPCjKuDKGY38FBWLvgaDx45zo9WQRUT3dKYnjwih2yJD9mkrocEZXo1ex8G81dwSM1fwqWpWkeS3v86pgKt",
+            xpub = "xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH",
+        )
+
+        // Chain m/0/2147483647H
+        derivedKey = derivedKey.derivePrivateKey(DerivationNode.Hardened(2147483647))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9",
+            xpub = "xpub6ASAVgeehLbnwdqV6UKMHVzgqAG8Gr6riv3Fxxpj8ksbH9ebxaEyBLZ85ySDhKiLDBrQSARLq1uNRts8RuJiHjaDMBU4Zn9h8LZNnBC5y4a",
+        )
+
+        // Chain m/0/2147483647H/1
+        derivedKey = derivedKey.derivePrivateKey(DerivationNode.NonHardened(1))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprv9zFnWC6h2cLgpmSA46vutJzBcfJ8yaJGg8cX1e5StJh45BBciYTRXSd25UEPVuesF9yog62tGAQtHjXajPPdbRCHuWS6T8XA2ECKADdw4Ef",
+            xpub = "xpub6DF8uhdarytz3FWdA8TvFSvvAh8dP3283MY7p2V4SeE2wyWmG5mg5EwVvmdMVCQcoNJxGoWaU9DCWh89LojfZ537wTfunKau47EL2dhHKon",
+        )
+
+        // Chain m/0/2147483647H/1/2147483646H
+        derivedKey = derivedKey.derivePrivateKey(DerivationNode.Hardened(2147483646))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc",
+            xpub = "xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL",
+        )
+
+        // Chain m/0/2147483647H/1/2147483646H/2
+        derivedKey = derivedKey.derivePrivateKey(DerivationNode.NonHardened(2))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j",
+            xpub = "xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt",
+        )
+
+        val derivedByPath = masterKey.derivePrivateKey(DerivationPath("m/0/2147483647'/1/2147483646'/2"))
+        assertEquals(derivedKey, derivedByPath)
+    }
+
+    @Test
+    fun testPrivateDerivationVector3() {
+        val seed = "4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be".hexToBytes()
+        val masterKey = BIP32.makeMasterKey(seed, EllipticCurve.Secp256k1)
+
+        // Chain m
+        assertExtendedKeys(
+            masterKey,
+            xprv = "xprv9s21ZrQH143K25QhxbucbDDuQ4naNntJRi4KUfWT7xo4EKsHt2QJDu7KXp1A3u7Bi1j8ph3EGsZ9Xvz9dGuVrtHHs7pXeTzjuxBrCmmhgC6",
+            xpub = "xpub661MyMwAqRbcEZVB4dScxMAdx6d4nFc9nvyvH3v4gJL378CSRZiYmhRoP7mBy6gSPSCYk6SzXPTf3ND1cZAceL7SfJ1Z3GC8vBgp2epUt13",
+        )
+
+        // Chain m/0H
+        val derivedKey = masterKey.derivePrivateKey(DerivationNode.Hardened(0))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L",
+            xpub = "xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y",
+        )
+
+        val derivedByPath = masterKey.derivePrivateKey(DerivationPath("m/0'"))
+        assertEquals(derivedKey, derivedByPath)
+    }
+
+    @Test
+    fun testPrivateDerivationVector4() {
+        val seed = "3ddd5602285899a946114506157c7997e5444528f3003f6134712147db19b678".hexToBytes()
+        val masterKey = BIP32.makeMasterKey(seed, EllipticCurve.Secp256k1)
+
+        // Chain m
+        assertExtendedKeys(
+            masterKey,
+            xprv = "xprv9s21ZrQH143K48vGoLGRPxgo2JNkJ3J3fqkirQC2zVdk5Dgd5w14S7fRDyHH4dWNHUgkvsvNDCkvAwcSHNAQwhwgNMgZhLtQC63zxwhQmRv",
+            xpub = "xpub661MyMwAqRbcGczjuMoRm6dXaLDEhW1u34gKenbeYqAix21mdUKJyuyu5F1rzYGVxyL6tmgBUAEPrEz92mBXjByMRiJdba9wpnN37RLLAXa",
+        )
+
+        // Chain m/0H
+        var derivedKey = masterKey.derivePrivateKey(DerivationNode.Hardened(0))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprv9vB7xEWwNp9kh1wQRfCCQMnZUEG21LpbR9NPCNN1dwhiZkjjeGRnaALmPXCX7SgjFTiCTT6bXes17boXtjq3xLpcDjzEuGLQBM5ohqkao9G",
+            xpub = "xpub69AUMk3qDBi3uW1sXgjCmVjJ2G6WQoYSnNHyzkmdCHEhSZ4tBok37xfFEqHd2AddP56Tqp4o56AePAgCjYdvpW2PU2jbUPFKsav5ut6Ch1m",
+        )
+
+        // Chain m/0H/1H
+        derivedKey = derivedKey.derivePrivateKey(DerivationNode.Hardened(1))
+        assertExtendedKeys(
+            derivedKey,
+            xprv = "xprv9xJocDuwtYCMNAo3Zw76WENQeAS6WGXQ55RCy7tDJ8oALr4FWkuVoHJeHVAcAqiZLE7Je3vZJHxspZdFHfnBEjHqU5hG1Jaj32dVoS6XLT1",
+            xpub = "xpub6BJA1jSqiukeaesWfxe6sNK9CCGaujFFSJLomWHprUL9DePQ4JDkM5d88n49sMGJxrhpjazuXYWdMf17C9T5XnxkopaeS7jGk1GyyVziaMt",
+        )
+
+        val derivedByPath = masterKey.derivePrivateKey(DerivationPath("m/0'/1'"))
+        assertEquals(derivedKey, derivedByPath)
+    }
+    // endregion
+
+    // region: - Derivation retry on invalid child key
+
+    @Test
+    fun testInvalidPrivateChildKeyDetection() {
+        val masterKey = BIP32.makeMasterKey("000102030405060708090a0b0c0d0e0f".hexToBytes(), EllipticCurve.Secp256k1)
+        val parentPublicKey = masterKey.makePublicKey(EllipticCurve.Secp256k1).publicKey
+
+        for (il in listOf(overflowedIL, zeroChildIL)) {
+            assertFailsWith<HDWalletError.InvalidChildKey> {
+                masterKey.makeChildKey(digest = il + masterKey.chainCode, index = 0, parentPublicKey = parentPublicKey)
+            }
+        }
+    }
+
+    @Test
+    fun testInvalidPublicChildKeyDetection() {
+        val masterKey = ExtendedPublicKey(
+            publicKey = "0339a36013301597daef41fbe593a02cc513d0b55527ec2df1050e2e8ff49c85c2".hexToBytes(),
+            chainCode = "873dff81c02f525623fd1fe5167eac3a55a049de3d314bb42ee227ffed37d508".hexToBytes(),
+        )
+
+        for (il in listOf(overflowedIL, zeroChildIL)) {
+            assertFailsWith<HDWalletError.InvalidChildKey> {
+                masterKey.makeChildKey(digest = il + masterKey.chainCode, index = 0)
+            }
+        }
+    }
+
+    @Test
+    fun testPrivateKeyDerivationProceedsWithTheNextIndex() {
+        val masterKey = BIP32.makeMasterKey("000102030405060708090a0b0c0d0e0f".hexToBytes(), EllipticCurve.Secp256k1)
+        val parentPublicKey = masterKey.makePublicKey(EllipticCurve.Secp256k1).publicKey
+
+        val derivedKey = BIP32.deriveWithRetry(0) { index ->
+            val digest = if (index == 0L) {
+                zeroChildIL + masterKey.chainCode
+            } else {
+                masterKey.chainCode.hmacSha512(parentPublicKey + index.toByteArray(4))
+            }
+            masterKey.makeChildKey(digest = digest, index = index, parentPublicKey = parentPublicKey)
+        }
+
+        assertEquals(masterKey.derivePrivateKey(DerivationNode.NonHardened(1)), derivedKey)
+        assertEquals(1L, derivedKey.childNumber)
+    }
+
+    @Test
+    fun testPublicKeyDerivationProceedsWithTheNextIndex() {
+        val masterKey = ExtendedPublicKey(
+            publicKey = "0339a36013301597daef41fbe593a02cc513d0b55527ec2df1050e2e8ff49c85c2".hexToBytes(),
+            chainCode = "873dff81c02f525623fd1fe5167eac3a55a049de3d314bb42ee227ffed37d508".hexToBytes(),
+        )
+
+        val derivedKey = BIP32.deriveWithRetry(0) { index ->
+            val digest = if (index == 0L) {
+                zeroChildIL + masterKey.chainCode
+            } else {
+                masterKey.chainCode.hmacSha512(masterKey.publicKey + index.toByteArray(4))
+            }
+            masterKey.makeChildKey(digest = digest, index = index)
+        }
+
+        assertEquals(masterKey.derivePublicKey(DerivationNode.NonHardened(1)), derivedKey)
+        assertEquals(1L, derivedKey.childNumber)
+    }
+
+    @Test
+    fun testDeriveWithRetryPropagatesOtherErrors() {
+        var attempts = 0
+
+        assertFailsWith<HDWalletError.HardenedNotSupported> {
+            BIP32.deriveWithRetry<Unit>(0) {
+                attempts += 1
+                throw HDWalletError.HardenedNotSupported
+            }
+        }
+
+        assertEquals(1, attempts)
+    }
+
+    @Test
+    fun testDeriveWithRetryFailsOnIndexOverflow() {
+        val attemptedIndexes = mutableListOf<Long>()
+
+        assertFailsWith<HDWalletError.InvalidChildKey> {
+            BIP32.deriveWithRetry<Unit>(BIP32.Constants.maxIndex - 1) { index ->
+                attemptedIndexes.add(index)
+                throw HDWalletError.InvalidChildKey
+            }
+        }
+
+        assertEquals(listOf(BIP32.Constants.maxIndex - 1, BIP32.Constants.maxIndex), attemptedIndexes)
+    }
+    // endregion
+
+    // region: - Hardened index semantics
+
+    // BIP32 defines hardened derivation solely by i >= 2^31, regardless of how the node was constructed.
+    @Test
+    fun testNonHardenedNodeWithHardenedIndex() {
+        val masterKey = BIP32.makeMasterKey("000102030405060708090a0b0c0d0e0f".hexToBytes(), EllipticCurve.Secp256k1)
+
+        assertEquals(
+            masterKey.derivePrivateKey(DerivationNode.Hardened(0)),
+            masterKey.derivePrivateKey(DerivationNode.NonHardened(2147483648)),
+        )
+
+        assertFailsWith<HDWalletError.HardenedNotSupported> {
+            masterKey.makePublicKey(EllipticCurve.Secp256k1).derivePublicKey(DerivationNode.NonHardened(2147483648))
+        }
+    }
+
+    @Test
+    fun testPrivateDerivationMatchesPublicDerivation() {
+        val path = DerivationPath("m/0/1")
+        val masterKey = ExtendedPrivateKey.from(
+            "xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U",
+            NetworkType.Mainnet,
+        ) as ExtendedPrivateKey
+
+        val publicFromPrivate = masterKey.derivePrivateKey(path).makePublicKey(EllipticCurve.Secp256k1)
+        val publicFromPublic = masterKey.makePublicKey(EllipticCurve.Secp256k1).derivePublicKey(path)
+
+        assertEquals(publicFromPrivate, publicFromPublic)
+    }
+    // endregion
+
+    private fun assertExtendedKeys(key: ExtendedPrivateKey, xprv: String, xpub: String) {
+        assertEquals(xprv, key.serialize(NetworkType.Mainnet))
+        assertEquals(xpub, key.makePublicKey(EllipticCurve.Secp256k1).serialize(NetworkType.Mainnet))
     }
 
     private fun getSeed(): ByteArray {

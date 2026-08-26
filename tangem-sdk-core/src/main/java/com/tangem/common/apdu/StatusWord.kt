@@ -30,6 +30,9 @@ enum class StatusWord(val code: Int) {
     InvalidAccessCode(code = 0x6AF1),
     InvalidPasscode(code = 0x6AF2),
     WalletAlreadyExists(code = 0x6A89),
+    NeedReset(code = 0x6983),
+    // COS v8+
+    AccessDenied(code = 0x6AF3),
 
     Unknown(code = 0x0000),
     ;
@@ -40,6 +43,7 @@ enum class StatusWord(val code: Int) {
     }
 }
 
+@Suppress("CyclomaticComplexMethod")
 fun StatusWord.toTangemSdkError(): TangemSdkError? {
     return when (this) {
         StatusWord.ProcessCompleted, StatusWord.Pin1Changed,
@@ -57,6 +61,8 @@ fun StatusWord.toTangemSdkError(): TangemSdkError? {
         StatusWord.InvalidAccessCode -> TangemSdkError.AccessCodeRequired()
         StatusWord.InvalidPasscode -> TangemSdkError.PasscodeRequired()
         StatusWord.WalletAlreadyExists -> TangemSdkError.WalletAlreadyCreated()
+        StatusWord.NeedReset -> TangemSdkError.NeedReset()
+        StatusWord.AccessDenied -> TangemSdkError.AccessDenied()
         else -> null
     }
 }

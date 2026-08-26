@@ -1,10 +1,11 @@
 package com.tangem.demo
 
 import com.tangem.common.json.MoshiJsonConverter
-import com.tangem.operations.personalization.entities.Acquirer
-import com.tangem.operations.personalization.entities.CardConfig
-import com.tangem.operations.personalization.entities.Issuer
-import com.tangem.operations.personalization.entities.Manufacturer
+import com.tangem.operations.personalization.config.Acquirer
+import com.tangem.operations.personalization.config.CardConfig
+import com.tangem.operations.personalization.config.CardConfigV8
+import com.tangem.operations.personalization.config.Issuer
+import com.tangem.operations.personalization.config.Manufacturer
 
 object Utils {
 
@@ -68,6 +69,7 @@ object Personalization {
     fun acquirer(): Acquirer = MoshiJsonConverter.INSTANCE.fromJson(acquirerJson)!!
 }
 
+@Suppress("LargeClass")
 object Backup {
 
     private const val configJsonPrimary =
@@ -231,9 +233,188 @@ object Backup {
     }
     """
 
+    private const val configJsonPrimaryV8 =
+        """
+     {
+        "releaseVersion": false,
+        "issuerName": "TANGEM SDK",
+        "series": "DD000000",
+        "startNumber": 0,
+        "count": 100,
+        "numberFormat": "0000001",
+        "PIN": "000000",
+        "signingMethod": 0,
+        "allowSwapPIN": false,
+        "useActivation": false,
+        "useNDEF": true,
+        "useBlock": true,
+        "forbidPurgeWallet": false,
+        "forbidDefaultPIN": true,
+        "disableFiles": false,
+        "allowHDWallets": true,
+        "allowBackup": true,
+        "allowExternalWallets": true,
+        "createWallet": 0,
+        "NDEF": [
+                {
+                    "type": "URI",
+                    "value": "https://tangem.com/ndef/DD000000"
+                },
+                {
+                    "type": "AAR",
+                    "value": "com.tangem.wallet"
+                }
+        ],
+        "walletsCount": 10,
+        "securityDelay": 5000,
+        "requireBackup": true,
+        "cardData": {
+            "date": "2026-06-05",
+            "batch": "DD000000"
+        }
+    }
+    """
+
+    private const val configJsonBackup1V8 =
+        """
+     {
+        "releaseVersion": false,
+        "issuerName": "TANGEM SDK",
+        "series": "DD000000",
+        "startNumber": 0,
+        "count": 100,
+        "numberFormat": "0000002",
+        "PIN": "000000",
+        "curveID": "secp256k1",
+        "signingMethod": 0,
+        "allowSwapPIN": false,
+        "useActivation": false,
+        "useNDEF": true,
+        "useBlock": true,
+        "forbidPurgeWallet": false,
+        "forbidDefaultPIN": true,
+        "disableFiles": false,
+        "allowHDWallets": true,
+        "allowBackup": true,
+        "allowExternalWallets": true,
+        "createWallet": 0,
+        "NDEF": [
+                {
+                    "type": "URI",
+                    "value": "https://tangem.com/ndef/DD000000"
+                },
+                {
+                    "type": "AAR",
+                    "value": "com.tangem.wallet"
+                }
+        ],
+        "walletsCount": 10,
+        "securityDelay": 5000,
+        "requireBackup": true,
+        "cardData": {
+            "date": "2026-06-05",
+            "batch": "DD000000"
+        }
+    }
+    """
+
+    private const val configJsonBackup2V8 =
+        """
+     {
+        "releaseVersion": false,
+        "issuerName": "TANGEM SDK",
+        "series": "DD000000",
+        "startNumber": 0,
+        "count": 100,
+        "numberFormat": "0000003",
+        "PIN": "000000",
+        "curveID": "secp256k1",
+        "signingMethod": 0,
+        "allowSwapPIN": false,
+        "useActivation": false,
+        "useNDEF": true,
+        "useBlock": true,
+        "forbidPurgeWallet": false,
+        "forbidDefaultPIN": true,
+        "disableFiles": false,
+        "allowHDWallets": true,
+        "allowBackup": true,
+        "allowExternalWallets": true,
+        "createWallet": 0,
+        "NDEF": [
+                {
+                    "type": "URI",
+                    "value": "https://tangem.com/ndef/DD000000"
+                },
+                {
+                    "type": "AAR",
+                    "value": "com.tangem.wallet"
+                }
+        ],
+        "walletsCount": 10,
+        "securityDelay": 5000,
+        "requireBackup": true,
+        "cardData": {
+            "date": "2026-06-05",
+            "batch": "DD000000"
+        }
+    }
+    """
+
+    private const val configJsonBackup3V8 =
+        """
+     {
+        "releaseVersion": false,
+        "issuerName": "TANGEM SDK",
+        "series": "DD000000",
+        "startNumber": 0,
+        "count": 100,
+        "numberFormat": "0000004",
+        "PIN": "000000",
+        "curveID": "secp256k1",
+        "signingMethod": 0,
+        "allowSwapPIN": false,
+        "useActivation": false,
+        "useNDEF": true,
+        "useBlock": true,
+        "forbidPurgeWallet": false,
+        "forbidDefaultPIN": true,
+        "disableFiles": false,
+        "allowHDWallets": true,
+        "allowBackup": true,
+        "allowExternalWallets": true,
+        "createWallet": 0,
+        "NDEF": [
+                {
+                    "type": "URI",
+                    "value": "https://tangem.com/ndef/DD000000"
+                },
+                {
+                    "type": "AAR",
+                    "value": "com.tangem.wallet"
+                }
+        ],
+        "walletsCount": 10,
+        "securityDelay": 5000,
+        "requireBackup": true,
+        "cardData": {
+            "date": "2026-06-05",
+            "batch": "DD000000"
+        }
+    }
+    """
+
     fun primaryCardConfig(): CardConfig = MoshiJsonConverter.INSTANCE.fromJson(configJsonPrimary)!!
 
     fun backup1Config(): CardConfig = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup1)!!
 
     fun backup2Config(): CardConfig = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup2)!!
+
+    fun primaryCardConfigV8(): CardConfigV8 = MoshiJsonConverter.INSTANCE.fromJson(configJsonPrimaryV8)!!
+
+    fun backup1ConfigV8(): CardConfigV8 = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup1V8)!!
+
+    fun backup2ConfigV8(): CardConfigV8 = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup2V8)!!
+
+    fun backup3ConfigV8(): CardConfigV8 = MoshiJsonConverter.INSTANCE.fromJson(configJsonBackup3V8)!!
 }

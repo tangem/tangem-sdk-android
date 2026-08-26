@@ -1,6 +1,5 @@
 package com.tangem.operations
 
-import com.tangem.*
 import com.tangem.common.CompletionResult
 import com.tangem.common.card.Card
 import com.tangem.common.card.FirmwareVersion
@@ -20,6 +19,10 @@ class ScanTask(
     override val allowsRequestAccessCodeFromRepository: Boolean = false,
 ) : CardSessionRunnable<Card> {
 
+    override val shouldAskForAccessCode: Boolean = false
+
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardReadWithAccessCodeCheck
+
     override fun run(session: CardSession, callback: CompletionCallback<Card>) {
         val card = session.environment.card.guard {
             callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
@@ -32,7 +35,7 @@ class ScanTask(
         // We cannot run checkUserCodes command for cards whose `isResettingUserCodesAllowed` is set to false
         // because of an error
         @Suppress("MagicNumber")
-        if (card.firmwareVersion < FirmwareVersion.IsPasscodeStatusAvailable &&
+        if (card.firmwareVersion < FirmwareVersion.PasscodeStatusAvailable &&
             card.firmwareVersion.doubleValue > 1.19 &&
             card.settings.isRemovingUserCodesAllowed
         ) {
@@ -61,6 +64,11 @@ class ScanTask(
             return
         }
 
+        if (card.assertWalletsAccess() != null) {
+            runAttestation(session, callback)
+            return
+        }
+
         val defaultPaths = session.environment.config.defaultDerivationPaths
 
         if (card.firmwareVersion < FirmwareVersion.HDWalletAvailable ||
@@ -72,7 +80,8 @@ class ScanTask(
 
         val derivations = card.wallets.mapNotNull { wallet ->
             val paths = defaultPaths[wallet.curve]
-            if (!paths.isNullOrEmpty()) wallet.publicKey.toMapKey() to paths else null
+            val key = wallet.publicKey ?: return@mapNotNull null
+            if (!paths.isNullOrEmpty()) key.toMapKey() to paths else null
         }.toMap()
 
         if (derivations.isEmpty()) {

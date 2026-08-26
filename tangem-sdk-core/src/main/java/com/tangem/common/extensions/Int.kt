@@ -21,3 +21,12 @@ fun Int.toHexString(): String {
 fun Int.containsByte(byte: Int): Boolean {
     return this and byte != 0
 }
+
+@Suppress("MagicNumber")
+fun Int.to3Bytes(): ByteArray {
+    return byteArrayOf(
+        (this shr 16).toByte(),
+        (this shr 8).toByte(),
+        this.toByte(),
+    )
+}

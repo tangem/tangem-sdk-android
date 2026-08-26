@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
 
@@ -31,6 +32,16 @@ data class NfcTag(val type: TagType, val isoDep: IsoDep?, val nfcV: NfcV? = null
  * Provides NFC communication between an Android application and Tangem card.
  */
 class NfcReader : CardReader {
+    /**
+     * Emission semantics every subscriber must keep in mind:
+     * - a non-null value is emitted only from [onTagDiscovered], i.e. it always means a fresh
+     *   discovery, which on Android can only happen after the tag left the field (power cycle);
+     * - null is emitted only when a transceive fails, or on [startSession]/[stopSession] —
+     *   Android has NO tag-left-the-field callback, so removing an idle tag emits nothing.
+     *   Never wait for a null emission to detect removal; wait for the next discovery instead.
+     * - replay = 1: a new subscriber immediately receives the current (possibly stale) value —
+     *   drop(1) it when only future events matter.
+     */
     override val tag: MutableSharedFlow<TagType?> = MutableSharedFlow(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
@@ -131,7 +142,7 @@ class NfcReader : CardReader {
             when (result) {
                 is CompletionResult.Success -> {
                     result.data?.let {
-                        val rApdu = ResponseApdu(it)
+                        val rApdu = ResponseApdu.fromRawBytes(it)
                         Log.nfc { rApdu.toString() }
                         callback.invoke(CompletionResult.Success(rApdu))
                     }
@@ -159,7 +170,15 @@ class NfcReader : CardReader {
             return
         } catch (exception: Exception) {
             Log.nfc { "ERROR transceiving data Exception: $exception" }
-            tryHandleNfcError(exception, callback)
+            callback.invoke(CompletionResult.Failure(mapTransceiveError(exception)))
+            nfcTag = null
+            return
+        }
+        // A missing tag handle or a response shorter than a status word means the tag
+        // died mid-exchange without TagLostException — treat it the same as a lost tag
+        if (rawResponse == null || rawResponse.size < MIN_RESPONSE_LENGTH) {
+            Log.nfc { "ERROR transceiving data: empty response, treating as tag lost" }
+            callback.invoke(CompletionResult.Failure(TangemSdkError.TagLost()))
             nfcTag = null
             return
         }
@@ -175,11 +194,21 @@ class NfcReader : CardReader {
         return rawResponse
     }
 
-    private fun tryHandleNfcError(exception: Exception, callback: (response: CompletionResult<ByteArray?>) -> Unit) {
-        // The messages of errors can vary on different Android devices,
-        // but we try to identify it by parsing the message.
-        if (exception.message?.contains("length") == true) {
-            callback.invoke(CompletionResult.Failure(TangemSdkError.ExtendedLengthNotSupported()))
+    private fun mapTransceiveError(exception: Exception): TangemSdkError {
+        return when {
+            // The messages of errors can vary on different Android devices,
+            // but we try to identify it by parsing the message.
+            exception.message?.contains("length") == true -> TangemSdkError.ExtendedLengthNotSupported()
+            // The system invalidated the tag handle (SecurityException "Tag is out of date" after
+            // the tag left the field or the activity was paused, e.g. behind a user code dialog) —
+            // only a re-scan can recover, so treat it as tag lost and let the session wait for it
+            exception is SecurityException -> TangemSdkError.TagLost()
+            // Removing the tag mid-exchange doesn't always produce TagLostException — the NFC stack
+            // may throw a plain IOException ("Transceive failed") instead, which is the same broken
+            // link recoverable only by a re-scan. Must stay below the "length" check: the extended
+            // length error is an IOException too
+            exception is IOException -> TangemSdkError.TagLost()
+            else -> TangemSdkError.ExceptionError(exception)
         }
     }
 
@@ -198,7 +227,7 @@ class NfcReader : CardReader {
 
             is SlixReadResult.Success -> {
                 Log.nfc { "read Slix tag succeed" }
-                callback.invoke(CompletionResult.Success(ResponseApdu(response.data)))
+                callback.invoke(CompletionResult.Success(ResponseApdu.fromRawBytes(response.data)))
             }
         }
     }
@@ -226,5 +255,6 @@ class NfcReader : CardReader {
         const val ISO_DEP_TIMEOUT_MS = 240_000
         const val CONNECTION_DELAY = 100L
         const val FORCE_ENABLE_READER_MODE_DELAY = 500L
+        const val MIN_RESPONSE_LENGTH = 2 // status word
     }
 }

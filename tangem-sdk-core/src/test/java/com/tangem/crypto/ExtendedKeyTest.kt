@@ -67,6 +67,26 @@ internal class ExtendedKeyTest {
     }
 
     @Test
+    fun testDerivedPrivateKey() {
+        val key = ExtendedPrivateKey.from(
+            "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
+            NetworkType.Mainnet,
+        ) as ExtendedPrivateKey
+        val parentFingerprint = key.makePublicKey(EllipticCurve.Secp256k1)
+            .publicKey.calculateSha256().calculateRipemd160().take(4).toByteArray()
+
+        val derivedKey = key.derivePrivateKey(DerivationNode.Hardened(0))
+
+        assertContentEquals(parentFingerprint, derivedKey.parentFingerprint)
+        assertEquals(1, derivedKey.depth)
+        assertEquals(2147483648L, derivedKey.childNumber)
+        assertEquals(
+            "xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7",
+            derivedKey.serialize(NetworkType.Mainnet),
+        )
+    }
+
+    @Test
     fun testInitMaster() {
         val key = ExtendedPublicKey(
             publicKey = "0339a36013301597daef41fbe593a02cc513d0b55527ec2df1050e2e8ff49c85c2".hexToBytes(),

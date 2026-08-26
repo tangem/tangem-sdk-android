@@ -63,6 +63,7 @@ dependencies {
 
     // testing
     testImplementation(libs.test.junit4)
+    testImplementation(libs.test.mockk)
     androidTestImplementation(libs.test.androidx.espresso)
     androidTestImplementation(libs.test.androidx.runner)
 }

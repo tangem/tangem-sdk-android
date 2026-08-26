@@ -5,14 +5,19 @@ import com.tangem.common.*
 import com.tangem.common.apdu.Apdu
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.ResponseApdu
-import com.tangem.common.card.EncryptionMode
+import com.tangem.common.card.FirmwareVersion
+import com.tangem.common.encryption.EncryptionMode
 import com.tangem.common.extensions.VoidCallback
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.json.JSONRPCConverter
 import com.tangem.common.json.JSONRPCLinker
 import com.tangem.common.nfc.CardReader
+import com.tangem.common.services.secure.CardAccessTokensRepository
 import com.tangem.common.services.secure.SecureStorage
-import com.tangem.common.usersCode.UserCodeRepository
+import com.tangem.common.services.secure.AccessCodeRepository
+import com.tangem.common.services.secure.AccessDataUnlocker
+import com.tangem.common.services.secure.RuntimeAccessDataCache
+import com.tangem.common.v8.SecureChannelSession
 import com.tangem.crypto.EncryptionHelper
 import com.tangem.crypto.pbkdf2Hash
 import com.tangem.operations.OpenSessionCommand
@@ -23,6 +28,10 @@ import com.tangem.operations.preflightread.PreflightReadFilter
 import com.tangem.operations.read.ReadCommand
 import com.tangem.operations.resetcode.ResetCodesController
 import com.tangem.operations.resetcode.ResetPinService
+import com.tangem.operations.securechannel.authorize.AuthorizeWithPINTask
+import com.tangem.operations.securechannel.establish.EstablishSecureChannelWithAccessTokenTask
+import com.tangem.operations.securechannel.establish.EstablishSecureChannelWithSecurityDelayTask
+import com.tangem.operations.securechannel.manageAccessTokens.ManageAccessTokensTask
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.PrintWriter
@@ -41,24 +50,34 @@ import java.io.StringWriter
  * @property initialMessage A custom description that will be shown at the beginning of the NFC session.
  * If null, a default header and text body will be used.
  */
-@Suppress("LargeClass", "LongParameterList")
+@Suppress("LargeClass", "LongParameterList", "TooManyFunctions")
 class CardSession(
     cardId: String? = null,
     val viewDelegate: SessionViewDelegate,
     val environment: SessionEnvironment,
-    val userCodeRepository: UserCodeRepository?,
+    val userCodeRepository: AccessCodeRepository?,
     val preflightReadFilter: PreflightReadFilter?,
+    private val cardAccessTokensRepository: CardAccessTokensRepository?,
     private val reader: CardReader,
     private val jsonRpcConverter: JSONRPCConverter,
     private val secureStorage: SecureStorage,
     private var initialMessage: ViewDelegateMessage? = null,
+    private val runtimeAccessDataCache: RuntimeAccessDataCache,
 ) {
+
+    val accessDataUnlocker = AccessDataUnlocker(
+        accessCodeRepository = userCodeRepository,
+        cardAccessTokensRepository = cardAccessTokensRepository,
+    )
 
     var cardId: String? = cardId
         private set
     var connectedTag: TagType? = null
         private set
     var state = CardSessionState.Inactive
+        private set
+
+    var secureChannelSession: SecureChannelSession? = null
         private set
 
     private var resetCodesController: ResetCodesController? = null
@@ -70,6 +89,11 @@ class CardSession(
     private var preflightReadMode: PreflightReadMode = PreflightReadMode.FullCardRead
 
     private var onTagConnectedAfterResume: VoidCallback? = null
+
+    private var secureChannelRetryCount = 0
+
+    /** Tag remembered for wrong-card detection during command execution */
+    private var currentTag: TagType? = null
 
     fun setInitialMessage(message: ViewDelegateMessage?) {
         initialMessage = message
@@ -113,9 +137,15 @@ class CardSession(
                             Log.session { "runnable completed" }
                             when (result) {
                                 is CompletionResult.Success -> {
-                                    stop()
+                                    saveAccessCodeIfNeeded()
+                                    handleHealthIfNeeded {
+                                        stop()
+                                        callback(result)
+                                    }
+                                    return@run
                                 }
                                 is CompletionResult.Failure -> {
+                                    Log.error { "${result.error}" }
                                     stopWithError(result.error, SessionErrorMoment.End)
                                 }
                             }
@@ -152,25 +182,7 @@ class CardSession(
             )
         }
 
-        scope.launch {
-            reader.tag
-                .filterNotNull()
-                .take(1)
-                .collect { tagType ->
-                    selectApplet()
-                        .doOnSuccess {
-                            if (tagType == TagType.Nfc && preflightReadMode != PreflightReadMode.None) {
-                                preflightCheck(onSessionStarted)
-                            } else {
-                                onSessionStarted(this@CardSession, null)
-                            }
-                        }
-                        .doOnFailure {
-                            onSessionStarted(this@CardSession, it)
-                            stopWithError(it, SessionErrorMoment.AppletSelection)
-                        }
-                }
-        }
+        scope.launch { selectAppletOnTagDiscovery(onSessionStarted) }
 
         scope.launch {
             reader.tag
@@ -200,11 +212,46 @@ class CardSession(
                 .collect {
                     if (it == null && connectedTag != null && state == CardSessionState.Active) {
                         environment.encryptionKey = null
+                        secureChannelSession?.reset()
                         connectedTag = null
                     } else if (it != null) {
                         connectedTag = it
                     }
                 }
+        }
+    }
+
+    fun resetAccessTokens() {
+        Log.session { "try resetAccessTokens" }
+        environment.cardAccessTokens = null
+        val cardId = environment.card?.cardId ?: return
+        if (cardId == environment.card?.cardId) {
+            runtimeAccessDataCache.removeCardAccessTokens(setOf(cardId))
+            cardAccessTokensRepository?.deleteTokens(setOf(cardId))
+        }
+    }
+
+    fun fetchAccessTokensIfNeeded() {
+        Log.session { "Try fetch access tokens" }
+        val card = environment.card ?: return
+        val tokens = cardAccessTokensRepository?.fetch(cardId = card.cardId) ?: return
+
+        environment.cardAccessTokens = tokens
+        Log.session { "Access tokens fetched successfully" }
+    }
+
+    fun saveAccessTokensIfNeeded() {
+        Log.session { "Try save access tokens" }
+        val card = environment.card ?: return
+        val tokens = environment.cardAccessTokens ?: return
+
+        try {
+            runBlocking { // TODO fix it, we should not block thread
+                cardAccessTokensRepository?.save(tokens, card.cardId)
+                Log.session { "Access tokens saved successfully" }
+            }
+        } catch (error: Throwable) {
+            Log.error { "Access tokens saving failed: $error" }
         }
     }
 
@@ -222,11 +269,19 @@ class CardSession(
     }
 
     private suspend fun shouldRequestBiometrics(): Boolean {
-        return when {
+        val hasAccessCodes = when {
             userCodeRepository == null -> false
-            cardId != null && userCodeRepository.hasSavedUserCode(cardId!!) -> true
+            cardId != null -> userCodeRepository.hasSavedUserCode(cardId!!)
             else -> userCodeRepository.hasSavedUserCodes()
         }
+
+        val hasCardAccessTokens = when {
+            cardAccessTokensRepository == null -> false
+            cardId != null -> cardAccessTokensRepository.hasSavedCardTokens(cardId!!)
+            else -> cardAccessTokensRepository.hasSavedCardTokens()
+        }
+
+        return hasAccessCodes || hasCardAccessTokens
     }
 
     private fun <T : CardSessionRunnable<*>> prepareSession(runnable: T, callback: CompletionCallback<Unit>) {
@@ -253,7 +308,7 @@ class CardSession(
             }
             requestUserCodeIfNeeded(
                 type = codeType,
-                isFirstAttempt = true,
+                isFirstAttempt = isEnterCodeFirstAttempt(codeType),
                 showWelcomeBackWarning = false,
             ) { userCodeResult ->
                 userCodeResult
@@ -265,10 +320,14 @@ class CardSession(
         when (val policy = environment.config.userCodeRequestPolicy) {
             is UserCodeRequestPolicy.AlwaysWithBiometrics -> {
                 scope.launch(Dispatchers.Main) {
+                    // Persist the access data collected in runtime while biometrics was disabled,
+                    // so that shouldRequestBiometrics() and unlockAll() below pick it up
+                    runtimeAccessDataCache.flushTo(userCodeRepository, cardAccessTokensRepository)
+
                     if (shouldRequestBiometrics()) {
-                        userCodeRepository?.unlock()
-                            ?.doOnSuccess { runnable.prepare(this@CardSession, callback) }
-                            ?.doOnFailure { e ->
+                        accessDataUnlocker.unlockAll()
+                            .doOnSuccess { runnable.prepare(this@CardSession, callback) }
+                            .doOnFailure { e ->
                                 Log.error {
                                     """
                                         User codes storage could not be unlocked
@@ -355,6 +414,7 @@ class CardSession(
             viewDelegate.onError(error)
         } else {
             Log.session { "User cancelled NFC session" }
+            viewDelegate.dismiss()
         }
     }
 
@@ -372,7 +432,14 @@ class CardSession(
     private fun onStopSessionFinalize() {
         state = CardSessionState.Inactive
         preflightReadMode = PreflightReadMode.FullCardRead
-        saveUserCodeIfNeeded()
+        cardAccessTokensRepository?.lock()
+        resetSensitiveData()
+    }
+
+    private fun resetSensitiveData() {
+        secureChannelSession?.reset()
+        secureChannelSession = null
+        environment.reset()
     }
 
     fun send(apdu: CommandApdu, callback: CompletionCallback<ResponseApdu>) {
@@ -380,22 +447,50 @@ class CardSession(
         scope.launch {
             reader.tag
                 .filterNotNull()
-                .map { establishEncryptionIfNeeded() }
-                .map { apdu.encrypt(environment.encryptionMode, environment.encryptionKey) }
-                .map { encryptedApdu -> reader.transceiveApdu(encryptedApdu) }
-                .map { responseApdu -> decrypt(responseApdu) }
-                .catch {
-                    if (it is TangemSdkError) {
-                        Log.error { "$it" }
-                        callback(CompletionResult.Failure(it))
+                .filter { tag ->
+                    // Wrong-card detection: compare current tag with remembered tag
+                    val remembered = currentTag
+                    if (remembered != null && tag != remembered) {
+                        val formatter = CardIdFormatter(environment.config.cardIdDisplayFormat)
+                        val formattedCardId = environment.card?.cardId?.let { formatter.getFormattedCardId(it) }
+                        viewDelegate.onWrongCard(WrongValueType.CardId(formattedCardId))
+                        false
+                    } else {
+                        true
                     }
                 }
+                // .map { establishLegacyEncryptionIfNeeded() } // TODO check if we nee use this
+                .map {
+                    apdu.encrypt(
+                        environment.encryptionMode,
+                        environment.encryptionKey,
+                        secureChannelSession?.makeCommandAPDUNonce(),
+                    )
+                }
+                .map { encryptedApdu -> reader.transceiveApdu(encryptedApdu) }
+                .map { responseApdu ->
+                    decrypt(
+                        responseApdu,
+                        secureChannelSession?.makeResponseAPDUNonce(),
+                    )
+                }
                 .transform { result ->
+                    // Swallowing the failure suspends the pipeline until reader.tag emits again:
+                    // the next discovery re-runs encrypt + transceive with the same apdu. This is
+                    // safe to wait on (unlike waiting for a null emission) because TagLost itself
+                    // proves a transceive noticed the loss, and recovery needs only the re-tap.
                     if (result is CompletionResult.Failure && result.error is TangemSdkError.TagLost) {
                         Log.session { "tag lost. Waiting for tag..." }
                     } else {
                         emit(result)
                     }
+                }
+                .catch { error ->
+                    // Emit instead of swallowing, otherwise the flow completes empty
+                    // and the command callback is never invoked
+                    if (error is CancellationException) throw error
+                    val sdkError = error as? TangemSdkError ?: TangemSdkError.ExceptionError(error)
+                    emit(CompletionResult.Failure(sdkError))
                 }
                 .take(1)
                 .collect { finalResult ->
@@ -419,60 +514,524 @@ class CardSession(
         reader.resumeSession()
     }
 
+    // MARK: - Encryption
+
+    /**
+     * Establishes encryption if needed for the given card session encryption level.
+     * Handles both legacy (CBC) and v8+ (CCM secure channel) encryption flows.
+     *
+     * @param cardSessionEncryption required encryption level for the command
+     * @param shouldAskForAccessCode whether the session should handle access code prompting
+     * @param callback completion callback
+     */
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
+    fun establishEncryptionIfNeeded(
+        cardSessionEncryption: CardSessionEncryption,
+        shouldAskForAccessCode: Boolean,
+        callback: CompletionCallback<Unit>,
+    ) {
+        Log.session { "Try establish encryption for type: $cardSessionEncryption" }
+
+        if (cardSessionEncryption == CardSessionEncryption.NONE) {
+            Log.session { "Encryption is not needed for this command" }
+            callback(CompletionResult.Success(Unit))
+            return
+        }
+
+        secureChannelSession?.let { session ->
+            if (!session.isElevationRequired(cardSessionEncryption)) {
+                Log.session { "Encryption elevation is not needed" }
+                callback(CompletionResult.Success(Unit))
+                return
+            }
+        }
+
+        val card = environment.card
+        if (card == null) {
+            Log.session { "Encryption can not be established because card is not read" }
+            callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
+            return
+        }
+
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            establishLegacyEncryption(callback)
+        } else {
+            val needsAuthorizationWithAccessCode = checkIfAuthorizationWithAccessCodeIsNeeded(
+                cardSessionEncryption = cardSessionEncryption,
+                shouldAskForAccessCode = shouldAskForAccessCode,
+            )
+
+            // Request Access Code as early as possible
+            if (needsAuthorizationWithAccessCode && environment.accessCode.isDefault()) {
+                Log.session { "Access code is needed, request early" }
+                val isFirstAttempt = isEnterCodeFirstAttempt(UserCodeType.AccessCode)
+                environment.accessCode = UserCode(UserCodeType.AccessCode, null)
+                pause()
+                requestUserCodeIfNeeded(
+                    type = UserCodeType.AccessCode,
+                    isFirstAttempt = isFirstAttempt,
+                    showWelcomeBackWarning = false,
+                ) { result ->
+                    when (result) {
+                        is CompletionResult.Success -> {
+                            resume()
+                            establishEncryptionIfNeeded(
+                                cardSessionEncryption = cardSessionEncryption,
+                                shouldAskForAccessCode = shouldAskForAccessCode,
+                                callback = callback,
+                            )
+                        }
+                        is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+                    }
+                }
+                return
+            }
+
+            establishSecureChannel { result ->
+                when (result) {
+                    is CompletionResult.Success -> {
+                        val session = secureChannelSession
+                        if (session == null) {
+                            Log.session { "Secure channel session not found" }
+                            callback(CompletionResult.Failure(TangemSdkError.NeedEncryption()))
+                            return@establishSecureChannel
+                        }
+
+                        Log.session {
+                            "SecureChannel established successfully. " +
+                                "Current access level is ${session.accessLevel}"
+                        }
+
+                        if (!needsAuthorizationWithAccessCode && !session.isElevationRequired(cardSessionEncryption)) {
+                            Log.session { "Authorization with PIN is not needed" }
+                            callback(CompletionResult.Success(Unit))
+                            return@establishSecureChannel
+                        }
+
+                        Log.session { "Authorization with PIN is needed" }
+                        authorizeWithPinOverEstablishedChannel(cardSessionEncryption, shouldAskForAccessCode, callback)
+                    }
+                    is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+                }
+            }
+        }
+    }
+
+    private fun authorizeWithPinOverEstablishedChannel(
+        cardSessionEncryption: CardSessionEncryption,
+        shouldAskForAccessCode: Boolean,
+        callback: CompletionCallback<Unit>,
+    ) {
+        // The access code may still be unset here: the early request runs only when authorization
+        // was known to be needed before establishing, but invalid access tokens are reset
+        // mid-establish and the retry falls back to a security-delay channel that does need PIN
+        // elevation. Ask for the code instead of burning a challenge doomed to InvalidAccessCode —
+        // and continue over the already established channel: re-entering establishEncryptionIfNeeded
+        // would re-open the channel and hit NeedReset on the card
+        if (environment.accessCode.isDefault()) {
+            Log.session { "Access code is not entered yet, request it before PIN authorization" }
+            val isFirstAttempt = isEnterCodeFirstAttempt(UserCodeType.AccessCode)
+            environment.accessCode = UserCode(UserCodeType.AccessCode, null)
+            pause()
+            requestUserCodeIfNeeded(
+                type = UserCodeType.AccessCode,
+                isFirstAttempt = isFirstAttempt,
+                showWelcomeBackWarning = false,
+            ) { result ->
+                when (result) {
+                    is CompletionResult.Success -> {
+                        resume()
+                        authorizeWithPinOverEstablishedChannel(cardSessionEncryption, shouldAskForAccessCode, callback)
+                    }
+                    is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
+                }
+            }
+            return
+        }
+
+        AuthorizeWithPINTask().run(this) { authorizeResult ->
+            when (authorizeResult) {
+                is CompletionResult.Success -> {
+                    requestCardAccessTokensIfNeeded(callback)
+                }
+                is CompletionResult.Failure -> {
+                    when (authorizeResult.error) {
+                        is TangemSdkError.AccessCodeRequired -> {
+                            handleWrongUserCode(UserCodeType.AccessCode) { pinResult ->
+                                when (pinResult) {
+                                    is CompletionResult.Success -> {
+                                        establishEncryptionIfNeeded(
+                                            cardSessionEncryption = cardSessionEncryption,
+                                            shouldAskForAccessCode = shouldAskForAccessCode,
+                                            callback = callback,
+                                        )
+                                    }
+                                    is CompletionResult.Failure -> {
+                                        callback(CompletionResult.Failure(pinResult.error))
+                                    }
+                                }
+                            }
+                        }
+                        else -> callback(CompletionResult.Failure(authorizeResult.error))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun establishLegacyEncryption(callback: CompletionCallback<Unit>) {
+        if (environment.encryptionMode == EncryptionMode.None || environment.encryptionKey != null) {
+            Log.session { "Legacy encryption is not needed or already established" }
+            callback(CompletionResult.Success(Unit))
+            return
+        }
+
+        Log.session { "Try establish legacy encryption" }
+
+        val encryptionHelper = EncryptionHelper.create(environment.encryptionMode)
+        if (encryptionHelper == null) {
+            callback(CompletionResult.Failure(TangemSdkError.CryptoUtilsError("Failed to establish encryption")))
+            return
+        }
+
+        scope.launch {
+            val openSessionCommand = OpenSessionCommand(encryptionHelper.keyA)
+            val apdu = openSessionCommand.serialize(environment)
+
+            when (val response = reader.transceiveApdu(apdu)) {
+                is CompletionResult.Success -> {
+                    try {
+                        val result = openSessionCommand.deserialize(environment, response.data)
+                        val uid = result.uid
+                        val accessCode = environment.accessCode.value
+                            ?: throw TangemSdkError.AccessCodeRequired()
+
+                        val protocolKey = accessCode.pbkdf2Hash(uid, iterations = 50)
+                        val secret = encryptionHelper.generateSecret(result.sessionKeyB)
+                        val sessionKey = (secret + protocolKey).calculateSha256()
+                        environment.encryptionKey = sessionKey
+                        Log.session { "The legacy encryption established" }
+                        callback(CompletionResult.Success(Unit))
+                    } catch (error: Throwable) {
+                        val sdkError = if (error is TangemSdkError) {
+                            error
+                        } else {
+                            TangemSdkError.CryptoUtilsError("Failed to establish encryption")
+                        }
+                        callback(CompletionResult.Failure(sdkError))
+                    }
+                }
+                is CompletionResult.Failure -> callback(CompletionResult.Failure(response.error))
+            }
+        }
+    }
+
+    private fun establishSecureChannel(callback: CompletionCallback<Unit>) {
+        Log.session { "Establish secure channel" }
+
+        val card = environment.card
+        if (card == null) {
+            Log.session { "Encryption can not be established because card is not read" }
+            callback(CompletionResult.Failure(TangemSdkError.MissingPreflightRead()))
+            return
+        }
+
+        secureChannelSession = SecureChannelSession(card.cardId)
+        environment.encryptionMode = EncryptionMode.None
+        environment.encryptionKey = null
+
+        if (environment.cardAccessTokens == null) {
+            EstablishSecureChannelWithSecurityDelayTask().run(this) { result ->
+                when (result) {
+                    is CompletionResult.Success -> {
+                        secureChannelRetryCount = 0
+                        callback(CompletionResult.Success(Unit))
+                    }
+                    is CompletionResult.Failure -> retryAfterPowerCycleIfNeedReset(result.error, callback)
+                }
+            }
+        } else {
+            EstablishSecureChannelWithAccessTokenTask().run(this) { result ->
+                when (result) {
+                    is CompletionResult.Success -> {
+                        secureChannelRetryCount = 0
+                        callback(CompletionResult.Success(Unit))
+                    }
+                    is CompletionResult.Failure -> {
+                        if (result.error is TangemSdkError.InvalidAccessTokens &&
+                            secureChannelRetryCount < MAX_SECURE_CHANNEL_RETRIES
+                        ) {
+                            secureChannelRetryCount++
+                            establishSecureChannel(callback)
+                        } else {
+                            retryAfterPowerCycleIfNeedReset(result.error, callback)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * The card answers [TangemSdkError.NeedReset] when a new secure channel is requested while the
+     * previous one is still open on its side — e.g. retrying authorization after a wrong access
+     * code without the card ever leaving the field. Per the firmware team the applet state can only
+     * be reset by a power cycle, so prompt a re-tap and retry once the card is back in the field.
+     */
+    private fun retryAfterPowerCycleIfNeedReset(error: TangemError, callback: CompletionCallback<Unit>) {
+        if (error !is TangemSdkError.NeedReset) {
+            callback(CompletionResult.Failure(error))
+            return
+        }
+        Log.session { "Card requires a power cycle to reset the secure channel. Waiting for re-tap..." }
+        viewDelegate.onTagLost(productType = environment.config.productType)
+        scope.launch {
+            // Wait for the next tag discovery, not for removal + arrival: removal alone is
+            // invisible to the SDK (a null tag is emitted only when a transceive fails or the
+            // session starts/stops — Android has no tag-left-the-field callback), so waiting for
+            // null would hang forever here where nothing is transceiving. A new discovery can
+            // only follow the tag leaving the field, so the power cycle is guaranteed. drop(1)
+            // skips the replayed still-connected tag. If the card comes back with the channel
+            // still open, the card answers NeedReset again and this handler simply re-arms.
+            reader.tag.drop(1).first { it != null }
+            establishSecureChannel(callback)
+        }
+    }
+
+    private fun checkIfAuthorizationWithAccessCodeIsNeeded(
+        cardSessionEncryption: CardSessionEncryption,
+        shouldAskForAccessCode: Boolean,
+    ): Boolean {
+        // Some commands handle PIN by themselves
+        if (!shouldAskForAccessCode) return false
+
+        // Access code is set
+        val card = environment.card
+        if (card != null && card.isAccessCodeSet) {
+            // Authorization is mandatory by command: the card rejects PIN-level commands over a
+            // token-established User channel with AccessDenied (intentional firmware behavior),
+            // so the code must be entered even when access tokens are available
+            if (cardSessionEncryption == CardSessionEncryption.SECURE_CHANNEL_WITH_PIN) return true
+
+            // Authorization is mandatory by user settings
+            if (card.userSettings.isPINRequired) return true
+
+            // No access tokens, PIN must be entered
+            if (environment.cardAccessTokens == null) return true
+        }
+
+        return false
+    }
+
+    private fun requestCardAccessTokensIfNeeded(callback: CompletionCallback<Unit>) {
+        if (environment.cardAccessTokens != null) {
+            callback(CompletionResult.Success(Unit))
+            return
+        }
+
+        val card = environment.card
+        if (card != null && card.settings.isBackupRequired && card.backupStatus?.isActive == false) {
+            callback(CompletionResult.Success(Unit))
+            return
+        }
+
+        ManageAccessTokensTask().run(this, callback)
+    }
+
+    // MARK: - Wrong user code handling
+
+    fun handleWrongUserCode(type: UserCodeType, callback: CompletionCallback<Unit>) {
+        pause()
+        val isFirstAttempt = isEnterCodeFirstAttempt(type)
+        when (type) {
+            UserCodeType.AccessCode -> environment.accessCode = UserCode(UserCodeType.AccessCode, null)
+            UserCodeType.Passcode -> environment.passcode = UserCode(UserCodeType.Passcode, null)
+        }
+
+        requestUserCodeIfNeeded(
+            type = type,
+            isFirstAttempt = isFirstAttempt,
+            showWelcomeBackWarning = false,
+        ) { result ->
+            when (result) {
+                is CompletionResult.Success -> {
+                    resume()
+                    callback(CompletionResult.Success(Unit))
+                }
+                is CompletionResult.Failure -> {
+                    releaseTag()
+                    callback(CompletionResult.Failure(result.error))
+                }
+            }
+        }
+    }
+
+    // MARK: - Health
+
+    fun handleHealthIfNeeded(completion: () -> Unit) {
+        val config = environment.config
+        if (!config.handleHealth || environment.card?.hasHealthReport != true) {
+            completion()
+            return
+        }
+
+        Log.session { "Show health alert" }
+        pause()
+        viewDelegate.showHealthAlert(onContinue = completion)
+    }
+
+    // MARK: - Tag management
+
+    /** Remember the current connected tag for wrong-card detection during command execution */
+    fun rememberTag() {
+        currentTag = connectedTag
+    }
+
+    /** Release the remembered tag after command execution */
+    fun releaseTag() {
+        currentTag = null
+    }
+
+    // MARK: - Access code management
+
+    fun saveAccessCodeIfNeeded() {
+        val card = environment.card ?: return
+        // v8+ uses access tokens instead of saving access codes
+        if (card.firmwareVersion >= FirmwareVersion.v8) return
+        if (environment.accessCode.value == null) return
+
+        Log.session { "Try save an access code" }
+        @Suppress("GlobalCoroutineUsage")
+        GlobalScope.launch {
+            userCodeRepository?.save(card.cardId, environment.accessCode, card.firmwareVersion)
+                ?.doOnResult { userCodeRepository.lock() }
+                ?.doOnFailure { Log.error { "Access code saving failed: $it" } }
+        }
+    }
+
+    /**
+     * Remembers the access data of the card being backed up in the runtime cache, to persist it
+     * to the secure repositories once the user enables biometrics. Called at the finalize step of
+     * the backup process — the only place where access data is collected while biometrics
+     * is disabled.
+     *
+     * For cards with FW below v8 the access code itself is cached. For v8+ cards the credential
+     * is the card access tokens, which the card issues only in a PIN-authorized session with an
+     * active backup — they don't exist yet at this point, so they are requested from the card
+     * first: a silent PIN authorization with [accessCode] followed by [ManageAccessTokensTask].
+     *
+     * @param accessCode SHA-256 hash of the access code that was set on the card during backup.
+     * @param callback invoked when caching is finished. A token request failure is logged and
+     * does not fail the backup.
+     */
+    fun cacheBackupAccessDataIfNeeded(accessCode: ByteArray, callback: VoidCallback) {
+        val card = environment.card ?: run {
+            callback()
+            return
+        }
+
+        if (card.firmwareVersion < FirmwareVersion.v8) {
+            if (userCodeRepository == null) {
+                runtimeAccessDataCache.putUserCode(
+                    cardId = card.cardId,
+                    userCode = UserCode(UserCodeType.AccessCode, accessCode),
+                    firmwareVersion = card.firmwareVersion,
+                )
+            }
+            callback()
+            return
+        }
+
+        if (cardAccessTokensRepository != null) {
+            // Biometrics is enabled, the tokens are saved to the repository by the regular flow
+            callback()
+            return
+        }
+
+        val tokens = environment.cardAccessTokens
+        if (tokens != null) {
+            runtimeAccessDataCache.putCardAccessTokens(card.cardId, tokens)
+            callback()
+            return
+        }
+
+        // The card issues tokens only when its backup is active
+        if (card.backupStatus?.isActive != true) {
+            callback()
+            return
+        }
+
+        Log.session { "Request card access tokens to cache them in runtime" }
+        environment.accessCode = UserCode(UserCodeType.AccessCode, accessCode)
+        ManageAccessTokensTask().run(this) { result ->
+            when (result) {
+                is CompletionResult.Success -> {
+                    environment.cardAccessTokens?.let {
+                        runtimeAccessDataCache.putCardAccessTokens(card.cardId, it)
+                    }
+                }
+                is CompletionResult.Failure -> {
+                    Log.error { "Failed to fetch card access tokens after backup: ${result.error}" }
+                }
+            }
+            callback()
+        }
+    }
+
+    private suspend fun selectAppletOnTagDiscovery(onSessionStarted: SessionStartedCallback) {
+        reader.tag
+            .filterNotNull()
+            .map { tagType ->
+                // Slix tags have no IsoDep interface, so there is no applet to select
+                val result = if (tagType == TagType.Nfc) {
+                    selectApplet()
+                } else {
+                    CompletionResult.Success<ByteArray?>(null)
+                }
+                tagType to result
+            }
+            .transform { (tagType, result) ->
+                // The flow can replay a tag that is already gone (e.g. scanned before a user
+                // code dialog), so the tag may drop right at applet selection — wait for the
+                // next discovery and retry instead of failing the whole session
+                if (result is CompletionResult.Failure && result.error is TangemSdkError.TagLost) {
+                    Log.session { "tag lost during applet selection. Waiting for tag..." }
+                } else {
+                    emit(tagType to result)
+                }
+            }
+            .take(1)
+            .collect { (tagType, result) ->
+                result
+                    .doOnSuccess {
+                        if (tagType == TagType.Nfc && preflightReadMode != PreflightReadMode.None) {
+                            preflightCheck(onSessionStarted)
+                        } else {
+                            onSessionStarted(this@CardSession, null)
+                        }
+                    }
+                    .doOnFailure {
+                        onSessionStarted(this@CardSession, it)
+                        stopWithError(it, SessionErrorMoment.AppletSelection)
+                    }
+            }
+    }
+
     private suspend fun selectApplet(): CompletionResult<ByteArray?> {
         Log.session { "select the Wallet applet" }
         return reader.transceiveRaw(Apdu.build(Apdu.SELECT, Apdu.TANGEM_WALLET_AID))
     }
 
-    private suspend fun establishEncryptionIfNeeded(): CompletionResult<Boolean> {
-        Log.session { "establish encryption if needed" }
-        if (environment.encryptionMode == EncryptionMode.None || environment.encryptionKey != null) {
-            return CompletionResult.Success(true)
-        }
-
-        val encryptionHelper = EncryptionHelper.create(environment.encryptionMode)
-            ?: return CompletionResult.Failure(
-                TangemSdkError.CryptoUtilsError("Failed to establish encryption"),
-            )
-
-        val openSessionCommand = OpenSessionCommand(encryptionHelper.keyA)
-        val apdu = openSessionCommand.serialize(environment)
-
-        when (val response = reader.transceiveApdu(apdu)) {
-            is CompletionResult.Success -> {
-                val result = try {
-                    openSessionCommand.deserialize(environment, response.data)
-                } catch (error: TangemSdkError) {
-                    return CompletionResult.Failure(error)
-                }
-
-                val uid = result.uid
-                val protocolKey = environment.accessCode.value?.pbkdf2Hash(uid, iterations = 50)
-                    ?: return CompletionResult.Failure(
-                        TangemSdkError.CryptoUtilsError(
-                            "Failed to establish encryption",
-                        ),
-                    )
-
-                val secret = encryptionHelper.generateSecret(result.sessionKeyB)
-                val sessionKey = (secret + protocolKey).calculateSha256()
-                environment.encryptionKey = sessionKey
-
-                Log.session { "The encryption established" }
-                return CompletionResult.Success(true)
-            }
-            is CompletionResult.Failure -> {
-                Log.session { "establish encryption Failure ${response.error}" }
-                return CompletionResult.Failure(response.error)
-            }
-        }
-    }
-
-    private fun decrypt(result: CompletionResult<ResponseApdu>): CompletionResult<ResponseApdu> {
+    private fun decrypt(
+        result: CompletionResult<ResponseApdu>,
+        nonce: ByteArray? = null,
+    ): CompletionResult<ResponseApdu> {
         return when (result) {
             is CompletionResult.Success -> {
                 try {
-                    CompletionResult.Success(result.data.decrypt(environment.encryptionKey))
+                    CompletionResult.Success(
+                        result.data.decrypt(environment.encryptionMode, environment.encryptionKey, nonce),
+                    )
                 } catch (error: TangemSdkError) {
                     CompletionResult.Failure(error)
                 }
@@ -592,6 +1151,13 @@ class CardSession(
         }
     }
 
+    private fun isEnterCodeFirstAttempt(type: UserCodeType): Boolean {
+        return when (type) {
+            UserCodeType.AccessCode -> environment.accessCode.value == null || environment.accessCode.isDefault()
+            UserCodeType.Passcode -> environment.passcode.value == null || environment.passcode.isDefault()
+        }
+    }
+
     private fun handleScopeCoroutineException(throwable: Throwable) {
         when (throwable) {
             is TangemSdkError.UserCancelled -> {
@@ -604,32 +1170,6 @@ class CardSession(
                 val exceptionAsString: String = sw.toString()
                 Log.error { exceptionAsString }
                 throw throwable
-            }
-        }
-    }
-
-    private fun saveUserCodeIfNeeded() {
-        val saveCodeAndLock: suspend (String, UserCode) -> Unit = { cardId, code ->
-            userCodeRepository?.save(cardId, code)
-                ?.doOnResult {
-                    userCodeRepository.lock()
-                }
-                ?.doOnFailure {
-                    Log.error { "Access code saving failed: $it" }
-                }
-        }
-
-        @Suppress("GlobalCoroutineUsage")
-        GlobalScope.launch {
-            val card = environment.card
-            when {
-                card == null -> userCodeRepository?.lock()
-                environment.accessCode.value != null && card.isAccessCodeSet -> {
-                    saveCodeAndLock(card.cardId, environment.accessCode)
-                }
-                environment.passcode.value != null && card.isPasscodeSet == true -> {
-                    saveCodeAndLock(card.cardId, environment.passcode)
-                }
             }
         }
     }
@@ -647,10 +1187,12 @@ class CardSession(
         val sessionBuilder = SessionBuilder(
             viewDelegate = viewDelegate,
             secureStorage = secureStorage,
-            userCodeRepository = userCodeRepository,
+            accessCodeRepository = userCodeRepository,
             reader = reader,
             jsonRpcConverter = jsonRpcConverter,
+            cardAccessTokensRepository = cardAccessTokensRepository,
             preflightReadFilter = null,
+            runtimeAccessDataCache = runtimeAccessDataCache,
         )
         val config = environment.config.apply {
             userCodeRequestPolicy = UserCodeRequestPolicy.Default
@@ -677,6 +1219,10 @@ class CardSession(
         Inactive,
         Active,
     }
+
+    companion object {
+        const val MAX_SECURE_CHANNEL_RETRIES = 5
+    }
 }
 
 typealias SessionStartedCallback = (session: CardSession, error: TangemError?) -> Unit
@@ -686,25 +1232,30 @@ enum class TagType {
     Slix,
 }
 
+@Suppress("LongParameterList")
 class SessionBuilder(
     private val viewDelegate: SessionViewDelegate,
     private val secureStorage: SecureStorage,
-    private val userCodeRepository: UserCodeRepository?,
+    private val accessCodeRepository: AccessCodeRepository?,
+    private val cardAccessTokensRepository: CardAccessTokensRepository?,
     private val reader: CardReader,
     private val jsonRpcConverter: JSONRPCConverter,
     private val preflightReadFilter: PreflightReadFilter?,
+    private val runtimeAccessDataCache: RuntimeAccessDataCache,
 ) {
     fun build(config: Config, cardId: String? = null, initialMessage: Message? = null): CardSession {
         return CardSession(
             cardId = cardId,
             viewDelegate = viewDelegate,
             environment = SessionEnvironment(config, secureStorage),
-            userCodeRepository = userCodeRepository,
+            userCodeRepository = accessCodeRepository,
             reader = reader,
             jsonRpcConverter = jsonRpcConverter,
             secureStorage = secureStorage,
             initialMessage = initialMessage,
             preflightReadFilter = preflightReadFilter,
+            cardAccessTokensRepository = cardAccessTokensRepository,
+            runtimeAccessDataCache = runtimeAccessDataCache,
         )
     }
 }

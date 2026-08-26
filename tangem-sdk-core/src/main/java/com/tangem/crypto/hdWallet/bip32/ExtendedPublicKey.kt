@@ -45,7 +45,8 @@ class ExtendedPublicKey @Throws constructor(
     /**
      * This function performs CKDpub((Kpar, cpar), i) → (Ki, ci) to compute a child extended public key from
      * the parent extended public key.
-     * It is only defined for non-hardened child keys. `secp256k1` only
+     * It is only defined for non-hardened child keys. `secp256k1` only.
+     * In case the derived key is invalid, the derivation proceeds with the next index, as required by BIP32.
      */
     @Suppress("MagicNumber")
     @Throws(HDWalletError::class)
@@ -56,32 +57,23 @@ class ExtendedPublicKey @Throws constructor(
             throw TangemSdkError.UnsupportedCurve()
         }
 
-        val index = node.index
+        return BIP32.deriveWithRetry(node.index) { index ->
+            // We can derive only non-hardened keys
+            if (index >= BIP32.Constants.hardenedOffset) throw HDWalletError.HardenedNotSupported
 
-        // We can derive only non-hardened keys
-        if (index >= BIP32.Constants.hardenedOffset) throw HDWalletError.HardenedNotSupported
+            // let I = HMAC-SHA512(Key = cpar, Data = serP(Kpar) || ser32(i)).
+            val data = publicKey.toCompressedPublicKey() + index.toByteArray(4)
+            val digest = chainCode.hmacSha512(data)
 
-        val data = publicKey.toCompressedPublicKey() + index.toByteArray(4)
-        val i = chainCode.hmacSha512(data).clone()
-        val iL = i.sliceArray(0 until 32)
-        val chainCode = i.sliceArray(32 until 64)
-
-        val ki = Secp256k1.gMultiplyAndAddPoint(iL, publicKey)
-        val derivedPublicKey = ki.getEncoded(true)
-
-        return ExtendedPublicKey(
-            publicKey = derivedPublicKey,
-            chainCode = chainCode,
-            depth = depth + 1,
-            parentFingerprint = publicKey.calculateSha256().calculateRipemd160().take(4).toByteArray(),
-            childNumber = index,
-        )
+            makeChildKey(digest = digest, index = index)
+        }
     }
 
     /**
      * This function performs CKDpub((Kpar, cpar), i) → (Ki, ci) to compute a child extended public key from the
      * parent extended public key.
-     * It is only defined for non-hardened child keys. `secp256k1` only
+     * It is only defined for non-hardened child keys. `secp256k1` only.
+     * In case the derived key is invalid, the derivation proceeds with the next index, as required by BIP32.
      */
     @Throws(HDWalletError::class)
     fun derivePublicKey(derivationPath: DerivationPath): ExtendedPublicKey {
@@ -90,6 +82,25 @@ class ExtendedPublicKey @Throws constructor(
             key = key.derivePublicKey(it)
         }
         return key
+    }
+
+    @Suppress("MagicNumber")
+    @Throws(HDWalletError::class)
+    fun makeChildKey(digest: ByteArray, index: Long): ExtendedPublicKey {
+        val derivedPublicKey = try {
+            Secp256k1.tweakAddPublicKey(publicKey, digest.sliceArray(0 until 32))
+        } catch (e: Exception) {
+            // BIP32: parse256(IL) ≥ n or Ki is the point at infinity
+            throw HDWalletError.InvalidChildKey
+        }
+
+        return ExtendedPublicKey(
+            publicKey = derivedPublicKey,
+            chainCode = digest.sliceArray(32 until 64),
+            depth = depth + 1,
+            parentFingerprint = publicKey.calculateSha256().calculateRipemd160().take(4).toByteArray(),
+            childNumber = index,
+        )
     }
 
     @Throws(Exception::class)

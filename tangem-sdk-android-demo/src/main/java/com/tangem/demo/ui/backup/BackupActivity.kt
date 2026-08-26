@@ -2,9 +2,14 @@ package com.tangem.demo.ui.backup
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.tangem.TangemSdk
 import com.tangem.common.CompletionResult
+import com.tangem.common.card.EllipticCurve
+import com.tangem.common.card.FirmwareVersion
+import com.tangem.crypto.hdWallet.DerivationPath
+import com.tangem.demo.DemoApplication
 import com.tangem.demo.asFlow
 import com.tangem.demo.postUi
 import com.tangem.operations.backup.BackupService
@@ -50,7 +55,7 @@ class BackupActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
-        tangemSdk = TangemSdk.init(this)
+        tangemSdk = (application as DemoApplication).dependencyContainer.getSdk(this)
         backupService = BackupService.init(tangemSdk, this)
         backupService.discardSavedBackup()
 
@@ -61,7 +66,13 @@ class BackupActivity : AppCompatActivity() {
                         is CompletionResult.Success -> {
                             binding.tvAddBackupCard.text = "${backupService.addedBackupCardsCount} added."
                         }
-                        is CompletionResult.Failure -> Unit
+                        is CompletionResult.Failure -> {
+                            Toast.makeText(
+                                this,
+                                "Add backup card failed: ${result.error.customMessage}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
                     }
                 }
             }
@@ -72,6 +83,10 @@ class BackupActivity : AppCompatActivity() {
                 postUi {
                     when (result) {
                         is CompletionResult.Success -> {
+                            // Cards with firmware 8+ support an extra backup card (3 instead of 2).
+                            val firmwareVersion = result.data.firmwareVersion
+                            tangemSdk.config.extendedBackup =
+                                firmwareVersion != null && firmwareVersion >= FirmwareVersion.v8
                             binding.btnAddOriginCard.text = "Good! You've scanned origin card."
                         }
                         is CompletionResult.Failure -> Unit
@@ -95,7 +110,9 @@ class BackupActivity : AppCompatActivity() {
 
         binding.btnStart.setOnClickListener {
             if (backupService.currentState != BackupService.State.Preparing) {
-                backupService.proceedBackup {
+                backupService.proceedBackup(
+                    defaultDerivations = mapOf(EllipticCurve.Secp256k1 to listOf(DerivationPath("m/44'/60'/0'/0/0"))),
+                ) {
                 }
             }
         }
