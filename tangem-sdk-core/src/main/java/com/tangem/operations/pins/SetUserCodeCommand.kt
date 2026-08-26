@@ -1,5 +1,6 @@
 package com.tangem.operations.pins
 
+import com.tangem.Log
 import com.tangem.common.*
 import com.tangem.common.apdu.CommandApdu
 import com.tangem.common.apdu.Instruction
@@ -14,6 +15,7 @@ import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.calculateSha256
 import com.tangem.common.tlv.TlvTag
 import com.tangem.operations.Command
+import com.tangem.operations.securechannel.manageAccessTokens.ManageAccessTokensTask
 
 class SetUserCodeCommand private constructor() : Command<SuccessResponse>() {
 
@@ -88,9 +90,41 @@ class SetUserCodeCommand private constructor() : Command<SuccessResponse>() {
                         session.environment.passcode = UserCode(UserCodeType.Passcode, passcodeValue)
                     }
 
-                    callback(CompletionResult.Success(response))
+                    refreshAccessTokensIfNeeded(session) {
+                        callback(CompletionResult.Success(response))
+                    }
                 }
                 .doOnFailure { error -> callback(CompletionResult.Failure(error)) }
+        }
+    }
+
+    /**
+     * The card may invalidate previously issued access tokens when its access code changes, which
+     * would leave the tokens saved on the phone stale and force an access code prompt on the next
+     * scan. Verify the tokens with the card in the same session and renew them if they were reset.
+     * A failure is logged and does not fail the command — the user code is already changed.
+     */
+    private fun refreshAccessTokensIfNeeded(session: CardSession, callback: () -> Unit) {
+        val card = session.environment.card
+        val isAccessCodeChanged = codes[UserCodeType.AccessCode]?.value != null
+
+        if (card == null || card.firmwareVersion < FirmwareVersion.v8 || !isAccessCodeChanged) {
+            callback()
+            return
+        }
+
+        // The card issues tokens only when its backup is active
+        if (card.settings.isBackupRequired && card.backupStatus?.isActive != true) {
+            callback()
+            return
+        }
+
+        Log.session { "Refresh access tokens after access code change" }
+        ManageAccessTokensTask().run(session) { result ->
+            result.doOnFailure { error ->
+                Log.error { "Failed to refresh access tokens after access code change: $error" }
+            }
+            callback()
         }
     }
 

@@ -328,10 +328,12 @@ class NfcSessionDialog(
         }
 
         welcomeBackWidget.onJustBoughtClick = {
+            welcomeBackWidget.onJustBoughtClick = null
             urlOpener.openUrlExternalBrowser(getPreactivatedWalletsUrl(context))
             welcomeBackContainer.hide()
             taskContainer.show()
             findDesignBottomSheetView()?.let { it.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT }
+            dismissInternal()
             callback.invoke(CompletionResult.Failure(TangemSdkError.UserCancelled()))
         }
         setStateAndShow(state, welcomeBackWidget)
