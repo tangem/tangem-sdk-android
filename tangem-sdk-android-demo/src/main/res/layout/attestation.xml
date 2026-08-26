@@ -81,6 +81,19 @@
                 android:layout_height="wrap_content"
                 android:text="Attest card" />
 
+            <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+                android:id="@+id/etAttestWalletKeyPath"
+                android:completionThreshold="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Derivation path (ex: m/44'/0'/0'/1/0)" />
+
+            <Button
+                android:id="@+id/btnAttestWalletKey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Attest wallet key" />
+
         </LinearLayout>
 
     </FrameLayout>

@@ -1,7 +1,7 @@
 package com.tangem.common.core
 
 import com.tangem.common.CompletionResult
-import com.tangem.common.card.EncryptionMode
+import com.tangem.common.encryption.EncryptionMode
 import com.tangem.operations.PreflightReadMode
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -15,6 +15,20 @@ interface CardSessionRunnable<T> {
      * */
     val allowsRequestAccessCodeFromRepository: Boolean
         get() = true
+
+    /**
+     * Whether the session should handle access code prompting for this command.
+     * When false, the command handles PIN by itself.
+     */
+    val shouldAskForAccessCode: Boolean
+        get() = true
+
+    /**
+     * Required card session encryption level for v8+ secure channel.
+     * Determines the secure channel elevation needed before executing the command.
+     */
+    val cardSessionEncryption: CardSessionEncryption
+        get() = CardSessionEncryption.SECURE_CHANNEL
 
     // / An enforced encryption mode. Managed by a card if none. None by default.
     val encryptionMode: EncryptionMode

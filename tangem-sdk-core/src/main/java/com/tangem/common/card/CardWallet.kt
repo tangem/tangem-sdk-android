@@ -13,13 +13,19 @@ data class CardWallet(
      * Wallet's public key.
      * For [EllipticCurve.Secp256k1], the key can be compressed or uncompressed.
      * Use [com.tangem.crypto.Secp256k1Key] for any conversions.
+
      */
-    val publicKey: ByteArray,
+    val publicKey: ByteArray?,
 
     /**
      * Optional chain code for BIP32 derivation.
      */
     val chainCode: ByteArray?,
+
+    /**
+     * Proof for BLS Proof of possession scheme (POP)
+     */
+    val proof: ByteArray? = null,
 
     /**
      *  Elliptic curve used for all wallet key operations.
@@ -57,6 +63,11 @@ data class CardWallet(
      *  Shows whether this wallet has a backup
      */
     val hasBackup: Boolean,
+
+    /**
+     * Raw status of the wallet
+     */
+    val status: Status,
 
     /**
      * Derived keys according to [com.tangem.common.core.Config.defaultDerivationPaths]
@@ -137,7 +148,8 @@ data class CardWallet(
                 return values.find { it.code.toByte() == code.toByte() }
             }
 
-            fun initExtendedPublicKey(publicKey: ByteArray, chainCode: ByteArray?): ExtendedPublicKey? {
+            fun initExtendedPublicKey(publicKey: ByteArray?, chainCode: ByteArray?): ExtendedPublicKey? {
+                val publicKey = publicKey ?: return null
                 val chainCode = chainCode ?: return null
 
                 return ExtendedPublicKey(publicKey, chainCode)

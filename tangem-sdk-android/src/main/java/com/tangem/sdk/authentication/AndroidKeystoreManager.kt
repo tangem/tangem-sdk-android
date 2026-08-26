@@ -19,8 +19,11 @@ import kotlinx.coroutines.withContext
 import java.security.InvalidKeyException
 import java.security.KeyPair
 import java.security.KeyStore
+import java.security.KeyStoreException
 import java.security.PrivateKey
+import java.security.ProviderException
 import java.security.PublicKey
+import java.security.UnrecoverableKeyException
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 
@@ -144,7 +147,15 @@ internal class AndroidKeystoreManager(
     }
 
     private fun getPrivateMasterKey(masterKeyConfig: KeystoreManager.MasterKeyConfig): PrivateKey? {
-        val key = keyStore.getKey(masterKeyConfig.alias, null) as? PrivateKey
+        val key = try {
+            keyStore.getKey(masterKeyConfig.alias, null) as? PrivateKey
+        } catch (e: UnrecoverableKeyException) {
+            handleKeystoreCorruption(masterKeyConfig.alias, e)
+        } catch (e: KeyStoreException) {
+            handleKeystoreCorruption(masterKeyConfig.alias, e)
+        } catch (e: ProviderException) {
+            handleKeystoreCorruption(masterKeyConfig.alias, e)
+        }
 
         if (key == null) {
             Log.biometric {
@@ -203,6 +214,14 @@ internal class AndroidKeystoreManager(
             authenticateUser(masterKeyConfig)
 
             initCipher()
+        } catch (e: KeyPermanentlyInvalidatedException) {
+            handleKeyInvalidationException(masterKeyConfig.alias, e)
+        } catch (e: UnrecoverableKeyException) {
+            handleKeystoreCorruption(masterKeyConfig.alias, e)
+        } catch (e: KeyStoreException) {
+            handleKeystoreCorruption(masterKeyConfig.alias, e)
+        } catch (e: ProviderException) {
+            handleKeystoreCorruption(masterKeyConfig.alias, e)
         } catch (e: Throwable) {
             Log.biometric {
                 """
@@ -266,6 +285,29 @@ internal class AndroidKeystoreManager(
 
         keyStore.deleteEntry(privateKeyAlias)
         keyStore.load(null)
+
+        throw TangemSdkError.KeystoreInvalidated(e)
+    }
+
+    /**
+     * Recovers from a corrupted or unusable keystore entry (e.g. keymaster/TEE blob corruption seen on
+     * some devices, surfacing as [UnrecoverableKeyException], [KeyStoreException] or [ProviderException]).
+     * Wipes the offending alias so the next launch regenerates it and falls back to code unlock, and maps
+     * the failure to [TangemSdkError.KeystoreInvalidated] instead of letting the platform exception escape.
+     */
+    private fun handleKeystoreCorruption(keyAlias: String, e: Throwable): Nothing {
+        Log.biometric {
+            """
+                The keystore entry is corrupted or unusable, wiping it to recover on the next launch
+                |- Alias: $keyAlias
+                |- Cause: $e
+            """.trimIndent()
+        }
+
+        runCatching {
+            keyStore.deleteEntry(keyAlias)
+            keyStore.load(null)
+        }
 
         throw TangemSdkError.KeystoreInvalidated(e)
     }
