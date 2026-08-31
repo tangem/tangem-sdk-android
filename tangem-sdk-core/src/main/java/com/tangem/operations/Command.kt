@@ -135,7 +135,16 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
         session.rememberTag()
 
         Log.apduCommand { "C-APDU serialization..." }
-        val apdu = serialize(session.environment)
+        // serialize implementations throw TangemSdkError (e.g. MissingPreflightRead when the
+        // session was reset while a user code dialog was open); an uncaught throw here crashes
+        // the app because this method is re-entered from UI-thread callbacks
+        val apdu = try {
+            serialize(session.environment)
+        } catch (error: TangemSdkError) {
+            session.releaseTag()
+            callback(CompletionResult.Failure(error))
+            return
+        }
         Log.apduCommand { "C-APDU serialization complete" }
         showMissingSecurityDelay(session)
         transceiveApdu(apdu, session) { result ->
@@ -386,7 +395,10 @@ abstract class Command<T : CommandResponse> : ApduSerializable<T>, CardSessionRu
     private fun requestPin(type: UserCodeType, session: CardSession, callback: CompletionCallback<T>) {
         session.handleWrongUserCode(type) { result ->
             when (result) {
-                is CompletionResult.Success -> transceiveInternal(session, callback)
+                // Re-enter through transceive, not transceiveInternal: the session may have been
+                // stopped and its environment reset while the user code dialog was open, so the
+                // preflight card check must run again
+                is CompletionResult.Success -> transceive(session, callback)
                 is CompletionResult.Failure -> callback(CompletionResult.Failure(result.error))
             }
         }
