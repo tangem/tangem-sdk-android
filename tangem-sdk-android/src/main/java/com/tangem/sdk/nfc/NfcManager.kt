@@ -31,7 +31,17 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
     val reader = NfcReader()
 
     val isNfcEnabled: Boolean
-        get() = nfcAdapter?.isEnabled == true
+        get() = runNfcCatching { it.isEnabled } == true
+
+    /**
+     * Whether the last attempt to turn reader mode on was rejected by the platform.
+     *
+     * [isNfcEnabled] alone is not enough to tell the user that scanning will not work: the adapter can
+     * report itself enabled while reader mode is unusable, because the NFC service may die between the
+     * two calls. Cleared as soon as reader mode is enabled again.
+     */
+    var readerModeFailed: Boolean = false
+        private set
 
     private val onTagDiscoveredListeners: MutableList<VoidCallback> = mutableListOf()
     private var activity: Activity? = null
@@ -101,9 +111,7 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
     }
 
     private fun enableReaderModeIfNfcEnabled() {
-        val nfcEnabled = nfcAdapter?.isEnabled == true
-
-        if (nfcEnabled) {
+        if (isNfcEnabled) {
             enableReaderMode()
         }
     }
@@ -115,27 +123,52 @@ class NfcManager : NfcAdapter.ReaderCallback, ReadingActiveListener, DefaultLife
                 disableReaderMode()
                 Thread.sleep(DELAY_BEFORE_ENABLE)
             }
-            nfcAdapter?.enableReaderMode(activity, this, READER_FLAGS, Bundle())
-            isReaderModeEnabled = true
+            isReaderModeEnabled = runNfcCatching {
+                it.enableReaderMode(activity, this, READER_FLAGS, Bundle())
+                true
+            } == true
+            readerModeFailed = !isReaderModeEnabled
         }
     }
 
     private fun disableReaderMode() {
         Log.nfc { "disableReaderMode $isReaderModeEnabled" }
         if (activity?.isDestroyed == false && isReaderModeEnabled) {
-            nfcAdapter?.disableReaderMode(activity)
+            runNfcCatching { it.disableReaderMode(activity) }
+            // Cleared even when the call failed: reader mode state is then unknown, and keeping it `true`
+            // would make every later enable attempt start with a disable that fails the same way.
             isReaderModeEnabled = false
         }
     }
 
     private fun ignoreTag(tag: Tag?) {
         Log.nfc { "NFC tag is ignored" }
-        nfcAdapter?.ignore(tag, IGNORE_DEBOUNCE_MS, null, null)
+        runNfcCatching { it.ignore(tag, IGNORE_DEBOUNCE_MS, null, null) }
         IsoDep.get(tag)?.closeInternal(
             onError = {
                 Log.nfc { "ignoreTag close failure" }
             },
         )
+    }
+
+    /**
+     * Every [NfcAdapter] method here is a binder call into the system NFC service, and the platform
+     * surfaces its failures as unchecked exceptions on the calling thread — which for this class is
+     * always the main one: `RuntimeException(DeadObjectException)` once the NFC service process dies,
+     * `IllegalStateException` when the host activity is not resumed.
+     *
+     * Reader mode is best-effort — losing it degrades card scanning until the next adapter state change,
+     * whereas letting the throwable escape kills the host app. So a failure is logged and swallowed.
+     */
+    private fun <T> runNfcCatching(block: (NfcAdapter) -> T): T? {
+        val adapter = nfcAdapter ?: return null
+
+        return try {
+            block(adapter)
+        } catch (e: RuntimeException) {
+            Log.error { "NFC call failed: ${e.stackTraceToString()}" }
+            null
+        }
     }
 
     private companion object {
