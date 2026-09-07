@@ -66,8 +66,11 @@ class DefaultSessionViewDelegate(
         Log.view { "checkNfcEnabled" }
         // workaround to delay checking isNfcEnabled to let nfcManager become enabled state after enableReaderMode
         postUI(msTime = DIALOG_NFC_DELAY) {
-            Log.view { "checkNfcEnabled isNfcEnabled=${nfcManager.isNfcEnabled}" }
-            if (!nfcManager.isNfcEnabled) {
+            Log.view {
+                "checkNfcEnabled isNfcEnabled=${nfcManager.isNfcEnabled} " +
+                    "readerModeFailed=${nfcManager.readerModeFailed}"
+            }
+            if (!nfcManager.isNfcEnabled || nfcManager.readerModeFailed) {
                 nfcEnableDialog?.cancel()
                 nfcEnableDialog = NfcEnableDialog()
                 if (!activity.isFinishing && !activity.isDestroyed) {
