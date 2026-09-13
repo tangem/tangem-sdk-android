@@ -86,7 +86,7 @@ class CardSession(
         handleScopeCoroutineException(throwable)
     }
 
-    private var preflightReadMode: PreflightReadMode = PreflightReadMode.FullCardRead
+    private var preflightReadMode: PreflightReadMode = PreflightReadMode.FullCardRead()
 
     private var onTagConnectedAfterResume: VoidCallback? = null
 
@@ -431,7 +431,7 @@ class CardSession(
 
     private fun onStopSessionFinalize() {
         state = CardSessionState.Inactive
-        preflightReadMode = PreflightReadMode.FullCardRead
+        preflightReadMode = PreflightReadMode.FullCardRead()
         cardAccessTokensRepository?.lock()
         resetSensitiveData()
     }
