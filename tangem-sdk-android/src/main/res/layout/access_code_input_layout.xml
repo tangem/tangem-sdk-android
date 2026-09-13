@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     app:boxBackgroundColor="@android:color/transparent">
 
-    <com.google.android.material.textfield.TextInputEditText
+    <com.tangem.sdk.ui.common.NoAutofillTextInputEditText
         android:id="@+id/etPinCode"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

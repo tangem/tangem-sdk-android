@@ -38,14 +38,36 @@ sealed class PreflightReadMode {
     object ReadCardOnly : PreflightReadMode()
 
     /**
-     * Read card info and all wallets. Used by default
+     * Read card info and all wallets, plus any requested extras. Used by default
      */
-    object FullCardRead : PreflightReadMode()
+    data class FullCardRead(val options: Set<Option> = emptySet()) : PreflightReadMode() {
 
-    /**
-     * Read card info and all wallets. Show alert if this card is unknown yet
-     */
-    object FullCardReadWithAccessCodeCheck : PreflightReadMode()
+        // The generated data-class toString would shadow the sealed class's compact one
+        // and blow the Log.command banner past its width
+        override fun toString(): String {
+            return if (options.isEmpty()) "FullCardRead" else "FullCardRead(${options.joinToString()})"
+        }
+
+        /**
+         * Optional extras layered on top of a full card read
+         */
+        enum class Option {
+            /**
+             * Show an alert and request the access code if this card is unknown yet
+             */
+            AccessCodeCheck,
+
+            /**
+             * Read the card's master secret. COS v8+
+             */
+            ReadMasterSecret,
+
+            /**
+             * Calculate and verify the backup hash. Needs the master secret, so implies [ReadMasterSecret]. COS v8+
+             */
+            VerifyBackup,
+        }
+    }
 
     override fun toString(): String = this::class.java.simpleName
 }
@@ -102,53 +124,64 @@ class PreflightReadTask(
         }
 
         when (readMode) {
-            PreflightReadMode.FullCardRead -> readWalletsList(session, callback)
-            PreflightReadMode.FullCardReadWithAccessCodeCheck -> checkFullCardReadWithAccessCodeCheckMode(
+            is PreflightReadMode.FullCardRead -> fullCardRead(
                 session = session,
                 card = card,
+                options = readMode.options,
                 callback = callback,
             )
             PreflightReadMode.ReadCardOnly, PreflightReadMode.None -> callback(Success(card))
         }
     }
 
-    private fun checkFullCardReadWithAccessCodeCheckMode(
+    private fun fullCardRead(
         session: CardSession,
         card: Card,
+        options: Set<PreflightReadMode.FullCardRead.Option>,
         callback: CompletionCallback<Card>,
     ) {
+        val shouldCheckAccessCode = PreflightReadMode.FullCardRead.Option.AccessCodeCheck in options
+        if (!shouldCheckAccessCode || !card.isAccessCodeSet) {
+            readWalletsList(session, options, callback)
+            return
+        }
+
         val cardPublicKey = session.environment.card?.cardPublicKey ?: run {
             callback(Failure(TangemSdkError.MissingPreflightRead()))
             return
         }
-        val attestationResult = trustedCardsRepo.attestation(cardPublicKey)
-        if (card.isAccessCodeSet && attestationResult == null) {
-            session.pause()
+        if (trustedCardsRepo.attestation(cardPublicKey) != null) {
+            readWalletsList(session, options, callback)
+            return
+        }
 
-            val showWelcomeBackWarning = card.firmwareVersion.type != FirmwareVersion.FirmwareType.Sdk
+        session.pause()
 
-            session.environment.accessCode = UserCode(UserCodeType.AccessCode, value = null)
-            session.requestUserCodeIfNeeded(
-                type = UserCodeType.AccessCode,
-                isFirstAttempt = true,
-                showWelcomeBackWarning = showWelcomeBackWarning,
-            ) { result ->
-                when (result) {
-                    is Success -> {
-                        session.resume { readWalletsList(session, callback) }
-                    }
-                    is Failure -> {
-                        session.releaseTag()
-                        callback(Failure(result.error))
-                    }
+        val showWelcomeBackWarning = card.firmwareVersion.type != FirmwareVersion.FirmwareType.Sdk
+
+        session.environment.accessCode = UserCode(UserCodeType.AccessCode, value = null)
+        session.requestUserCodeIfNeeded(
+            type = UserCodeType.AccessCode,
+            isFirstAttempt = true,
+            showWelcomeBackWarning = showWelcomeBackWarning,
+        ) { result ->
+            when (result) {
+                is Success -> {
+                    session.resume { readWalletsList(session, options, callback) }
+                }
+                is Failure -> {
+                    session.releaseTag()
+                    callback(Failure(result.error))
                 }
             }
-        } else {
-            readWalletsList(session, callback)
         }
     }
 
-    private fun readWalletsList(session: CardSession, callback: CompletionCallback<Card>) {
+    private fun readWalletsList(
+        session: CardSession,
+        options: Set<PreflightReadMode.FullCardRead.Option>,
+        callback: CompletionCallback<Card>,
+    ) {
         ReadWalletsListCommand().run(session) { result ->
             when (result) {
                 is Success -> {
@@ -164,12 +197,16 @@ class PreflightReadTask(
                         return@run
                     }
 
-                    if (card.firmwareVersion >= FirmwareVersion.v8) {
+                    val shouldReadMasterSecret = PreflightReadMode.FullCardRead.Option.ReadMasterSecret in options ||
+                        PreflightReadMode.FullCardRead.Option.VerifyBackup in options
+                    if (card.firmwareVersion >= FirmwareVersion.v8 && shouldReadMasterSecret) {
                         readMasterSecret(session) { masterSecretResult ->
                             when (masterSecretResult) {
                                 is Success -> {
-                                    verifyBackup(result.data.backupHash, session)
-                                    callback(Success(masterSecretResult.data))
+                                    if (PreflightReadMode.FullCardRead.Option.VerifyBackup in options) {
+                                        verifyBackup(result.data.backupHash, session)
+                                    }
+                                    callback(Success(session.environment.card ?: masterSecretResult.data))
                                 }
                                 is Failure -> callback(masterSecretResult)
                             }
