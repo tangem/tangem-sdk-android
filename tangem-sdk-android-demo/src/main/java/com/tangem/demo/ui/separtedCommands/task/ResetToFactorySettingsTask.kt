@@ -7,12 +7,20 @@ import com.tangem.common.core.CardSession
 import com.tangem.common.core.CardSessionRunnable
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.guard
+import com.tangem.operations.PreflightReadMode
 import com.tangem.operations.backup.ResetBackupCommand
 import com.tangem.operations.masterSecret.PurgeMasterSecretCommand
 import com.tangem.operations.securechannel.manageAccessTokens.ResetAccessTokensTask
 import com.tangem.operations.wallet.PurgeWalletCommand
 
 class ResetToFactorySettingsTask : CardSessionRunnable<Card> {
+
+    /**
+     * Reads `card.masterSecret` in [deleteMasterSecret], so the preflight read must include it.
+     */
+    override fun preflightReadMode(): PreflightReadMode = PreflightReadMode.FullCardRead(
+        options = setOf(PreflightReadMode.FullCardRead.Option.ReadMasterSecret),
+    )
 
     override fun run(session: CardSession, callback: (result: CompletionResult<Card>) -> Unit) {
         deleteWallets(session, callback)

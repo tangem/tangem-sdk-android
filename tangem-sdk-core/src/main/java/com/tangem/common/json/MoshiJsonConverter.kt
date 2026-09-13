@@ -189,9 +189,8 @@ class TangemSdkAdapter {
         @ToJson
         fun toJson(src: PreflightReadMode): String {
             return when (src) {
-                PreflightReadMode.FullCardRead -> "fullCardRead"
+                is PreflightReadMode.FullCardRead -> "fullCardRead"
                 PreflightReadMode.ReadCardOnly -> "readCardOnly"
-                PreflightReadMode.FullCardReadWithAccessCodeCheck -> "fullCardReadWithAccessCodeCheck"
                 PreflightReadMode.None -> "none"
             }
         }
@@ -199,9 +198,18 @@ class TangemSdkAdapter {
         @FromJson
         fun fromJson(json: String): PreflightReadMode {
             return when (json) {
-                "fullCardRead" -> PreflightReadMode.FullCardRead
+                "fullCardRead" -> PreflightReadMode.FullCardRead()
+                // Legacy value from SDK versions that had a dedicated FullCardReadWithAccessCodeCheck mode.
+                // Back then a full read also loaded the master secret and verified the backup unconditionally,
+                // so the full option set preserves the old behavior for existing JSON-RPC clients.
+                "fullCardReadWithAccessCodeCheck" -> PreflightReadMode.FullCardRead(
+                    options = setOf(
+                        PreflightReadMode.FullCardRead.Option.AccessCodeCheck,
+                        PreflightReadMode.FullCardRead.Option.ReadMasterSecret,
+                        PreflightReadMode.FullCardRead.Option.VerifyBackup,
+                    ),
+                )
                 "readCardOnly" -> PreflightReadMode.ReadCardOnly
-                "fullCardReadWithAccessCodeCheck" -> PreflightReadMode.FullCardReadWithAccessCodeCheck
                 "none" -> PreflightReadMode.None
                 else -> error("PreflightReadMode not found")
             }
