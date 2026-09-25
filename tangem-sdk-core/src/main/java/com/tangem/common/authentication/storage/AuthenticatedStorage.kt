@@ -192,12 +192,15 @@ class AuthenticatedStorage(
     }
 
     /**
-     * Deletes the encrypted data associated with the provided key from storage.
+     * Deletes the encrypted data associated with the provided key from storage, together with the wrapped data
+     * key and the IV that were created for it in [store] — otherwise they stay behind as orphans.
      *
      * @param key The unique identifier of the encrypted data to be deleted.
      */
     fun delete(key: String) {
         secureStorage.delete(key)
+        secureStorage.delete(getStorageKeyForDataIv(key))
+        keystoreManager.delete(key)
     }
 
     private suspend fun encrypt(keyAlias: String, decryptedData: ByteArray): ByteArray {

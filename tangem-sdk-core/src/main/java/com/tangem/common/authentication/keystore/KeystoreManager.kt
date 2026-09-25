@@ -56,6 +56,14 @@ interface KeystoreManager {
     suspend fun store(masterKeyConfig: MasterKeyConfig, keyAlias: String, key: SecretKey)
 
     /**
+     * Deletes the wrapped key stored under [keyAlias], if any. Implementations without persistent wrapped keys
+     * may keep the default no-op.
+     *
+     * @param keyAlias The alias the key was stored under.
+     */
+    fun delete(keyAlias: String) = Unit
+
+    /**
      * The configuration for the master key.
      *
      * @property alias The alias of the master key.

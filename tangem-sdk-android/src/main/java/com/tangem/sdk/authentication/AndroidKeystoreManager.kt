@@ -390,6 +390,10 @@ internal class AndroidKeystoreManager(
             .build()
     }
 
+    override fun delete(keyAlias: String) {
+        secureStorage.delete(getStorageKeyForWrappedSecretKey(keyAlias))
+    }
+
     private fun getStorageKeyForWrappedSecretKey(keyAlias: String): String {
         return "data_key_$keyAlias"
     }
