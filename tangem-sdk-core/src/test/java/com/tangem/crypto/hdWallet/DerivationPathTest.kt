@@ -340,4 +340,28 @@ class DerivationPathTest {
     }
 
     // endregion
+
+    @Test(expected = HDWalletError.WrongPath::class)
+    fun parseNonHardenedIndexAtHardenedOffsetThrows() {
+        // Would serialize as 0x80000000 = "0'" and alias the hardened node.
+        DerivationPath("m/44'/0'/0'/0/$hardenedOffset")
+    }
+
+    @Test(expected = HDWalletError.WrongPath::class)
+    fun parseHardenedIndexAtHardenedOffsetThrows() {
+        // Would serialize as 0x00000000 = plain "0" while being displayed as hardened.
+        DerivationPath("m/$hardenedOffset'/0'/0'")
+    }
+
+    @Test(expected = HDWalletError.WrongPath::class)
+    fun parseNegativeIndexThrows() {
+        DerivationPath("m/44'/0'/0'/0/-1")
+    }
+
+    @Test
+    fun parseMaximumValidIndex() {
+        val path = DerivationPath("m/${hardenedOffset - 1}'/${hardenedOffset - 1}")
+        assertThat(path.nodes[0]).isEqualTo(DerivationNode.Hardened(hardenedOffset - 1))
+        assertThat(path.nodes[1]).isEqualTo(DerivationNode.NonHardened(hardenedOffset - 1))
+    }
 }

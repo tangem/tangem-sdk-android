@@ -76,6 +76,9 @@ class DerivationPath {
                 val cleanedPathItem = pathItem.trim()
                     .remove(BIP32.Constants.hardenedSymbol, BIP32.Constants.alternativeHardenedSymbol)
                 val index = cleanedPathItem.toLongOrNull() ?: throw HDWalletError.WrongPath
+                // BIP32 indexes are 31-bit. Anything else is serialized modulo 2^32 and silently aliases another
+                // node ("…/2147483649" derives the same key as "…/1'", "…/-1" the same as "…/2147483647'").
+                if (index < 0 || index >= BIP32.Constants.hardenedOffset) throw HDWalletError.WrongPath
 
                 if (isHardened) DerivationNode.Hardened(index) else DerivationNode.NonHardened(index)
             }
