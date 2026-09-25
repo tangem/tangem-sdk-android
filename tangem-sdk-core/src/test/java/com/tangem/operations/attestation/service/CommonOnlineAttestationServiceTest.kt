@@ -1,6 +1,8 @@
 package com.tangem.operations.attestation.service
 
 import com.google.common.truth.Truth
+import com.squareup.moshi.JsonDataException
+import com.squareup.moshi.JsonEncodingException
 import com.tangem.common.CompletionResult
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.services.CardVerificationInfoStore
@@ -320,6 +322,55 @@ internal class CommonOnlineAttestationServiceTest {
 
         Truth.assertThat(actual.error).isInstanceOf(expected::class.java)
         Truth.assertThat(actual.error).hasMessageThat().isEqualTo(expected.message)
+    }
+
+    /**
+     * Cache state:  empty
+     * API result:   failure (2xx with a body Moshi cannot decode — JsonDataException)
+     * Verification: never mind
+     *
+     * Result:       failure (CardVerificationFailed, not a network-class error that ends in "verified offline")
+     */
+    @Test
+    fun test_10() = runTest {
+        val apiError = JsonDataException("Required value 'issuer_signature' missing at $")
+
+        every { cardVerificationInfoStore.get(cardPublicKey = cardPublicKey) } returns null
+        coEvery { tangemApiService.getOnlineAttestationResponse(CARD_ID, cardPublicKey) } returns Result.Failure(
+            apiError,
+        )
+
+        val actual = service.attestCard(CARD_ID, cardPublicKey) as CompletionResult.Failure
+
+        coVerify(inverse = true) {
+            onlineAttestationVerifier.verify(response = any())
+            cardVerificationInfoStore.store(cardPublicKey = any(), response = any())
+        }
+
+        val expected = TangemSdkError.CardVerificationFailed()
+
+        Truth.assertThat(actual.error).isInstanceOf(expected::class.java)
+        Truth.assertThat(actual.error).hasMessageThat().isEqualTo(expected.message)
+    }
+
+    /**
+     * Cache state:  empty
+     * API result:   failure (2xx with a body that is not JSON at all — JsonEncodingException)
+     *
+     * Result:       failure (CardVerificationFailed)
+     */
+    @Test
+    fun test_11() = runTest {
+        val apiError = JsonEncodingException("Use JsonReader.setLenient(true) to accept malformed JSON at path $")
+
+        every { cardVerificationInfoStore.get(cardPublicKey = cardPublicKey) } returns null
+        coEvery { tangemApiService.getOnlineAttestationResponse(CARD_ID, cardPublicKey) } returns Result.Failure(
+            apiError,
+        )
+
+        val actual = service.attestCard(CARD_ID, cardPublicKey) as CompletionResult.Failure
+
+        Truth.assertThat(actual.error).isInstanceOf(TangemSdkError.CardVerificationFailed::class.java)
     }
 
     private companion object {

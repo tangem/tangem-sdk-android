@@ -1,5 +1,7 @@
 package com.tangem.operations.attestation.service
 
+import com.squareup.moshi.JsonDataException
+import com.squareup.moshi.JsonEncodingException
 import com.tangem.Log
 import com.tangem.common.CompletionResult
 import com.tangem.common.core.TangemSdkError
@@ -46,7 +48,10 @@ internal class CommonOnlineAttestationService(
             is Result.Failure -> {
                 Log.error { "Failed to get attestation data: ${result.error}" }
 
-                if (result.error.isDataNotFoundException() || result.error.isEmptyResponseBody()) {
+                if (result.error.isDataNotFoundException() ||
+                    result.error.isEmptyResponseBody() ||
+                    result.error.isMalformedResponseBody()
+                ) {
                     CompletionResult.Failure(error = TangemSdkError.CardVerificationFailed())
                 } else {
                     CompletionResult.Failure(error = result.toTangemSdkError())
@@ -71,6 +76,15 @@ internal class CommonOnlineAttestationService(
     }
 
     private fun Throwable.isEmptyResponseBody(): Boolean = this is EOFException
+
+    /**
+     * The backend answered 2xx but the body is not a valid [CardVerificationInfoResponse] (Moshi failed to decode
+     * it). The server was reachable and did not vouch for the card, so — like an empty body — this is a failed
+     * verification, not a "no network, continue offline" situation.
+     */
+    private fun Throwable.isMalformedResponseBody(): Boolean {
+        return this is JsonDataException || this is JsonEncodingException
+    }
 
     private companion object {
 
