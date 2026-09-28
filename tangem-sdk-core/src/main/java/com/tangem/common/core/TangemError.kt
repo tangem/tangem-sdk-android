@@ -324,6 +324,13 @@ sealed class TangemSdkError(code: Int) : TangemError(code) {
      * */
     class KeystoreInvalidated(override val cause: Throwable?) : TangemSdkError(code = 50024)
 
+    /**
+     * The key needs a new user authentication, which the `ReuseOnly` authentication policy doesn't allow to request
+     * */
+    class UserNotAuthenticated(override val cause: Throwable?) : TangemSdkError(code = 50028) {
+        override val silent: Boolean = true
+    }
+
     class KeyGenerationException(override var customMessage: String) : TangemSdkError(code = 50022)
 
     class MnemonicException(val mnemonicResult: MnemonicErrorResult) : TangemSdkError(code = 50023)
