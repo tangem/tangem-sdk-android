@@ -7,13 +7,13 @@ class DummyKeystoreManager : KeystoreManager {
     override suspend fun get(
         masterKeyConfig: KeystoreManager.MasterKeyConfig,
         keyAlias: String,
-        forceAuthentication: Boolean,
+        authenticationPolicy: AuthenticationPolicy,
     ): SecretKey? = null
 
     override suspend fun get(
         masterKeyConfig: KeystoreManager.MasterKeyConfig,
         keyAliases: Set<String>,
-        forceAuthentication: Boolean,
+        authenticationPolicy: AuthenticationPolicy,
     ): Map<String, SecretKey> = emptyMap()
 
     override suspend fun store(masterKeyConfig: KeystoreManager.MasterKeyConfig, keyAlias: String, key: SecretKey) =

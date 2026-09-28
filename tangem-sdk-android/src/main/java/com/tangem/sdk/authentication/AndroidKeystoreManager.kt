@@ -7,6 +7,7 @@ import android.security.keystore.KeyProperties
 import android.security.keystore.UserNotAuthenticatedException
 import com.tangem.Log
 import com.tangem.common.authentication.AuthenticationManager
+import com.tangem.common.authentication.keystore.AuthenticationPolicy
 import com.tangem.common.authentication.keystore.KeystoreManager
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.extensions.mapNotNullValues
@@ -38,7 +39,7 @@ internal class AndroidKeystoreManager(
     override suspend fun get(
         masterKeyConfig: KeystoreManager.MasterKeyConfig,
         keyAlias: String,
-        forceAuthentication: Boolean,
+        authenticationPolicy: AuthenticationPolicy,
     ): SecretKey? {
         val wrappedKeyBytes = getWrappedKeyBytes(keyAlias)
 
@@ -55,11 +56,9 @@ internal class AndroidKeystoreManager(
 
         val privateKey = getPrivateMasterKey(masterKeyConfig) ?: return null
 
-        if (forceAuthentication) {
-            authenticateUser(masterKeyConfig)
-        }
+        if (authenticationPolicy == AuthenticationPolicy.Force) authenticateUser(masterKeyConfig)
 
-        val cipher = initUnwrapCipher(privateKey, masterKeyConfig)
+        val cipher = initUnwrapCipher(privateKey, masterKeyConfig, authenticationPolicy)
         val unwrappedKey = unwrapKeyOrNull(keyAlias, cipher, wrappedKeyBytes)
 
         Log.biometric {
@@ -76,7 +75,7 @@ internal class AndroidKeystoreManager(
     override suspend fun get(
         masterKeyConfig: KeystoreManager.MasterKeyConfig,
         keyAliases: Set<String>,
-        forceAuthentication: Boolean,
+        authenticationPolicy: AuthenticationPolicy,
     ): Map<String, SecretKey> {
         val wrappedKeysBytes = keyAliases
             .mapNotNull { keyAlias ->
@@ -100,11 +99,9 @@ internal class AndroidKeystoreManager(
 
         val privateKey = getPrivateMasterKey(masterKeyConfig) ?: return emptyMap()
 
-        if (forceAuthentication) {
-            authenticateUser(masterKeyConfig)
-        }
+        if (authenticationPolicy == AuthenticationPolicy.Force) authenticateUser(masterKeyConfig)
 
-        val cipher = initUnwrapCipher(privateKey, masterKeyConfig)
+        val cipher = initUnwrapCipher(privateKey, masterKeyConfig, authenticationPolicy)
         val unwrappedKeys = wrappedKeysBytes.mapNotNullValues { (keyAlias, wrappedKeyBytes) ->
             unwrapKeyOrNull(keyAlias, cipher, wrappedKeyBytes)
         }
@@ -203,6 +200,7 @@ internal class AndroidKeystoreManager(
     private suspend fun initUnwrapCipher(
         privateKey: PrivateKey,
         masterKeyConfig: KeystoreManager.MasterKeyConfig,
+        authenticationPolicy: AuthenticationPolicy,
     ): Cipher {
         val initCipher = { RSACipherOperations.initUnwrapKeyCipher(privateKey) }
 
@@ -211,6 +209,7 @@ internal class AndroidKeystoreManager(
         return try {
             initCipher()
         } catch (e: UserNotAuthenticatedException) {
+            authenticationPolicy.requirePromptAllowed(e)
             authenticateUser(masterKeyConfig)
 
             initCipher()
@@ -401,5 +400,13 @@ internal class AndroidKeystoreManager(
 
         const val INVALIDATION_CHECK_KEY_ALIAS = "invalidation_check_key"
         const val AUTHENTICATION_CHECK_KEY_SIZE = 128
+    }
+}
+
+/** Fails with [TangemSdkError.UserNotAuthenticated] when the master key needs a prompt the policy doesn't allow. */
+private fun AuthenticationPolicy.requirePromptAllowed(cause: UserNotAuthenticatedException) {
+    if (this == AuthenticationPolicy.ReuseOnly) {
+        Log.biometric { "The master key requires a new authentication, which the policy doesn't allow" }
+        throw TangemSdkError.UserNotAuthenticated(cause)
     }
 }
