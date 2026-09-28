@@ -28,7 +28,7 @@ class SignResetPinTokenCommand(
                 internalCode = TangemSdkError.NotSupportedFirmwareVersion().code,
             )
         }
-        if (card.backupStatus !is Card.BackupStatus.Active) {
+        if (!card.canResetPin) {
             return TangemSdkError.ResetPinWrongCard(
                 internalCode = TangemSdkError.NoActiveBackup().code,
             )
