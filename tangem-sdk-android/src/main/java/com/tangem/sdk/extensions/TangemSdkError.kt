@@ -66,6 +66,7 @@ fun TangemSdkError.localizedDescriptionRes(): TangemSdkErrorDescription {
         is TangemSdkError.KeysImportDisabled,
         is TangemSdkError.WalletAlreadyCreated,
         is TangemSdkError.KeystoreInvalidated,
+        is TangemSdkError.UserNotAuthenticated,
         is TangemSdkError.UnsupportedCurve,
         is TangemSdkError.InvalidParams,
         is TangemSdkError.SerializeCommandError,
