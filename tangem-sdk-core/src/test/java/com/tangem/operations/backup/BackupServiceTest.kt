@@ -7,11 +7,16 @@ import com.tangem.common.StringsLocator
 import com.tangem.common.UserCodeType
 import com.tangem.common.card.Card
 import com.tangem.common.card.FirmwareVersion
+import com.tangem.common.core.CardSessionRunnable
 import com.tangem.common.core.Config
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.json.MoshiJsonConverter
 import com.tangem.common.services.secure.SecureStorage
+import io.mockk.CapturingSlot
 import io.mockk.every
+import io.mockk.just
+import io.mockk.runs
+import io.mockk.slot
 import io.mockk.mockk
 import org.junit.Test
 import java.util.Date
@@ -145,6 +150,79 @@ internal class BackupServiceTest {
         Truth.assertThat(result).isInstanceOf(CompletionResult.Failure::class.java)
         Truth.assertThat((result as CompletionResult.Failure).error)
             .isInstanceOf(TangemSdkError.BackupServiceInvalidState::class.java)
+    }
+
+    @Test
+    fun proceedBackupInFinalizingPrimaryCardStateRunsTheDecoratedRunnable() {
+        val decorated: CardSessionRunnable<Card> = mockk()
+        var decoratedTask: CardSessionRunnable<Card>? = null
+        var decoratedPrimaryCard: PrimaryCard? = null
+        val (service, startedRunnable) = createServiceCapturingSession { primaryCard, task ->
+            decoratedPrimaryCard = primaryCard
+            decoratedTask = task
+            decorated
+        }
+        service.setPrimaryCard(primaryCard())
+        repo.data = repo.data.copy(backupCards = listOf(backupCard("backup_1")))
+        service.setAccessCode("123456")
+
+        service.proceedBackup {}
+
+        Truth.assertThat(service.currentState).isEqualTo(BackupService.State.FinalizingPrimaryCard)
+        Truth.assertThat(decoratedPrimaryCard?.cardId).isEqualTo("primary_id")
+        Truth.assertThat(decoratedTask).isInstanceOf(FinalizePrimaryCardTask::class.java)
+        Truth.assertThat(startedRunnable.captured).isSameInstanceAs(decorated)
+    }
+
+    @Test
+    fun proceedBackupInFinalizingBackupCardStateRunsTheUndecoratedRunnable() {
+        var isDecoratorCalled = false
+        val (service, startedRunnable) = createServiceCapturingSession { _, task ->
+            isDecoratorCalled = true
+            task
+        }
+        service.setPrimaryCard(primaryCard())
+        repo.data = repo.data.copy(
+            backupCards = listOf(backupCard("backup_1")),
+            attestSignature = byteArrayOf(1),
+            backupData = mapOf("backup_1" to listOf(EncryptedBackupData(data = byteArrayOf(2), salt = byteArrayOf(3)))),
+            primaryCardFinalized = true,
+        )
+        service.setAccessCode("123456")
+
+        service.proceedBackup {}
+
+        Truth.assertThat(service.currentState).isEqualTo(BackupService.State.FinalizingBackupCard(index = 1))
+        Truth.assertThat(isDecoratorCalled).isFalse()
+        Truth.assertThat(startedRunnable.captured).isInstanceOf(FinalizeBackupCardTask::class.java)
+    }
+
+    private fun createServiceCapturingSession(
+        primaryCardRunnableDecorator: (PrimaryCard, CardSessionRunnable<Card>) -> CardSessionRunnable<Card>,
+    ): Pair<BackupService, CapturingSlot<CardSessionRunnable<Card>>> {
+        val sdk: TangemSdk = mockk()
+        every { sdk.config } returns Config()
+        every { sdk.secureStorage } returns storage
+        val startedRunnable = slot<CardSessionRunnable<Card>>()
+        every {
+            sdk.startSessionWithRunnable(
+                runnable = capture(startedRunnable),
+                cardId = any(),
+                initialMessage = any(),
+                accessCode = any(),
+                iconScanRes = any(),
+                preflightReadFilter = any(),
+                callback = any(),
+            )
+        } just runs
+        repo = BackupRepo(storage = storage, jsonConverter = MoshiJsonConverter.INSTANCE)
+        val service = BackupService(
+            sdk = sdk,
+            repo = repo,
+            stringsLocator = stringsLocator,
+            primaryCardRunnableDecorator = primaryCardRunnableDecorator,
+        )
+        return service to startedRunnable
     }
 
     @Test
