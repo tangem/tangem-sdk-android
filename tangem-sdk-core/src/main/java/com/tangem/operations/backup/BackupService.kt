@@ -11,6 +11,7 @@ import com.tangem.common.UserCodeType
 import com.tangem.common.card.Card
 import com.tangem.common.card.EllipticCurve
 import com.tangem.common.card.FirmwareVersion
+import com.tangem.common.core.CardSessionRunnable
 import com.tangem.common.core.CompletionCallback
 import com.tangem.common.core.ProductType
 import com.tangem.common.core.TangemSdkError
@@ -26,12 +27,18 @@ import kotlinx.coroutines.flow.StateFlow
 import java.io.PrintWriter
 import java.io.StringWriter
 
+/**
+ * @param primaryCardRunnableDecorator wraps the card session runnable that finalizes the given primary card, so the
+ * caller can run its own commands on the same NFC tap once the primary card is finalized. The identity by default.
+ */
 @Suppress("LargeClass")
 @OptIn(ExperimentalCoroutinesApi::class)
-class BackupService(
+class BackupService @JvmOverloads constructor(
     private val sdk: TangemSdk,
     private var repo: BackupRepo,
     private val stringsLocator: StringsLocator,
+    private val primaryCardRunnableDecorator: (PrimaryCard, CardSessionRunnable<Card>) -> CardSessionRunnable<Card> =
+        { _, runnable -> runnable },
 ) {
     var currentState: State = State.Preparing
         private set(value) {
@@ -398,7 +405,7 @@ class BackupService(
             }
 
             sdk.startSessionWithRunnable(
-                runnable = task,
+                runnable = primaryCardRunnableDecorator(primaryCard, task),
                 cardId = primaryCard.cardId,
                 initialMessage = message,
                 iconScanRes = iconScanRes,
