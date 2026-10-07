@@ -117,6 +117,11 @@ class FirmwareVersion : Comparable<FirmwareVersion> {
         val BackupAvailable = FirmwareVersion(4, 43)
 
         /**
+         * Wallet status returned and signed by the card in the wallet key attestation
+         */
+        val WalletStatusAttestationAvailable = FirmwareVersion(6, 0)
+
+        /**
          * HD Wallet
          */
         val HDWalletAvailable = FirmwareVersion(4, 39)
