@@ -2,6 +2,7 @@ package com.tangem.common.authentication.storage
 
 import com.tangem.Log
 import com.tangem.common.authentication.keystore.KeystoreManager
+import com.tangem.common.authentication.keystore.AuthenticationPolicy
 import com.tangem.common.authentication.keystore.MasterKeyConfigs
 import com.tangem.common.services.secure.SecureStorage
 import com.tangem.crypto.operations.AESCipherOperations
@@ -28,10 +29,14 @@ class AuthenticatedStorage(
      * Retrieves and decrypts data from the storage after necessary user authentication.
      *
      * @param keyAlias The unique identifier for the stored encrypted data.
+     * @param authenticationPolicy When the user is asked to authenticate.
      *
      * @return The decrypted data as [ByteArray] or `null` if data is not found.
      */
-    suspend fun get(keyAlias: String): ByteArray? = withContext(Dispatchers.IO) {
+    suspend fun get(
+        keyAlias: String,
+        authenticationPolicy: AuthenticationPolicy = AuthenticationPolicy.Force,
+    ): ByteArray? = withContext(Dispatchers.IO) {
         val encryptedData = secureStorage.get(keyAlias)
             ?.takeIf(ByteArray::isNotEmpty)
 
@@ -46,7 +51,7 @@ class AuthenticatedStorage(
             return@withContext null
         }
 
-        val (config, key) = getSecretKey(keyAlias) ?: run {
+        val (config, key) = getSecretKey(keyAlias, authenticationPolicy) ?: run {
             Log.warning {
                 """
                     $TAG - The secret key is not stored
@@ -64,13 +69,16 @@ class AuthenticatedStorage(
         decryptedData
     }
 
-    private suspend fun getSecretKey(keyAlias: String): Pair<MasterKeyConfigs, SecretKey>? {
+    private suspend fun getSecretKey(
+        keyAlias: String,
+        authenticationPolicy: AuthenticationPolicy,
+    ): Pair<MasterKeyConfigs, SecretKey>? {
         val currentConfig = MasterKeyConfigs.current
-        val dataKey = keystoreManager.get(currentConfig, keyAlias, forceAuthentication = true)
+        val dataKey = keystoreManager.get(currentConfig, keyAlias, authenticationPolicy)
 
         return if (dataKey == null) {
             MasterKeyConfigs.old.firstNotNullOfOrNull { masterKeyConfig ->
-                val key = keystoreManager.get(masterKeyConfig, keyAlias, forceAuthentication = false)
+                val key = keystoreManager.get(masterKeyConfig, keyAlias, authenticationPolicy.forOldMasterKeys())
                     ?: return@firstNotNullOfOrNull null
 
                 masterKeyConfig to key
@@ -91,10 +99,14 @@ class AuthenticatedStorage(
      * Retrieves and decrypts data from the storage after necessary user authentication.
      *
      * @param keysAliases The unique identifiers for the stored encrypted data.
+     * @param authenticationPolicy When the user is asked to authenticate.
      *
      * @return The decrypted data as a map of key-alias to [ByteArray] or an empty map if data is not found.
      */
-    suspend fun get(keysAliases: Collection<String>): Map<String, ByteArray> = withContext(Dispatchers.IO) {
+    suspend fun get(
+        keysAliases: Collection<String>,
+        authenticationPolicy: AuthenticationPolicy = AuthenticationPolicy.Force,
+    ): Map<String, ByteArray> = withContext(Dispatchers.IO) {
         val keyToEncryptedData = keysAliases
             .mapNotNull { keyAlias ->
                 val data = secureStorage.get(keyAlias)
@@ -117,7 +129,7 @@ class AuthenticatedStorage(
             return@withContext emptyMap()
         }
 
-        val (config, keys) = getSecretKeys(keyToEncryptedData.keys) ?: run {
+        val (config, keys) = getSecretKeys(keyToEncryptedData.keys, authenticationPolicy) ?: run {
             Log.warning {
                 """
                     $TAG - The secret keys are not stored
@@ -144,13 +156,18 @@ class AuthenticatedStorage(
 
     private suspend fun getSecretKeys(
         keysAliases: Collection<String>,
+        authenticationPolicy: AuthenticationPolicy,
     ): Pair<MasterKeyConfigs, Map<String, SecretKey>>? {
         val currentConfig = MasterKeyConfigs.current
-        val dataKeys = keystoreManager.get(currentConfig, keysAliases.toSet(), forceAuthentication = true)
+        val dataKeys = keystoreManager.get(currentConfig, keysAliases.toSet(), authenticationPolicy)
 
         return if (dataKeys.isEmpty()) {
             MasterKeyConfigs.old.firstNotNullOfOrNull { masterKeyConfig ->
-                val keys = keystoreManager.get(masterKeyConfig, keysAliases.toSet(), forceAuthentication = false)
+                val keys = keystoreManager.get(
+                    masterKeyConfig,
+                    keysAliases.toSet(),
+                    authenticationPolicy.forOldMasterKeys(),
+                )
                     .takeIf { it.isNotEmpty() }
                     ?: return@firstNotNullOfOrNull null
 
@@ -159,6 +176,15 @@ class AuthenticatedStorage(
         } else {
             currentConfig to dataKeys
         }
+    }
+
+    /**
+     * An old master key is only read to migrate its data, so it never forces a new authentication — and keeps
+     * [AuthenticationPolicy.ReuseOnly] from prompting.
+     */
+    private fun AuthenticationPolicy.forOldMasterKeys(): AuthenticationPolicy = when (this) {
+        AuthenticationPolicy.ReuseOnly -> AuthenticationPolicy.ReuseOnly
+        AuthenticationPolicy.Force, AuthenticationPolicy.ReuseOrPrompt -> AuthenticationPolicy.ReuseOrPrompt
     }
 
     private fun decrypt(keyAlias: String, key: SecretKey, encryptedData: ByteArray): ByteArray {

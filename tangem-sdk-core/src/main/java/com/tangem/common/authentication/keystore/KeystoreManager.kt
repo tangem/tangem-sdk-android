@@ -16,14 +16,18 @@ interface KeystoreManager {
      *
      * @param masterKeyConfig The configuration for the master key.
      * @param keyAlias The alias of the key to be retrieved.
-     * @param forceAuthentication Whether to force user authentication. If `true`, the user will be prompted
-     * to authenticate even if the master key security delay is not reached.
+     * @param authenticationPolicy When the user is asked to authenticate.
      *
      * @return The [SecretKey] if found. If the key cannot be found or unwrapped, then `null` will be returned.
      *
      * @throws TangemSdkError.KeystoreInvalidated if the keystore is invalidated.
+     * @throws TangemSdkError.UserNotAuthenticated if [AuthenticationPolicy.ReuseOnly] finds no authentication to reuse.
      */
-    suspend fun get(masterKeyConfig: MasterKeyConfig, keyAlias: String, forceAuthentication: Boolean): SecretKey?
+    suspend fun get(
+        masterKeyConfig: MasterKeyConfig,
+        keyAlias: String,
+        authenticationPolicy: AuthenticationPolicy,
+    ): SecretKey?
 
     /**
      * Retrieves the map of key alias to [SecretKey] for a given [keyAliases].
@@ -32,18 +36,18 @@ interface KeystoreManager {
      *
      * @param masterKeyConfig The configuration for the master key.
      * @param keyAliases The aliases of the keys to be retrieved.
-     * @param forceAuthentication Whether to force user authentication. If `true`, the user will be prompted
-     * to authenticate even if the master key security delay is not reached.
+     * @param authenticationPolicy When the user is asked to authenticate.
      *
      * @return The map of key alias to [SecretKey] if found. If the key cannot be found or unwrapped,
      * then the key will not be included in the map.
      *
      * @throws TangemSdkError.KeystoreInvalidated if the keystore is invalidated.
+     * @throws TangemSdkError.UserNotAuthenticated if [AuthenticationPolicy.ReuseOnly] finds no authentication to reuse.
      */
     suspend fun get(
         masterKeyConfig: MasterKeyConfig,
         keyAliases: Set<String>,
-        forceAuthentication: Boolean,
+        authenticationPolicy: AuthenticationPolicy,
     ): Map<String, SecretKey>
 
     /**
