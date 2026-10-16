@@ -324,6 +324,7 @@ class NfcSessionDialog(
             welcomeBackContainer.hide()
             taskContainer.show()
             findDesignBottomSheetView()?.let { it.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT }
+            setStateAndShow(getEmptyOnReadyEvent(), headerWidget, touchCardWidget, messageWidget)
             callback.invoke(CompletionResult.Success(Unit))
         }
 
