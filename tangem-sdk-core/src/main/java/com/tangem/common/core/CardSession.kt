@@ -1052,7 +1052,7 @@ class CardSession(
                 when (result) {
                     is CompletionResult.Success -> {
                         Log.session { "showWelcomeBackWarning success" }
-                        val showForgotButton = environment.card?.backupStatus?.isActive ?: false
+                        val showForgotButton = environment.card?.canResetPin ?: false
                         val cardId = environment.card?.cardId ?: this.cardId
                         showRequestAccessCode(
                             type = type,
@@ -1080,7 +1080,7 @@ class CardSession(
             Log.session { "request user code of type: $type" }
 
             val cardId = environment.card?.cardId ?: this.cardId
-            val showForgotButton = environment.card?.backupStatus?.isActive ?: false
+            val showForgotButton = environment.card?.canResetPin ?: false
 
             showRequestAccessCode(
                 type = type,

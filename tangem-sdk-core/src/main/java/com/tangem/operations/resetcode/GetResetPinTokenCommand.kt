@@ -23,7 +23,7 @@ class GetResetPinTokenCommand : Command<ResetPinCard>() {
         if (card.firmwareVersion < FirmwareVersion.BackupAvailable) {
             return TangemSdkError.NotSupportedFirmwareVersion()
         }
-        if (card.backupStatus !is Card.BackupStatus.Active) {
+        if (!card.canResetPin) {
             return TangemSdkError.NoActiveBackup()
         }
         if (!card.userSettings.isUserCodeRecoveryAllowed) {

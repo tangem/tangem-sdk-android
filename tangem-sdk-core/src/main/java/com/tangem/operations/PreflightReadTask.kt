@@ -1,6 +1,7 @@
 package com.tangem.operations
 
 import com.tangem.Log
+import com.tangem.common.CompletionResult
 import com.tangem.common.CompletionResult.Failure
 import com.tangem.common.CompletionResult.Success
 import com.tangem.common.UserCode
@@ -141,7 +142,7 @@ class PreflightReadTask(
         callback: CompletionCallback<Card>,
     ) {
         val shouldCheckAccessCode = PreflightReadMode.FullCardRead.Option.AccessCodeCheck in options
-        if (!shouldCheckAccessCode || !card.isAccessCodeSet) {
+        if (!shouldCheckAccessCode) {
             readWalletsList(session, options, callback)
             return
         }
@@ -155,9 +156,20 @@ class PreflightReadTask(
             return
         }
 
-        session.pause()
-
         val showWelcomeBackWarning = card.firmwareVersion.type != FirmwareVersion.FirmwareType.Sdk
+
+        if (!card.isAccessCodeSet) {
+            readWalletsList(session, options) { result ->
+                if (showWelcomeBackWarning && result is Success && result.data.hasImportedKeys()) {
+                    confirmWelcomeBack(session, result, callback)
+                } else {
+                    callback(result)
+                }
+            }
+            return
+        }
+
+        session.pause()
 
         session.environment.accessCode = UserCode(UserCodeType.AccessCode, value = null)
         session.requestUserCodeIfNeeded(
@@ -169,6 +181,32 @@ class PreflightReadTask(
                 is Success -> {
                     session.resume { readWalletsList(session, options, callback) }
                 }
+                is Failure -> {
+                    session.releaseTag()
+                    callback(Failure(result.error))
+                }
+            }
+        }
+    }
+
+    /**
+     * A card without an access code has no backup (finishing a backup forbids the default code), so only imported
+     * keys can be known to someone else — e.g. a seed phrase imported before resale. COS v8 keeps an imported seed in
+     * the master secret rather than in the wallets.
+     */
+    private fun Card.hasImportedKeys(): Boolean {
+        return wallets.any { it.isImported } || masterSecret?.isImported == true
+    }
+
+    private fun confirmWelcomeBack(
+        session: CardSession,
+        readResult: CompletionResult<Card>,
+        callback: CompletionCallback<Card>,
+    ) {
+        session.pause()
+        session.viewDelegate.showWelcomeBackWarning { result ->
+            when (result) {
+                is Success -> session.resume { callback(readResult) }
                 is Failure -> {
                     session.releaseTag()
                     callback(Failure(result.error))

@@ -127,6 +127,24 @@ data class Card internal constructor(
             return msb and 0x7F != 0
         }
 
+    /**
+     * COS v8+ allows resetting the access code on a card already linked to backup cards.
+     * Earlier firmware requires an active backup.
+     */
+    val canResetPin: Boolean
+        get() {
+            val backupStatus = backupStatus ?: return false
+
+            if (firmwareVersion < FirmwareVersion.v8) {
+                return backupStatus.isActive
+            }
+
+            return when (backupStatus) {
+                is BackupStatus.Active, is BackupStatus.CardLinked -> true
+                BackupStatus.NoBackup -> false
+            }
+        }
+
     fun assertWalletsAccess(): TangemSdkError? {
         if (firmwareVersion < FirmwareVersion.v8 || !settings.isBackupRequired) {
             return null
